@@ -24,9 +24,16 @@
 
 extern phys_addr_t gConEmiPhyBase;
 
+extern int mtk_wcn_stpgps_drv_init(void);
+extern void mtk_wcn_stpgps_drv_exit(void);
 #ifdef CONFIG_MTK_GPS_EMI
 extern int mtk_gps_emi_init(void);
 extern void mtk_gps_emi_exit(void);
+#endif
+#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+int mtk_gps_fw_log_init(void);
+void mtk_gps_fw_log_exit(void);
+void GPS_fwlog_ctrl(bool on);
 #endif
 
 #endif
