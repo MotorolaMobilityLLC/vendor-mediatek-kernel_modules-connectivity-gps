@@ -123,6 +123,28 @@ INT32 gps_emi_mpu_set_region_protection(INT32 region)
 	return 0;
 }
 
+INT32 gps_emi_patch_get(PUINT8 pPatchName, osal_firmware **ppPatch)
+{
+	INT32 iRet = -1;
+	osal_firmware *fw = NULL;
+
+	if (!ppPatch) {
+		GPS_DBG("invalid ppBufptr!\n");
+		return -1;
+	}
+	*ppPatch = NULL;
+	iRet = request_firmware((const struct firmware **)&fw, pPatchName, NULL);
+	if (iRet != 0) {
+		GPS_DBG("failed to open or read!(%s)\n", pPatchName);
+		return -1;
+	}
+	GPS_DBG("loader firmware %s  ok!!\n", pPatchName);
+	iRet = 0;
+	*ppPatch = fw;
+
+	return iRet;
+}
+
 INT32 mtk_wcn_consys_gps_emi_init(void)
 {
 	INT32 iRet = -1;
@@ -158,7 +180,7 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 			GPS_DBG("EMI mapping OK(0x%p)\n", pGpsEmibaseaddr);
 			memset_io(pGpsEmibaseaddr, 0, GPS_EMI_MPU_SIZE);
 			if ((pFullPatchName != NULL)
-				&& (wmt_dev_patch_get(pFullPatchName, &pPatch) == 0)) {
+				&& (gps_emi_patch_get(pFullPatchName, &pPatch) == 0)) {
 				if (pPatch != NULL) {
 					/*get full name patch success*/
 					GPS_DBG("get full patch name(%s) buf(0x%p) size(%ld)\n",
