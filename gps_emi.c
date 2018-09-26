@@ -208,6 +208,7 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 				release_firmware(pPatch);
 				pPatch = NULL;
 			}
+			iounmap(pGpsEmibaseaddr);
 		} else {
 			GPS_DBG("EMI mapping fail\n");
 		}
@@ -227,7 +228,9 @@ long gps_emi_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long a
 
 	switch (cmd) {
 	case IOCTL_MNL_IMAGE_FILE_TO_MEM:
+	#ifdef SUPPORT_GPS_OFFLOAD
 		retval = mtk_wcn_consys_gps_emi_init();
+	#endif
 		GPS_DBG("IOCTL_MNL_IMAGE_FILE_TO_MEM\n");
 		break;
 
@@ -249,6 +252,11 @@ long gps_emi_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long a
 }
 
 /******************************************************************************/
+long gps_emi_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	return gps_emi_unlocked_ioctl(filp, cmd, arg);
+}
+
 /*****************************************************************************/
 static int gps_emi_open(struct inode *inode, struct file *file)
 {
@@ -293,6 +301,7 @@ static ssize_t gps_emi_write(struct file *file, const char __user *buf, size_t c
 static const struct file_operations gps_emi_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = gps_emi_unlocked_ioctl,
+	.compat_ioctl = gps_emi_compat_ioctl,
 	.open = gps_emi_open,
 	.read = gps_emi_read,
 	.write = gps_emi_write,
