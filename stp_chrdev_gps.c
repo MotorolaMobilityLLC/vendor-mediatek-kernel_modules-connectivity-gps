@@ -38,6 +38,9 @@
 #if defined(CONFIG_MACH_MT6739)
 #include <mach/mtk_freqhopping.h>
 #endif
+#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
+#include <helio-dvfsrc.h>
+#endif
 
 MODULE_LICENSE("GPL");
 
@@ -745,6 +748,10 @@ static int GPS_open(struct inode *inode, struct file *file)
 	GPS_WARN_FUNC("export_clk_buf: %x\n", CLK_BUF_AUDIO);
 	KERNEL_clk_buf_ctrl(CLK_BUF_AUDIO, 1);
 #endif
+#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
+	dvfsrc_enable_dvfs_freq_hopping(1);
+	GPS_WARN_FUNC("mt6765/61 GPS desense solution on\n");
+#endif
 
 #ifdef GPS_FWCTL_SUPPORT
 	down(&fwctl_mtx);
@@ -795,6 +802,10 @@ static int GPS_close(struct inode *inode, struct file *file)
 		GPS_WARN_FUNC("disable MEMPLL successfully\n");
 	else
 		GPS_WARN_FUNC("Error to disable MEMPLL\n");
+#endif
+#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
+	dvfsrc_enable_dvfs_freq_hopping(0);
+	GPS_WARN_FUNC("mt6765/61 GPS desense solution off\n");
 #endif
 
 #if defined(CONFIG_MACH_MT6580)
