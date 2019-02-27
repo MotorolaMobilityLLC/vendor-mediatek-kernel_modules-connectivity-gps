@@ -48,6 +48,17 @@
 #define IOCTL_MNL_NVRAM_FILE_TO_MEM  2
 #define IOCTL_MNL_NVRAM_MEM_TO_FILE  3
 
+#if defined(CONFIG_MACH_MT6765)
+#define GPS_EMI_MPU_REGION           29
+#define GPS_EMI_BASE_ADDR_OFFSET     (2*SZ_1M + SZ_1M/2 + 0x1000)
+#define GPS_EMI_MPU_SIZE             (SZ_1M + SZ_1M/2 - 0x2000)
+#endif
+#if defined(CONFIG_MACH_MT6771) || defined(CONFIG_MACH_MT6775) || defined(CONFIG_MACH_MT6758)
+#define GPS_EMI_MPU_REGION           30
+#define GPS_EMI_BASE_ADDR_OFFSET     (SZ_1M)
+#define GPS_EMI_MPU_SIZE             (SZ_1M)
+#endif
+
 /******************************************************************************
  * Debug configuration
 ******************************************************************************/
@@ -85,7 +96,7 @@ void mtk_wcn_consys_gps_memory_reserve(void)
 	gGpsEmiPhyBase = arm_memblock_steal(SZ_1M, SZ_1M);
 #endif
 #else
-	gGpsEmiPhyBase = gConEmiPhyBase + SZ_1M;
+	gGpsEmiPhyBase = gConEmiPhyBase + GPS_EMI_BASE_ADDR_OFFSET;
 
 #endif
 	if (gGpsEmiPhyBase)
@@ -101,7 +112,7 @@ INT32 gps_emi_mpu_set_region_protection(INT32 region)
 	/*set MPU for EMI share Memory */
 	GPS_DBG("setting MPU for EMI share memory\n");
 	region_info.start = gGpsEmiPhyBase;
-	region_info.end = gGpsEmiPhyBase + SZ_1M - 1;
+	region_info.end = gGpsEmiPhyBase + GPS_EMI_MPU_SIZE - 1;
 	region_info.region = region;
 	SET_ACCESS_PERMISSION(region_info.apc, LOCK,
 	FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN,
@@ -121,7 +132,7 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 		/*set MPU for EMI share Memory*/
 		#if EMI_MPU_PROTECTION_IS_READY
 		GPS_DBG("setting MPU for EMI share memory\n");
-		gps_emi_mpu_set_region_protection(30);
+		gps_emi_mpu_set_region_protection(GPS_EMI_MPU_REGION);
 		#endif
 		GPS_DBG("get consys start phy address(0x%zx)\n", (size_t)gGpsEmiPhyBase);
 		#if 0
@@ -139,13 +150,13 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 			CONSYS_REG_READ(conn_reg.topckgen_base + CONSYS_EMI_MAPPING_OFFSET));
 		#endif
 
-		pGpsEmibaseaddr = ioremap_nocache(gGpsEmiPhyBase, SZ_1M);
+		pGpsEmibaseaddr = ioremap_nocache(gGpsEmiPhyBase, GPS_EMI_MPU_SIZE);
 		if (pGpsEmibaseaddr != NULL) {
 			unsigned char *pFullPatchName = "MNL.bin";
 			osal_firmware *pPatch = NULL;
 
 			GPS_DBG("EMI mapping OK(0x%p)\n", pGpsEmibaseaddr);
-			memset_io(pGpsEmibaseaddr, 0, SZ_1M);
+			memset_io(pGpsEmibaseaddr, 0, GPS_EMI_MPU_SIZE);
 			if ((pFullPatchName != NULL)
 				&& (wmt_dev_patch_get(pFullPatchName, &pPatch) == 0)) {
 				if (pPatch != NULL) {
@@ -156,7 +167,7 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 				}
 			}
 			if (pPatch != NULL) {
-				if ((pPatch)->size <= SZ_1M) {
+				if ((pPatch)->size <= GPS_EMI_MPU_SIZE) {
 					GPS_DBG("Prepare to copy FW\n");
 					memcpy(pGpsEmibaseaddr, (pPatch)->data, (pPatch)->size);
 					iRet = 1;
