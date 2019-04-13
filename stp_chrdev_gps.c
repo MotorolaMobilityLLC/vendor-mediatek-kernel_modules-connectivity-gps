@@ -58,13 +58,13 @@ MODULE_LICENSE("GPL");
 #define COMBO_IOC_GPS_HWVER           6
 #define COMBO_IOC_GPS_IC_HW_VERSION   7
 #define COMBO_IOC_GPS_IC_FW_VERSION   8
-#define COMBO_IOC_D1_EFUSE_GET       9
-#define COMBO_IOC_RTC_FLAG	     10
-#define COMBO_IOC_CO_CLOCK_FLAG	     11
+#define COMBO_IOC_D1_EFUSE_GET        9
+#define COMBO_IOC_RTC_FLAG           10
+#define COMBO_IOC_CO_CLOCK_FLAG      11
 #define COMBO_IOC_TRIGGER_WMT_ASSERT 12
 #define COMBO_IOC_WMT_STATUS         13
-#define COMBO_IOC_TAKE_GPS_WAKELOCK         14
-#define COMBO_IOC_GIVE_GPS_WAKELOCK         15
+#define COMBO_IOC_TAKE_GPS_WAKELOCK  14
+#define COMBO_IOC_GIVE_GPS_WAKELOCK  15
 #define COMBO_IOC_GET_GPS_LNA_PIN    16
 #define COMBO_IOC_GPS_FWCTL          17
 
@@ -163,6 +163,7 @@ bool rtc_GPS_low_power_detected(void)
 		return false;
 	}
 }
+
 ssize_t GPS_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
 {
 	int retval = 0;
@@ -709,6 +710,41 @@ static void gps_cdev_rst_cb(ENUM_WMTDRV_TYPE_T src,
 	}
 }
 
+static void GPS_handle_desense(bool on)
+{
+	if (on) {
+#if defined(CONFIG_MACH_MT6739)
+		if (freqhopping_config(FH_MEM_PLLID, 0, 1) == 0)
+			GPS_WARN_FUNC("Enable MEMPLL successfully\n");
+		else
+			GPS_WARN_FUNC("Error to enable MEMPLL\n");
+#endif
+#if defined(CONFIG_MACH_MT6580)
+		GPS_WARN_FUNC("export_clk_buf: %x\n", CLK_BUF_AUDIO);
+		KERNEL_clk_buf_ctrl(CLK_BUF_AUDIO, 1);
+#endif
+#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
+		dvfsrc_enable_dvfs_freq_hopping(1);
+		GPS_WARN_FUNC("mt6765/61 GPS desense solution on\n");
+#endif
+	} else {
+#if defined(CONFIG_MACH_MT6739)
+		if (freqhopping_config(FH_MEM_PLLID, 0, 0) == 0)
+			GPS_WARN_FUNC("disable MEMPLL successfully\n");
+		else
+			GPS_WARN_FUNC("Error to disable MEMPLL\n");
+#endif
+#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
+		dvfsrc_enable_dvfs_freq_hopping(0);
+		GPS_WARN_FUNC("mt6765/61 GPS desense solution off\n");
+#endif
+#if defined(CONFIG_MACH_MT6580)
+		GPS_WARN_FUNC("export_clk_buf: %x\n", CLK_BUF_AUDIO);
+		KERNEL_clk_buf_ctrl(CLK_BUF_AUDIO, 0);
+#endif
+	}
+}
+
 static int GPS_open(struct inode *inode, struct file *file)
 {
 	pr_warn("%s: major %d minor %d (pid %d)\n", __func__, imajor(inode), iminor(inode), current->pid);
@@ -751,21 +787,7 @@ static int GPS_open(struct inode *inode, struct file *file)
 	gps_hold_wake_lock(1);
 	GPS_WARN_FUNC("gps_hold_wake_lock(1)\n");
 
-#if defined(CONFIG_MACH_MT6739)
-	if (freqhopping_config(FH_MEM_PLLID, 0, 1) == 0)
-		GPS_WARN_FUNC("Enable MEMPLL successfully\n");
-	else
-		GPS_WARN_FUNC("Error to enable MEMPLL\n");
-#endif
-
-#if defined(CONFIG_MACH_MT6580)
-	GPS_WARN_FUNC("export_clk_buf: %x\n", CLK_BUF_AUDIO);
-	KERNEL_clk_buf_ctrl(CLK_BUF_AUDIO, 1);
-#endif
-#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
-	dvfsrc_enable_dvfs_freq_hopping(1);
-	GPS_WARN_FUNC("mt6765/61 GPS desense solution on\n");
-#endif
+	GPS_handle_desense(true);
 
 #ifdef GPS_FWCTL_SUPPORT
 	down(&fwctl_mtx);
@@ -811,21 +833,8 @@ static int GPS_close(struct inode *inode, struct file *file)
 	gps_hold_wake_lock(0);
 	GPS_WARN_FUNC("gps_hold_wake_lock(0)\n");
 
-#if defined(CONFIG_MACH_MT6739)
-	if (freqhopping_config(FH_MEM_PLLID, 0, 0) == 0)
-		GPS_WARN_FUNC("disable MEMPLL successfully\n");
-	else
-		GPS_WARN_FUNC("Error to disable MEMPLL\n");
-#endif
-#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
-	dvfsrc_enable_dvfs_freq_hopping(0);
-	GPS_WARN_FUNC("mt6765/61 GPS desense solution off\n");
-#endif
+	GPS_handle_desense(false);
 
-#if defined(CONFIG_MACH_MT6580)
-	GPS_WARN_FUNC("export_clk_buf: %x\n", CLK_BUF_AUDIO);
-	KERNEL_clk_buf_ctrl(CLK_BUF_AUDIO, 0);
-#endif
 	return 0;
 }
 
