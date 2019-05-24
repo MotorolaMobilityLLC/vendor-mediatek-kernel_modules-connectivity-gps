@@ -37,6 +37,7 @@
 #include "gps.h"
 #if defined(CONFIG_MACH_MT6739)
 #include <mtk_freqhopping.h>
+#include <mtk_freqhopping_drv.h>
 #endif
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
 #include <helio-dvfsrc.h>
