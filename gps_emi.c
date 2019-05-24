@@ -299,9 +299,10 @@ static ssize_t gps_emi_read(struct file *file, char __user *buf, size_t count, l
 	GPS_DBG("gps_emi_read begin\n");
 	if (count > GPS_ADC_CAPTURE_BUFF_SIZE)
 		count = GPS_ADC_CAPTURE_BUFF_SIZE;
-	if (copy_to_user(buf, (char *)pGpsEmibaseaddr, count))
-		pr_err("Copy to user failed\n");
-
+	if (pGpsEmibaseaddr != NULL) {
+		if (copy_to_user(buf, (char *)pGpsEmibaseaddr, count))
+			pr_err("Copy to user failed\n");
+	}
 	GPS_DBG("gps_emi_read finish\n");
 	return ret;
 }
