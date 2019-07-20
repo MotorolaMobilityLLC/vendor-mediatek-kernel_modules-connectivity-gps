@@ -6,6 +6,7 @@
 #include "gps_dl_hal.h"
 #include "gps_dl_ctrld.h"
 #include "gps_data_link_devices.h"
+#include "gps_dl_subsys_reset.h"
 
 static ssize_t gps_each_device_read(struct file *filp,
 	char __user *buf, size_t count, loff_t *f_pos)
@@ -198,7 +199,10 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 		GDL_LOGXD(dev->index, "GPSDL_IOC_TRIGGER_ASSERT, reason = %d", arg);
 
 		/* TODO: assert dev->is_open */
-		retval = gps_each_link_reset(dev->index);
+		if (dev->index == GPS_DATA_LINK_ID0)
+			retval = gps_dl_trigger_gps_subsys_reset(false);
+		else
+			retval = gps_each_link_reset(dev->index);
 		break;
 	case GPSDL_IOC_QUERY_STATUS:
 		retval = gps_each_link_check(dev->index);
