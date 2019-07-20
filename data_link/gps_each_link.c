@@ -408,10 +408,11 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 	return retval;
 }
 
-int gps_dl_trigger_connsys_reset(void)
+int gps_dl_whole_chip_reset(void)
 {
 	/* - set gps global reset status
 	 */
+	GDL_LOGE("");
 	return 0;
 }
 
