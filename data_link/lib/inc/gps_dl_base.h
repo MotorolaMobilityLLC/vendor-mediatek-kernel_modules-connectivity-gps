@@ -16,7 +16,7 @@ enum GDL_RET_STATUS {
 	GDL_RET_NUM,
 };
 
-char *gdl_ret_to_name(enum GDL_RET_STATUS gdl_ret);
+const char *gdl_ret_to_name(enum GDL_RET_STATUS gdl_ret);
 
 #endif /* _GPS_DL_BASE_H */
 

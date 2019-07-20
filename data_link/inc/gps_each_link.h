@@ -105,9 +105,6 @@ enum gps_each_link_state_enum {
 	LINK_STATE_NUM
 };
 
-const char *gps_dl_link_state_name(enum gps_each_link_state_enum state);
-
-
 #define GPS_EACH_LINK_SID_MAX       (0x7FFFFFFE)
 #define GPS_EACH_LINK_SID_NO_CHECK  (0xFFFFFFFF)
 struct gps_each_link {

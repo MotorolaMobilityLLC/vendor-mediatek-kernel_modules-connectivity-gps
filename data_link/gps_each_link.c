@@ -10,68 +10,11 @@
 #include "gps_dl_lib_misc.h"
 #include "gps_dsp_fsm.h"
 #include "gps_dl_osal.h"
+#include "gps_dl_name_list.h"
 
 #include "linux/errno.h"
 
-char *link_event_name[GPS_DL_LINK_EVT_NUM + 1] = {
-	[GPS_DL_EVT_LINK_OPEN]  = "LINK_OPEN",
-	[GPS_DL_EVT_LINK_CLOSE] = "LINK_CLOSE",
-	[GPS_DL_EVT_LINK_WRITE] = "LINK_WRITE",
-	[GPS_DL_EVT_LINK_READ]  = "LINK_READ",
-	[GPS_DL_EVT_LINK_DSP_ROM_READY_TIMEOUT] = "ROM_READY_TIMEOUT",
-	[GPS_DL_EVT_LINK_DSP_FSM_TIMEOUT] = "DSP_FSM_TIMEOUT",
-	[GPS_DL_EVT_LINK_RESET_DSP]       = "RESET_DSP",
-	[GPS_DL_EVT_LINK_RESET_GPS]       = "RESET_GPS",
-	[GPS_DL_EVT_LINK_PRE_CONN_RESET]  = "PRE_CONN_RESET",
-	[GPS_DL_EVT_LINK_POST_CONN_RESET] = "POST_CONN_RESET",
-	[GPS_DL_EVT_LINK_PRINT_HW_STATUS] = "PRINT_HW_STATUS",
-	[GPS_DL_LINK_EVT_NUM]             = "LINK_INVALID_EVT",
-};
 
-char *gps_dl_link_event_name(enum gps_dl_link_event_id evt)
-{
-	if (evt >= 0 && evt < GPS_DL_LINK_EVT_NUM)
-		return link_event_name[evt];
-	else
-		return link_event_name[GPS_DL_LINK_EVT_NUM];
-}
-
-char *waitable_type_name[GPS_DL_WAIT_NUM + 1] = {
-	[GPS_DL_WAIT_OPEN_CLOSE] = "OPEN_OR_CLOSE",
-	[GPS_DL_WAIT_WRITE]      = "WRITE",
-	[GPS_DL_WAIT_READ]       = "READ",
-	[GPS_DL_WAIT_RESET]      = "RESET",
-	[GPS_DL_WAIT_NUM]        = "INVALID",
-};
-
-char *gps_dl_waitable_type_name(enum gps_each_link_waitable_type type)
-{
-	if (type >= 0 && type < GPS_DL_LINK_EVT_NUM)
-		return waitable_type_name[type];
-	else
-		return waitable_type_name[GPS_DL_WAIT_NUM];
-}
-
-const char * const state_name_str_list[LINK_STATE_NUM + 1] = {
-	[LINK_UNINIT]      = "UNINIT",
-	[LINK_CLOSED]      = "CLOSED",
-	[LINK_OPENING]     = "OPENING",
-	[LINK_OPENED]      = "OPENED",
-	[LINK_CLOSING]     = "CLOSING",
-	[LINK_RESETTING]   = "RESETTING",
-	[LINK_RESET_DONE]  = "RESET_DONE",
-	[LINK_DISABLED]    = "DISABLED",
-	/* [LNK_INIT_FAIL]   = "INIT_FAIL", */
-	[LINK_STATE_NUM]   = "INVALID",
-};
-
-const char *gps_dl_link_state_name(enum gps_each_link_state_enum state)
-{
-	if (state >= 0 && state < LINK_STATE_NUM)
-		return state_name_str_list[state];
-	else
-		return state_name_str_list[GPS_DL_WAIT_NUM];
-}
 
 void gps_each_link_set_bool_flag(enum gps_dl_link_id_enum link_id,
 	enum gps_each_link_bool_state name, bool value)
