@@ -62,12 +62,17 @@ obj-m += $(MODULE_NAME).o
 
 SELECT_GPS_DL_DRV := n
 GPS_DL_HAS_MOCK := n
+GPS_DL_HAS_CONNINFRA_DRV := n
+
 ifeq ($(CONFIG_MACH_MT6885),y)
 SELECT_GPS_DL_DRV := y
+ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6885),y)
+GPS_DL_HAS_CONNINFRA_DRV := y
+endif
 endif
 
 ifeq ($(SELECT_GPS_DL_DRV),y) # New GPS driver with L1+L5 support
-ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6885),y)
+ifeq ($(GPS_DL_HAS_CONNINFRA_DRV),y)
 CONNINFRA_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/conninfra
 ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/include
 ccflags-y += -DGPS_DL_HAS_CONNINFRA_DRV=1
