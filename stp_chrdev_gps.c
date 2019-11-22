@@ -122,7 +122,7 @@ static int GPS_major = GPS_DEV_MAJOR;	/* dynamic allocation */
 module_param(GPS_major, uint, 0);
 static struct cdev GPS_cdev;
 
-static struct wakeup_source gps_wake_lock;
+static struct wakeup_source *gps_wake_lock_ptr;
 static unsigned char wake_lock_acquired;   /* default: 0 */
 
 #if (defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) && !defined(CONFIG_MTK_ENG_BUILD))
@@ -207,7 +207,7 @@ static void gps_hold_wake_lock(int hold)
 	if (hold == 1) {
 		if (!wake_lock_acquired) {
 			GPS_DBG_FUNC("acquire gps wake_lock acquired = %d\n", wake_lock_acquired);
-			__pm_stay_awake(&gps_wake_lock);
+			__pm_stay_awake(gps_wake_lock_ptr);
 			wake_lock_acquired = 1;
 		} else {
 			GPS_DBG_FUNC("acquire gps wake_lock acquired = %d (do nothing)\n", wake_lock_acquired);
@@ -215,7 +215,7 @@ static void gps_hold_wake_lock(int hold)
 	} else if (hold == 0) {
 		if (wake_lock_acquired) {
 			GPS_DBG_FUNC("release gps wake_lock acquired = %d\n", wake_lock_acquired);
-			__pm_relax(&gps_wake_lock);
+			__pm_relax(gps_wake_lock_ptr);
 			wake_lock_acquired = 0;
 		} else {
 			GPS_DBG_FUNC("release gps wake_lock acquired = %d (do nothing)\n", wake_lock_acquired);
@@ -1162,7 +1162,11 @@ static int GPS_init(void)
 #endif
 	pr_warn("%s driver(major %d) installed.\n", GPS_DRIVER_NAME, GPS_major);
 
-	wakeup_source_init(&gps_wake_lock, "gpswakelock");
+	gps_wake_lock_ptr = wakeup_source_register("gpswakelock");
+	if (!gps_wake_lock_ptr) {
+		pr_info("%s %d: init wakeup source fail!", __func__, __LINE__);
+		goto error;
+	}
 
 	sema_init(&status_mtx, 1);
 	sema_init(&fwctl_mtx, 1);
@@ -1205,7 +1209,7 @@ static void GPS_exit(void)
 	unregister_chrdev_region(dev, GPS_devs);
 	pr_warn("%s driver removed.\n", GPS_DRIVER_NAME);
 
-	wakeup_source_trash(&gps_wake_lock);
+	wakeup_source_unregister(gps_wake_lock_ptr);
 }
 
 int mtk_wcn_stpgps_drv_init(void)
