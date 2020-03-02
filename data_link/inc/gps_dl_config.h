@@ -39,9 +39,7 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_ON_LINUX       (1)
 #define GPS_DL_ON_CTP         (0)
 
-#define GPS_DL_HAS_LINK_LAYER (1)
 #define GPS_DL_HAS_CTRLD      (1)
-#define GPS_DL_CTRLD_MOCK_LINK_LAYER    (0)
 #define GPS_DL_NO_USE_IRQ     (0)
 #define GPS_DL_USE_THREADED_IRQ (1)
 

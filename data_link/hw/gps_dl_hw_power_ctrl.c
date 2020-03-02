@@ -247,7 +247,8 @@ int gps_dl_hw_gps_common_on(void)
 		 * TODO:
 		 * if (!gps_dl_reset_level_is_none()) break;
 		 */
-		GDL_LOGW("_poll_gps_top_off_active, cnt = %d", i + 1);
+		if (i > 0)
+			GDL_LOGW("_poll_gps_top_off_active, cnt = %d", i + 1);
 	}
 	if (!poll_okay) {
 		GDL_LOGE("_fail_gps_top_off_active_not_okay");

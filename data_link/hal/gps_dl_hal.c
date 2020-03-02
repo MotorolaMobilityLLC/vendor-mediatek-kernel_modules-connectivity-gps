@@ -278,12 +278,11 @@ bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 		}
 
 		gps_dl_hw_get_mcub_info(link_id, &d2a);
+		if (d2a.flag == 0)
+			break;
 
 		GDL_LOGXI(link_id, "d2a: flag = 0x%04x, d0 = 0x%04x, d1 = 0x%04x",
 			d2a.flag, d2a.dat0, d2a.dat1);
-
-		if (d2a.flag == 0)
-			break;
 
 		if (d2a.flag == 0xdeadfeed) {
 			gps_dl_hw_dump_host_csr_gps_info(true);
