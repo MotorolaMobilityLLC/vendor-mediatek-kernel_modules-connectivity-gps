@@ -124,7 +124,7 @@ enum GDL_RET_STATUS gps_dl_reset_level_set_and_trigger(
 				gps_dl_link_event_send(GPS_DL_EVT_LINK_RESET_GPS, link_id);
 		}
 
-		GDL_LOGXE(link_id,
+		GDL_LOGXE_STA(link_id,
 			"state change: %s -> %s, level = %d (%d -> %d), is_sent = %d, to_wait = %d",
 			gps_dl_link_state_name(old_state), gps_dl_link_state_name(new_state),
 			level, old_level, new_level,
@@ -194,7 +194,7 @@ void gps_dl_handle_connsys_reset_done(void)
 		if (to_send_reset_event)
 			gps_dl_link_event_send(GPS_DL_EVT_LINK_POST_CONN_RESET, link_id);
 
-		GDL_LOGXE(link_id, "state check: %s, level = %d, is_sent = %d",
+		GDL_LOGXE_STA(link_id, "state check: %s, level = %d, is_sent = %d",
 			gps_dl_link_state_name(state), level, to_send_reset_event);
 	}
 }

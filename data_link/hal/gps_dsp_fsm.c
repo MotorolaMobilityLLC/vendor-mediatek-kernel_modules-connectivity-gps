@@ -113,6 +113,8 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 			/* GPS_Reroute_Cos_Sleep_Enable(); */
 		}
 #endif
+		if (GPS_DSP_ST_RESET_DONE == last_state)
+			abnormal_flag = false;
 		gps_dsp_state_change_to(GPS_DSP_ST_OFF, link_id);
 		goto _last_check;
 	}
@@ -194,7 +196,8 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 			/* PMTK101 like restart or to be powered off */
 			gps_dsp_state_change_to(GPS_DSP_ST_RESET_DONE, link_id);
 			abnormal_flag = false;
-		}
+		} else
+			abnormal_flag = true;
 #if 0
 		else if (GPS_DSP_EVT_HW_SLEEP_REQ == evt) {
 			GPS_Reroute_Ext_Power_Ctrl_Inner(2);
@@ -207,7 +210,6 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 		} else
 			abnormal_flag = true;
 #endif
-		abnormal_flag = true;
 		break;
 
 	case GPS_DSP_ST_HW_SLEEP_MODE:
@@ -255,14 +257,15 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 	}
 
 _last_check:
-	/* Note: due to in WMT task, g_mcu_real_clock_rate not update here */
-	/* It's updated when next WMT task message is processed */
-	/* GPS_TRC("gps_dsp_fsm: old_st=%d, evt=%d, new_st=%d, ab=%d, clk=%d, screen=%d", */
-	/* last_state, evt, gps_dsp_state_get(), abnormal_flag, */
-	/* g_mcu_real_clock_rate, cos_get_host_screen_on_state()); */
-	GDL_LOGXI(link_id, "gps_dsp_fsm: old_st=%s, evt=%s, new_st=%s, is_err=%d",
-		gps_dl_dsp_state_name(last_state), gps_dl_dsp_event_name(evt),
-		gps_dl_dsp_state_name(gps_dsp_state_get(link_id)), abnormal_flag);
+	if (abnormal_flag) {
+		GDL_LOGXW_STA(link_id, "gps_dsp_fsm: old_st=%s, evt=%s, new_st=%s, is_err=%d",
+			gps_dl_dsp_state_name(last_state), gps_dl_dsp_event_name(evt),
+			gps_dl_dsp_state_name(gps_dsp_state_get(link_id)), abnormal_flag);
+	} else {
+		GDL_LOGXI_STA(link_id, "gps_dsp_fsm: old_st=%s, evt=%s, new_st=%s",
+			gps_dl_dsp_state_name(last_state), gps_dl_dsp_event_name(evt),
+			gps_dl_dsp_state_name(gps_dsp_state_get(link_id)));
+	}
 	return;
 #endif
 }

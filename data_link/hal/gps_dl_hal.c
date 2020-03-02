@@ -73,12 +73,12 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		/* ack the reset status */
 		last_session_msg = true;
 	} else if (sid_on_evt != curr_sid && sid_on_evt != GPS_EACH_LINK_SID_NO_CHECK) {
-		GDL_LOGXW(link_id, "curr_sid = %d, evt = %s, on_sid = %d, not matching",
+		GDL_LOGXW_EVT(link_id, "curr_sid = %d, evt = %s, on_sid = %d, not matching",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
 		last_session_msg = true;
 	} else if (!gps_each_link_is_active(link_id) ||
 		gps_each_link_get_bool_flag(link_id, LINK_TO_BE_CLOSED)) {
-		GDL_LOGXW(link_id, "curr_sid = %d, evt = %s, on_sid = %d, not active",
+		GDL_LOGXW_EVT(link_id, "curr_sid = %d, evt = %s, on_sid = %d, not active",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
 		last_session_msg = true;
 	}
@@ -103,16 +103,17 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	}
 
 	if (sid_on_evt == GPS_EACH_LINK_SID_NO_CHECK) {
-		GDL_LOGXW(link_id, "curr_sid = %d, evt = %s, on_sid = %d, no check",
+		GDL_LOGXW_EVT(link_id, "curr_sid = %d, evt = %s, on_sid = %d, no check",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
 	} else if (sid_on_evt <= 0 || sid_on_evt > GPS_EACH_LINK_SID_MAX) {
-		GDL_LOGXW(link_id, "curr_sid = %d, evt = %s, on_sid = %d, out of range",
+		GDL_LOGXW_EVT(link_id, "curr_sid = %d, evt = %s, on_sid = %d, out of range",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
 	} else {
-		GDL_LOGXD(link_id, "curr_sid = %d, evt = %s, on_sid = %d",
+		GDL_LOGXD_EVT(link_id, "curr_sid = %d, evt = %s, on_sid = %d",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
 	}
 
+	GDL_LOGXD_EVT(link_id, "evt = %s", gps_dl_hal_event_name(evt));
 	switch (evt) {
 	case GPS_DL_HAL_EVT_D2A_RX_HAS_DATA:
 		gdl_ret = gdl_dma_buf_get_free_entry(
@@ -124,7 +125,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		} else {
 
 			/* TODO: has pending rx: GDL_FAIL_NOSPACE_PENDING_RX */
-			GDL_LOGXW(link_id, "rx dma not start due to %s", gdl_ret_to_name(gdl_ret));
+			GDL_LOGXI_DRW(link_id, "rx dma not start due to %s", gdl_ret_to_name(gdl_ret));
 		}
 		break;
 
@@ -250,7 +251,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	}
 
 	j1 = jiffies;
-	GDL_LOGXI(link_id, "evt = %s, on_sid = %d, dj = %u",
+	GDL_LOGXI_EVT(link_id, "evt = %s, on_sid = %d, dj = %u",
 		gps_dl_hal_event_name(evt), sid_on_evt, j1 - j0);
 }
 

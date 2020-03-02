@@ -62,7 +62,7 @@ int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, int dev_index,
 	p_dma_buf->dir = dir;
 	p_dma_buf->len = len;
 
-	GDL_LOGI("p_linux_plat_dev = 0x%p", p_linux_plat_dev);
+	GDL_LOGI_INI("p_linux_plat_dev = 0x%p", p_linux_plat_dev);
 	if (p_linux_plat_dev == NULL) {
 		p_dma_buf->vir_addr = dma_zalloc_coherent(
 			p_dev->dev, len, &p_dma_buf->phy_addr, GFP_DMA | GFP_DMA32);
@@ -71,18 +71,22 @@ int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, int dev_index,
 			p_linux_plat_dev, len, &p_dma_buf->phy_addr, GFP_DMA);/* | GFP_DMA32); */
 	}
 
-	if (sizeof(dma_addr_t) == sizeof(unsigned long long))
-		GDL_LOGI("alloc gps dl dma buf(%d,%d) in arch64, addr: vir=0x%p, phy=0x%llx, len=%u\n",
+	if (sizeof(dma_addr_t) == sizeof(unsigned long long)) {
+		GDL_LOGI_INI(
+			"alloc gps dl dma buf(%d,%d) in arch64, addr: vir=0x%p, phy=0x%llx, len=%u\n",
 			p_dma_buf->dev_index, p_dma_buf->dir,
 			p_dma_buf->vir_addr, p_dma_buf->phy_addr, p_dma_buf->len);
-	else
-		GDL_LOGI("alloc gps dl dma buf(%d,%d) in arch32, addr: vir=0x%p, phy=0x%08x, len=%u\n",
+	} else {
+		GDL_LOGI_INI(
+			"alloc gps dl dma buf(%d,%d) in arch32, addr: vir=0x%p, phy=0x%08x, len=%u\n",
 			p_dma_buf->dev_index, p_dma_buf->dir,
 			p_dma_buf->vir_addr, p_dma_buf->phy_addr, p_dma_buf->len);
+	}
 
 
 	if (NULL == p_dma_buf->vir_addr) {
-		GDL_LOGXE(dev_index, "alloc gps dl dma buf(%d,%d)(len = %u) fail\n", dev_index, dir, len);
+		GDL_LOGXE_INI(dev_index,
+			"alloc gps dl dma buf(%d,%d)(len = %u) fail\n", dev_index, dir, len);
 		/* force move forward even fail */
 		/* return -ENOMEM; */
 	}
@@ -227,24 +231,6 @@ void gps_dl_device_context_deinit(void)
 	gps_dl_reserved_mem_deinit();
 }
 
-#if GPS_DL_CTRLD_MOCK_LINK_LAYER
-void gps_dl_rx_event_cb(int data_link_num)
-{
-	struct gps_each_device *device;
-
-	if (data_link_num >= GPS_DATA_LINK_NUM)
-		return;
-	device = gps_dl_device_get(data_link_num);
-
-	if (device != NULL) {
-		GDL_LOGI("wake up read thread\n ");
-		wake_up(&(device->r_wq));
-		device->i_len = 1;
-	} else
-		GDL_LOGI("device NULL\n ");
-}
-#endif
-
 int gps_dl_irq_init(void)
 {
 #if 0
@@ -277,11 +263,11 @@ static int gps_dl_devices_init(void)
 	gps_dl_devno_major = MAJOR(devno);
 
 	if (result < 0) {
-		GDL_LOGE("fail to get major %d\n", gps_dl_devno_major);
+		GDL_LOGE_INI("fail to get major %d\n", gps_dl_devno_major);
 		return result;
 	}
 
-	GDL_LOGE("success to get major %d\n", gps_dl_devno_major);
+	GDL_LOGW_INI("success to get major %d\n", gps_dl_devno_major);
 
 	for (i = 0; i < GPS_DATA_LINK_NUM; i++) {
 		devno = MKDEV(gps_dl_devno_major, gps_dl_devno_minor + i);
@@ -329,15 +315,15 @@ void gps_dl_device_context_init(void)
 
 void mtk_gps_data_link_devices_exit(void)
 {
-	GDL_LOGI("mtk_gps_data_link_devices_exit");
+	GDL_LOGI_INI("mtk_gps_data_link_devices_exit");
 	gps_dl_devices_exit();
 }
 
 int mtk_gps_data_link_devices_init(void)
 {
-	GDL_LOGI("mtk_gps_data_link_devices_init");
+	GDL_LOGI_INI("mtk_gps_data_link_devices_init");
 	gps_dl_devices_init();
-	GDL_ASSERT(false, 0, "test assert");
+	/* GDL_ASSERT(false, 0, "test assert"); */
 	return 0;
 }
 

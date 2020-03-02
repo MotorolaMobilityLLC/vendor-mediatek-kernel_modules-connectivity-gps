@@ -80,10 +80,10 @@ void gps_dl_update_status_for_md_blanking(bool gps_is_on)
 		val_old = __raw_readl(p);
 		mt_reg_sync_writel(val, p);
 		val_new = __raw_readl(p);
-		GDL_LOGI("dummy cr updated: %d -> %d, due to on = %d",
+		GDL_LOGI_INI("dummy cr updated: %d -> %d, due to on = %d",
 			val_old, val_new, gps_is_on);
 	} else
-		GDL_LOGW("dummy cr addr is invalid, can not update (on = %d)", gps_is_on);
+		GDL_LOGW_INI("dummy cr addr is invalid, can not update (on = %d)", gps_is_on);
 }
 
 void gps_dl_tia_gps_ctrl(bool gps_is_on)
@@ -93,7 +93,7 @@ void gps_dl_tia_gps_ctrl(bool gps_is_on)
 	unsigned int tia_gps_on1, tia_gps_ctrl1, tia_temp1;
 
 	if (p == NULL) {
-		GDL_LOGE("on = %d, tia_gps addr is null", gps_is_on);
+		GDL_LOGW_INI("on = %d, tia_gps addr is null", gps_is_on);
 		return;
 	}
 
@@ -120,7 +120,8 @@ void gps_dl_tia_gps_ctrl(bool gps_is_on)
 	tia_gps_ctrl1 = __raw_readl(p + 4);
 	tia_temp1 = __raw_readl(p + 8);
 
-	GDL_LOGI("on = %d, tia_gps_on = 0x%08x/0x%08x, ctrl = 0x%08x/0x%08x, temp = 0x%08x/0x%08x",
+	GDL_LOGI_INI(
+		"on = %d, tia_gps_on = 0x%08x/0x%08x, ctrl = 0x%08x/0x%08x, temp = 0x%08x/0x%08x",
 		gps_is_on, tia_gps_on, tia_gps_on1,
 		tia_gps_ctrl, tia_gps_ctrl1,
 		tia_temp, tia_temp1);
@@ -154,12 +155,12 @@ void gps_dl_pinctrl_show_info(void)
 	const char *p_name;
 	struct pinctrl_state *p_state;
 
-	GDL_LOGD("pinctrl_ptr = 0x%p", g_gps_dl_pinctrl_ptr);
+	GDL_LOGD_INI("pinctrl_ptr = 0x%p", g_gps_dl_pinctrl_ptr);
 
 	for (state_id = 0; state_id < GPS_DL_PINCTRL_STATE_CNT; state_id++) {
 		p_name = gps_dl_pinctrl_state_name_list[state_id];
 		p_state = g_gps_dl_pinctrl_state_struct_list[state_id];
-		GDL_LOGD("state id = %d, ptr = 0x%p, name = %s",
+		GDL_LOGD_INI("state id = %d, ptr = 0x%p, name = %s",
 			state_id, p_state, p_name);
 	}
 }
@@ -171,7 +172,7 @@ void gps_dl_pinctrl_context_init(void)
 	struct pinctrl_state *p_state;
 
 	if (IS_ERR(g_gps_dl_pinctrl_ptr)) {
-		GDL_LOGE("pinctrl is error");
+		GDL_LOGE_INI("pinctrl is error");
 		return;
 	}
 
@@ -180,13 +181,13 @@ void gps_dl_pinctrl_context_init(void)
 		p_state = pinctrl_lookup_state(g_gps_dl_pinctrl_ptr, p_name);
 
 		if (IS_ERR(p_state)) {
-			GDL_LOGE("lookup fail: state id = %d, name = %s", state_id, p_name);
+			GDL_LOGE_INI("lookup fail: state id = %d, name = %s", state_id, p_name);
 			g_gps_dl_pinctrl_state_struct_list[state_id] = NULL;
 			continue;
 		}
 
 		g_gps_dl_pinctrl_state_struct_list[state_id] = p_state;
-		GDL_LOGE("lookup okay: state id = %d, name = %s", state_id, p_name);
+		GDL_LOGW_INI("lookup okay: state id = %d, name = %s", state_id, p_name);
 	}
 }
 
@@ -246,7 +247,7 @@ bool gps_dl_get_iomem_by_name(struct platform_device *pdev, const char *p_name,
 		okay = false;
 	}
 
-	GDL_LOGE("phy_addr = 0x%08x, vir_addr = 0x%p, ok = %d, size = 0x%x, name = %s",
+	GDL_LOGW_INI("phy_addr = 0x%08x, vir_addr = 0x%p, ok = %d, size = 0x%x, name = %s",
 		p_entry->host_phys_addr, p_entry->host_virt_addr, okay, p_entry->length, p_name);
 
 	return okay;
@@ -272,24 +273,24 @@ static int gps_dl_probe(struct platform_device *pdev)
 	for (i = 0; i < GPS_DL_IRQ_NUM; i++) {
 		irq = platform_get_resource(pdev, IORESOURCE_IRQ, i);
 		if (irq == NULL) {
-			GDL_LOGE("irq idx = %d, ptr = NULL!", i);
+			GDL_LOGE_INI("irq idx = %d, ptr = NULL!", i);
 			continue;
 		}
 
-		GDL_LOGE("irq idx = %d, start = %lld, end = %lld, name = %s, flag = 0x%x",
+		GDL_LOGW_INI("irq idx = %d, start = %lld, end = %lld, name = %s, flag = 0x%x",
 			i, irq->start, irq->end, irq->name, irq->flags);
 		gps_dl_irq_set_id(i, irq->start);
 	}
 
 	g_gps_dl_pinctrl_ptr = devm_pinctrl_get(&pdev->dev);
 	if (IS_ERR(g_gps_dl_pinctrl_ptr))
-		GDL_LOGE("devm_pinctrl_get fail");
+		GDL_LOGE_INI("devm_pinctrl_get fail");
 	else {
 		gps_dl_pinctrl_context_init();
 		gps_dl_pinctrl_show_info();
 	}
 
-	GDL_LOGE("do gps_dl_probe\n");
+	GDL_LOGW_INI("do gps_dl_probe");
 	platform_set_drvdata(pdev, p_each_dev0);
 	p_each_dev0->private_data = (struct device *)&pdev->dev;
 	p_each_dev1->private_data = (struct device *)&pdev->dev;
@@ -303,7 +304,7 @@ static int gps_dl_remove(struct platform_device *pdev)
 {
 	struct gps_each_device *p_each_dev = gps_dl_device_get(0);
 
-	GDL_LOGE("do gps dl remove\n");
+	GDL_LOGW_INI("do gps_dl_remove");
 	platform_set_drvdata(pdev, NULL);
 	p_each_dev->private_data = NULL;
 	return 0;
@@ -374,13 +375,13 @@ struct platform_driver gps_dl_dev_drv = {
 	.resume = gps_dl_plat_resume,
 /* #endif */
 	.driver = {
-			.name = "gps", /* mediatek,gps */
-			.owner = THIS_MODULE,
+		.name = "gps", /* mediatek,gps */
+		.owner = THIS_MODULE,
 /* #ifdef CONFIG_PM */
-			.pm = &mtk_btif_drv_pm_ops,
+		.pm = &mtk_btif_drv_pm_ops,
 /* #endif */
 /* #ifdef CONFIG_OF */
-			.of_match_table = gps_dl_of_ids,
+		.of_match_table = gps_dl_of_ids,
 /* #endif */
 	}
 };
@@ -393,10 +394,7 @@ static ssize_t driver_flag_read(struct device_driver *drv, char *buf)
 static ssize_t driver_flag_set(struct device_driver *drv,
 				   const char *buffer, size_t count)
 {
-
-
-	GDL_LOGE("buffer = %s, count = %zd\n", buffer, count);
-
+	GDL_LOGW_INI("buffer = %s, count = %zd", buffer, count);
 	return count;
 }
 
@@ -406,10 +404,6 @@ static ssize_t driver_flag_set(struct device_driver *drv,
 static DRIVER_ATTR(flag, 0644, driver_flag_read, driver_flag_set);
 
 
-
-
-
-
 int gps_dl_linux_plat_drv_register(void)
 {
 	int result;
@@ -417,11 +411,11 @@ int gps_dl_linux_plat_drv_register(void)
 
 	result = platform_driver_register(&gps_dl_dev_drv);
 	/* if (result) */
-	GDL_LOGE("platform_driver_register, ret(%d)\n", result);
+	GDL_LOGW_INI("platform_driver_register, ret(%d)\n", result);
 
 	result = driver_create_file(&gps_dl_dev_drv.driver, &driver_attr_flag);
 	/* if (result) */
-	GDL_LOGE("driver_create_file, ret(%d)\n", result);
+	GDL_LOGW_INI("driver_create_file, ret(%d)\n", result);
 
 	return 0;
 }
@@ -438,19 +432,19 @@ int gps_dl_linux_plat_drv_unregister(void)
 static struct wakeup_source g_gps_dl_wake_lock;
 void gps_dl_wake_lock_init(void)
 {
-	GDL_LOGD("");
+	GDL_LOGD_INI("");
 	wakeup_source_init(&g_gps_dl_wake_lock, "gpsdl_wakelock");
 }
 
 void gps_dl_wake_lock_deinit(void)
 {
-	GDL_LOGD("");
+	GDL_LOGD_INI("");
 	wakeup_source_trash(&g_gps_dl_wake_lock);
 }
 
 void gps_dl_wake_lock_hold(bool hold)
 {
-	GDL_LOGD("hold = %d", hold);
+	GDL_LOGD_ONF("hold = %d", hold);
 	if (hold)
 		__pm_stay_awake(&g_gps_dl_wake_lock);
 	else
