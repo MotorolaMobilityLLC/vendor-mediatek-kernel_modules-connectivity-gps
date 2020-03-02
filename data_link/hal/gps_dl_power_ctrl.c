@@ -208,6 +208,8 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 #endif
 				gps_dl_hw_gps_common_off();
 				g_gps_common_on = false;
+				g_gps_dsp_off_ret_array[GPS_DATA_LINK_ID0] = 0;
+				g_gps_dsp_off_ret_array[GPS_DATA_LINK_ID1] = 0;
 			}
 		}
 

@@ -70,62 +70,107 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id)
 void gps_dl_hw_dump_host_csr_gps_info(bool force_show_log)
 {
 	int i;
-	unsigned int value;
 	bool show_log = true;
 
 	if (force_show_log)
 		show_log = gps_dl_set_show_reg_rw_log(true);
 
-	value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL);
-	value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG);
+#if 0
+	GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL);
+	GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG);
+#else
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_ADDR,
+		BMASK_RW_FORCE_PRINT);
+#endif
+
 	for (i = 0xA2; i <= 0xB7; i++) {
+#if 0
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL, i);
-		value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG);
+		GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG);
+#else
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_ADDR, i,
+			BMASK_RW_FORCE_PRINT);
+		gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_ADDR,
+			BMASK_RW_FORCE_PRINT);
+#endif
 	}
 
 	if (force_show_log)
 		gps_dl_set_show_reg_rw_log(show_log);
 }
 
-void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log)
+void gps_dl_bus_check_and_print(unsigned int host_addr)
+{
+	/* not do rw check because here is the checking */
+	GDL_LOGI("for addr = 0x%08x", host_addr);
+	gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_ADDR, 0x000D0001,
+		BMASK_RW_FORCE_PRINT);
+
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_ADDR,
+		BMASK_RW_FORCE_PRINT);
+
+	gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_ADDR, 0x000B0001,
+		BMASK_RW_FORCE_PRINT);
+
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_ADDR,
+		BMASK_RW_FORCE_PRINT);
+
+	gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_ADDR, 0x000A0001,
+		BMASK_RW_FORCE_PRINT);
+
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_ADDR,
+		BMASK_RW_FORCE_PRINT);
+}
+
+void gps_dl_hw_dump_host_csr_conninfra_info_inner(unsigned int selection, int n)
 {
 	int i;
-	unsigned int value;
-	unsigned int selection;
+
+	for (i = 0; i < n; i++) {
+#if 0
+		GDL_HW_SET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_CONN_INFRA_DEBUG_CTRL_AO_DEBUGSYS_CTRL,
+			selection);
+		GDL_HW_GET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT);
+#else
+		/* Due to RW_DO_CHECK might be enabled, not use
+		 * GDL_HW_SET_CONN_INFRA_ENTRY and GDL_HW_GET_CONN_INFRA_ENTRY to avoid redundant print.
+		 */
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_ADDR, selection,
+			BMASK_RW_FORCE_PRINT);
+
+		gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_ADDR,
+			BMASK_RW_FORCE_PRINT);
+#endif
+		selection -= 0x10000;
+	}
+}
+
+void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log)
+{
 	bool show_log = true;
 
 	if (force_show_log)
 		show_log = gps_dl_set_show_reg_rw_log(true);
 
-	selection = 0x000F0001;
-	for (i = 0; i < 15; i++) {
-		GDL_HW_SET_CONN_INFRA_ENTRY(
-			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_CONN_INFRA_DEBUG_CTRL_AO_DEBUGSYS_CTRL,
-			selection);
-		value = GDL_HW_GET_CONN_INFRA_ENTRY(
-			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT);
-		selection -= 0x10000;
-	}
-
-	selection = 0x00030002;
-	for (i = 0; i < 3; i++) {
-		GDL_HW_SET_CONN_INFRA_ENTRY(
-			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_CONN_INFRA_DEBUG_CTRL_AO_DEBUGSYS_CTRL,
-			selection);
-		value = GDL_HW_GET_CONN_INFRA_ENTRY(
-			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT);
-		selection -= 0x10000;
-	}
-
-	selection = 0x00040003;
-	for (i = 0; i < 4; i++) {
-		GDL_HW_SET_CONN_INFRA_ENTRY(
-			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_CONN_INFRA_DEBUG_CTRL_AO_DEBUGSYS_CTRL,
-			selection);
-		value = GDL_HW_GET_CONN_INFRA_ENTRY(
-			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT);
-		selection -= 0x10000;
-	}
+	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x000F0001, 15);
+	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x00030002, 3);
+	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x00040002, 4);
 
 	if (force_show_log)
 		gps_dl_set_show_reg_rw_log(show_log);
