@@ -266,8 +266,13 @@ int gps_dl_hw_gps_common_on(void)
 		goto _fail_bgf_ip_cfg_not_okay;
 	}
 
+#if (GPS_DL_HAS_CONNINFRA_DRV)
+	/* conninfra driver add an API to do bellow step */
+	conninfra_config_setup();
+#else
 	/* Enable conninfra bus hung detection */
 	GDL_HW_WR_CONN_INFRA_REG(0x1800F000, 0xF000001C);
+#endif
 
 	/* host csr gps bus debug mode enable 0x18c60000 = 0x10 */
 	GDL_HW_WR_GPS_REG(0x80060000, 0x10);
