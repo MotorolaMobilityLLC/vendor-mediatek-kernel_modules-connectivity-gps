@@ -31,7 +31,6 @@ bool g_gps_common_on;
 bool g_gps_dsp_on_array[GPS_DATA_LINK_NUM];
 int g_gps_dsp_off_ret_array[GPS_DATA_LINK_NUM];
 bool g_gps_conninfa_on;
-bool g_gps_pta_on;
 bool g_gps_pta_init_done;
 bool g_gps_tia_on;
 bool g_gps_dma_irq_en;
@@ -53,7 +52,7 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 		if (!g_gps_common_on) {
 			if (gps_dl_hw_gps_common_on() != 0)
 				return -1;
-
+			gps_dl_hal_md_blanking_init_pta();
 			g_gps_common_on = true;
 		}
 
@@ -123,6 +122,7 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			}
 
 			if (g_gps_common_on) {
+				gps_dl_hal_md_blanking_deinit_pta();
 				gps_dl_hw_gps_common_off();
 				g_gps_common_on = false;
 			}
@@ -139,8 +139,8 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 	int ret;
 
 	GDL_LOGXD(link_id,
-		"op = %d, conn_user = 0x%x, infra_on = %d, pta_on = %d, tia_on = %d, dma_irq_en = %d",
-		op, g_conn_user, g_gps_conninfa_on, g_gps_pta_on, g_gps_tia_on, g_gps_dma_irq_en);
+		"op = %d, conn_user = 0x%x, infra_on = %d, tia_on = %d, dma_irq_en = %d",
+		op, g_conn_user, g_gps_conninfa_on, g_gps_tia_on, g_gps_dma_irq_en);
 
 	if (1 == op) {
 		if (g_conn_user == 0) {
@@ -161,10 +161,6 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			gps_dl_tia_gps_ctrl(true);
 			g_gps_tia_on = true;
 #endif
-#if 0
-			gps_dl_hal_md_blanking_init_pta();
-			g_gps_pta_on = true;
-#endif
 			gps_dl_irq_unmask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
 			g_gps_dma_irq_en = true;
 		}
@@ -178,12 +174,6 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 				gps_dl_irq_mask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
 				g_gps_dma_irq_en = false;
 			}
-#if 0
-			if (g_gps_pta_on) {
-				gps_dl_hal_md_blanking_deinit_pta();
-				g_gps_pta_on = false;
-			}
-#endif
 #if GPS_DL_HAS_PLAT_DRV
 			if (g_gps_tia_on) {
 				gps_dl_tia_gps_ctrl(false);
