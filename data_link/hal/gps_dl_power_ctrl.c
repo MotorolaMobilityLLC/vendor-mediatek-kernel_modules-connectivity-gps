@@ -13,6 +13,7 @@
 #include "gps_dl_config.h"
 #include "gps_dl_context.h"
 
+#include "gps_dl_hal.h"
 #include "gps_dl_hw_api.h"
 #include "gps_dl_hal.h"
 #if GPS_DL_MOCK_HAL
@@ -31,6 +32,7 @@ bool g_gps_dsp_on_array[GPS_DATA_LINK_NUM];
 int g_gps_dsp_off_ret_array[GPS_DATA_LINK_NUM];
 bool g_gps_conninfa_on;
 bool g_gps_pta_on;
+bool g_gps_pta_init_done;
 bool g_gps_tia_on;
 bool g_gps_dma_irq_en;
 
@@ -154,13 +156,14 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			gps_dl_emi_remap_calc_and_set();
 
 #if GPS_DL_HAS_PLAT_DRV
-			/* pta init */
-			gps_dl_update_status_for_md_blanking(true);
-			g_gps_pta_on = true;
-
 			gps_dl_wake_lock_hold(true);
+
 			gps_dl_tia_gps_ctrl(true);
 			g_gps_tia_on = true;
+#endif
+#if 0
+			gps_dl_hal_md_blanking_init_pta();
+			g_gps_pta_on = true;
 #endif
 			gps_dl_irq_unmask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
 			g_gps_dma_irq_en = true;
@@ -175,22 +178,18 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 				gps_dl_irq_mask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
 				g_gps_dma_irq_en = false;
 			}
-
+#if 0
+			if (g_gps_pta_on) {
+				gps_dl_hal_md_blanking_deinit_pta();
+				g_gps_pta_on = false;
+			}
+#endif
 #if GPS_DL_HAS_PLAT_DRV
-			gps_dl_update_status_for_md_blanking(false);
-			gps_dl_tia_gps_ctrl(false);
 			if (g_gps_tia_on) {
 				gps_dl_tia_gps_ctrl(false);
 				g_gps_tia_on = false;
 			}
 
-			if (g_gps_pta_on) {
-				gps_dl_update_status_for_md_blanking(false);
-				/* pta deinit */
-				g_gps_pta_on = false;
-			}
-			gps_dl_update_status_for_md_blanking(false);
-			gps_dl_tia_gps_ctrl(false);
 			gps_dl_wake_lock_hold(false);
 #endif
 			gps_dl_hal_conn_infra_driver_off();
@@ -198,6 +197,98 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 	}
 
 	return 0;
+}
+
+bool gps_dl_hal_md_blanking_init_pta(void)
+{
+	bool okay, done;
+
+	if (g_gps_pta_init_done) {
+		GDL_LOGW("already init done, do nothing return");
+		return false;
+	}
+
+	if (!gps_dl_hw_is_pta_clk_cfg_ready()) {
+		GDL_LOGE("gps_dl_hw_is_pta_clk_cfg_ready fail");
+		return false;
+	}
+
+	okay = gps_dl_hw_take_conn_hw_sema(100);
+	if (!okay) {
+		GDL_LOGE("gps_dl_hw_take_conn_hw_sema fail");
+		return false;
+	}
+
+	/* do pta uart init firstly */
+	done = gps_dl_hw_is_pta_uart_init_done();
+	if (!done) {
+		okay = gps_dl_hw_init_pta_uart();
+		if (!okay) {
+			gps_dl_hw_give_conn_hw_sema();
+			GDL_LOGE("gps_dl_hw_init_pta_uart fail");
+			return false;
+		}
+	} else
+		GDL_LOGW("pta uart already init done");
+
+	/* do pta init secondly */
+	done = gps_dl_hw_is_pta_init_done();
+	if (!done)
+		gps_dl_hw_init_pta();
+	else
+		GDL_LOGW("pta already init done");
+
+	gps_dl_hw_claim_pta_used_by_gps();
+
+	gps_dl_hw_set_pta_blanking_parameter();
+
+	gps_dl_hw_give_conn_hw_sema();
+
+	/* okay, update flags */
+#if GPS_DL_HAS_PLAT_DRV
+	gps_dl_update_status_for_md_blanking(true);
+#endif
+	g_gps_pta_init_done = true;
+
+	return true; /* okay */
+}
+
+void gps_dl_hal_md_blanking_deinit_pta(void)
+{
+	bool okay;
+
+	/* clear the flags anyway */
+#if GPS_DL_HAS_PLAT_DRV
+	gps_dl_update_status_for_md_blanking(false);
+#endif
+	if (!g_gps_pta_init_done) {
+		GDL_LOGW("already deinit done, do nothing return");
+		return;
+	}
+	g_gps_pta_init_done = false;
+
+	/* Currently, deinit is no need.
+	 * Just keep the bellow code for future usage.
+	 */
+	okay = gps_dl_hw_take_conn_hw_sema(0); /* 0 stands for polling just one time */
+	if (!okay) {
+		GDL_LOGE("gps_dl_hw_take_conn_hw_sema fail");
+		return;
+	}
+
+	gps_dl_hw_disclaim_pta_used_by_gps();
+
+	if (gps_dl_hw_is_pta_init_done())
+		gps_dl_hw_deinit_pta();
+	else
+		GDL_LOGW("pta already deinit done");
+
+	if (gps_dl_hw_is_pta_uart_init_done())
+		gps_dl_hw_deinit_pta_uart();
+	else
+		GDL_LOGW("pta uart already deinit done");
+
+	gps_dl_hw_give_conn_hw_sema();
 }
 
 void gps_dl_hal_conn_infra_driver_off(void)
