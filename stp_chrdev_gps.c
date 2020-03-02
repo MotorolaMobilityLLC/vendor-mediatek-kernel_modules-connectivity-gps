@@ -68,7 +68,8 @@ MODULE_LICENSE("GPL");
 #define COMBO_IOC_GET_GPS_LNA_PIN    16
 #define COMBO_IOC_GPS_FWCTL          17
 
-#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761) || defined(CONFIG_MACH_MT6779)
+#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761) || defined(CONFIG_MACH_MT6779) \
+|| defined(CONFIG_MACH_MT6768)
 #define GPS_FWCTL_SUPPORT
 #endif
 
