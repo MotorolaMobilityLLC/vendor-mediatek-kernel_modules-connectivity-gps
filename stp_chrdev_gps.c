@@ -609,7 +609,10 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		} else if (rstflag == 2) {
 			/* chip reset end */
 			retval = -889;
-			rstflag = 0;
+			/*
+			 * rstflag = 0 is cleared by GPS_open or GPS_close,
+			 * no need to clear it here
+			 */
 		} else {
 			/* normal */
 			retval = 0;
