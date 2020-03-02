@@ -106,15 +106,14 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	switch (evt) {
 	case GPS_DL_HAL_EVT_D2A_RX_HAS_DATA:
 		gdl_ret = gdl_dma_buf_get_free_entry(
-			&p_link->rx_dma_buf, &dma_buf_entry);
+			&p_link->rx_dma_buf, &dma_buf_entry, true);
 
 		if (gdl_ret == GDL_OKAY)
 			gps_dl_hal_d2a_rx_dma_start(link_id, &dma_buf_entry);
 		else {
-			GDL_LOGXW(link_id, "rx dma not start due to %s", gdl_ret_to_name(gdl_ret));
 
-			/* TODO: has pending rx */
-			p_link->rx_dma_buf.has_pending_rx = true;
+			/* TODO: has pending rx: GDL_FAIL_NOSPACE_PENDING_RX */
+			GDL_LOGXW(link_id, "rx dma not start due to %s", gdl_ret_to_name(gdl_ret));
 		}
 		break;
 
