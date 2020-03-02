@@ -110,6 +110,8 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 			goto _last_check;
 		}
 
+		/* TODO: unmask it when timer ready */
+#if 0
 		switch (last_state) {
 		case GPS_DSP_ST_TURNED_ON:
 			/* GPS_DSP_EVT_RESET_DONE timeout (180ms) */
@@ -137,6 +139,7 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 			abnormal_flag = true;
 		}
 		goto _last_check;
+#endif
 	}
 
 	switch (last_state) {
@@ -150,8 +153,7 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 #endif
 			gps_dsp_state_change_to(GPS_DSP_ST_TURNED_ON, link_id);
 			abnormal_flag = false;
-		} else
-			abnormal_flag = true;
+		}
 		break;
 
 	case GPS_DSP_ST_TURNED_ON:

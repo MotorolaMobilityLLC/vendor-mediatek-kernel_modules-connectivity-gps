@@ -276,6 +276,9 @@ enum GDL_RET_STATUS gdl_dma_buf_get_free_entry(struct gps_dl_dma_buf *p_dma,
 		p_entry->phy_addr = p_dma->phy_addr;
 		p_entry->vir_addr = p_dma->vir_addr;
 		p_entry->is_valid = true;
+
+		/* This field not used for free entry, just make static analysis tool happy. */
+		p_entry->is_nodata = false;
 		return GDL_OKAY;
 	}
 
@@ -292,11 +295,6 @@ enum GDL_RET_STATUS gdl_dma_buf_set_free_entry(struct gps_dl_dma_buf *p_dma,
 
 	if (!p_dma->writer_working)
 		return GDL_FAIL_STATE_MISMATCH;
-
-	if (NULL == p_entry) {
-		p_dma->writer_working = false;
-		return GDL_OKAY;
-	}
 
 	p_dma->write_index = p_entry->write_index;
 	p_dma->writer_working = false;
