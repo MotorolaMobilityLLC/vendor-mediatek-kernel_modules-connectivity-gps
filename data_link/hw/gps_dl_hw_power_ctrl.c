@@ -17,6 +17,9 @@
 #if GPS_DL_MOCK_HAL
 #include "gps_mock_hal.h"
 #endif
+#if GPS_DL_HAS_CONNINFRA_DRV
+#include "conninfra.h"
+#endif
 
 #include "gps_dl_hw_api.h"
 #include "gps_dl_hw_priv_util.h"
@@ -72,7 +75,24 @@ static void gps_dl_hw_gps_sleep_prot_ctrl(int op)
 
 void gps_dl_hw_gps_common_on(void)
 {
-	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFYS_ON_TOP_PWR_CTL_BGFSYS_ON_TOP_PWR_ON, 1);
+	/* Conninfra driver will do it
+	 * GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFYS_ON_TOP_PWR_CTL_BGFSYS_ON_TOP_PWR_ON, 1);
+	 */
+
+	/* GPS SW force wakeup conninfra top off */
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
+
+	/* Wait until sleep prot disabled, 10 times per 1ms */
+	GDL_HW_POLL_CONN_INFRA_ENTRY(
+		CONN_HOST_CSR_TOP_CONN_SLP_PROT_CTRL_CONN_INFRA_ON2OFF_SLP_PROT_ACK, 0, POLL_DEFAULT);
+
+	/* Poll conninfra hw version */
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_CONN_HW_VER_RO_CONN_HW_VERSION, 0x20010000, POLL_DEFAULT);
+
+	/* GPS SW EMI request */
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 1);
+
+	/* Enable GPS function */
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, 1);
 
 	/* bit24: BGFSYS_ON_TOP primary power ack */
@@ -99,11 +119,30 @@ void gps_dl_hw_gps_common_on(void)
 
 	/* 0x18c21014[7:0] bgf ip cfg */
 	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_CONFIG_BGFSYS_CONFIG, 0, POLL_DEFAULT);
+
+	/* Power on A-die top clock */
+#if (GPS_DL_HAS_CONNINFRA_DRV)
+	/* conninfra_adie_top_ck_en_on(CONNSYS_ADIE_CTL_HOST_GPS); */
+#endif
+
+	/* Enable PLL driver */
+	GDL_HW_SET_GPS_ENTRY(GPS_CFG_ON_GPS_CLKGEN1_CTL_CR_GPS_DIGCK_DIV_EN, 1);
+
 }
 
 void gps_dl_hw_gps_common_off(void)
 {
+	/* Power off A-die top clock */
+#if (GPS_DL_HAS_CONNINFRA_DRV)
+	/* conninfra_adie_top_ck_en_off(CONNSYS_ADIE_CTL_HOST_GPS); */
+#endif
+
 	gps_dl_hw_gps_sleep_prot_ctrl(0);
+
+	/* GPS SW EMI request */
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
+
+	/* Disable GPS function */
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, 0);
 }
 
