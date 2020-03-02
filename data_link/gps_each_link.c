@@ -890,7 +890,7 @@ int gps_each_link_write_with_opt(enum gps_dl_link_id_enum link_id,
 		return -1;
 
 	if (gps_each_link_get_state(link_id) != LINK_OPENED) {
-		GDL_LOGXW(link_id, "not opened, drop the write data len = %d", link_id);
+		GDL_LOGXW(link_id, "not opened, drop the write data len = %d", len);
 		return -EBUSY;
 	}
 
@@ -1493,6 +1493,7 @@ bool gps_dl_link_start_tx_dma_if_has_data(enum gps_dl_link_id_enum link_id)
 		 * TODO: handle timeout case
 		 */
 		gps_dl_hw_poll_usrt_dsp_rx_empty(link_id);
+		gps_dl_hal_a2d_tx_dma_claim_emi_usage(link_id, true);
 		gps_dl_hal_a2d_tx_dma_start(link_id, &dma_buf_entry);
 		tx_dma_started = true;
 	} else {
