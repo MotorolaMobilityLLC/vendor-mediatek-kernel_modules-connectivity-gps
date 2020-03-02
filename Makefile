@@ -44,12 +44,12 @@ else
 endif
 ccflags-y += -D MTK_WCN_WMT_STP_EXP_SYMBOL_ABSTRACT
 
-ccflags-y += -I$(KERNEL_DIR)/drivers/misc/mediatek/include
-ccflags-y += -I$(KERNEL_DIR)/drivers/misc/mediatek/include/mt-plat
-ccflags-y += -I$(KERNEL_DIR)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include
-ccflags-y += -I$(KERNEL_DIR)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include/mach
-ccflags-y += -I$(KERNEL_DIR)/drivers/misc/mediatek/emi/submodule
-ccflags-y += -I$(KERNEL_DIR)/drivers/misc/mediatek/emi/$(MTK_PLATFORM)
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/include
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include/mach
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/emi/submodule
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/emi/$(MTK_PLATFORM)
 ###############################################################################
 
 MODULE_NAME := gps_drv
@@ -78,7 +78,6 @@ ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/linux/include
 ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/core/include
 ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/platform/include
 
-$(warning hao test $(CONFIG_MTK_CONN_MT3337_CHIP_SUPPORT))
 
 ifeq ($(CONFIG_MTK_CONN_MT3337_CHIP_SUPPORT),y)
         $(MODULE_NAME)-objs += gps_mt3337.o
