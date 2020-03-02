@@ -111,6 +111,7 @@ $(MODULE_NAME)-objs += data_link/hal/gps_dl_isr.o
 $(MODULE_NAME)-objs += data_link/hal/gps_dl_dma.o
 $(MODULE_NAME)-objs += data_link/hal/gps_dl_mcub.o
 $(MODULE_NAME)-objs += data_link/hal/gps_dl_zbus.o
+$(MODULE_NAME)-objs += data_link/hal/gps_dl_conn_infra.o
 
 $(MODULE_NAME)-objs += data_link/link/gps_dl_subsys_reset.o
 $(MODULE_NAME)-objs += data_link/gps_each_link.o
@@ -119,6 +120,7 @@ $(MODULE_NAME)-objs += data_link/linux/gps_data_link_devices.o
 $(MODULE_NAME)-objs += data_link/linux/gps_each_device.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_linux.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_linux_plat_drv.o
+$(MODULE_NAME)-objs += data_link/linux/gps_dl_linux_reserved_mem.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_ctrld.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_procfs.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_osal.o

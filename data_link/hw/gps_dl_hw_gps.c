@@ -51,8 +51,8 @@ void gps_dl_hw_set_dma_start(enum gps_dl_hal_dma_ch_index channel,
 	unsigned int bus_addr_of_buf_start;
 	unsigned int gdl_ret;
 
-	gdl_ret = gps_dl_remap_emi_phy_addr(p_transfer->transfer_start_addr, &bus_addr_of_data_start);
-	gdl_ret = gps_dl_remap_emi_phy_addr(p_transfer->buf_start_addr, &bus_addr_of_buf_start);
+	gdl_ret = gps_dl_emi_remap_phy_to_bus_addr(p_transfer->transfer_start_addr, &bus_addr_of_data_start);
+	gdl_ret = gps_dl_emi_remap_phy_to_bus_addr(p_transfer->buf_start_addr, &bus_addr_of_buf_start);
 
 	switch (channel) {
 	case GPS_DL_DMA_LINK0_A2D:
