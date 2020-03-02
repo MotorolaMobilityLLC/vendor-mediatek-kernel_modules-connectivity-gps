@@ -48,6 +48,14 @@ char *osal_strsep(char **str, const char *c)
 	return strsep(str, c);
 }
 
+int osal_strtol(const char *str, unsigned int adecimal, long *res)
+{
+	if (sizeof(long) == 4)
+		return kstrtou32(str, adecimal, (unsigned int *) res);
+	else
+		return kstrtol(str, adecimal, res);
+}
+
 int osal_snprintf(char *buf, unsigned int len, const char *fmt, ...)
 {
 	int iRet = 0;
