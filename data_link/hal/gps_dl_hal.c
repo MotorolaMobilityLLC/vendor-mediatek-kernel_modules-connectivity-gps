@@ -15,6 +15,7 @@
 #include "gps_dsp_fsm.h"
 #include "gps_each_link.h"
 #include "gps_dl_isr.h"
+#include "linux/jiffies.h"
 
 char *hal_event_name[GPD_DL_HAL_EVT_NUM + 1] = {
 	[GPS_DL_HAL_EVT_A2D_TX_DMA_DONE] = "HAL_TX_DMA_DONE",
@@ -72,23 +73,38 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	enum GDL_RET_STATUS gdl_ret;
 	unsigned int write_index;
 	int curr_sid;
+	bool last_session_msg = false;
+	unsigned long j0, j1;
 
+	j0 = jiffies;
 	curr_sid = gps_each_link_get_session_id(link_id);
-
 
 	if (gps_each_link_get_bool_flag(link_id, LINK_IS_RESETTING)) {
 		/* ack the reset status */
-		return;
-	}
-
-	if (sid_on_evt != curr_sid && sid_on_evt != GPS_EACH_LINK_SID_NO_CHECK) {
+		last_session_msg = true;
+	} else if (sid_on_evt != curr_sid && sid_on_evt != GPS_EACH_LINK_SID_NO_CHECK) {
 		GDL_LOGXW(link_id, "curr_sid = %d, evt = %s, on_sid = %d, not matching",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
-		return;
+		last_session_msg = true;
 	} else if (!gps_each_link_is_active(link_id) ||
 		gps_each_link_get_bool_flag(link_id, LINK_TO_BE_CLOSED)) {
 		GDL_LOGXW(link_id, "curr_sid = %d, evt = %s, on_sid = %d, not active",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
+		last_session_msg = true;
+	}
+
+	if (last_session_msg) {
+		/* unmask irq to make it balance */
+		if (evt == GPS_DL_HAL_EVT_D2A_RX_HAS_NODATA) {
+			gps_dl_irq_each_link_unmask(link_id,
+				GPS_DL_IRQ_TYPE_HAS_NODATA, GPS_DL_IRQ_CTRL_FROM_HAL);
+		} else if (evt == GPS_DL_HAL_EVT_D2A_RX_HAS_DATA) {
+			gps_dl_irq_each_link_unmask(link_id,
+				GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_HAL);
+		} else if (evt == GPS_DL_HAL_EVT_MCUB_HAS_IRQ) {
+			gps_dl_irq_each_link_unmask(link_id,
+				GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_HAL);
+		}
 		return;
 	}
 
@@ -224,6 +240,9 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	default:
 		break;
 	}
+
+	j1 = jiffies;
+	GDL_LOGXD(link_id, "evt2 = %s, dj = %u", gps_dl_hal_event_name(evt), j1 - j0);
 }
 
 void gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
