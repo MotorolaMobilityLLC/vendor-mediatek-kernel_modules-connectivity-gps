@@ -709,11 +709,15 @@ int gps_each_link_check(enum gps_dl_link_id_enum link_id)
 		break;
 
 	case LINK_OPENED:
-		gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, link_id);
-
-		/* if L1 trigger it, also print L5 status */
+		/* if L1 trigger it, also print L5 status
+		 * for this case, dump L5 firstly,
+		 * due to L1 dump might enable A2Z to dump more information.
+		 * see last part of gps_dl_hw_print_hw_status
+		 */
 		if (link_id == GPS_DATA_LINK_ID0)
 			gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, GPS_DATA_LINK_ID1);
+
+		gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, link_id);
 		break;
 
 	default:
