@@ -1,29 +1,6 @@
 #include "gps_dl_lib_misc.h"
 #include "gps_dl_log.h"
 
-static char *gdl_ret_names[GDL_RET_NUM + 1] = {
-	[GDL_OKAY] = "OKAY",
-	[GDL_FAIL] = "FAIL_GENERAL",
-	[GDL_FAIL_ASSERT] = "FAIL_ASSERT",
-	[GDL_FAIL_BUSY] = "FAIL_BUSY",
-	[GDL_FAIL_NOSPACE] = "FAIL_NOSPACE",
-	[GDL_FAIL_NODATA] = "FAIL_NODATA",
-	[GDL_FAIL_STATE_MISMATCH] = "FAIL_STATE_MISMATCH",
-	[GDL_FAIL_SIGNALED] = "FAIL_SIGNALED",
-	[GDL_FAIL_TIMEOUT] = "FAIL_TIMEOUT",
-	[GDL_FAIL_NOT_SUPPORT] = "FAIL_NOT_SUPPORT",
-	[GDL_FAIL_INVAL] = "FAIL_INVAL",
-	[GDL_RET_NUM] = "FAIL_UNKNOWN",
-};
-
-char *gdl_ret_to_name(enum GDL_RET_STATUS gdl_ret)
-{
-	if (gdl_ret >= 0 && gdl_ret < GDL_RET_NUM)
-		return gdl_ret_names[gdl_ret];
-	else
-		return gdl_ret_names[GDL_RET_NUM];
-}
-
 bool gps_dl_hal_comp_buf_match(unsigned char *data_buf, unsigned int data_len,
 	unsigned char *golden_buf, unsigned int golden_len, unsigned int data_shift) {
 	bool is_match = true;
