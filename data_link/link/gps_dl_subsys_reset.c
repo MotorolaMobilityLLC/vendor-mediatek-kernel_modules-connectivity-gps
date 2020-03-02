@@ -22,6 +22,25 @@
 #include "conninfra.h"
 #endif
 
+bool gps_dl_reset_level_is_none(enum gps_dl_link_id_enum link_id)
+{
+	struct gps_each_link *p = gps_dl_link_get(link_id);
+	enum gps_each_link_state_enum state;
+	enum gps_each_link_reset_level level;
+	bool is_none;
+
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	state = p->state_for_user;
+	level = p->reset_level;
+	is_none = (level == GPS_DL_RESET_LEVEL_NONE);
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+
+	if (!is_none)
+		GDL_LOGW("state = %s, level = %d", gps_dl_link_state_name(state), level);
+
+	return is_none;
+}
+
 enum GDL_RET_STATUS gps_dl_reset_level_set_and_trigger(
 	enum gps_each_link_reset_level level, bool wait_reset_done)
 {
