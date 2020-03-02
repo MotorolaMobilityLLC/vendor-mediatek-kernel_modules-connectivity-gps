@@ -71,6 +71,8 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 		gps_dl_trigger_gps_subsys_reset((bool)z);
 	else if (y == 2 && (z >= 0 && z <= GPS_DATA_LINK_NUM))
 		gps_each_link_reset(z);
+	else if (y == 3)
+		gps_dl_trigger_gps_print_hw_status();
 
 	return 0;
 }
