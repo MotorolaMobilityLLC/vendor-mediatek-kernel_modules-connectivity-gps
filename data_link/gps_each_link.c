@@ -706,22 +706,46 @@ int gps_each_link_check(enum gps_dl_link_id_enum link_id)
 
 int gps_each_link_enter_dsleep(enum gps_dl_link_id_enum link_id)
 {
+	struct gps_each_link *p_link = gps_dl_link_get(link_id);
+
+	gps_dl_link_event_send(GPS_DL_EVT_LINK_ENTER_DSLEEP, link_id);
+	gps_dma_buf_reset(&p_link->tx_dma_buf);
+	gps_dma_buf_reset(&p_link->rx_dma_buf);
 	return 0;
 }
 
 int gps_each_link_leave_dsleep(enum gps_dl_link_id_enum link_id)
 {
+#if GPS_DL_ON_CTP
+	struct gps_each_link *p_link = gps_dl_link_get(link_id);
+
+	gps_dma_buf_align_as_byte_mode(&p_link->tx_dma_buf);
+	gps_dma_buf_align_as_byte_mode(&p_link->rx_dma_buf);
+#endif
+	gps_dl_link_event_send(GPS_DL_EVT_LINK_EXIT_DSLEEP, link_id);
 	return 0;
 }
 
 
 int gps_each_link_enter_dstop(enum gps_dl_link_id_enum link_id)
 {
+	struct gps_each_link *p_link = gps_dl_link_get(link_id);
+
+	gps_dl_link_event_send(GPS_DL_EVT_LINK_ENTER_DSTOP, link_id);
+	gps_dma_buf_reset(&p_link->tx_dma_buf);
+	gps_dma_buf_reset(&p_link->rx_dma_buf);
 	return 0;
 }
 
 int gps_each_link_leave_dstop(enum gps_dl_link_id_enum link_id)
 {
+#if GPS_DL_ON_CTP
+	struct gps_each_link *p_link = gps_dl_link_get(link_id);
+
+	gps_dma_buf_align_as_byte_mode(&p_link->tx_dma_buf);
+	gps_dma_buf_align_as_byte_mode(&p_link->rx_dma_buf);
+#endif
+	gps_dl_link_event_send(GPS_DL_EVT_LINK_EXIT_DSTOP, link_id);
 	return 0;
 }
 
@@ -1000,11 +1024,48 @@ void gps_dl_link_event_send(enum gps_dl_link_event_id evt,
 #endif
 }
 
+void gps_dl_link_irq_set(enum gps_dl_link_id_enum link_id, bool enable)
+{
+	struct gps_each_link *p_link = gps_dl_link_get(link_id);
+	bool dma_working, pending_rx;
+
+	if (enable) {
+		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_NODATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		gps_dsp_fsm(GPS_DSP_EVT_FUNC_ON, link_id);
+
+		/* check if MCUB ROM ready */
+		gps_dl_hal_mcub_flag_handler(link_id);
+		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
+	} else {
+		gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
+
+		gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+		dma_working = p_link->rx_dma_buf.dma_working_entry.is_valid;
+		pending_rx = p_link->rx_dma_buf.has_pending_rx;
+		if (dma_working || pending_rx) {
+			p_link->rx_dma_buf.has_pending_rx = false;
+			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+			/* It means this irq has already masked, */
+			/* DON'T mask again, otherwise twice unmask might be needed */
+			GDL_LOGXW(link_id,
+				"has dma_working = %d, pending rx = %d, by pass mask the this IRQ",
+				dma_working, pending_rx);
+		} else {
+			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+			gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		}
+
+		/* TODO: avoid twice mask need to be handled if HAS_CTRLD */
+		gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_HAS_NODATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
+	}
+}
+
 void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	enum gps_dl_link_id_enum link_id)
 {
 	struct gps_each_link *p_link = gps_dl_link_get(link_id);
-	bool dma_working, pending_rx;
 	bool show_log = false;
 	unsigned long j0, j1;
 	int ret;
@@ -1031,14 +1092,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 			break;
 		}
 
-		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
-		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_NODATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
-		gps_dsp_fsm(GPS_DSP_EVT_FUNC_ON, link_id);
-
-		/* check if MCUB ROM ready */
-		gps_dl_hal_mcub_flag_handler(link_id);
-		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
-
+		gps_dl_link_irq_set(link_id, true);
 #if GPS_DL_NO_USE_IRQ
 		gps_dl_wait_us(1000); /* wait 1ms */
 #endif
@@ -1049,7 +1103,22 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_dl_link_open_ack(link_id, true); /* TODO: ack on DSP reset done */
 		/* gps_dl_set_show_reg_rw_log(show_log); */
 		break;
-
+	case GPS_DL_EVT_LINK_EXIT_DSTOP:
+		gps_dl_hal_link_power_ctrl(link_id, 5);
+		gps_dl_link_irq_set(link_id, true);
+		break;
+	case GPS_DL_EVT_LINK_EXIT_DSLEEP:
+		gps_dl_hal_link_power_ctrl(link_id, 3);
+		gps_dl_link_irq_set(link_id, true);
+		break;
+	case GPS_DL_EVT_LINK_ENTER_DSLEEP:
+		gps_dl_link_irq_set(link_id, false);
+		gps_dl_hal_link_power_ctrl(link_id, 2);
+		break;
+	case GPS_DL_EVT_LINK_ENTER_DSTOP:
+		gps_dl_link_irq_set(link_id, false);
+		gps_dl_hal_link_power_ctrl(link_id, 4);
+		break;
 	case GPS_DL_EVT_LINK_DSP_ROM_READY_TIMEOUT:
 		/* check again mcub not ready triggered */
 		if (false)
@@ -1060,7 +1129,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 			/* no handle it again */
 			break;
 		}
-		/* go and do close */
+		/* TODO: go and do close */
 	case GPS_DL_EVT_LINK_CLOSE:
 	case GPS_DL_EVT_LINK_RESET_DSP:
 	case GPS_DL_EVT_LINK_RESET_GPS:
@@ -1100,27 +1169,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		/* Note: the order to mask might be important */
 		/* TODO: avoid twice mask need to be handled */
 		gps_dl_link_set_ready_to_write(link_id, false);
-		gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
-
-		gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
-		dma_working = p_link->rx_dma_buf.dma_working_entry.is_valid;
-		pending_rx = p_link->rx_dma_buf.has_pending_rx;
-		if (dma_working || pending_rx) {
-			p_link->rx_dma_buf.has_pending_rx = false;
-			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
-
-			/* It means this irq has already masked, */
-			/* DON'T mask again, otherwise twice unmask might be needed */
-			GDL_LOGXD(link_id,
-				"has dma_working = %d, pending rx = %d, by pass mask the this IRQ",
-				dma_working, pending_rx);
-		} else {
-			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
-			gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
-		}
-
-		/* TODO: avoid twice mask need to be handled if HAS_CTRLD */
-		gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_HAS_NODATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		gps_dl_link_irq_set(link_id, false);
 
 		gps_dl_hal_link_power_ctrl(link_id, 0);
 		gps_dl_hal_conn_power_ctrl(link_id, 0);
@@ -1281,7 +1330,7 @@ void gps_each_link_mutexes_deinit(struct gps_each_link *p)
 
 void gps_each_link_spin_locks_init(struct gps_each_link *p)
 {
-	enum gps_each_link_mutex i;
+	enum gps_each_link_spinlock i;
 
 	for (i = 0; i < GPS_DL_SPINLOCK_NUM; i++)
 		osal_unsleepable_lock_init(&p->spin_locks[i]);
@@ -1290,7 +1339,7 @@ void gps_each_link_spin_locks_init(struct gps_each_link *p)
 void gps_each_link_spin_locks_deinit(struct gps_each_link *p)
 {
 #if 0
-	enum gps_each_link_mutex i;
+	enum gps_each_link_spinlock i;
 
 	for (i = 0; i < GPS_DL_SPINLOCK_NUM; i++)
 		osal_unsleepable_lock_deinit(&p->spin_locks[i]);
