@@ -46,6 +46,7 @@ struct gps_each_link_state_list {
 	bool is_resetting;
 	bool open_result_okay;
 	bool user_open;
+	bool need_a2z_dump;
 };
 
 enum gps_each_link_bool_state {
@@ -56,6 +57,7 @@ enum gps_each_link_bool_state {
 	LINK_WAIT_RESET_DONE,
 	LINK_IS_RESETTING,
 	LINK_OPEN_RESULT_OKAY,
+	LINK_NEED_A2Z_DUMP,
 	BOOL_STATE_NUM
 };
 
