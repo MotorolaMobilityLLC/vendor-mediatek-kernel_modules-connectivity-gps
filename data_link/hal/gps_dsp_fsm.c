@@ -15,6 +15,7 @@
 #include "gps_dsp_fsm.h"
 #include "gps_dl_log.h"
 #include "gps_each_link.h"
+#include "gps_dl_name_list.h"
 
 /* extern kal_uint32 g_mcu_real_clock_rate; */
 /* extern kal_uint32 g_max_mcu_clock_rate; */
@@ -153,9 +154,10 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 		break;
 
 	case GPS_DSP_ST_TURNED_ON:
-		if (GPS_DSP_EVT_RESET_DONE == evt)
+		if (GPS_DSP_EVT_RESET_DONE == evt) {
 			gps_dsp_state_change_to(GPS_DSP_ST_RESET_DONE, link_id);
-		else
+			abnormal_flag = false;
+		} else
 			abnormal_flag = true;
 		break;
 
@@ -164,6 +166,7 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 			/* TODO */
 			/* gps_ctrl_timer_stop(); */
 			gps_dsp_state_change_to(GPS_DSP_ST_WORKING, link_id);
+			abnormal_flag = false;
 		} /* add GPS_DSP_EVT_REQUEST_HW_SLEEP_MODE == evt */
 		else
 			abnormal_flag = true;
@@ -173,6 +176,7 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 		if (GPS_DSP_EVT_RESET_DONE == evt) {
 			/* PMTK101 like restart or to be powered off */
 			gps_dsp_state_change_to(GPS_DSP_ST_RESET_DONE, link_id);
+			abnormal_flag = false;
 		}
 #if 0
 		else if (GPS_DSP_EVT_HW_SLEEP_REQ == evt) {
@@ -239,8 +243,9 @@ _last_check:
 	/* GPS_TRC("gps_dsp_fsm: old_st=%d, evt=%d, new_st=%d, ab=%d, clk=%d, screen=%d", */
 	/* last_state, evt, gps_dsp_state_get(), abnormal_flag, */
 	/* g_mcu_real_clock_rate, cos_get_host_screen_on_state()); */
-	GDL_LOGXD(link_id, "gps_dsp_fsm: old_st=%d, evt=%d, new_st=%d, err=%d",
-		last_state, evt, gps_dsp_state_get(link_id), abnormal_flag);
+	GDL_LOGXD(link_id, "gps_dsp_fsm: old_st=%s, evt=%s, new_st=%s, is_err=%d",
+		gps_dl_dsp_state_name(last_state), gps_dl_dsp_event_name(evt),
+		gps_dl_dsp_state_name(gps_dsp_state_get(link_id)), abnormal_flag);
 	return;
 #endif
 }
