@@ -30,6 +30,7 @@
 #include "osal_typedef.h"
 #include "stp_exp.h"
 #include "wmt_exp.h"
+#include <connectivity_build_in_adapter.h>
 #if defined(CONFIG_MACH_MT6580)
 #include <mt_clkbuf_ctl.h>
 #endif
@@ -741,7 +742,8 @@ static int GPS_open(struct inode *inode, struct file *file)
 #endif
 
 #if defined(CONFIG_MACH_MT6580)
-	clk_buf_ctrl(CLK_BUF_AUDIO, 1);
+	GPS_WARN_FUNC("export_clk_buf: %x\n", CLK_BUF_AUDIO);
+	KERNEL_clk_buf_ctrl(CLK_BUF_AUDIO, 1);
 #endif
 
 #ifdef GPS_FWCTL_SUPPORT
@@ -796,7 +798,8 @@ static int GPS_close(struct inode *inode, struct file *file)
 #endif
 
 #if defined(CONFIG_MACH_MT6580)
-	clk_buf_ctrl(CLK_BUF_AUDIO, 0);
+	GPS_WARN_FUNC("export_clk_buf: %x\n", CLK_BUF_AUDIO);
+	KERNEL_clk_buf_ctrl(CLK_BUF_AUDIO, 0);
 #endif
 	return 0;
 }
