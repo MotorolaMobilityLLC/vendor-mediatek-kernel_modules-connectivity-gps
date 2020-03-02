@@ -137,12 +137,25 @@ _fail_enable_gps_slp_prot:
 	return 0;
 }
 
-void gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
+bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 {
-	if (enable)
+	bool poll_okay;
+
+	if (enable) {
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
-	else
+
+		/* Wait until sleep prot disabled, 10 times per 1ms */
+		GDL_HW_POLL_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_SLP_PROT_CTRL_CONN_INFRA_ON2OFF_SLP_PROT_ACK, 0,
+			10 * 1000 * POLL_US, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_conn_slp_prot_not_okay");
+			return false; /* not okay */
+		}
+	} else
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 0);
+
+	return true;
 }
 
 void gps_dl_hw_gps_sw_request_emi_usage(bool request)
@@ -181,15 +194,6 @@ int gps_dl_hw_gps_common_on(void)
 	/* Conninfra driver will do it
 	 * GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFYS_ON_TOP_PWR_CTL_BGFSYS_ON_TOP_PWR_ON, 1);
 	 */
-
-	/* Wait until sleep prot disabled, 10 times per 1ms */
-	GDL_HW_POLL_CONN_INFRA_ENTRY(
-		CONN_HOST_CSR_TOP_CONN_SLP_PROT_CTRL_CONN_INFRA_ON2OFF_SLP_PROT_ACK, 0,
-		10 * 1000 * POLL_US, &poll_okay);
-	if (!poll_okay) {
-		GDL_LOGE("_fail_conn_slp_prot_not_okay");
-		goto _fail_conn_slp_prot_not_okay;
-	}
 
 	/* Poll conninfra hw version */
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_CONN_HW_VER_RO_CONN_HW_VERSION, 0x20010000,
@@ -297,7 +301,6 @@ _fail_bgf_top_1st_pwr_ack_not_okay:
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
 
 _fail_conn_hw_ver_not_okay:
-_fail_conn_slp_prot_not_okay:
 	return -1;
 }
 
@@ -476,32 +479,39 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 	}
 
 	i = 0;
-	done = true;
 
 	show_log = gps_dl_set_show_reg_rw_log(true);
-
-	/* MCUB IRQ already mask at this time */
-	gps_dl_hal_mcub_flag_handler(link_id);
-	while (GPS_DSP_ST_RESET_DONE != gps_dsp_state_get(link_id)) {
-		/* poll 10ms */
-		if (i > 10) {
+	do {
+		/* MCUB IRQ already mask at this time */
+		if (!gps_dl_hal_mcub_flag_handler(link_id)) {
 			done = false;
 			break;
 		}
-		gps_dl_wait_us(1000);
 
-		/* read dummy cr confirm dsp state for debug */
-		if (GPS_DATA_LINK_ID0 == link_id)
-			GDL_HW_RD_GPS_REG(0x80073160);
-		else if (GPS_DATA_LINK_ID1 == link_id)
-			GDL_HW_RD_GPS_REG(0x80073134);
+		done = true;
+		while (GPS_DSP_ST_RESET_DONE != gps_dsp_state_get(link_id)) {
+			/* poll 10ms */
+			if (i > 10) {
+				done = false;
+				break;
+			}
+			gps_dl_wait_us(1000);
 
-		gps_dl_hal_mcub_flag_handler(link_id);
-		i++;
-	}
+			/* read dummy cr confirm dsp state for debug */
+			if (GPS_DATA_LINK_ID0 == link_id)
+				GDL_HW_RD_GPS_REG(0x80073160);
+			else if (GPS_DATA_LINK_ID1 == link_id)
+				GDL_HW_RD_GPS_REG(0x80073134);
+
+			if (!gps_dl_hal_mcub_flag_handler(link_id)) {
+				done = false;
+				break;
+			}
+			i++;
+		}
+	} while (0);
 	gps_dl_set_show_reg_rw_log(show_log);
-
-	GDL_LOGXW(link_id, "2nd return, done = %d", done);
+	GDL_LOGXW(link_id, "2nd return, done = %d, i = %d", done, i);
 	return done;
 }
 

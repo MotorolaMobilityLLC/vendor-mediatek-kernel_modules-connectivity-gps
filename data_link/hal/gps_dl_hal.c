@@ -258,12 +258,19 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		gps_dl_hal_event_name(evt), sid_on_evt, j1 - j0);
 }
 
-void gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
+bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 {
 	struct gps_dl_hal_mcub_info d2a;
+	bool conninfra_okay;
 
 	/* Todo: while condition make sure DSP is on and session ID */
 	while (1) {
+		conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+		if (!conninfra_okay) {
+			GDL_LOGXE(link_id, "conninfra_okay = %d", conninfra_okay);
+			return false; /* not okay */
+		}
+
 		gps_dl_hw_get_mcub_info(link_id, &d2a);
 
 		GDL_LOGXI(link_id, "d2a: flag = 0x%04x, d0 = 0x%04x, d1 = 0x%04x",
@@ -296,6 +303,8 @@ void gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 			gps_each_dsp_reg_read_ack(link_id, &d2a);
 
 	}
+
+	return true;
 }
 
 
