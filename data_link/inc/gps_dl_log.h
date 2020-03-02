@@ -242,6 +242,9 @@ void GDL_VOIDF(void);
 #define ASSERT_NOT_ZERO(val, ret)\
 	GDL_ASSERT(val != 0, ret, "%s should not be 0!", #val)
 
+#define ASSERT_ZERO(val, ret)\
+	GDL_ASSERT(val == 0, ret, "%s should be 0!", #val)
+
 #define ASSERT_NOT_NULL(ptr, ret)\
 	GDL_ASSERT(ptr != NULL, ret, "null ptr!")
 
