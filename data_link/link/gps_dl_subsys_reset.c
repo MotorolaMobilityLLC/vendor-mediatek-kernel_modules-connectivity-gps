@@ -76,6 +76,7 @@ enum GDL_RET_STATUS gps_dl_reset_level_set_and_trigger(
 		gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
 		if (to_send_reset_event) {
+			gps_dl_link_waitable_reset(link_id, GPS_DL_WAIT_RESET);
 			if (level == GPS_DL_RESET_LEVEL_CONNSYS)
 				gps_dl_link_event_send(GPS_DL_EVT_LINK_PRE_CONN_RESET, link_id);
 			else

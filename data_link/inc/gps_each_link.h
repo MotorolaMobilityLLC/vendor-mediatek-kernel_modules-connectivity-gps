@@ -67,6 +67,7 @@ enum gps_each_link_wait_status {
 
 struct gps_each_link_waitable {
 #if GPS_DL_ON_LINUX
+	/* TODO: use completion */
 	wait_queue_head_t wq;
 #endif
 	bool fired;
@@ -197,11 +198,15 @@ int gps_each_link_read_with_timeout(enum gps_dl_link_id_enum link_id,
 
 void gps_dl_link_waitable_init(struct gps_each_link_waitable *p,
 	enum gps_each_link_waitable_type type);
-void gps_dl_link_waitable_reset(struct gps_each_link_waitable *p,
-	enum gps_each_link_waitable_type type);
-enum GDL_RET_STATUS gps_dl_link_wait_on(struct gps_each_link_waitable *p, long *p_sigval);
-void gps_dl_link_wake_up(struct gps_each_link_waitable *p);
 
+void gps_dl_link_waitable_reset(enum gps_dl_link_id_enum link_id, enum gps_each_link_waitable_type type);
+
+enum GDL_RET_STATUS gps_dl_link_wait_on(struct gps_each_link_waitable *p, long *p_sigval);
+
+enum GDL_RET_STATUS gps_dl_link_try_wait_on(enum gps_dl_link_id_enum link_id,
+	enum gps_each_link_waitable_type type);
+
+void gps_dl_link_wake_up(struct gps_each_link_waitable *p);
 
 enum gps_dl_link_event_id {
 	GPS_DL_EVT_LINK_OPEN,
