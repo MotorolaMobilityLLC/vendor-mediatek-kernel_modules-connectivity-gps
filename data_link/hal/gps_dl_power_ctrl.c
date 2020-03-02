@@ -72,7 +72,7 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 	int hung_value;
 
 	conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(&hung_value, (op == 0));
-	GDL_LOGXI(link_id, "op = %d, conn_okay = %d, gps_common = %d, L1 = %d, L5 = %d",
+	GDL_LOGXI_ONF(link_id, "op = %d, conn_okay = %d, gps_common = %d, L1 = %d, L5 = %d",
 		op, conninfra_okay, g_gps_common_on,
 		g_gps_dsp_on_array[GPS_DATA_LINK_ID0],
 		g_gps_dsp_on_array[GPS_DATA_LINK_ID1]);
@@ -225,9 +225,10 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 	int ret = 0;
 	int hung_value;
 
-	GDL_LOGXD(link_id,
-		"op = %d, conn_user = 0x%x, infra_on = %d, tia_on = %d, dma_irq_en = %d",
-		op, g_conn_user, g_gps_conninfa_on, g_gps_tia_on, gps_dl_hal_get_dma_irq_en_flag());
+	GDL_LOGXI_ONF(link_id,
+		"op = %d, conn_user = 0x%x,%d, tia_on = %d, dma_irq_en = %d, mcub_cfg = 0x%x",
+		op, g_conn_user, g_gps_conninfa_on, g_gps_tia_on, gps_dl_hal_get_dma_irq_en_flag(),
+		gps_dl_hw_get_mcub_a2d1_cfg(gps_dl_is_1byte_mode()));
 
 	if (1 == op) {
 		if (g_conn_user == 0) {
@@ -255,8 +256,10 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 #if GPS_DL_HAS_PLAT_DRV
 			gps_dl_wake_lock_hold(true);
 
+#if GPS_DL_USE_TIA
 			gps_dl_tia_gps_ctrl(true);
 			g_gps_tia_on = true;
+#endif
 #endif
 			gps_dl_irq_unmask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
 			gps_dl_hal_set_dma_irq_en_flag(true);
@@ -281,11 +284,12 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 					gps_dl_hal_set_dma_irq_en_flag(false);
 			}
 #if GPS_DL_HAS_PLAT_DRV
+#if GPS_DL_USE_TIA
 			if (g_gps_tia_on) {
 				gps_dl_tia_gps_ctrl(false);
 				g_gps_tia_on = false;
 			}
-
+#endif
 			gps_dl_wake_lock_hold(false);
 #endif
 			gps_dl_hal_conn_infra_driver_off();

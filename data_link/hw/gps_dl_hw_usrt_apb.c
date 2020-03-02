@@ -49,8 +49,9 @@ unsigned int gps_dl_hw_get_mcub_a2d1_cfg(bool is_1byte_mode)
 	cfg |= GPS_DSP_CFG_BITMASK_ADIE_IS_MT6635_E2_OR_AFTER;
 	if (!is_1byte_mode)
 		cfg |= GPS_DSP_CFG_BITMASK_USRT_4BYTE_MODE;
+#if GPS_DL_USE_TIA
 	cfg |= GPS_DSP_CFG_BITMASK_COLOCK_USE_TIA;
-
+#endif
 	return cfg;
 }
 
