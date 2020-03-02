@@ -121,12 +121,16 @@ void gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 {
 	bool show_log;
+	bool reg_rw_log = gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_EMI_SW_REQ_CTRL);
 
-	show_log = gps_dl_set_show_reg_rw_log(true);
-	GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_TOP_ADDR);
-	GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_WF_ADDR);
-	GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_BT_ADDR);
-	GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_GPS_ADDR);
+	if (reg_rw_log) {
+		show_log = gps_dl_set_show_reg_rw_log(true);
+		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_TOP_ADDR);
+		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_WF_ADDR);
+		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_BT_ADDR);
+		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_GPS_ADDR);
+	}
+
 	if (request) {
 		/* GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 1);
 		 * CONN_INFRA_CFG_EMI_CTL_GPS used by DSP, driver use TOP's.
@@ -136,7 +140,9 @@ void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 		/* GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0); */
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_TOP_EMI_REQ_TOP, 0);
 	}
-	gps_dl_set_show_reg_rw_log(show_log);
+
+	if (reg_rw_log)
+		gps_dl_set_show_reg_rw_log(show_log);
 }
 
 int gps_dl_hw_gps_common_on(void)
@@ -276,7 +282,9 @@ void gps_dl_hw_gps_common_off(void)
 	 */
 	gps_dl_hal_emi_usage_deinit();
 
-	gps_dl_hw_dump_host_csr_conninfra_info(true);
+	if (gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_HOST_CSR_GPS_OFF))
+		gps_dl_hw_dump_host_csr_conninfra_info(true);
+
 	/* Disable GPS function */
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, 0);
 }
