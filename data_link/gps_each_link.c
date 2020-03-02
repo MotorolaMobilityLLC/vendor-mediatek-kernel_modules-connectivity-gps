@@ -1057,6 +1057,7 @@ void gps_dl_link_irq_set(enum gps_dl_link_id_enum link_id, bool enable)
 {
 	struct gps_each_link *p_link = gps_dl_link_get(link_id);
 	bool dma_working, pending_rx;
+	bool bypass_unmask_irq;
 
 	if (enable) {
 		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
@@ -1064,7 +1065,11 @@ void gps_dl_link_irq_set(enum gps_dl_link_id_enum link_id, bool enable)
 		gps_dsp_fsm(GPS_DSP_EVT_FUNC_ON, link_id);
 
 		/* check if MCUB ROM ready */
-		if (!gps_dl_hal_mcub_flag_handler(link_id)) {
+		if (gps_dl_test_mask_mcub_irq_on_open_get(link_id)) {
+			GDL_LOGXE(link_id, "test mask mcub irq, not unmask irq and wait reset");
+			gps_dl_hal_set_mcub_irq_dis_flag(link_id, true);
+			gps_dl_test_mask_mcub_irq_on_open_set(link_id, false);
+		} else if (!gps_dl_hal_mcub_flag_handler(link_id)) {
 			GDL_LOGXE(link_id, "mcub_flag_handler not okay, not unmask irq and wait reset");
 			gps_dl_hal_set_mcub_irq_dis_flag(link_id, true);
 		} else {
@@ -1078,6 +1083,13 @@ void gps_dl_link_irq_set(enum gps_dl_link_id_enum link_id, bool enable)
 		} else {
 			gps_dl_irq_each_link_mask(link_id,
 				GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		}
+
+		bypass_unmask_irq = false;
+		if (gps_dl_hal_get_irq_dis_flag(link_id, GPS_DL_IRQ_TYPE_HAS_DATA)) {
+			GDL_LOGXW(link_id, "hasdata irq already disable, bypass mask irq");
+			gps_dl_hal_set_irq_dis_flag(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, false);
+			bypass_unmask_irq = true;
 		}
 
 		gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
@@ -1094,7 +1106,10 @@ void gps_dl_link_irq_set(enum gps_dl_link_id_enum link_id, bool enable)
 				dma_working, pending_rx);
 		} else {
 			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
-			gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
+			if (!bypass_unmask_irq) {
+				gps_dl_irq_each_link_mask(link_id,
+					GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
+			}
 		}
 
 		/* TODO: avoid twice mask need to be handled if HAS_CTRLD */

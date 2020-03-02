@@ -16,6 +16,7 @@
 #include "gps_dl_config.h"
 #include "gps_dl_dma_buf.h"
 #include "gps_dl_hal_type.h"
+#include "gps_dl_isr.h"
 
 /* for gps_each_device.c */
 
@@ -72,6 +73,10 @@ bool gps_dl_hal_get_dma_irq_en_flag(void);
 void gps_dl_hal_set_dma_irq_en_flag(bool enable);
 bool gps_dl_hal_get_mcub_irq_dis_flag(enum gps_dl_link_id_enum link_id);
 void gps_dl_hal_set_mcub_irq_dis_flag(enum gps_dl_link_id_enum link_id, bool disable);
+bool gps_dl_hal_get_irq_dis_flag(enum gps_dl_link_id_enum link_id,
+	enum gps_dl_each_link_irq_type type);
+void gps_dl_hal_set_irq_dis_flag(enum gps_dl_link_id_enum link_id,
+	enum gps_dl_each_link_irq_type type, bool disable);
 
 
 #endif /* _GPS_DL_HAL_H */
