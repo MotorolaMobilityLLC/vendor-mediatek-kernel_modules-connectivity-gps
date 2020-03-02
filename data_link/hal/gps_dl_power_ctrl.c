@@ -142,6 +142,7 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 
 	if (1 == op) {
 		if (g_conn_user == 0) {
+			gps_dl_log_info_show();
 #if GPS_DL_HAS_CONNINFRA_DRV
 			ret = conninfra_pwr_on(CONNDRV_TYPE_GPS);
 			if (ret != 0) {
