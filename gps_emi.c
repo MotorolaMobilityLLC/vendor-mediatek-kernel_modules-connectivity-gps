@@ -64,6 +64,11 @@
 #define GPS_EMI_BASE_ADDR_OFFSET     (SZ_1M)
 #define GPS_EMI_MPU_SIZE             (SZ_1M)
 #endif
+#if defined(CONFIG_MACH_MT6873)
+#define GPS_EMI_MPU_REGION           18
+#define GPS_EMI_BASE_ADDR_OFFSET     (3*SZ_1M + 0x10000)
+#define GPS_EMI_MPU_SIZE             (0xF0000)
+#endif
 #define GPS_ADC_CAPTURE_BUFF_SIZE   0x50000
 /******************************************************************************
  * Debug configuration
