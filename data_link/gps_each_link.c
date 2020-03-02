@@ -14,17 +14,18 @@
 #include "linux/errno.h"
 
 char *link_event_name[GPS_DL_LINK_EVT_NUM + 1] = {
-	[GPS_DL_EVT_LINK_OPEN] = "LINK_OPEN",
+	[GPS_DL_EVT_LINK_OPEN]  = "LINK_OPEN",
 	[GPS_DL_EVT_LINK_CLOSE] = "LINK_CLOSE",
 	[GPS_DL_EVT_LINK_WRITE] = "LINK_WRITE",
-	[GPS_DL_EVT_LINK_READ] = "LINK_READ",
+	[GPS_DL_EVT_LINK_READ]  = "LINK_READ",
 	[GPS_DL_EVT_LINK_DSP_ROM_READY_TIMEOUT] = "ROM_READY_TIMEOUT",
 	[GPS_DL_EVT_LINK_DSP_FSM_TIMEOUT] = "DSP_FSM_TIMEOUT",
-	[GPS_DL_EVT_LINK_RESET_DSP] = "RESET_DSP",
-	[GPS_DL_EVT_LINK_RESET_GPS] = "RESET_GPS",
-	[GPS_DL_EVT_LINK_RESET_CONNSYS] = "RESET_CONNSYS",
+	[GPS_DL_EVT_LINK_RESET_DSP]       = "RESET_DSP",
+	[GPS_DL_EVT_LINK_RESET_GPS]       = "RESET_GPS",
+	[GPS_DL_EVT_LINK_PRE_CONN_RESET]  = "PRE_CONN_RESET",
+	[GPS_DL_EVT_LINK_POST_CONN_RESET] = "POST_CONN_RESET",
 	[GPS_DL_EVT_LINK_PRINT_HW_STATUS] = "PRINT_HW_STATUS",
-	[GPS_DL_LINK_EVT_NUM] = "LINK_INVALID_EVT",
+	[GPS_DL_LINK_EVT_NUM]             = "LINK_INVALID_EVT",
 };
 
 char *gps_dl_link_event_name(enum gps_dl_link_event_id evt)
@@ -37,9 +38,10 @@ char *gps_dl_link_event_name(enum gps_dl_link_event_id evt)
 
 char *waitable_type_name[GPS_DL_WAIT_NUM + 1] = {
 	[GPS_DL_WAIT_OPEN_CLOSE] = "OPEN_OR_CLOSE",
-	[GPS_DL_WAIT_WRITE] = "WRITE",
-	[GPS_DL_WAIT_READ] = "READ",
-	[GPS_DL_WAIT_NUM] = "INVALID",
+	[GPS_DL_WAIT_WRITE]      = "WRITE",
+	[GPS_DL_WAIT_READ]       = "READ",
+	[GPS_DL_WAIT_RESET]      = "RESET",
+	[GPS_DL_WAIT_NUM]        = "INVALID",
 };
 
 char *gps_dl_waitable_type_name(enum gps_each_link_waitable_type type)
@@ -58,6 +60,8 @@ const char * const state_name_str_list[LINK_STATE_NUM + 1] = {
 	[LINK_CLOSING]     = "CLOSING",
 	[LINK_RESETTING]   = "RESETTING",
 	[LINK_RESET_DONE]  = "RESET_DONE",
+	[LINK_DISABLED]    = "DISABLED",
+	/* [LNK_INIT_FAIL]   = "INIT_FAIL", */
 	[LINK_STATE_NUM]   = "INVALID",
 };
 
@@ -237,7 +241,7 @@ void gps_each_link_init(enum gps_dl_link_id_enum link_id)
 	gps_each_link_spin_locks_init(p);
 	gps_each_link_set_active(link_id, false);
 	gps_dl_link_set_ready_to_write(link_id, false);
-	gps_each_link_context_reset(link_id);
+	gps_each_link_context_init(link_id);
 	gps_each_link_set_state(link_id, LINK_CLOSED);
 }
 
@@ -250,13 +254,21 @@ void gps_each_link_deinit(enum gps_dl_link_id_enum link_id)
 	gps_each_link_spin_locks_deinit(p);
 }
 
-void gps_each_link_context_reset(enum gps_dl_link_id_enum link_id)
+void gps_each_link_context_init(enum gps_dl_link_id_enum link_id)
 {
 	enum gps_each_link_waitable_type j;
 	struct gps_each_link *p_link = gps_dl_link_get(link_id);
 
 	for (j = 0; j < GPS_DL_WAIT_NUM; j++)
 		gps_dl_link_waitable_reset(&p_link->waitables[j], j);
+}
+
+void gps_each_link_context_clear(enum gps_dl_link_id_enum link_id)
+{
+	struct gps_each_link *p_link = gps_dl_link_get(link_id);
+
+	gps_dl_link_waitable_reset(&p_link->waitables[GPS_DL_WAIT_WRITE], GPS_DL_WAIT_WRITE);
+	gps_dl_link_waitable_reset(&p_link->waitables[GPS_DL_WAIT_READ], GPS_DL_WAIT_READ);
 }
 
 int gps_each_link_open(enum gps_dl_link_id_enum link_id)
@@ -287,6 +299,7 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 	switch (state) {
 	case LINK_CLOSING:
 	case LINK_RESETTING:
+	case LINK_DISABLED:
 		retval = -EAGAIN;
 		break;
 
@@ -362,6 +375,7 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 	case LINK_OPENING:
 	case LINK_CLOSING:
 	case LINK_CLOSED:
+	case LINK_DISABLED:
 		retval = -EBUSY;
 		break;
 
@@ -408,60 +422,55 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 	return retval;
 }
 
-int gps_dl_whole_chip_reset(void)
-{
-	/* - set gps global reset status
-	 */
-	GDL_LOGE("");
-	return 0;
-}
-
 void gps_dl_ctrld_set_resest_status(void)
 {
 	gps_each_link_set_active(GPS_DATA_LINK_ID0, false);
 	gps_each_link_set_active(GPS_DATA_LINK_ID1, false);
 }
 
-bool gps_connsys_reset_sent;
-int gps_dl_link_connsys_reset_handler(void)
-{
-	if (gps_connsys_reset_sent) {
-		gps_dl_ctrld_set_resest_status();
-		gps_dl_link_event_send(GPS_DL_EVT_LINK_RESET_CONNSYS, GPS_DATA_LINK_ID0);
-		gps_dl_link_event_send(GPS_DL_EVT_LINK_RESET_CONNSYS, GPS_DATA_LINK_ID1);
-		gps_connsys_reset_sent = true;
-	}
-
-	return 0;
-}
-
-int gps_dl_connsys_reset_prepare(void)
-{
-	/*
-	 * - set gps global reset status
-	 * - wait ctrld wait it
-	 * - set to wait reset done
-	 * - return, then conninfra can goto do reset
-	 */
-	gps_dl_link_connsys_reset_handler();
-
-	return 0;
-}
-
-int gps_dl_connsys_reset_done_handler(void)
-{
-	/*
-	 * - change to idle status
-	 */
-
-	return 0;
-}
-
 void gps_dl_link_reset_ack(enum gps_dl_link_id_enum link_id)
 {
+	struct gps_each_link *p = gps_dl_link_get(link_id);
+
 	GDL_LOGXD(link_id, "");
+
+	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_RESET]);
+
 	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_RESET_DONE);
-	gps_each_link_set_state(link_id, LINK_RESET_DONE);
+
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	if (p->reset_level != GPS_DL_RESET_LEVEL_CONNSYS) {
+		if (p->sub_states.user_open)
+			p->state_for_user = LINK_RESET_DONE;
+		else
+			p->state_for_user = LINK_CLOSED;
+		p->reset_level = GPS_DL_RESET_LEVEL_NONE;
+	}
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	gps_each_link_give_big_lock(link_id);
+
+	/* TODO */
+#if 0
+	if (has_someone_wait_reset_done)
+		wait until the one to wakeup and clear it
+#endif
+}
+
+void gps_dl_link_on_post_conn_reset(enum gps_dl_link_id_enum link_id)
+{
+
+	struct gps_each_link *p = gps_dl_link_get(link_id);
+
+	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_RESET_DONE);
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	if (p->reset_level == GPS_DL_RESET_LEVEL_CONNSYS) {
+		if (p->sub_states.user_open)
+			p->state_for_user = LINK_RESET_DONE;
+		else
+			p->state_for_user = LINK_CLOSED;
+		p->reset_level = GPS_DL_RESET_LEVEL_NONE;
+	}
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	gps_each_link_give_big_lock(link_id);
 }
 
@@ -489,7 +498,9 @@ void gps_dl_link_close_ack(enum gps_dl_link_id_enum link_id)
 	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
 
 	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_CLOSE_DONE);
+
 	gps_each_link_set_state(link_id, LINK_CLOSED);
+
 	gps_each_link_give_big_lock(link_id);
 }
 
@@ -506,6 +517,7 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 	case LINK_OPENING:
 	case LINK_CLOSING:
 	case LINK_CLOSED:
+	case LINK_DISABLED:
 		/* twice close */
 		retval = -EINVAL;
 		break;
@@ -572,6 +584,7 @@ int gps_each_link_check(enum gps_dl_link_id_enum link_id)
 	case LINK_OPENING:
 	case LINK_CLOSING:
 	case LINK_CLOSED:
+	case LINK_DISABLED:
 		break;
 
 	case LINK_RESETTING:
@@ -664,23 +677,29 @@ enum GDL_RET_STATUS gps_dl_link_wait_on(struct gps_each_link_waitable *p, long *
 	long val;
 	bool is_fired;
 
+	p->waiting = true;
 	/* TODO: check race conditions? */
 	GDL_TEST_TRUE_AND_SET_FALSE(p->fired, is_fired);
 	if (is_fired) {
 		GDL_LOGD("waitable = %s, no wait return", gps_dl_waitable_type_name(p->type));
+		p->waiting = false;
 		return GDL_OKAY;
 	}
 
 	GDL_LOGD("waitable = %s, wait start", gps_dl_waitable_type_name(p->type));
 	val = wait_event_interruptible(p->wq, p->fired);
+	p->waiting = false;
+
 	if (val) {
 		GDL_LOGI("signaled by %ld", val);
 		if (p_sigval)
 			*p_sigval = val;
+		p->waiting = false;
 		return GDL_FAIL_SIGNALED;
 	}
 
 	p->fired = false;
+	p->waiting = false;
 	GDL_LOGD("waitable = %s, wait done", gps_dl_waitable_type_name(p->type));
 	return GDL_OKAY;
 #else
@@ -693,6 +712,11 @@ void gps_dl_link_wake_up(struct gps_each_link_waitable *p)
 	bool is_fired;
 
 	ASSERT_NOT_NULL(p, GDL_VOIDF());
+
+	if (!p->waiting) {
+		GDL_LOGD("waitable = %s, nobody waiting", gps_dl_waitable_type_name(p->type));
+		return;
+	}
 
 	GDL_TEST_FALSE_AND_SET_TRUE(p->fired, is_fired);
 	GDL_LOGD("waitable = %s, fired = %d", gps_dl_waitable_type_name(p->type), is_fired);
@@ -902,6 +926,8 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		/* go and do close */
 	case GPS_DL_EVT_LINK_CLOSE:
 	case GPS_DL_EVT_LINK_RESET_DSP:
+	case GPS_DL_EVT_LINK_RESET_GPS:
+	case GPS_DL_EVT_LINK_PRE_CONN_RESET:
 		/* TODO: avoid twice enter */
 
 		/* TODO: Corresponding DMA must be stopped before turn off L1 or L5 power */
@@ -935,16 +961,20 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 
 		gps_dsp_fsm(GPS_DSP_EVT_FUNC_OFF, link_id);
 
-		if (GPS_DL_EVT_LINK_RESET_DSP == evt)
-			gps_dl_link_reset_ack(link_id);
-		else
-			gps_dl_link_close_ack(link_id); /* TODO: check fired race */
-
+		gps_each_link_context_clear(link_id);
 #if GPS_DL_ON_LINUX
 		gps_dma_buf_reset(&p_link->tx_dma_buf);
 		gps_dma_buf_reset(&p_link->rx_dma_buf);
 #endif
-		gps_each_link_context_reset(link_id);
+
+		if (GPS_DL_EVT_LINK_CLOSE == evt)
+			gps_dl_link_close_ack(link_id); /* TODO: check fired race */
+		else
+			gps_dl_link_reset_ack(link_id);
+		break;
+
+	case GPS_DL_EVT_LINK_POST_CONN_RESET:
+		gps_dl_link_on_post_conn_reset(link_id);
 		break;
 
 	case GPS_DL_EVT_LINK_WRITE:
@@ -966,18 +996,19 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	case GPS_DL_EVT_LINK_DSP_FSM_TIMEOUT:
 		gps_dsp_fsm(GPS_DSP_EVT_CTRL_TIMER_EXPIRE, link_id);
 		break;
-
+#if 0
 	case GPS_DL_EVT_LINK_RESET_GPS:
 		/* turn off GPS power directly */
 		break;
 
-	case GPS_DL_EVT_LINK_RESET_CONNSYS:
+	case GPS_DL_EVT_LINK_PRE_CONN_RESET:
 		/* turn off Connsys power directly
 		 * 1. no need to do anything, just make sure the message queue is empty
 		 * 2. how to handle ctrld block issue
 		 */
 		/* gps_dl_link_open_ack(link_id); */
 		break;
+#endif
 	default:
 		break;
 	}
