@@ -13,6 +13,7 @@
 #include "gps_dl_config.h"
 #include "gps_dl_context.h"
 #include "gps_dl_hw_priv_util.h"
+#include "gps_dl_subsys_reset.h"
 
 #if GPS_DL_ON_LINUX
 #include <linux/delay.h>
@@ -64,6 +65,7 @@ void gps_dl_bus_write_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, un
 		return;
 	}
 
+	/* gps_dl_conninfra_not_readable_show_warning(host_addr); */
 #if !GPS_DL_HW_IS_MOCK
 	mt_reg_sync_writel(val, host_vir_addr);
 #endif
@@ -132,6 +134,7 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 		return 0;
 	}
 
+	/* gps_dl_conninfra_not_readable_show_warning(host_addr); */
 #if !GPS_DL_HW_IS_MOCK
 	val = __raw_readl(host_vir_addr);
 #endif

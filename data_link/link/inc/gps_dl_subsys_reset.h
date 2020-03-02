@@ -37,5 +37,9 @@ void gps_dl_handle_connsys_reset_done(void);
 void gps_dl_register_conninfra_reset_cb(void);
 void gps_dl_unregister_conninfra_reset_cb(void);
 
+bool gps_dl_conninfra_is_readable(void);
+void gps_dl_conninfra_not_readable_show_warning(unsigned int host_addr);
+bool gps_dl_conninfra_is_okay_or_handle_it(int *p_hung_value, bool dump_on_hung_value_zero);
+
 #endif /* _GPS_DL_SUBSYS_RESET_H */
 
