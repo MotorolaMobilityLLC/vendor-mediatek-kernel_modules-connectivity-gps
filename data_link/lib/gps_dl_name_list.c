@@ -55,6 +55,8 @@ const char *const gps_dl_ret_name_list[GDL_RET_NUM + 1] = {
 	[GDL_FAIL_TIMEOUT]        = "FAIL_TIMEOUT",
 	[GDL_FAIL_NOT_SUPPORT]    = "FAIL_NOT_SUPPORT",
 	[GDL_FAIL_INVAL]          = "FAIL_INVAL",
+	[GDL_FAIL_NOENTRY]        = "FAIL_NOENTRY",
+	[GDL_FAIL_NOENTRY2]       = "FAIL_NOENTRY2",
 	[GDL_RET_NUM]             = "FAIL_UNKNOWN"
 };
 

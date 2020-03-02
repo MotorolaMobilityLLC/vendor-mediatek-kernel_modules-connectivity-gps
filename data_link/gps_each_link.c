@@ -880,19 +880,23 @@ int gps_each_link_write_with_opt(enum gps_dl_link_id_enum link_id,
 			}
 #endif
 			return 0;
-		} else if (gdl_ret == GDL_FAIL_NOSPACE || gdl_ret == GDL_FAIL_BUSY) {
+		} else if (gdl_ret == GDL_FAIL_NOSPACE || gdl_ret == GDL_FAIL_BUSY ||
+			gdl_ret == GDL_FAIL_NOENTRY) {
 			/* TODO: */
 			/* 1. note: BUSY stands for others thread is do write, it should be impossible */
 			/* - If wait on BUSY, should wake up the waitings or return eno_again? */
 			/* 2. note: NOSPACE stands for need wait for tx dma working done */
-			gps_dma_buf_show(&p->tx_dma_buf);
-			GDL_LOGI("gdl_dma_buf_put wait due to %s", gdl_ret_to_name(gdl_ret));
+			gps_dma_buf_show(&p->tx_dma_buf, false);
+			GDL_LOGXD(link_id,
+				"wait due to gdl_dma_buf_put ret = %s", gdl_ret_to_name(gdl_ret));
 			gdl_ret = gps_dl_link_wait_on(&p->waitables[GPS_DL_WAIT_WRITE], &sigval);
 			if (gdl_ret == GDL_FAIL_SIGNALED)
-				return -1;
+				break;
 		} else {
-			GDL_LOGI("gdl_dma_buf_put fail %s", gdl_ret_to_name(gdl_ret));
-			return -1;
+			gps_dma_buf_show(&p->tx_dma_buf, true);
+			GDL_LOGXW(link_id,
+				"fail due to gdl_dma_buf_put ret = %s", gdl_ret_to_name(gdl_ret));
+			break;
 		}
 	}
 
