@@ -62,7 +62,7 @@ static ssize_t gps_each_device_write(struct file *filp,
 	const char __user *buf, size_t count, loff_t *f_pos)
 {
 	int retval;
-	int retlen;
+	int retlen = 0;
 	int copy_size;
 	int pid;
 	struct gps_each_device *dev;
