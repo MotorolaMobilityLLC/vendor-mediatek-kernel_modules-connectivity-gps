@@ -14,6 +14,9 @@
 #include "gps_dl_context.h"
 
 #include "gps_dl_dma_buf.h"
+#if GPS_DL_ON_LINUX
+#include "asm/barrier.h"
+#endif
 
 #define GDL_COUNT_FREE(r, w, l)\
 	((w >= r) ? (l + r - w) : (r - w))
@@ -23,26 +26,39 @@
 
 void gps_dma_buf_reset(struct gps_dl_dma_buf *p_dma)
 {
-	GDL_LOGXD(p_dma->dev_index, "dir = %d", p_dma->dir);
+	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 	p_dma->read_index = 0;
 	p_dma->reader_working = 0;
 	p_dma->write_index = 0;
 	p_dma->writer_working = 0;
 	p_dma->dma_working_entry.is_valid = false;
+	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+	GDL_LOGXD(p_dma->dev_index, "dir = %d", p_dma->dir);
 }
 
 void gps_dma_buf_show(struct gps_dl_dma_buf *p_dma)
 {
+	unsigned int ri, wi;
+	bool r_working, w_working;
+
+	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+	ri = p_dma->read_index;
+	r_working = p_dma->reader_working;
+	wi = p_dma->write_index;
+	w_working = p_dma->writer_working;
+	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
 	GDL_LOGXD(p_dma->dev_index, "dir = %d, l = %d, r = %d(%d), w = %d(%d)",
-		p_dma->dir, p_dma->len,
-		p_dma->read_index, p_dma->reader_working,
-		p_dma->write_index, p_dma->writer_working);
+		p_dma->dir, p_dma->len, ri, r_working, wi, w_working);
 }
 
 void gps_dma_buf_align_as_byte_mode(struct gps_dl_dma_buf *p_dma)
 {
 	unsigned int ri, wi;
+	unsigned int ri_new, wi_new;
 
+	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 	ri = p_dma->read_index;
 	wi = p_dma->write_index;
 
@@ -59,13 +75,15 @@ void gps_dma_buf_align_as_byte_mode(struct gps_dl_dma_buf *p_dma)
 		p_dma->dma_working_entry.is_valid = false;
 	}
 
-	GDL_LOGD("dma link index = %d, is_1byte = %d, ri:%u -> %u, wi:%u -> %u",
-		p_dma->dev_index, gps_dl_is_1byte_mode(),
-		ri, p_dma->read_index,
-		wi, p_dma->write_index);
+	ri_new = p_dma->read_index;
+	wi_new = p_dma->write_index;
 
 	/* clear it anyway */
 	p_dma->read_index = p_dma->write_index;
+	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+	GDL_LOGXD(p_dma->dev_index, "is_1byte = %d, ri: %u -> %u, wi: %u -> %u",
+		gps_dl_is_1byte_mode(), ri, ri_new, wi, wi_new);
 }
 
 #if 0
@@ -82,7 +100,13 @@ enum GDL_RET_STATUS gdl_dma_buf_deinit(struct gps_dl_dma_buf *p_dma_buf)
 
 bool gps_dma_buf_is_empty(struct gps_dl_dma_buf *p_dma)
 {
-	return (p_dma->read_index == p_dma->write_index);
+	bool is_empty;
+
+	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+	is_empty = (p_dma->read_index == p_dma->write_index);
+	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+	return is_empty;
 }
 
 enum GDL_RET_STATUS gdl_dma_buf_put(struct gps_dl_dma_buf *p_dma,
@@ -214,12 +238,9 @@ enum GDL_RET_STATUS gdl_dma_buf_get(struct gps_dl_dma_buf *p_dma,
 	return GDL_OKAY;
 }
 
-enum GDL_RET_STATUS gdl_dma_buf_get_data_entry(struct gps_dl_dma_buf *p_dma,
+static enum GDL_RET_STATUS gdl_dma_buf_get_data_entry_inner(struct gps_dl_dma_buf *p_dma,
 	struct gdl_dma_buf_entry *p_entry)
 {
-	ASSERT_NOT_NULL(p_dma, GDL_FAIL_ASSERT);
-	ASSERT_NOT_NULL(p_entry, GDL_FAIL_ASSERT);
-
 	if (p_dma->reader_working)
 		return GDL_FAIL_BUSY;
 
@@ -246,12 +267,25 @@ enum GDL_RET_STATUS gdl_dma_buf_get_data_entry(struct gps_dl_dma_buf *p_dma,
 	p_dma->reader_working = false;
 	return GDL_FAIL_NODATA;
 }
-
-enum GDL_RET_STATUS gdl_dma_buf_set_data_entry(struct gps_dl_dma_buf *p_dma,
+enum GDL_RET_STATUS gdl_dma_buf_get_data_entry(struct gps_dl_dma_buf *p_dma,
 	struct gdl_dma_buf_entry *p_entry)
 {
-	ASSERT_NOT_NULL(p_dma, GDL_FAIL_ASSERT);
+	enum GDL_RET_STATUS ret;
 
+	ASSERT_NOT_NULL(p_dma, GDL_FAIL_ASSERT);
+	ASSERT_NOT_NULL(p_entry, GDL_FAIL_ASSERT);
+
+	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+	ret = gdl_dma_buf_get_data_entry_inner(p_dma, p_entry);
+	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+	return ret;
+}
+
+
+static enum GDL_RET_STATUS gdl_dma_buf_set_data_entry_inner(struct gps_dl_dma_buf *p_dma,
+	struct gdl_dma_buf_entry *p_entry)
+{
 	if (!p_dma->reader_working)
 		return GDL_FAIL_STATE_MISMATCH;
 
@@ -265,12 +299,24 @@ enum GDL_RET_STATUS gdl_dma_buf_set_data_entry(struct gps_dl_dma_buf *p_dma,
 	return GDL_OKAY;
 }
 
-enum GDL_RET_STATUS gdl_dma_buf_get_free_entry(struct gps_dl_dma_buf *p_dma,
+enum GDL_RET_STATUS gdl_dma_buf_set_data_entry(struct gps_dl_dma_buf *p_dma,
 	struct gdl_dma_buf_entry *p_entry)
 {
-	ASSERT_NOT_NULL(p_dma, GDL_FAIL_ASSERT);
-	ASSERT_NOT_NULL(p_entry, GDL_FAIL_ASSERT);
+	enum GDL_RET_STATUS ret;
 
+	ASSERT_NOT_NULL(p_dma, GDL_FAIL_ASSERT);
+
+	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+	ret = gdl_dma_buf_set_data_entry_inner(p_dma, p_entry);
+	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+	return ret;
+}
+
+
+static enum GDL_RET_STATUS gdl_dma_buf_get_free_entry_inner(struct gps_dl_dma_buf *p_dma,
+	struct gdl_dma_buf_entry *p_entry)
+{
 	if (p_dma->writer_working)
 		return GDL_FAIL_BUSY;
 
@@ -295,16 +341,29 @@ enum GDL_RET_STATUS gdl_dma_buf_get_free_entry(struct gps_dl_dma_buf *p_dma,
 	}
 
 	p_dma->writer_working = false;
-
 	return GDL_FAIL_NOSPACE;
 }
 
-enum GDL_RET_STATUS gdl_dma_buf_set_free_entry(struct gps_dl_dma_buf *p_dma,
+enum GDL_RET_STATUS gdl_dma_buf_get_free_entry(struct gps_dl_dma_buf *p_dma,
 	struct gdl_dma_buf_entry *p_entry)
 {
+	enum GDL_RET_STATUS ret;
+
 	ASSERT_NOT_NULL(p_dma, GDL_FAIL_ASSERT);
 	ASSERT_NOT_NULL(p_entry, GDL_FAIL_ASSERT);
 
+	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+	ret = gdl_dma_buf_get_free_entry_inner(p_dma, p_entry);
+	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+	return ret;
+}
+
+
+
+static enum GDL_RET_STATUS gdl_dma_buf_set_free_entry_inner(struct gps_dl_dma_buf *p_dma,
+	struct gdl_dma_buf_entry *p_entry)
+{
 	if (!p_dma->writer_working)
 		return GDL_FAIL_STATE_MISMATCH;
 
@@ -314,11 +373,53 @@ enum GDL_RET_STATUS gdl_dma_buf_set_free_entry(struct gps_dl_dma_buf *p_dma,
 	return GDL_OKAY;
 }
 
+enum GDL_RET_STATUS gdl_dma_buf_set_free_entry(struct gps_dl_dma_buf *p_dma,
+	struct gdl_dma_buf_entry *p_entry)
+{
+	enum GDL_RET_STATUS ret;
+
+	ASSERT_NOT_NULL(p_dma, GDL_FAIL_ASSERT);
+	ASSERT_NOT_NULL(p_entry, GDL_FAIL_ASSERT);
+
+	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+	ret = gdl_dma_buf_set_free_entry_inner(p_dma, p_entry);
+	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+	return ret;
+}
+
+
+void gps_dma_buf_memcpy_from_rx(void *p_dst, const void *p_src, unsigned int len)
+{
+#if GPS_DL_ON_LINUX
+	/* TODO:
+	 * __dma_unmap_area((void *)p_dst, len, DMA_FROM_DEVICE);
+	 * dma_sync_single_for_cpu(DMA_FROM_DEVICE);
+	 */
+#endif
+	memcpy(p_dst, p_src, len);
+}
+
+void gps_dma_buf_memcpy_to_tx(void *p_dst, const void *p_src, unsigned int len)
+{
+	memcpy(p_dst, p_src, len);
+#if GPS_DL_ON_LINUX
+	/* Use mb to make sure memcpy is done by CPU, and then DMA can be started.  */
+	mb();
+	/* TODO:
+	 * __dma_flush_area((void *)p_dst, len);
+	 * dma_sync_single_for_device(DMA_TO_DEVICE);
+	 */
+#endif
+}
+
+
 enum GDL_RET_STATUS gdl_dma_buf_entry_to_buf(const struct gdl_dma_buf_entry *p_entry,
 	unsigned char *p_buf, unsigned int buf_len, unsigned int *p_data_len)
 {
 	unsigned int data_len;
 	unsigned int wrap_len;
+	unsigned char *p_src;
 
 	ASSERT_NOT_NULL(p_entry, GDL_FAIL_ASSERT);
 	ASSERT_NOT_NULL(p_buf, GDL_FAIL_ASSERT);
@@ -336,16 +437,16 @@ enum GDL_RET_STATUS gdl_dma_buf_entry_to_buf(const struct gdl_dma_buf_entry *p_e
 	}
 
 	if (p_entry->write_index > p_entry->read_index) {
-		memcpy(p_buf, ((unsigned char *)p_entry->vir_addr) + p_entry->read_index,
-			data_len);
+		p_src = ((unsigned char *)p_entry->vir_addr) + p_entry->read_index;
+		gps_dma_buf_memcpy_from_rx(p_buf, p_src, data_len);
 	} else {
 		wrap_len = p_entry->buf_length - p_entry->read_index;
 
-		memcpy(p_buf, ((unsigned char *)p_entry->vir_addr) + p_entry->read_index,
-			wrap_len);
+		p_src = ((unsigned char *)p_entry->vir_addr) + p_entry->read_index;
+		gps_dma_buf_memcpy_from_rx(p_buf, p_src, wrap_len);
 
-		memcpy(p_buf + wrap_len, ((unsigned char *)p_entry->vir_addr) + 0,
-			data_len - wrap_len);
+		p_src = ((unsigned char *)p_entry->vir_addr) + 0;
+		gps_dma_buf_memcpy_from_rx(p_buf + wrap_len, p_src, data_len - wrap_len);
 	}
 
 	*p_data_len = data_len;
@@ -360,6 +461,7 @@ enum GDL_RET_STATUS gdl_dma_buf_buf_to_entry(const struct gdl_dma_buf_entry *p_e
 	unsigned int write_index;
 	unsigned int alligned_data_len;
 	unsigned int fill_zero_len;
+	unsigned char *p_dst;
 
 	if (gps_dl_is_1byte_mode()) {
 		alligned_data_len = data_len;
@@ -388,18 +490,18 @@ enum GDL_RET_STATUS gdl_dma_buf_buf_to_entry(const struct gdl_dma_buf_entry *p_e
 
 	wrap_len = p_entry->buf_length - p_entry->write_index;
 	if (wrap_len >= data_len) {
-		memcpy(((unsigned char *)p_entry->vir_addr) + p_entry->write_index,
-			p_buf, data_len);
+		p_dst = ((unsigned char *)p_entry->vir_addr) + p_entry->write_index;
+		gps_dma_buf_memcpy_to_tx(p_dst, p_buf, data_len);
 
 		write_index = p_entry->write_index + data_len;
 		if (write_index >= p_entry->buf_length)
 			write_index = 0;
 	} else {
-		memcpy(((unsigned char *)p_entry->vir_addr) + p_entry->write_index,
-			p_buf, wrap_len);
+		p_dst = ((unsigned char *)p_entry->vir_addr) + p_entry->write_index;
+		gps_dma_buf_memcpy_to_tx(p_dst, p_buf, wrap_len);
 
-		memcpy(((unsigned char *)p_entry->vir_addr) + 0,
-			p_buf + wrap_len, data_len - wrap_len);
+		p_dst = ((unsigned char *)p_entry->vir_addr) + 0;
+		gps_dma_buf_memcpy_to_tx(p_dst, p_buf + wrap_len, data_len - wrap_len);
 
 		write_index = data_len - wrap_len;
 	}
