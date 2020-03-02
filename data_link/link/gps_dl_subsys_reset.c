@@ -193,7 +193,7 @@ int gps_dl_trigger_connsys_reset(void)
 }
 
 #if GPS_DL_HAS_CONNINFRA_DRV
-int gps_dl_on_pre_connsys_reset(void)
+int gps_dl_on_pre_connsys_reset(enum consys_drv_type drv, char *reason)
 {
 	enum GDL_RET_STATUS ret_status;
 
