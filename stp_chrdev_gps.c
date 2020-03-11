@@ -1166,7 +1166,7 @@ static int GPS_init(void)
 		goto error;
 #endif
 	pr_warn("%s driver(major %d) installed.\n", GPS_DRIVER_NAME, GPS_major);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 83)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 149)
 	gps_wake_lock_ptr = wakeup_source_register(NULL, "gpswakelock");
 #else
 	gps_wake_lock_ptr = wakeup_source_register("gpswakelock");
