@@ -28,8 +28,8 @@
 struct gps_dl_reserved_mem_layout {
 	unsigned char icap_buf[GPS_ICAP_MEM_SIZE];
 	unsigned char padding1[GPS_RESERVED_MEM_PADDING_SIZE];
-	unsigned char tx_dma_buf[LINK_STATE_NUM][GPS_DL_RX_BUF_SIZE + GPS_RESERVED_MEM_PADDING_SIZE];
-	unsigned char rx_dma_buf[LINK_STATE_NUM][GPS_DL_RX_BUF_SIZE + GPS_RESERVED_MEM_PADDING_SIZE];
+	unsigned char tx_dma_buf[GPS_DATA_LINK_NUM][GPS_DL_RX_BUF_SIZE + GPS_RESERVED_MEM_PADDING_SIZE];
+	unsigned char rx_dma_buf[GPS_DATA_LINK_NUM][GPS_DL_RX_BUF_SIZE + GPS_RESERVED_MEM_PADDING_SIZE];
 };
 
 struct gps_dl_iomem_addr_map_entry g_gps_dl_res_emi;

@@ -103,8 +103,8 @@ static void gps_dl_hist_rec_rw_add_rec(enum gps_dl_link_id_enum link_id,
 		else
 			gps_dl_hist_rec_rw_check_dump(link_id, p_list, DRW_RETURN);
 	} else {
-		GDL_LOGXE_DRW(link_id, "type=%d, n_rec=%d, mismatch rec_point=%d/%d",
-			p_list->type, p_list->n_item, last_point, rec_point);
+		GDL_LOGXE_DRW(link_id, "type=%d, n_rec=%d, mismatch rec_point=%d/%d, len=%d, pid=%d",
+			p_list->type, p_list->n_item, last_point, rec_point, len, pid);
 	}
 }
 

@@ -37,9 +37,11 @@ static ssize_t gps_each_device_read(struct file *filp,
 	link_id = (enum gps_dl_link_id_enum)dev->index;
 
 	/* show read log after ram code downloading to avoid print too much */
-	if (gps_dsp_state_get(link_id) == GPS_DSP_ST_WORKING) {
+	if (gps_dsp_state_get(link_id) != GPS_DSP_ST_RESET_DONE) {
 		GDL_LOGXI_DRW(link_id, "buf_len = %d, pid = %d", count, pid);
 		print_log = true;
+	} else {
+		GDL_LOGXD_DRW(link_id, "buf_len = %d, pid = %d", count, pid);
 	}
 	gps_each_link_rec_read(link_id, pid, count, DRW_ENTER);
 
@@ -54,6 +56,8 @@ static ssize_t gps_each_device_read(struct file *filp,
 	}
 	if (print_log)
 		GDL_LOGXI_DRW(link_id, "ret_len = %d", retlen);
+	else
+		GDL_LOGXD_DRW(link_id, "ret_len = %d", retlen);
 	gps_each_link_rec_read(link_id, pid, retlen, DRW_RETURN);
 	return retlen;
 }
@@ -74,9 +78,11 @@ static ssize_t gps_each_device_write(struct file *filp,
 	link_id = (enum gps_dl_link_id_enum)dev->index;
 
 	/* show write log after ram code downloading to avoid print too much */
-	if (gps_dsp_state_get(link_id) == GPS_DSP_ST_WORKING) {
+	if (gps_dsp_state_get(link_id) != GPS_DSP_ST_RESET_DONE) {
 		GDL_LOGXI_DRW(link_id, "len = %d, pid = %d", count, pid);
 		print_log = true;
+	} else {
+		GDL_LOGXD_DRW(link_id, "len = %d, pid = %d", count, pid);
 	}
 	gps_each_link_rec_write(link_id, pid, count, DRW_ENTER);
 
@@ -102,7 +108,9 @@ static ssize_t gps_each_device_write(struct file *filp,
 	}
 
 	if (print_log)
-		GDL_LOGXI_DRW(dev->index, "ret_len = %d", retlen);
+		GDL_LOGXI_DRW(link_id, "ret_len = %d", retlen);
+	else
+		GDL_LOGXD_DRW(link_id, "ret_len = %d", retlen);
 	gps_each_link_rec_write(link_id, pid, retlen, DRW_RETURN);
 	return retlen;
 }
@@ -161,6 +169,23 @@ static int gps_each_device_open(struct inode *inode, struct file *filp)
 	return 0;
 }
 
+static int gps_each_device_hw_resume(enum gps_dl_link_id_enum link_id)
+{
+	int pid;
+	int retval;
+
+	pid = current->pid;
+	GDL_LOGXW(link_id, "pid = %d", pid);
+
+	retval = gps_each_link_hw_resume(link_id);
+
+	/* device read may arrive before resume, not reset the recording here
+	 * gps_each_link_rec_reset(link_id);
+	 */
+
+	return retval;
+}
+
 static int gps_each_device_release(struct inode *inode, struct file *filp)
 {
 	struct gps_each_device *dev;
@@ -177,6 +202,20 @@ static int gps_each_device_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 
+static int gps_each_device_hw_suspend(enum gps_dl_link_id_enum link_id, bool need_clk_ext)
+{
+	int pid;
+	int retval;
+
+	pid = current->pid;
+	GDL_LOGXW(link_id, "pid = %d, clk_ext = %d", pid, need_clk_ext);
+
+	retval = gps_each_link_hw_suspend(link_id, need_clk_ext);
+	gps_each_link_rec_force_dump(link_id);
+
+	return retval;
+}
+
 #define GPSDL_IOC_GPS_HWVER            6
 #define GPSDL_IOC_GPS_IC_HW_VERSION    7
 #define GPSDL_IOC_GPS_IC_FW_VERSION    8
@@ -189,6 +228,9 @@ static int gps_each_device_release(struct inode *inode, struct file *filp)
 #define GPSDL_IOC_GIVE_GPS_WAKELOCK    15
 #define GPSDL_IOC_GET_GPS_LNA_PIN      16
 #define GPSDL_IOC_GPS_FWCTL            17
+#define GPSDL_IOC_GPS_HW_SUSPEND       18
+#define GPSDL_IOC_GPS_HW_RESUME        19
+#define GPSDL_IOC_GPS_LISTEN_RST_EVT   20
 
 static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
 {
@@ -221,9 +263,9 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 			retval = gps_each_link_reset(dev->index);
 		break;
 	case GPSDL_IOC_QUERY_STATUS:
-		retval = gps_each_link_check(dev->index);
+		retval = gps_each_link_check(dev->index, arg);
 		gps_each_link_rec_force_dump(dev->index);
-		GDL_LOGXW_DRW(dev->index, "GPSDL_IOC_QUERY_STATUS, status = %d", retval);
+		GDL_LOGXW_DRW(dev->index, "GPSDL_IOC_QUERY_STATUS, reason = %d, ret = %d", arg, retval);
 		break;
 #if 0
 	case GPSDL_IOC_GPS_HWVER:
@@ -318,6 +360,22 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 			retval = -EFAULT;
 		break;
 #endif
+	case GPSDL_IOC_GPS_HW_SUSPEND:
+		/* arg == 1 stand for need clk extension, otherwise is normal deep sotp mode */
+		retval = gps_each_device_hw_suspend(dev->index, (arg == 1));
+		GDL_LOGXI_ONF(dev->index,
+			"GPSDL_IOC_GPS_HW_SUSPEND: arg = %ld, ret = %d", arg, retval);
+		break;
+	case GPSDL_IOC_GPS_HW_RESUME:
+		retval = gps_each_device_hw_resume(dev->index);
+		GDL_LOGXI_ONF(dev->index,
+			"GPSDL_IOC_GPS_HW_RESUME: arg = %ld, ret = %d", arg, retval);
+		break;
+	case GPSDL_IOC_GPS_LISTEN_RST_EVT:
+		retval = -EINVAL;
+		GDL_LOGXI_ONF(dev->index,
+			"GPSDL_IOC_GPS_LISTEN_RST_EVT retval = %d", retval);
+		break;
 	case 21505:
 	case 21506:
 	case 21515:

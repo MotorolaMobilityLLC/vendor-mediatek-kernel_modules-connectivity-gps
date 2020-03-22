@@ -36,7 +36,7 @@ unsigned int gps_dl_hw_get_gps_emi_remapping(void)
 		CONN_HOST_CSR_TOP_CONN2AP_REMAP_GPS_EMI_BASE_ADDR_CONN2AP_REMAP_GPS_EMI_BASE_ADDR);
 }
 
-void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id)
+void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr)
 {
 	struct gps_dl_hw_dma_status_struct a2d_dma_status, d2a_dma_status;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
@@ -72,8 +72,10 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id)
 	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_RDAT_ADDR);
 	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_STA_ADDR);
 
-	gps_dl_hw_gps_dump_top_rf_cr();
-	gps_dl_hw_gps_dump_gps_rf_cr();
+	if (dump_rf_cr) {
+		gps_dl_hw_gps_dump_top_rf_cr();
+		gps_dl_hw_gps_dump_gps_rf_cr();
+	}
 
 	/* only need for L1 */
 	gps_each_link_set_bool_flag(GPS_DATA_LINK_ID0, LINK_NEED_A2Z_DUMP, true);
@@ -440,10 +442,31 @@ bool gps_dl_hw_take_conn_coex_hw_sema(unsigned int try_timeout_ms)
 {
 	bool okay;
 	bool show_log;
+	unsigned int poll_us, poll_max_us;
+	unsigned int val;
 
 	show_log = gps_dl_set_show_reg_rw_log(true);
 	/* poll until value is expected or timeout */
-	GDL_HW_POLL_CONN_INFRA_ENTRY(COS_SEMA_COEX_STA_ENTRY_FOR_GPS, 1, POLL_US * 1000 * try_timeout_ms, &okay);
+	poll_us = 0;
+	poll_max_us = POLL_US * 1000 * try_timeout_ms;
+	okay = false;
+	while (!okay) {
+		val = GDL_HW_GET_CONN_INFRA_ENTRY(COS_SEMA_COEX_STA_ENTRY_FOR_GPS);
+		/* 2bit value:
+		 * 0 -> need waiting
+		 * 1,3 -> okay; 2 -> already taken
+		 */
+		if (val != 0) {
+			okay = true;
+			break;
+		}
+		if (poll_us >= poll_max_us) {
+			okay = false;
+			break;
+		}
+		gps_dl_wait_us(POLL_INTERVAL_US);
+		poll_us += POLL_INTERVAL_US;
+	}
 	gps_dl_set_show_reg_rw_log(show_log);
 
 	if (!okay)
@@ -468,11 +491,31 @@ bool gps_dl_hw_take_conn_rfspi_hw_sema(unsigned int try_timeout_ms)
 {
 	bool okay;
 	bool show_log;
+	unsigned int poll_us, poll_max_us;
+	unsigned int val;
 
 	show_log = gps_dl_set_show_reg_rw_log(true);
 	/* poll until value is expected or timeout */
-	GDL_HW_POLL_CONN_INFRA_ENTRY(COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS, 1,
-		POLL_US * 1000 * try_timeout_ms, &okay);
+	poll_us = 0;
+	poll_max_us = POLL_US * 1000 * try_timeout_ms;
+	okay = false;
+	while (!okay) {
+		val = GDL_HW_GET_CONN_INFRA_ENTRY(COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS);
+		/* 2bit value:
+		 * 0 -> need waiting
+		 * 1,3 -> okay; 2 -> already taken
+		 */
+		if (val != 0) {
+			okay = true;
+			break;
+		}
+		if (poll_us >= poll_max_us) {
+			okay = false;
+			break;
+		}
+		gps_dl_wait_us(POLL_INTERVAL_US);
+		poll_us += POLL_INTERVAL_US;
+	}
 	gps_dl_set_show_reg_rw_log(show_log);
 
 	GDL_LOGI("okay = %d", okay);
