@@ -12,6 +12,8 @@
 ###############################################################################
 # Necessary Check
 
+ifeq ($(CONFIG_MTK_GPS_SUPPORT), y)
+
 ifeq ($(AUTOCONF_H),)
     $(error AUTOCONF_H is not defined)
 endif
@@ -180,4 +182,6 @@ $(MODULE_NAME)-objs += fw_log_gps.o
 endif
 
 endif
+
+endif #ifeq ($(CONFIG_MTK_GPS_SUPPORT), y)
 # EOF
