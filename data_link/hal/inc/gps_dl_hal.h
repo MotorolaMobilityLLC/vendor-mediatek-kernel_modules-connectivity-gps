@@ -32,6 +32,7 @@ enum gps_dl_hal_power_ctrl_op_enum {
 	GPS_DL_HAL_POWER_OP_MAX
 };
 
+bool gps_dl_hal_conn_infra_driver_on(void);
 void gps_dl_hal_conn_infra_driver_off(void);
 void gps_dl_hal_link_confirm_dma_stop(enum gps_dl_link_id_enum link_id);
 int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op);

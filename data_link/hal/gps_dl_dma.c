@@ -176,7 +176,7 @@ void gps_dl_real_dma_start(enum gps_dl_hal_dma_ch_index ch,
 	link_id = DMA_CH_TO_LINK_ID(ch);
 	ASSERT_LINK_ID(link_id, GDL_VOIDF());
 
-	GDL_LOGXD(link_id, "ch = %d, r = %u, w = %u, addr = 0x%08x",
+	GDL_LOGXD(link_id, "ch = %d, r = %u, w = %u, addr = 0x%p",
 		ch, p_entry->read_index, p_entry->write_index,
 		p_entry->vir_addr);
 

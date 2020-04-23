@@ -54,7 +54,7 @@ enum GDL_RET_STATUS gps_dl_reset_level_set_and_trigger(
 	enum GDL_RET_STATUS wait_status;
 
 	if (level != GPS_DL_RESET_LEVEL_GPS_SUBSYS && level !=  GPS_DL_RESET_LEVEL_CONNSYS) {
-		GDL_LOGW("level = %d, do nothing and return");
+		GDL_LOGW("level = %d, do nothing and return", level);
 		return GDL_FAIL_INVAL;
 	}
 
@@ -147,7 +147,7 @@ enum GDL_RET_STATUS gps_dl_reset_level_set_and_trigger(
 		p = gps_dl_link_get(link_id);
 		wait_status = gps_dl_link_wait_on(&p->waitables[GPS_DL_WAIT_RESET], &sigval);
 		if (wait_status == GDL_FAIL_SIGNALED) {
-			GDL_LOGXE(link_id, "sigval = %d", sigval);
+			GDL_LOGXE(link_id, "sigval = %ld", sigval);
 			return GDL_FAIL_SIGNALED;
 		}
 

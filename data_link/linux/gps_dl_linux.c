@@ -73,7 +73,7 @@ int gps_dl_linux_irqs_register(struct gps_each_irq *p_irqs, int irq_num)
 			(irq_handler_t)p_irqs[i].cfg.isr, /* gps_dl_linux_irq_dispatcher */
 			sys_irq_flags, p_irqs[i].cfg.name, &p_irqs[i]);
 #endif
-		GDL_LOGW_INI("i = %d, irq_id = %d, name = %s, flags = 0x%x, ret = %d",
+		GDL_LOGW_INI("i = %d, irq_id = %d, name = %s, flags = 0x%lx, ret = %d",
 			i, irq_id, p_irqs[i].cfg.name, sys_irq_flags, i_ret);
 		if (i_ret) {
 			/* show error log */

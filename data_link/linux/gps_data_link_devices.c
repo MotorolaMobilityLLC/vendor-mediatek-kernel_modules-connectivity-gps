@@ -71,22 +71,18 @@ int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, int dev_index,
 			p_linux_plat_dev, len, &p_dma_buf->phy_addr, GFP_DMA);/* | GFP_DMA32); */
 	}
 
-	if (sizeof(dma_addr_t) == sizeof(unsigned long long)) {
-		GDL_LOGI_INI(
-			"alloc gps dl dma buf(%d,%d) in arch64, addr: vir=0x%p, phy=0x%llx, len=%u\n",
-			p_dma_buf->dev_index, p_dma_buf->dir,
-			p_dma_buf->vir_addr, p_dma_buf->phy_addr, p_dma_buf->len);
-	} else {
-		GDL_LOGI_INI(
-			"alloc gps dl dma buf(%d,%d) in arch32, addr: vir=0x%p, phy=0x%08x, len=%u\n",
-			p_dma_buf->dev_index, p_dma_buf->dir,
-			p_dma_buf->vir_addr, p_dma_buf->phy_addr, p_dma_buf->len);
-	}
-
+	GDL_LOGI_INI(
+#if GPS_DL_ON_LINUX
+		"alloc gps dl dma buf(%d,%d), addr: vir=0x%p, phy=0x%pad, len=%u",
+#else
+		"alloc gps dl dma buf(%d,%d), addr: vir=0x%p, phy=0x%08x, len=%u",
+#endif
+		p_dma_buf->dev_index, p_dma_buf->dir,
+		p_dma_buf->vir_addr, p_dma_buf->phy_addr, p_dma_buf->len);
 
 	if (NULL == p_dma_buf->vir_addr) {
 		GDL_LOGXE_INI(dev_index,
-			"alloc gps dl dma buf(%d,%d)(len = %u) fail\n", dev_index, dir, len);
+			"alloc gps dl dma buf(%d,%d)(len = %u) fail", dev_index, dir, len);
 		/* force move forward even fail */
 		/* return -ENOMEM; */
 	}

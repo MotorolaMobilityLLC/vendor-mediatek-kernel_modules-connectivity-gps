@@ -277,7 +277,7 @@ static int gps_dl_probe(struct platform_device *pdev)
 			continue;
 		}
 
-		GDL_LOGW_INI("irq idx = %d, start = %lld, end = %lld, name = %s, flag = 0x%x",
+		GDL_LOGW_INI("irq idx = %d, start = %lld, end = %lld, name = %s, flag = 0x%lx",
 			i, irq->start, irq->end, irq->name, irq->flags);
 		gps_dl_irq_set_id(i, irq->start);
 	}

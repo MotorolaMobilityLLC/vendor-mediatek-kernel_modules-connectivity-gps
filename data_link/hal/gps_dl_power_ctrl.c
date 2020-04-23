@@ -127,7 +127,6 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id,
 	bool keep_conninfra_clk;
 	int hung_value = 0;
 	int ret = 0;
-	int trigger_ret;
 
 	wakeup_okay = gps_dl_hw_gps_force_wakeup_conninfra_top_off(true);
 	conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(&hung_value, true);
@@ -144,8 +143,13 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id,
 		gps_dl_hw_get_mcub_a2d1_cfg(link_id, gps_dl_is_1byte_mode()));
 
 	if (!wakeup_okay && conninfra_okay) {
+#if (GPS_DL_HAS_CONNINFRA_DRV)
+		int trigger_ret;
 		trigger_ret = conninfra_trigger_whole_chip_rst(CONNDRV_TYPE_GPS, "GPS conninfra wake fail");
 		GDL_LOGXE(link_id, "conninfra wake fail, trigger reset ret = %d", trigger_ret);
+#else
+		GDL_LOGXE(link_id, "conninfra wake fail, trigger reset not support");
+#endif
 		ret = -1;
 	} else if (!conninfra_okay && hung_value != 0) {
 		g_gps_common_on = false;
@@ -154,6 +158,7 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id,
 		GDL_LOGXE(link_id, "reset flags due to conninfa not okay");
 		ret = -1;
 	} else {
+#if (GPS_DL_HAS_CONNINFRA_DRV)
 		/* Due to GPS on or GPS exit deep sleep/stop mode may change osc_en from 0 to 1,
 		 * keeping conninfra_bus_clock will make it more safety.
 		 */
@@ -168,6 +173,9 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id,
 			conninfra_bus_clock_ctrl(CONNDRV_TYPE_GPS,
 				CONNINFRA_BUS_CLOCK_WPLL | CONNINFRA_BUS_CLOCK_BPLL, 0);
 		}
+#else
+		ret = gps_dl_hal_link_power_ctrl_inner(link_id, op);
+#endif
 	}
 	gps_dl_hw_gps_force_wakeup_conninfra_top_off(false);
 	return ret;
@@ -302,8 +310,6 @@ void gps_dl_hal_link_clear_hw_pwr_stat(enum gps_dl_link_id_enum link_id)
 
 int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 {
-	int ret = 0;
-
 	GDL_LOGXI_ONF(link_id,
 		"sid = %d, op = %d, conn_user = 0x%x,%d, tia_on = %d, dma_irq_en = %d, mcub_cfg = 0x%x",
 		gps_each_link_get_session_id(link_id),
@@ -313,24 +319,12 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 	if (1 == op) {
 		if (g_conn_user == 0) {
 			gps_dl_log_info_show();
-#if GPS_DL_HAS_CONNINFRA_DRV
-#if GPS_DL_ON_LINUX
-			ret = conninfra_pwr_on(CONNDRV_TYPE_GPS);
-#elif GPS_DL_ON_CTP
-			ret = conninfra_power_on(CONNDRV_TYPE_GPS);
-#endif
-			if (ret != 0) {
-				GDL_LOGXE(link_id, "conninfra_pwr_on fail, ret = %d", ret);
+			if (!gps_dl_hal_conn_infra_driver_on())
 				return -1;
-			}
-			g_gps_conninfa_on = true;
-#endif
 
 			gps_dl_emi_remap_calc_and_set();
-
 #if GPS_DL_HAS_PLAT_DRV
 			gps_dl_wake_lock_hold(true);
-
 #if GPS_DL_USE_TIA
 			gps_dl_tia_gps_ctrl(true);
 			g_gps_tia_on = true;
@@ -423,6 +417,25 @@ void gps_dl_hal_link_confirm_dma_stop(enum gps_dl_link_id_enum link_id)
 		conn_user_asis, conn_user_tobe, old_dma_en,
 		tx_working, gdl_ret_to_name(stop_tx_status),
 		rx_working, gdl_ret_to_name(stop_rx_status));
+}
+
+bool gps_dl_hal_conn_infra_driver_on(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	int ret;
+
+#if GPS_DL_ON_LINUX
+	ret = conninfra_pwr_on(CONNDRV_TYPE_GPS);
+#elif GPS_DL_ON_CTP
+	ret = conninfra_power_on(CONNDRV_TYPE_GPS);
+#endif
+	if (ret != 0) {
+		GDL_LOGE("conninfra_pwr_on fail, ret = %d", ret);
+		return false; /* not okay */
+	}
+	g_gps_conninfa_on = true;
+#endif
+	return true; /* okay */
 }
 
 void gps_dl_hal_conn_infra_driver_off(void)
