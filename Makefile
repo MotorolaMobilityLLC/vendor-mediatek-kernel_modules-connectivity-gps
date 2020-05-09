@@ -159,6 +159,8 @@ endif
 
 ifneq ($(filter "CONSYS_6771" "CONSYS_6775" "CONSYS_6779",$(CONFIG_MTK_COMBO_CHIP)),)
         ccflags-y += -DEMI_MPU_PROTECTION_IS_READY=1
+else
+	ccflags-y += -DEMI_MPU_PROTECTION_IS_READY=0
 endif
 
 ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/include
