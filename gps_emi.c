@@ -29,13 +29,6 @@
 #include <linux/printk.h>
 #include <linux/version.h>
 #include <asm/memblock.h>
-#if EMI_MPU_PROTECTION_IS_READY
-#if defined(CONFIG_MACH_MT6873)
-#include <memory/mediatek/emi.h>
-#else
-#include <mt_emi_api.h>
-#endif
-#endif
 #include "gps.h"
 
 #ifdef pr_fmt
@@ -57,16 +50,28 @@
 #define GPS_EMI_MPU_REGION           29
 #define GPS_EMI_BASE_ADDR_OFFSET     (2*SZ_1M + SZ_1M/2 + 0x1000)
 #define GPS_EMI_MPU_SIZE             (SZ_1M + SZ_1M/2 - 0x2000)
+#define EMI_MPU_PROTECTION_IS_READY  1
+#if EMI_MPU_PROTECTION_IS_READY
+#include <mt_emi_api.h>
+#endif
 #endif
 #if defined(CONFIG_MACH_MT6779)
 #define GPS_EMI_MPU_REGION           29
 #define GPS_EMI_BASE_ADDR_OFFSET     (3*SZ_1M + 0x10000)
 #define GPS_EMI_MPU_SIZE             (0xF0000)
+#define EMI_MPU_PROTECTION_IS_READY  1
+#if EMI_MPU_PROTECTION_IS_READY
+#include <mt_emi_api.h>
+#endif
 #endif
 #if defined(CONFIG_MACH_MT6771) || defined(CONFIG_MACH_MT6775) || defined(CONFIG_MACH_MT6758)
 #define GPS_EMI_MPU_REGION           30
 #define GPS_EMI_BASE_ADDR_OFFSET     (SZ_1M)
 #define GPS_EMI_MPU_SIZE             (SZ_1M)
+#define EMI_MPU_PROTECTION_IS_READY  1
+#if EMI_MPU_PROTECTION_IS_READY
+#include <mt_emi_api.h>
+#endif
 #endif
 #if defined(CONFIG_MACH_MT6873)
 #define GPS_EMI_MPU_REGION           29
@@ -74,6 +79,10 @@
 #define GPS_EMI_MPU_SIZE             (0xF0000)
 #define GPS_DL_EMI_MPU_DOMAIN_AP      0
 #define GPS_DL_EMI_MPU_DOMAIN_CONN    2
+#define EMI_MPU_PROTECTION_IS_READY  1
+#if EMI_MPU_PROTECTION_IS_READY
+#include <memory/mediatek/emi.h>
+#endif
 #endif
 #define GPS_ADC_CAPTURE_BUFF_SIZE   0x50000
 /******************************************************************************
@@ -114,8 +123,9 @@ void mtk_wcn_consys_gps_memory_reserve(void)
 	gGpsEmiPhyBase = arm_memblock_steal(SZ_1M, SZ_1M);
 #endif
 #else
+	#if EMI_MPU_PROTECTION_IS_READY
 	gGpsEmiPhyBase = gConEmiPhyBase + GPS_EMI_BASE_ADDR_OFFSET;
-
+	#endif
 #endif
 	if (gGpsEmiPhyBase)
 		GPS_DBG("Con:0x%zx, Gps:0x%zx\n", (size_t)gConEmiPhyBase, (size_t)gGpsEmiPhyBase);
@@ -206,8 +216,9 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 		GPS_DBG("GPS_EMI_MAPPING dump(0x%08x)\n",
 			CONSYS_REG_READ(conn_reg.topckgen_base + CONSYS_EMI_MAPPING_OFFSET));
 		#endif
-
+		#if EMI_MPU_PROTECTION_IS_READY
 		pGpsEmibaseaddr = ioremap_nocache(gGpsEmiPhyBase, GPS_EMI_MPU_SIZE);
+		#endif
 		iRet = 1;
 		#if 0
 		if (pGpsEmibaseaddr != NULL) {
