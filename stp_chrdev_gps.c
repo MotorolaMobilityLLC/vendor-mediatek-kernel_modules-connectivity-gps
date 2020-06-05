@@ -963,7 +963,7 @@ static void gps_cdev_rst_cb(ENUM_WMTDRV_TYPE_T src,
 static bool desense_handled_flag;
 static void GPS_handle_desense(bool on)
 {
-	bool to_do, handled;
+	bool to_do = false, handled = false;
 
 	down(&status_mtx);
 	handled = desense_handled_flag;
