@@ -14,12 +14,15 @@
 
 #include "gps_dl_context.h"
 #include "gps_dl_hw_api.h"
+#include "gps_dl_hw_dep_api.h"
 #include "gps_dl_hw_priv_util.h"
 
 #include "conn_infra/conn_host_csr_top.h"
 #include "conn_infra/conn_infra_cfg.h"
+#if GPS_DL_HAS_PTA
 #include "conn_infra/conn_uart_pta.h"
 #include "conn_infra/conn_pta6.h"
+#endif
 #include "conn_infra/conn_semaphore.h"
 #include "conn_infra/conn_rf_spi_mst_reg.h"
 
@@ -92,12 +95,27 @@ void gps_dl_hw_dump_sleep_prot_status(void)
 	bool show_log = true;
 
 	show_log = gps_dl_set_show_reg_rw_log(true);
+#if (GDL_HW_CONN_INFRA_VER == 0x20010000)
 	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
 		CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_ADDR,
 		BMASK_RW_FORCE_PRINT);
 	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
 		CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_ADDR,
 		BMASK_RW_FORCE_PRINT);
+#else
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_INFRA_CFG_CONN_INFRA_CONN2GPS_SLP_CTRL_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_INFRA_CFG_GALS_CONN2GPS_SLP_STATUS_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_INFRA_CFG_CONN_INFRA_GPS2CONN_SLP_CTRL_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_INFRA_CFG_GALS_GPS2CONN_SLP_STATUS_ADDR,
+		BMASK_RW_FORCE_PRINT);
+#endif
 	gps_dl_set_show_reg_rw_log(show_log);
 }
 
@@ -210,6 +228,7 @@ void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log)
 		gps_dl_set_show_reg_rw_log(show_log);
 }
 
+#if GPS_DL_HAS_PTA
 /* CONN_INFRA_CFG_CKGEN_BUS_ADDR[5:2] */
 #define CONN_INFRA_CFG_PTA_CLK_ADDR CONN_INFRA_CFG_CKGEN_BUS_ADDR
 #define CONN_INFRA_CFG_PTA_CLK_MASK (\
@@ -427,17 +446,6 @@ void gps_dl_hw_set_pta_blanking_parameter(void)
 #define COS_SEMA_COEX_REL_ENTRY_FOR_GPS \
 	CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_REL_CONN_SEMA05_M3_OWN_REL
 
-/*
- * COS_SEMA_RFSPI_INDEX = 11(see conninfra/platform/include/consys_hw.h)
- * GPS use M3
- */
-#define COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS \
-	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_STA_CONN_SEMA11_M3_OWN_STA
-
-#define COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS \
-	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_REL_CONN_SEMA11_M3_OWN_REL
-
-
 bool gps_dl_hw_take_conn_coex_hw_sema(unsigned int try_timeout_ms)
 {
 	bool okay;
@@ -486,6 +494,17 @@ void gps_dl_hw_give_conn_coex_hw_sema(void)
 
 	GDL_LOGD("");
 }
+#endif /* GPS_DL_HAS_PTA */
+
+/*
+ * COS_SEMA_RFSPI_INDEX = 11(see conninfra/platform/include/consys_hw.h)
+ * GPS use M3
+ */
+#define COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_STA_CONN_SEMA11_M3_OWN_STA
+
+#define COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_REL_CONN_SEMA11_M3_OWN_REL
 
 bool gps_dl_hw_take_conn_rfspi_hw_sema(unsigned int try_timeout_ms)
 {

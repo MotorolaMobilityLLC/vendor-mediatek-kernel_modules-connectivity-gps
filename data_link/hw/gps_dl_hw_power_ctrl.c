@@ -26,6 +26,7 @@
 #endif
 
 #include "gps_dl_hw_api.h"
+#include "gps_dl_hw_dep_api.h"
 #include "gps_dl_hw_priv_util.h"
 #include "gps_dl_hal_util.h"
 #include "gps_dsp_fsm.h"
@@ -46,33 +47,29 @@ static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 
 	if (1 == op) {
 		/* disable when on */
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_EN,  0);
-		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_RDY, 0,
-			POLL_DEFAULT, &poll_okay);
+		GDL_HW_SET_CONN2GPS_SLP_PROT_RX_VAL(0);
+		GDL_HW_POLL_CONN2GPS_SLP_PROT_RX_UNTIL_VAL(0, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
 			GDL_LOGE("_fail_disable_gps_slp_prot - conn2gps rx");
 			goto _fail_disable_gps_slp_prot;
 		}
 
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_EN,  0);
-		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_RDY, 0,
-			POLL_DEFAULT, &poll_okay);
+		GDL_HW_SET_CONN2GPS_SLP_PROT_TX_VAL(0);
+		GDL_HW_POLL_CONN2GPS_SLP_PROT_TX_UNTIL_VAL(0, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
 			GDL_LOGE("_fail_disable_gps_slp_prot - conn2gps tx");
 			goto _fail_disable_gps_slp_prot;
 		}
 
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_EN,  0);
-		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_RDY, 0,
-			POLL_DEFAULT, &poll_okay);
+		GDL_HW_SET_GPS2CONN_SLP_PROT_RX_VAL(0);
+		GDL_HW_POLL_GPS2CONN_SLP_PROT_RX_UNTIL_VAL(0, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
 			GDL_LOGE("_fail_disable_gps_slp_prot - gps2conn rx");
 			goto _fail_disable_gps_slp_prot;
 		}
 
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_EN,  0);
-		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_RDY, 0,
-			POLL_DEFAULT, &poll_okay);
+		GDL_HW_SET_GPS2CONN_SLP_PROT_TX_VAL(0);
+		GDL_HW_POLL_GPS2CONN_SLP_PROT_TX_UNTIL_VAL(0, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
 			GDL_LOGE("_fail_disable_gps_slp_prot - gps2conn tx");
 			goto _fail_disable_gps_slp_prot;
@@ -90,34 +87,30 @@ _fail_disable_gps_slp_prot:
 		return -1;
 	} else if (0 == op) {
 		/* enable when off */
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_EN,  1);
-		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_RDY, 1,
-			POLL_DEFAULT, &poll_okay);
+		GDL_HW_SET_CONN2GPS_SLP_PROT_TX_VAL(1);
+		GDL_HW_POLL_CONN2GPS_SLP_PROT_TX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
 			/* From DE: need to trigger connsys reset */
 			GDL_LOGE("_fail_enable_gps_slp_prot - conn2gps tx");
 			goto _fail_enable_gps_slp_prot;
 		}
 
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_EN,  1);
-		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_RDY, 1,
-			POLL_DEFAULT, &poll_okay);
+		GDL_HW_SET_CONN2GPS_SLP_PROT_RX_VAL(1);
+		GDL_HW_POLL_CONN2GPS_SLP_PROT_RX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
 			/* not handle it, just show warning */
 			GDL_LOGE("_fail_enable_gps_slp_prot - conn2gps rx");
 		}
 
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_EN,  1);
-		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_RDY, 1,
-			POLL_DEFAULT, &poll_okay);
+		GDL_HW_SET_GPS2CONN_SLP_PROT_TX_VAL(1);
+		GDL_HW_POLL_GPS2CONN_SLP_PROT_TX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
 			/* not handle it, just show warning */
 			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn tx");
 		}
 
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_EN,  1);
-		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_RDY, 1,
-			POLL_DEFAULT, &poll_okay);
+		GDL_HW_SET_GPS2CONN_SLP_PROT_RX_VAL(1);
+		GDL_HW_POLL_GPS2CONN_SLP_PROT_RX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
 			/* From DE: need to trigger connsys reset */
 			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn rx");
@@ -143,11 +136,15 @@ bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 
 	if (enable) {
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
-
+#if (GDL_HW_CONN_INFRA_VER == 0x20010000)
 		/* Wait until sleep prot disabled, 10 times per 1ms */
 		GDL_HW_POLL_CONN_INFRA_ENTRY(
 			CONN_HOST_CSR_TOP_CONN_SLP_PROT_CTRL_CONN_INFRA_ON2OFF_SLP_PROT_ACK, 0,
 			10 * 1000 * POLL_US, &poll_okay);
+#else
+		/* No need after Connac2.0 */
+		poll_okay = true;
+#endif
 		if (!poll_okay) {
 			GDL_LOGE("_fail_conn_slp_prot_not_okay");
 			return false; /* not okay */
@@ -191,13 +188,15 @@ int gps_dl_hw_gps_common_on(void)
 	bool poll_okay;
 	int i;
 
-	/* Conninfra driver will do it
-	 * GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFYS_ON_TOP_PWR_CTL_BGFSYS_ON_TOP_PWR_ON, 1);
-	 */
+#if (GPS_DL_HAS_CONNINFRA_DRV)
+	/* Conninfra driver alreay do it */
+#else
+	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
+#endif
 
 	/* Poll conninfra hw version */
-	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_CONN_HW_VER_RO_CONN_HW_VERSION, 0x20010000,
-		POLL_DEFAULT, &poll_okay);
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_CONN_HW_VER_RO_CONN_HW_VERSION,
+		GDL_HW_CONN_INFRA_VER, POLL_DEFAULT, &poll_okay);
 	if (!poll_okay) {
 		GDL_LOGE("_fail_conn_hw_ver_not_okay");
 		goto _fail_conn_hw_ver_not_okay;
@@ -208,7 +207,7 @@ int gps_dl_hw_gps_common_on(void)
 	gps_dl_hal_emi_usage_init();
 
 	/* Enable GPS function */
-	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, 1);
+	GDL_HW_SET_GPS_FUNC_EN(1);
 
 	/* bit24: BGFSYS_ON_TOP primary power ack */
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFSYS_ON_TOP_PWR_ACK_ST_BGFSYS_ON_TOP_PWR_ACK, 1,
@@ -256,8 +255,8 @@ int gps_dl_hw_gps_common_on(void)
 	}
 
 	/* 0x18c21010[31:0] bgf ip version */
-	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION, 0x20010000,
-		POLL_DEFAULT, &poll_okay);
+	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION,
+		GDL_HW_BGF_VER, POLL_DEFAULT, &poll_okay);
 	if (!poll_okay) {
 		GDL_LOGE("_fail_bgf_ip_ver_not_okay");
 		goto _fail_bgf_ip_ver_not_okay;
@@ -298,7 +297,7 @@ _fail_gps_top_off_active_not_okay:
 _fail_disable_gps_slp_prot_not_okay:
 _fail_bgf_top_2nd_pwr_ack_not_okay:
 _fail_bgf_top_1st_pwr_ack_not_okay:
-	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, 0);
+	GDL_HW_SET_GPS_FUNC_EN(0);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
 
 _fail_conn_hw_ver_not_okay:
@@ -327,7 +326,13 @@ int gps_dl_hw_gps_common_off(void)
 		gps_dl_hw_dump_host_csr_conninfra_info(true);
 
 	/* Disable GPS function */
-	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, 0);
+	GDL_HW_SET_GPS_FUNC_EN(0);
+
+#if (GPS_DL_HAS_CONNINFRA_DRV)
+	/* Conninfra driver will do it */
+#else
+	GDL_HW_SET_CONN_INFRA_BGF_EN(0);
+#endif
 	return 0;
 }
 

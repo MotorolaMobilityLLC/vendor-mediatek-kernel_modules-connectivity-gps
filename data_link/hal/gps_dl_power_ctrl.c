@@ -191,9 +191,7 @@ int gps_dl_hal_link_power_ctrl_inner(enum gps_dl_link_id_enum link_id,
 		if (!g_gps_common_on) {
 			if (gps_dl_hw_gps_common_on() != 0)
 				return -1;
-#if GPS_DL_ON_LINUX
-			gps_dl_hal_md_blanking_init_pta();
-#endif
+			gps_dl_hal_md_blanking_ctrl(true);
 			g_gps_common_on = true;
 		}
 
@@ -280,9 +278,7 @@ int gps_dl_hal_link_power_ctrl_inner(enum gps_dl_link_id_enum link_id,
 			}
 
 			if (g_gps_common_on) {
-#if GPS_DL_ON_LINUX
-				gps_dl_hal_md_blanking_deinit_pta();
-#endif
+				gps_dl_hal_md_blanking_ctrl(false);
 				g_gps_common_on = false;
 				g_gps_dsp_off_ret_array[GPS_DATA_LINK_ID0] = 0;
 				g_gps_dsp_off_ret_array[GPS_DATA_LINK_ID1] = 0;
@@ -463,7 +459,7 @@ void gps_dl_hal_conn_infra_driver_off(void)
 #endif
 }
 
-#if GPS_DL_ON_LINUX
+#if GPS_DL_HAS_PTA
 bool gps_dl_hal_md_blanking_init_pta(void)
 {
 	bool okay, done;
@@ -555,4 +551,20 @@ void gps_dl_hal_md_blanking_deinit_pta(void)
 
 	gps_dl_hw_give_conn_coex_hw_sema();
 }
-#endif /* GPS_DL_ON_LINUX */
+#endif /* GPS_DL_HAS_PTA */
+
+void gps_dl_hal_md_blanking_ctrl(bool on)
+{
+#if GPS_DL_HAS_PTA
+	if (on)
+		gps_dl_hal_md_blanking_init_pta();
+	else
+		gps_dl_hal_md_blanking_deinit_pta();
+#else
+	/* For directly connection case, there is no PTA, just update status for md. */
+#if GPS_DL_HAS_PLAT_DRV
+	gps_dl_update_status_for_md_blanking(on);
+#endif
+#endif
+}
+
