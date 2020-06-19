@@ -265,7 +265,7 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 	case GPSDL_IOC_QUERY_STATUS:
 		retval = gps_each_link_check(dev->index, arg);
 		gps_each_link_rec_force_dump(dev->index);
-		GDL_LOGXW_DRW(dev->index, "GPSDL_IOC_QUERY_STATUS, reason = %d, ret = %d", arg, retval);
+		GDL_LOGXW_DRW(dev->index, "GPSDL_IOC_QUERY_STATUS, reason = %ld, ret = %d", arg, retval);
 		break;
 #if 0
 	case GPSDL_IOC_GPS_HWVER:
