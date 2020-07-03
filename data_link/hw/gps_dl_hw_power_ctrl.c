@@ -136,15 +136,7 @@ bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 
 	if (enable) {
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
-#if ((GDL_HW_CONN_INFRA_VER == 0x20010000) || (GDL_HW_CONN_INFRA_VER == 0x20010101))
-		/* Wait until sleep prot disabled, 10 times per 1ms */
-		GDL_HW_POLL_CONN_INFRA_ENTRY(
-			CONN_HOST_CSR_TOP_CONN_SLP_PROT_CTRL_CONN_INFRA_ON2OFF_SLP_PROT_ACK, 0,
-			10 * 1000 * POLL_US, &poll_okay);
-#else
-		/* No need after Connac2.0 */
-		poll_okay = true;
-#endif
+		GDL_HW_MAY_WAIT_CONN_INFRA_SLP_PROT_DISABLE_ACK(&poll_okay);
 		if (!poll_okay) {
 			GDL_LOGE("_fail_conn_slp_prot_not_okay");
 			return false; /* not okay */
@@ -186,18 +178,26 @@ void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 int gps_dl_hw_gps_common_on(void)
 {
 	bool poll_okay;
+	unsigned int poll_ver;
 	int i;
 
 	/* Enable Conninfra BGF */
 	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
 
 	/* Poll conninfra hw version */
-	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_CONN_HW_VER_RO_CONN_HW_VERSION,
-		GDL_HW_CONN_INFRA_VER, POLL_DEFAULT, &poll_okay);
+	GDL_HW_CHECK_CONN_INFRA_VER(&poll_okay, &poll_ver);
 	if (!poll_okay) {
-		GDL_LOGE("_fail_conn_hw_ver_not_okay");
+		GDL_LOGE("_fail_conn_hw_ver_not_okay, poll_ver = 0x%08x", poll_ver);
 		goto _fail_conn_hw_ver_not_okay;
 	}
+
+	/* GDL_HW_CHECK_CONN_INFRA_VER may check a list and return ok if poll_ver is in the list,
+	 * record the poll_ver here and we can know which one it is,
+	 * and it may help for debug purpose.
+	 */
+	gps_dl_hw_gps_set_conn_infra_ver(poll_ver);
+	GDL_LOGW("%s: poll_ver = 0x%08x is ok", GDL_HW_SUPPORT_LIST, poll_ver);
+
 	/* GPS SW EMI request
 	 * gps_dl_hw_gps_sw_request_emi_usage(true);
 	 */

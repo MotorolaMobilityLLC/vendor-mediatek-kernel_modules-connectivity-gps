@@ -113,13 +113,16 @@ void gps_dl_bus_check_and_print(unsigned int host_addr);
 #define POLL_FOREVER (-1)
 #define POLL_DEFAULT (1000 * POLL_US)
 #if (GPS_DL_ON_CTP || GPS_DL_ON_LINUX)
-#define GDL_HW_POLL_ENTRY(Bus_ID, Field, ValueExpected, TimeoutUsec, pIsOkay)      \
+#define GDL_HW_POLL_ENTRY_VERBOSE(Bus_ID, Field, pIsOkay, pLastValue, TimeoutUsec, condExpected) \
 	do {                                                                       \
 		if (pIsOkay != NULL) {                                             \
 			*pIsOkay = false;                                          \
 		}                                                                  \
 		if (POLL_1_TIME == TimeoutUsec) {                                  \
-			if (ValueExpected == GDL_HW_GET_ENTRY(Bus_ID, Field)) {    \
+			if (pLastValue != NULL) {                                  \
+				*pLastValue = GDL_HW_GET_ENTRY(Bus_ID, Field);     \
+			}                                                          \
+			if ((condExpected)) {                                      \
 				if (pIsOkay != NULL) {                             \
 					*pIsOkay = true;                           \
 				}                                                  \
@@ -127,7 +130,10 @@ void gps_dl_bus_check_and_print(unsigned int host_addr);
 		} else if (TimeoutUsec > 0) {                                      \
 			unsigned int poll_wait_cnt = 0;                            \
 			while (true) {                                             \
-				if (ValueExpected == GDL_HW_GET_ENTRY(Bus_ID, Field)) { \
+				if (pLastValue != NULL) {                          \
+					*pLastValue = GDL_HW_GET_ENTRY(Bus_ID, Field); \
+				}                                                  \
+				if ((condExpected)) {                              \
 					if (pIsOkay != NULL) {                     \
 						*pIsOkay = true;                   \
 					}                                          \
@@ -140,13 +146,27 @@ void gps_dl_bus_check_and_print(unsigned int host_addr);
 				poll_wait_cnt += POLL_INTERVAL_US;                 \
 			}                                                          \
 		} else if (TimeoutUsec <= POLL_FOREVER) {                          \
-			while (ValueExpected != GDL_HW_GET_ENTRY(Bus_ID, Field)) { \
+			while (true) {                                             \
+				if (pLastValue != NULL) {                          \
+					*pLastValue = GDL_HW_GET_ENTRY(Bus_ID, Field); \
+				}                                                  \
+				if ((condExpected)) {                              \
+					if (pIsOkay != NULL) {                     \
+						*pIsOkay = true;                   \
+					}                                          \
+					break;                                     \
+				}                                                  \
 				gps_dl_wait_us(POLL_INTERVAL_US);                  \
 			}                                                          \
-			if (pIsOkay != NULL) {                                     \
-				*pIsOkay = true;                                   \
-			}                                                          \
 		}                                                                  \
+	} while (0)
+
+#define GDL_HW_POLL_ENTRY(Bus_ID, Field, ValueExpected, TimeoutUsec, pIsOkay)      \
+	do {                                                                       \
+		unsigned int gdl_hw_poll_value;                                    \
+		GDL_HW_POLL_ENTRY_VERBOSE(Bus_ID, Field,                           \
+			pIsOkay, &gdl_hw_poll_value,                               \
+			TimeoutUsec, (gdl_hw_poll_value == ValueExpected));        \
 	} while (0)
 #else
 #define GDL_HW_POLL_ENTRY(Bus_ID, Field, ValueExpected, TimeoutUsec, pIsOkay)      \
@@ -170,19 +190,19 @@ void gps_dl_bus_check_and_print(unsigned int host_addr);
 	GDL_HW_POLL_ENTRY(GPS_DL_BGF_BUS, Field, ValueExpected, TimeoutUsec, pIsOkay)
 
 #define GDL_HW_SET_GPS_ENTRY(Field, Value) GDL_HW_SET_ENTRY(GPS_DL_GPS_BUS, Field, Value)
-#define GDL_HW_SET_GPS_ENTRY2(LinkID, Value, Field1, Field2) do {\
-		if (GPS_DATA_LINK_ID0 == LinkID)                         \
-			GDL_HW_SET_GPS_ENTRY(Field1, Value);                 \
-		else if (GPS_DATA_LINK_ID1 == LinkID)                    \
-			GDL_HW_SET_GPS_ENTRY(Field2, Value);                 \
+#define GDL_HW_SET_GPS_ENTRY2(LinkID, Value, Field1, Field2) do {         \
+		if (GPS_DATA_LINK_ID0 == LinkID)                          \
+			GDL_HW_SET_GPS_ENTRY(Field1, Value);              \
+		else if (GPS_DATA_LINK_ID1 == LinkID)                     \
+			GDL_HW_SET_GPS_ENTRY(Field2, Value);              \
 	} while (0)
 
 #define GDL_HW_GET_GPS_ENTRY(Field)        GDL_HW_GET_ENTRY(GPS_DL_GPS_BUS, Field)
-#define GDL_HW_GET_GPS_ENTRY2(LinkID, Field1, Field2)           (\
-		(GPS_DATA_LINK_ID0 == LinkID) ?                          \
-			GDL_HW_GET_GPS_ENTRY(Field1) :                       \
-		((GPS_DATA_LINK_ID1 == LinkID) ?                         \
-			GDL_HW_GET_GPS_ENTRY(Field2) : 0)                    \
+#define GDL_HW_GET_GPS_ENTRY2(LinkID, Field1, Field2) (                   \
+		(GPS_DATA_LINK_ID0 == LinkID) ?                           \
+			GDL_HW_GET_GPS_ENTRY(Field1) :                    \
+		((GPS_DATA_LINK_ID1 == LinkID) ?                          \
+			GDL_HW_GET_GPS_ENTRY(Field2) : 0)                 \
 	)
 
 #define GDL_HW_POLL_GPS_ENTRY(Field, ValueExpected, TimeoutUsec, pIsOkay) \
