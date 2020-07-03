@@ -457,7 +457,7 @@ static int gps_dl_plat_resume(struct platform_device *pdev)
 }
 
 
-const struct dev_pm_ops mtk_btif_drv_pm_ops = {
+const struct dev_pm_ops gps_dl_drv_pm_ops = {
 	.suspend = gps_dl_drv_suspend,
 	.resume = gps_dl_drv_resume,
 };
@@ -473,7 +473,7 @@ struct platform_driver gps_dl_dev_drv = {
 		.name = "gps", /* mediatek,gps */
 		.owner = THIS_MODULE,
 /* #ifdef CONFIG_PM */
-		.pm = &mtk_btif_drv_pm_ops,
+		.pm = &gps_dl_drv_pm_ops,
 /* #endif */
 /* #ifdef CONFIG_OF */
 		.of_match_table = gps_dl_of_ids,
