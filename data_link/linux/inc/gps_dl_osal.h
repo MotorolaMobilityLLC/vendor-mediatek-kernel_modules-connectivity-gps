@@ -162,7 +162,6 @@ typedef unsigned int(*OSAL_EVENT_CHECKER) (struct gps_dl_osal_thread *pThread);
 char *gps_dl_osal_strncpy(char *dst, const char *src, unsigned int len);
 char *gps_dl_osal_strsep(char **str, const char *c);
 int gps_dl_osal_strtol(const char *str, unsigned int adecimal, long *res);
-int gps_dl_osal_err_print(const char *str, ...);
 void *gps_dl_osal_memset(void *buf, int i, unsigned int len);
 int gps_dl_osal_thread_create(struct gps_dl_osal_thread *pThread);
 int gps_dl_osal_thread_run(struct gps_dl_osal_thread *pThread);
@@ -195,8 +194,9 @@ int gps_dl_osal_unlock_unsleepable_lock(struct gps_dl_osal_unsleepable_lock *pUS
 
 #define gps_dl_osal_assert(condition) \
 do { \
-	if (!(condition)) \
-		gps_dl_osal_err_print("%s, %d, (%s)\n", __FILE__, __LINE__, #condition); \
+	if (!(condition)) { \
+		GDL_LOGE("ASSERT: (%s)", #condition); \
+	} \
 } while (0)
 
 #endif /* _GPS_DL_OSAL_H */

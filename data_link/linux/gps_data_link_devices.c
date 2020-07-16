@@ -36,11 +36,16 @@
 int gps_dl_devno_major;
 int gps_dl_devno_minor;
 
-void gps_dl_dma_buf_free(struct gps_dl_dma_buf *p_dma_buf, int dev_index)
+void gps_dl_dma_buf_free(struct gps_dl_dma_buf *p_dma_buf, enum gps_dl_link_id_enum link_id)
 {
 	struct gps_each_device *p_dev;
 
-	p_dev = gps_dl_device_get(dev_index);
+	p_dev = gps_dl_device_get(link_id);
+	if (p_dev == NULL) {
+		GDL_LOGXE_INI(link_id, "gps_dl_device_get return null");
+		return;
+	}
+
 	if (p_dma_buf->vir_addr)
 		dma_free_coherent(p_dev->dev,
 			p_dma_buf->len, p_dma_buf->vir_addr, p_dma_buf->phy_addr);
@@ -48,17 +53,22 @@ void gps_dl_dma_buf_free(struct gps_dl_dma_buf *p_dma_buf, int dev_index)
 	memset(p_dma_buf, 0, sizeof(*p_dma_buf));
 }
 
-int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, int dev_index,
+int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, enum gps_dl_link_id_enum link_id,
 	enum gps_dl_dma_dir dir, unsigned int len)
 {
 	struct gps_each_device *p_dev;
 	struct device *p_linux_plat_dev;
 
-	p_dev = gps_dl_device_get(dev_index);
+	p_dev = gps_dl_device_get(link_id);
+	if (p_dev == NULL) {
+		GDL_LOGXE_INI(link_id, "gps_dl_device_get return null");
+		return -1;
+	}
+
 	p_linux_plat_dev = (struct device *)p_dev->private_data;
 
 	memset(p_dma_buf, 0, sizeof(*p_dma_buf));
-	p_dma_buf->dev_index = dev_index;
+	p_dma_buf->dev_index = link_id;
 	p_dma_buf->dir = dir;
 	p_dma_buf->len = len;
 
@@ -81,8 +91,8 @@ int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, int dev_index,
 		p_dma_buf->vir_addr, p_dma_buf->phy_addr, p_dma_buf->len);
 
 	if (NULL == p_dma_buf->vir_addr) {
-		GDL_LOGXE_INI(dev_index,
-			"alloc gps dl dma buf(%d,%d)(len = %u) fail", dev_index, dir, len);
+		GDL_LOGXE_INI(link_id,
+			"alloc gps dl dma buf(%d,%d)(len = %u) fail", link_id, dir, len);
 		/* force move forward even fail */
 		/* return -ENOMEM; */
 	}
@@ -98,6 +108,10 @@ int gps_dl_dma_buf_alloc2(enum gps_dl_link_id_enum link_id)
 
 	p_dev = gps_dl_device_get(link_id);
 	p_link = gps_dl_link_get(link_id);
+	if (p_dev == NULL) {
+		GDL_LOGXE_INI(link_id, "gps_dl_device_get return null");
+		return -1;
+	}
 
 	of_dma_configure(p_dev->dev, p_dev->dev->of_node);
 
@@ -192,8 +206,9 @@ int gps_dl_ctx_links_init(void)
 
 static void gps_dl_devices_exit(void)
 {
-	int i;
+	enum gps_dl_link_id_enum link_id;
 	dev_t devno = MKDEV(gps_dl_devno_major, gps_dl_devno_minor);
+	struct gps_each_device *p_dev;
 
 	gps_dl_device_context_deinit();
 
@@ -201,8 +216,10 @@ static void gps_dl_devices_exit(void)
 	gps_dl_linux_plat_drv_unregister();
 #endif
 
-	for (i = 0; i < GPS_DATA_LINK_NUM; i++)
-		gps_dl_cdev_cleanup(gps_dl_device_get(i), i);
+	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
+		p_dev = gps_dl_device_get(link_id);
+		gps_dl_cdev_cleanup(p_dev, link_id);
+	}
 
 	unregister_chrdev_region(devno, GPS_DATA_LINK_NUM);
 }
@@ -249,7 +266,8 @@ int gps_dl_irq_deinit(void)
 
 static int gps_dl_devices_init(void)
 {
-	int result, i;
+	int result;
+	enum gps_dl_link_id_enum link_id;
 	dev_t devno = 0;
 	struct gps_each_device *p_dev;
 
@@ -265,11 +283,11 @@ static int gps_dl_devices_init(void)
 
 	GDL_LOGW_INI("success to get major %d\n", gps_dl_devno_major);
 
-	for (i = 0; i < GPS_DATA_LINK_NUM; i++) {
-		devno = MKDEV(gps_dl_devno_major, gps_dl_devno_minor + i);
-		p_dev = gps_dl_device_get(i);
+	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
+		devno = MKDEV(gps_dl_devno_major, gps_dl_devno_minor + link_id);
+		p_dev = gps_dl_device_get(link_id);
 		p_dev->devno = devno;
-		result = gps_dl_cdev_setup(p_dev, i);
+		result = gps_dl_cdev_setup(p_dev, link_id);
 		if (result) {
 			/* error happened */
 			gps_dl_devices_exit();

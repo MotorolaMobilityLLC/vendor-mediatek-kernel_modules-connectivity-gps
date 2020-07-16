@@ -34,21 +34,6 @@ int gps_dl_osal_strtol(const char *str, unsigned int adecimal, long *res)
 		return kstrtol(str, adecimal, res);
 }
 
-int gps_dl_osal_err_print(const char *str, ...)
-{
-	va_list args;
-	char tempString[DBG_LOG_STR_SIZE];
-
-	va_start(args, str);
-	vsnprintf(tempString, DBG_LOG_STR_SIZE, str, args);
-	va_end(args);
-
-	GDL_LOGE("%s", tempString);
-
-	return 0;
-}
-
-
 void *gps_dl_osal_memset(void *buf, int i, unsigned int len)
 {
 	return memset(buf, i, len);
