@@ -267,6 +267,10 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 		gps_each_link_rec_force_dump(dev->index);
 		GDL_LOGXW_DRW(dev->index, "GPSDL_IOC_QUERY_STATUS, reason = %ld, ret = %d", arg, retval);
 		break;
+	case GPSDL_IOC_CO_CLOCK_FLAG:
+		retval = gps_dl_link_get_clock_flag();
+		GDL_LOGXD_ONF(dev->index, "gps clock flag = 0x%x", retval);
+		break;
 #if 0
 	case GPSDL_IOC_GPS_HWVER:
 		/*get combo hw version */

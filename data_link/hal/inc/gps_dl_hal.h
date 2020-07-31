@@ -97,6 +97,12 @@ void gps_dl_hal_set_irq_dis_flag(enum gps_dl_link_id_enum link_id,
 bool gps_dl_hal_get_need_clk_ext_flag(enum gps_dl_link_id_enum link_id);
 void gps_dl_hal_set_need_clk_ext_flag(enum gps_dl_link_id_enum link_id, bool need);
 
+#define GPSDL_CLOCK_FLAG_TCXO      (0x00)
+#define GPSDL_CLOCK_FLAG_COTMS     (0x21)
+#define GPSDL_CLOCK_FLAG_52M_COTMS (0x51)
+int gps_dl_hal_get_clock_flag(void);
+void gps_dl_hal_load_clock_flag(void);
+
 void gps_dl_hw_gps_set_conn_infra_ver(unsigned int ver);
 unsigned int gps_dl_hw_gps_get_conn_infra_ver(void);
 

@@ -1699,3 +1699,8 @@ bool gps_dl_link_start_tx_dma_if_has_data(enum gps_dl_link_id_enum link_id)
 	return tx_dma_started;
 }
 
+int gps_dl_link_get_clock_flag(void)
+{
+	return gps_dl_hal_get_clock_flag();
+}
+
