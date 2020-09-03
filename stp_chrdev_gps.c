@@ -77,17 +77,6 @@ MODULE_LICENSE("GPL");
 #define COMBO_IOC_GPS_HW_RESUME      19
 #define COMBO_IOC_GPS_LISTEN_RST_EVT 20
 
-#if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761) || defined(CONFIG_MACH_MT6779) \
-|| defined(CONFIG_MACH_MT6768) || defined(CONFIG_MACH_MT6785) || defined(CONFIG_MACH_MT6873)
-#define GPS_FWCTL_SUPPORT
-#endif
-
-#ifdef GPS_FWCTL_SUPPORT
-/* Disable: #define GPS_FWCTL_IOCTL_SUPPORT */
-
-#define GPS_HW_SUSPEND_SUPPORT
-#endif /* GPS_FWCTL_SUPPORT */
-
 static UINT32 gDbgLevel = GPS_LOG_DBG;
 
 #define GPS_DBG_FUNC(fmt, arg...)	\
@@ -111,12 +100,12 @@ do { if (gDbgLevel >= GPS_LOG_DBG)	\
 		pr_info(PFX "<%s> <%d>\n", __func__, __LINE__);	\
 } while (0)
 
-#ifdef GPS_FWCTL_SUPPORT
-bool fgGps_fwctl_ready;
-#endif
-
 #ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
 bool fgGps_fwlog_on;
+#endif
+
+#ifdef GPS_FWCTL_SUPPORT
+bool fgGps_fwctl_ready;
 #endif
 
 static int GPS_devs = 1;	/* device count */
@@ -139,7 +128,8 @@ static unsigned char wake_lock_acquired;   /* default: 0 */
 #endif
 static unsigned char i_buf[STP_GPS_BUFFER_SIZE];	/* input buffer of read() */
 static unsigned char o_buf[STP_GPS_BUFFER_SIZE];	/* output buffer of write() */
-static struct semaphore wr_mtx, rd_mtx, fwctl_mtx, status_mtx;
+static struct semaphore wr_mtx, rd_mtx, status_mtx;
+struct semaphore fwctl_mtx;
 
 static DECLARE_WAIT_QUEUE_HEAD(GPS_wq);
 static DECLARE_WAIT_QUEUE_HEAD(GPS_rst_wq);
@@ -147,14 +137,7 @@ static int flag;
 static int rstflag;
 static int rst_listening_flag;
 static int rst_happened_or_gps_close_flag;
-enum gps_ctrl_status_enum {
-	GPS_CLOSED,
-	GPS_OPENED,
-	GPS_SUSPENDED,
-	GPS_RESET_START,
-	GPS_RESET_DONE,
-	GPS_CTRL_STATUS_NUM
-};
+
 static enum gps_ctrl_status_enum g_gps_ctrl_status;
 
 static void GPS_check_and_wakeup_rst_listener(enum gps_ctrl_status_enum to)
@@ -396,13 +379,6 @@ OUT:
 }
 
 #ifdef GPS_FWCTL_SUPPORT
-#define GPS_FWCTL_OPCODE_ENTER_SLEEP_MODE (2)
-#define GPS_FWCTL_OPCODE_EXIT_SLEEP_MODE  (3)
-#define GPS_FWCTL_OPCODE_ENTER_STOP_MODE  (4)
-#define GPS_FWCTL_OPCODE_EXIT_STOP_MODE   (5)
-#define GPS_FWCTL_OPCODE_LOG_CFG          (6)
-#define GPS_FWCTL_OPCODE_LOOPBACK_TEST    (7)
-
 #ifdef GPS_FWCTL_IOCTL_SUPPORT
 struct gps_fwctl_data {
 	UINT32 size;
@@ -629,9 +605,6 @@ static int GPS_hw_suspend_ctrl(bool to_suspend, UINT8 mode)
 	return 0;
 }
 
-
-static void GPS_handle_desense(bool on);
-
 static int GPS_hw_suspend(UINT8 mode)
 {
 	MTK_WCN_BOOL wmt_okay;
@@ -661,7 +634,7 @@ static int GPS_hw_suspend(UINT8 mode)
 		 * mtk_wcn_wmt_msgcb_unreg(WMTDRV_TYPE_GPS);
 		 */
 
-		GPS_handle_desense(false);
+		GPS_reference_count(HANDLE_DESENSE, false, GPS_USER1);
 		gps_hold_wake_lock(0);
 		GPS_WARN_FUNC("gps_hold_wake_lock(0)\n");
 
@@ -679,7 +652,7 @@ static int GPS_hw_resume(UINT8 mode)
 
 	gps_status = g_gps_ctrl_status;
 	if (gps_status == GPS_SUSPENDED) {
-		GPS_handle_desense(true);
+		GPS_reference_count(HANDLE_DESENSE, true, GPS_USER1);
 		gps_hold_wake_lock(1);
 		GPS_WARN_FUNC("gps_hold_wake_lock(1)\n");
 
@@ -711,8 +684,7 @@ void GPS_fwlog_ctrl(bool on)
 #if (defined(GPS_FWCTL_SUPPORT) && defined(CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH))
 	down(&fwctl_mtx);
 	if (fgGps_fwctl_ready)
-		GPS_fwlog_ctrl_inner(on);
-
+		GPS_reference_count(FWLOG_CTRL_INNER, on, GPS_USER1);
 	fgGps_fwlog_on = on;
 	up(&fwctl_mtx);
 #endif
@@ -948,9 +920,9 @@ static void gps_cdev_rst_cb(ENUM_WMTDRV_TYPE_T src,
 				GPS_INFO_FUNC("Whole chip reset start!\n");
 				rstflag = 1;
 #ifdef GPS_FWCTL_SUPPORT
-				/* down(&fwctl_mtx); */
-				fgGps_fwctl_ready = false;
-				/* up(&fwctl_mtx); */
+				down(&fwctl_mtx);
+				GPS_reference_count(FGGPS_FWCTL_EADY, false, GPS_USER1);
+				up(&fwctl_mtx);
 #endif
 				GPS_ctrl_status_change_to(GPS_RESET_START);
 				break;
@@ -1072,15 +1044,15 @@ static int GPS_open(struct inode *inode, struct file *file)
 	gps_hold_wake_lock(1);
 	GPS_WARN_FUNC("gps_hold_wake_lock(1)\n");
 
-	GPS_handle_desense(true);
+	GPS_reference_count(HANDLE_DESENSE, true, GPS_USER1);
 
 #ifdef GPS_FWCTL_SUPPORT
 	down(&fwctl_mtx);
-	fgGps_fwctl_ready = true;
+	GPS_reference_count(FGGPS_FWCTL_EADY, true, GPS_USER1);
 #ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
 	if (fgGps_fwlog_on) {
 		/* GPS fw clear log on flag when GPS on, no need to send it if log setting is off */
-		GPS_fwlog_ctrl_inner(fgGps_fwlog_on);
+		GPS_reference_count(FWLOG_CTRL_INNER, fgGps_fwlog_on, GPS_USER1);
 	}
 #endif
 	up(&fwctl_mtx);
@@ -1106,7 +1078,7 @@ static int GPS_close(struct inode *inode, struct file *file)
 
 #ifdef GPS_FWCTL_SUPPORT
 	down(&fwctl_mtx);
-	fgGps_fwctl_ready = false;
+	GPS_reference_count(FGGPS_FWCTL_EADY, false, GPS_USER1);
 	up(&fwctl_mtx);
 #endif
 
@@ -1126,7 +1098,7 @@ _out:
 	gps_hold_wake_lock(0);
 	GPS_WARN_FUNC("gps_hold_wake_lock(0)\n");
 
-	GPS_handle_desense(false);
+	GPS_reference_count(HANDLE_DESENSE, false, GPS_USER1);
 
 	GPS_ctrl_status_change_to(GPS_CLOSED);
 	return ret;
@@ -1243,7 +1215,6 @@ static int GPS_init(void)
 	wakeup_source_init(&gps2_wake_lock, "gpswakelock");
 
 	sema_init(&status_mtx2, 1);
-	sema_init(&fwctl_mtx2, 1);
 	/* init_MUTEX(&wr_mtx); */
 	sema_init(&wr_mtx2, 1);
 	/* init_MUTEX(&rd_mtx); */
@@ -1355,4 +1326,39 @@ static void __exit gps_mod_exit(void)
 
 module_init(gps_mod_init);
 module_exit(gps_mod_exit);
+
+int reference_count_bitmap[2] = {0};
+void GPS_reference_count(enum gps_reference_count_cmd cmd, bool flag, int user)
+{
+	bool old_state = false;
+	bool new_state = false;
+
+	old_state = (reference_count_bitmap[0] & (0x01 << (int)cmd))
+	|| (reference_count_bitmap[1] & (0x01 << FWLOG_CTRL_INNER));
+	if (flag == true)
+		reference_count_bitmap[user] |= (0x01 << (int)cmd);
+	else
+		reference_count_bitmap[user] &= ~(0x01 << (int)cmd);
+	new_state = (reference_count_bitmap[0] & (0x01 << (int)cmd))
+	|| (reference_count_bitmap[1] & (0x01 << FWLOG_CTRL_INNER));
+
+	switch (cmd) {
+	case FWLOG_CTRL_INNER:
+#ifdef GPS_FWCTL_SUPPORT
+		if (old_state != new_state)
+			GPS_fwlog_ctrl_inner(new_state);
+#endif
+	break;
+	case HANDLE_DESENSE:
+		if (old_state != new_state)
+			GPS_handle_desense(new_state);
+	break;
+	case FGGPS_FWCTL_EADY:
+#ifdef GPS_FWCTL_SUPPORT
+		if (old_state != new_state)
+			fgGps_fwctl_ready = new_state;
+#endif
+	break;
+	}
+}
 

@@ -73,6 +73,9 @@ GPS_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps
 ifeq ($(CONFIG_ARCH_MTK_PROJECT),"k6833v1_64_swrgo")
 ccflags-y += -DCONFIG_GPSL5_SUPPORT
 endif
+ifeq ($(CONFIG_MACH_MT6833),y)
+ccflags-y += -DCONFIG_GPSL5_SUPPORT
+endif
 
 ifeq ($(CONFIG_MACH_MT6885),y)
 SELECT_GPS_DL_DRV := y
@@ -192,6 +195,9 @@ ifeq ($(CONFIG_MTK_CONN_MT3337_CHIP_SUPPORT),y)
 else
         $(MODULE_NAME)-objs += stp_chrdev_gps.o
 ifeq ($(CONFIG_ARCH_MTK_PROJECT),"k6833v1_64_swrgo")
+        $(MODULE_NAME)-objs += stp_chrdev_gps2.o
+endif
+ifeq ($(CONFIG_MACH_MT6833),y)
         $(MODULE_NAME)-objs += stp_chrdev_gps2.o
 endif
 endif
