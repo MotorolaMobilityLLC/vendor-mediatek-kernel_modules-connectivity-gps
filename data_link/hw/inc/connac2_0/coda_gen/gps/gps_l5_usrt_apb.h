@@ -10,7 +10,6 @@
 #define GPS_L5_USRT_APB_GPS_APB_DATA_ADDR                      (GPS_L5_USRT_APB_BASE + 0x0000)
 #define GPS_L5_USRT_APB_APB_CTRL_ADDR                          (GPS_L5_USRT_APB_BASE + 0x0004)
 #define GPS_L5_USRT_APB_APB_INTEN_ADDR                         (GPS_L5_USRT_APB_BASE + 0x0008)
-#define GPS_L5_USRT_APB_APB_INTEN_ADDR                         (GPS_L5_USRT_APB_BASE + 0x0008)
 #define GPS_L5_USRT_APB_APB_STA_ADDR                           (GPS_L5_USRT_APB_BASE + 0x000C)
 #define GPS_L5_USRT_APB_MONF_ADDR                              (GPS_L5_USRT_APB_BASE + 0x0010)
 #define GPS_L5_USRT_APB_MCUB_A2DF_ADDR                         (GPS_L5_USRT_APB_BASE + 0x0020)
