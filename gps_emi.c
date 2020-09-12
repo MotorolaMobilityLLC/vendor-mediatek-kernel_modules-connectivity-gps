@@ -73,7 +73,8 @@
 #include <mt_emi_api.h>
 #endif
 #endif
-#if defined(CONFIG_MACH_MT6873) || defined(CONFIG_MACH_MT6853)
+#if defined(CONFIG_MACH_MT6873) || defined(CONFIG_MACH_MT6853) || defined(CONFIG_MACH_MT6893)
+#define GPS_EMI_NEW_API
 #define GPS_EMI_MPU_REGION           29
 #define GPS_EMI_BASE_ADDR_OFFSET     (3*SZ_1M + 0x10000)
 #define GPS_EMI_MPU_SIZE             (0xF0000)
@@ -84,7 +85,20 @@
 #include <memory/mediatek/emi.h>
 #endif
 #endif
+#if defined(CONFIG_MACH_MT6833)
+#define GPS_EMI_NEW_API
+#define GPS_EMI_MPU_REGION           29
+#define GPS_EMI_BASE_ADDR_OFFSET     (4*SZ_1M)
+#define GPS_EMI_MPU_SIZE             (0xFFFFF)
+#define GPS_DL_EMI_MPU_DOMAIN_AP      0
+#define GPS_DL_EMI_MPU_DOMAIN_CONN    2
+#define EMI_MPU_PROTECTION_IS_READY  1
+#if EMI_MPU_PROTECTION_IS_READY
+#include <memory/mediatek/emi.h>
+#endif
+#endif
 #if defined(CONFIG_MACH_MT6779) && (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+#define GPS_EMI_NEW_API
 #define GPS_EMI_MPU_REGION           29
 #define GPS_EMI_BASE_ADDR_OFFSET     (3*SZ_1M + 0x10000)
 #define GPS_EMI_MPU_SIZE             (0xF0000)
@@ -148,8 +162,7 @@ void mtk_wcn_consys_gps_memory_reserve(void)
 INT32 gps_emi_mpu_set_region_protection(INT32 region)
 {
 #if EMI_MPU_PROTECTION_IS_READY
-#if defined(CONFIG_MACH_MT6873) || defined(CONFIG_MACH_MT6853) ||\
-	(defined(CONFIG_MACH_MT6779) && (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)))
+#if defined(GPS_EMI_NEW_API)
 	struct emimpu_region_t region_info;
 	int emimpu_ret1, emimpu_ret2, emimpu_ret3, emimpu_ret4, emimpu_ret5, emimpu_ret6;
 	/* Set EMI MPU permission */
