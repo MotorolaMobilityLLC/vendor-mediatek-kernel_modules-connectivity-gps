@@ -1278,6 +1278,22 @@ void gps_dl_link_irq_set(enum gps_dl_link_id_enum link_id, bool enable)
 	}
 }
 
+void gps_dl_link_pre_off_setting(enum gps_dl_link_id_enum link_id)
+{
+	/*
+	 * The order is important:
+	 * 1. disallow write, avoiding to start dma
+	 * 2. stop tx/rx dma and mask dma irq if it is last link
+	 * 3. mask link's irqs
+	 * 4. set inactive after all irq mask done
+	 * (at this time isr can check inactive and unmask irq safely due to step 3 already mask irqs)
+	 */
+	gps_dl_link_set_ready_to_write(link_id, false);
+	gps_dl_hal_link_confirm_dma_stop(link_id);
+	gps_dl_link_irq_set(link_id, false);
+	gps_each_link_set_active(link_id, false);
+}
+
 void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	enum gps_dl_link_id_enum link_id)
 {
@@ -1342,11 +1358,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_dl_link_irq_set(link_id, true);
 		break;
 	case GPS_DL_EVT_LINK_ENTER_DPSLEEP:
-		gps_each_link_set_active(link_id, false);
-		gps_dl_link_set_ready_to_write(link_id, false);
-		gps_dl_hal_link_confirm_dma_stop(link_id);
-		gps_dl_link_irq_set(link_id, false);
-
+		gps_dl_link_pre_off_setting(link_id);
 		gps_dl_hal_link_power_ctrl(link_id, GPS_DL_HAL_ENTER_DPSLEEP);
 		break;
 	case GPS_DL_EVT_LINK_ENTER_DPSTOP:
@@ -1369,11 +1381,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_dl_hal_set_need_clk_ext_flag(link_id,
 			gps_each_link_get_bool_flag(link_id, LINK_SUSPEND_TO_CLK_EXT));
 
-		gps_each_link_set_active(link_id, false);
-		gps_dl_link_set_ready_to_write(link_id, false);
-		gps_dl_hal_link_confirm_dma_stop(link_id);
-		gps_dl_link_irq_set(link_id, false);
-
+		gps_dl_link_pre_off_setting(link_id);
 		/* TODO: handle fail */
 		gps_dl_hal_link_power_ctrl(link_id, GPS_DL_HAL_ENTER_DPSTOP);
 		gps_dsp_fsm(GPS_DSP_EVT_HW_STOP_REQ, link_id);
@@ -1399,8 +1407,6 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	case GPS_DL_EVT_LINK_RESET_DSP:
 	case GPS_DL_EVT_LINK_RESET_GPS:
 	case GPS_DL_EVT_LINK_PRE_CONN_RESET:
-		gps_each_link_set_active(link_id, false);
-
 		if (evt != GPS_DL_EVT_LINK_CLOSE)
 			show_log = gps_dl_set_show_reg_rw_log(true);
 
@@ -1409,6 +1415,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 			GDL_LOGXD(link_id, "not open okay, just power off for %s",
 				gps_dl_link_event_name(evt));
 
+			gps_each_link_set_active(link_id, false);
 			gps_dl_hal_link_power_ctrl(link_id, GPS_DL_HAL_POWER_OFF);
 			gps_dl_hal_conn_power_ctrl(link_id, 0);
 			goto _close_or_reset_ack;
@@ -1418,6 +1425,9 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		if (GPS_DSP_ST_OFF == gps_dsp_state_get(link_id)) {
 			GDL_LOGXD(link_id, "dsp state is off, do nothing for %s",
 				gps_dl_link_event_name(evt));
+
+			if (evt != GPS_DL_EVT_LINK_CLOSE)
+				gps_dl_set_show_reg_rw_log(show_log);
 
 			goto _close_or_reset_ack;
 		} else if (GPS_DSP_ST_HW_STOP_MODE == gps_dsp_state_get(link_id)) {
@@ -1429,9 +1439,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 			gps_dl_hal_link_power_ctrl(link_id, GPS_DL_HAL_LEAVE_DPSTOP);
 		} else {
 			/* make sure current link's DMAs are stopped and mask the IRQs */
-			gps_dl_link_set_ready_to_write(link_id, false);
-			gps_dl_hal_link_confirm_dma_stop(link_id);
-			gps_dl_link_irq_set(link_id, false);
+			gps_dl_link_pre_off_setting(link_id);
 		}
 		gps_dl_hal_set_need_clk_ext_flag(link_id, false);
 
