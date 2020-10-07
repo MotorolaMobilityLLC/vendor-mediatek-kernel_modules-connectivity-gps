@@ -154,6 +154,7 @@ bool gps_dl_hw_usrt_has_set_nodata_flag(enum gps_dl_link_id_enum link_id);
 
 
 bool gps_dl_hw_is_pta_clk_cfg_ready(void);
+void gps_dl_hw_set_ptk_clk_cfg(void);
 
 bool gps_dl_hw_is_pta_uart_init_done(void);
 bool gps_dl_hw_init_pta_uart(void);
@@ -165,7 +166,7 @@ void gps_dl_hw_deinit_pta(void);
 
 void gps_dl_hw_claim_pta_used_by_gps(void);
 void gps_dl_hw_disclaim_pta_used_by_gps(void);
-void gps_dl_hw_set_pta_blanking_parameter(void);
+void gps_dl_hw_set_pta_blanking_parameter(bool use_direct_path);
 
 bool gps_dl_hw_take_conn_coex_hw_sema(unsigned int timeout_ms);
 void gps_dl_hw_give_conn_coex_hw_sema(void);

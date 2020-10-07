@@ -195,7 +195,7 @@ int gps_dl_hw_gps_common_on(void)
 	 * record the poll_ver here and we can know which one it is,
 	 * and it may help for debug purpose.
 	 */
-	gps_dl_hw_gps_set_conn_infra_ver(poll_ver);
+	gps_dl_hal_set_conn_infra_ver(poll_ver);
 	GDL_LOGW("%s: poll_ver = 0x%08x is ok", GDL_HW_SUPPORT_LIST, poll_ver);
 
 	/* GPS SW EMI request
