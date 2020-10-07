@@ -17,6 +17,7 @@
 #include <linux/proc_fs.h>
 #include "gps_dl_osal.h"
 #include "gps_dl_procfs.h"
+#include "gps_dl_context.h"
 #include "gps_each_link.h"
 #include "gps_dl_subsys_reset.h"
 
@@ -58,6 +59,16 @@ int gps_dl_procfs_set_opt(int y, int z)
 		gps_dl_log_mod_off(z);
 		mod_new = gps_dl_log_level_get();
 		GDL_LOGW("log modules change: 0x%x to 0x%x", mod_old, mod_new);
+	} else if (y == 5) {
+		bool rrw_old, rrw_new;
+
+		rrw_old = gps_dl_show_reg_rw_log();
+		if (z == 0)
+			gps_dl_set_show_reg_rw_log(false);
+		else if (z == 1)
+			gps_dl_set_show_reg_rw_log(true);
+		rrw_new = gps_dl_show_reg_rw_log();
+		GDL_LOGW("log rrw change: %d to %d", rrw_old, rrw_new);
 	}
 
 	return 0;
