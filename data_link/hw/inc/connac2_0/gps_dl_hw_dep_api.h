@@ -5,13 +5,11 @@
 #ifndef _GPS_DL_HW_DEP_API_H
 #define _GPS_DL_HW_DEP_API_H
 
+#include "gps_dl_hw_ver.h"
 #include "conn_infra/conn_infra_cfg.h"
 #include "conn_infra/conn_host_csr_top.h"
 
 #define GDL_HW_SUPPORT_LIST "SUPPORT:MT6885,MT6893"
-#define GDL_HW_CONN_INFRA_VER_MT6885 (0x20010000)
-#define GDL_HW_CONN_INFRA_VER_MT6893 (0x20010101)
-#define GDL_HW_BGF_VER (0x20010000)
 
 #define GDL_HW_CHECK_CONN_INFRA_VER(p_poll_okay, p_poll_ver)             \
 	GDL_HW_POLL_ENTRY_VERBOSE(GPS_DL_CONN_INFRA_BUS,                 \

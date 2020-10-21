@@ -103,8 +103,9 @@ void gps_dl_hal_set_need_clk_ext_flag(enum gps_dl_link_id_enum link_id, bool nee
 int gps_dl_hal_get_clock_flag(void);
 void gps_dl_hal_load_clock_flag(void);
 
-void gps_dl_hw_gps_set_conn_infra_ver(unsigned int ver);
-unsigned int gps_dl_hw_gps_get_conn_infra_ver(void);
+void gps_dl_hal_set_conn_infra_ver(unsigned int ver);
+unsigned int gps_dl_hal_get_conn_infra_ver(void);
+bool gps_dl_hal_conn_infra_ver_is_mt6885(void);
 
 #endif /* _GPS_DL_HAL_H */
 
