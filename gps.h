@@ -102,4 +102,6 @@ extern bool fgGps_fwlog_on;
 extern bool fgGps_fwctl_ready;
 #endif
 
+extern struct semaphore lna_mtx;
+
 #endif
