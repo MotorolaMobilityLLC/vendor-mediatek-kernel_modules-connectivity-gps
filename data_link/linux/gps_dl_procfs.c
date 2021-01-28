@@ -120,6 +120,10 @@ ssize_t gps_dl_procfs_write(struct file *filp, const char __user *buffer, size_t
 			break;
 		}
 
+		if (!pBuf) {
+			GDL_LOGW("y use default value - case1");
+			break;
+		}
 		res = 0;
 		sub_len = strlen(pBuf);
 		GDL_LOGD("write parameter data = %s, len = %d", pBuf, sub_len);
@@ -129,10 +133,14 @@ ssize_t gps_dl_procfs_write(struct file *filp, const char __user *buffer, size_t
 			osal_strtol(pToken, 16, &res);
 			y = (int)res;
 		} else {
-			GDL_LOGW("y use default value");
+			GDL_LOGW("y use default value - case2");
 			break;
 		}
 
+		if (!pBuf) {
+			GDL_LOGW("z use default value - case1");
+			break;
+		}
 		res = 0;
 		sub_len = strlen(pBuf);
 		GDL_LOGD("write parameter data = %s, len = %d", pBuf, sub_len);
@@ -142,7 +150,7 @@ ssize_t gps_dl_procfs_write(struct file *filp, const char __user *buffer, size_t
 			osal_strtol(pToken, 16, &res);
 			z = (int)res;
 		} else {
-			GDL_LOGW("z use default value");
+			GDL_LOGW("z use default value - case2");
 			break;
 		}
 	} while (0);
