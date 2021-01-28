@@ -75,7 +75,7 @@ static struct gps_dl_ctx s_gps_dl_ctx = {
 };
 
 static struct gps_dl_runtime_cfg s_gps_rt_cfg = {
-	.dma_is_1byte_mode = true,
+	.dma_is_1byte_mode = false,
 	.dma_is_enabled = true,
 	.show_reg_rw_log = false,
 	.show_reg_wait_log = true,
