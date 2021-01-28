@@ -56,6 +56,16 @@ enum gps_dl_hal_dma_ch_index {
 	GPS_DL_DMA_CH_NUM,
 };
 
+enum gps_dl_hal_emi_user {
+	GPS_DL_EMI_USER_TX_DMA0 = GPS_DL_DMA_LINK0_A2D,
+	GPS_DL_EMI_USER_RX_DMA0 = GPS_DL_DMA_LINK0_D2A,
+	GPS_DL_EMI_USER_TX_DMA1 = GPS_DL_DMA_LINK1_A2D,
+	GPS_DL_EMI_USER_RX_DMA1 = GPS_DL_DMA_LINK1_D2A,
+	GPS_DL_EMI_USER_ICAP,
+	GPS_DL_EMI_USER_GPS_ON, /* may remove this user later */
+	GPS_DL_EMI_USER_NUM
+};
+
 #define DMA_CH_TO_LINK_ID(ch) (\
 	((ch) == GPS_DL_DMA_LINK0_A2D || (ch) == GPS_DL_DMA_LINK0_D2A) ? GPS_DATA_LINK_ID0 : (\
 	((ch) == GPS_DL_DMA_LINK1_A2D || (ch) == GPS_DL_DMA_LINK1_D2A) ? GPS_DATA_LINK_ID1 : (\
@@ -82,6 +92,13 @@ void gps_dl_hal_dma_stop(enum gps_dl_hal_dma_ch_index ch);
 
 void gps_dl_emi_remap_calc_and_set(void);
 enum GDL_RET_STATUS gps_dl_emi_remap_phy_to_bus_addr(unsigned int phy_addr, unsigned int *bus_addr);
+
+void gps_dl_hal_emi_usage_init(void);
+void gps_dl_hal_emi_usage_deinit(void);
+void gps_dl_hal_emi_usage_claim(enum gps_dl_hal_emi_user user, bool use_emi);
+void gps_dl_hal_a2d_tx_dma_claim_emi_usage(enum gps_dl_link_id_enum link_id, bool use_emi);
+void gps_dl_hal_d2a_rx_dma_claim_emi_usage(enum gps_dl_link_id_enum link_id, bool use_emi);
+
 
 #endif /* _GPS_DL_HAL_API_H */
 
