@@ -49,6 +49,8 @@
 MODULE_LICENSE("GPL");
 
 #define GPS_DRIVER_NAME "mtk_stp_GPS_chrdev"
+#define GPS2_DRIVER_NAME "mtk_stp_GPS2_chrdev"
+
 #define GPS_DEV_MAJOR 191	/* never used number */
 #define GPS_DEBUG_TRACE_GPIO         0
 #define GPS_DEBUG_DUMP               0
@@ -121,6 +123,10 @@ static int GPS_devs = 1;	/* device count */
 static int GPS_major = GPS_DEV_MAJOR;	/* dynamic allocation */
 module_param(GPS_major, uint, 0);
 static struct cdev GPS_cdev;
+#ifdef CONFIG_GPSL5_SUPPORT
+static int GPS2_devs = 2;	/* device count */
+static struct cdev GPS2_cdev;
+#endif
 
 static struct wakeup_source *gps_wake_lock_ptr;
 const char gps_wake_lock_name[] = "gpswakelock";
@@ -134,13 +140,13 @@ static unsigned char wake_lock_acquired;   /* default: 0 */
 static unsigned char i_buf[STP_GPS_BUFFER_SIZE];	/* input buffer of read() */
 static unsigned char o_buf[STP_GPS_BUFFER_SIZE];	/* output buffer of write() */
 static struct semaphore wr_mtx, rd_mtx, fwctl_mtx, status_mtx;
+
 static DECLARE_WAIT_QUEUE_HEAD(GPS_wq);
 static DECLARE_WAIT_QUEUE_HEAD(GPS_rst_wq);
 static int flag;
 static int rstflag;
 static int rst_listening_flag;
 static int rst_happened_or_gps_close_flag;
-
 enum gps_ctrl_status_enum {
 	GPS_CLOSED,
 	GPS_OPENED,
@@ -636,9 +642,13 @@ static int GPS_hw_suspend(UINT8 mode)
 		if (GPS_hw_suspend_ctrl(true, mode) != 0)
 			return -EINVAL; /* Stands for not support */
 
+#ifdef CONFIG_GPSL5_SUPPORT
+		wmt_okay = mtk_wmt_gps_l1_suspend_ctrl(MTK_WCN_BOOL_TRUE);
+#else
 		wmt_okay = mtk_wmt_gps_suspend_ctrl(MTK_WCN_BOOL_TRUE);
+#endif
 		if (!wmt_okay)
-			GPS_WARN_FUNC("mtk_wmt_gps_suspend_ctrl(1), is_ok = %d", wmt_okay);
+			GPS_WARN_FUNC("mtk_wmt_gps_l1_suspend_ctrl(1), is_ok = %d", wmt_okay);
 
 		/* register event cb will clear GPS STP buffer */
 		mtk_wcn_stp_register_event_cb(GPS_TASK_INDX, 0x0);
@@ -673,9 +683,13 @@ static int GPS_hw_resume(UINT8 mode)
 		gps_hold_wake_lock(1);
 		GPS_WARN_FUNC("gps_hold_wake_lock(1)\n");
 
+#ifdef CONFIG_GPSL5_SUPPORT
+		wmt_okay = mtk_wmt_gps_l1_suspend_ctrl(MTK_WCN_BOOL_FALSE);
+#else
 		wmt_okay = mtk_wmt_gps_suspend_ctrl(MTK_WCN_BOOL_FALSE);
+#endif
 		if (!wmt_okay)
-			GPS_WARN_FUNC("mtk_wmt_gps_suspend_ctrl(0), is_ok = %d", wmt_okay);
+			GPS_WARN_FUNC("mtk_wmt_gps_l1_suspend_ctrl(0), is_ok = %d", wmt_okay);
 
 		/* should register it before real resuming to prepare for receiving data */
 		mtk_wcn_stp_register_event_cb(GPS_TASK_INDX, GPS_event_cb);
@@ -1138,16 +1152,27 @@ void GPS_event_cb(void)
 
 #if WMT_CREATE_NODE_DYNAMIC || REMOVE_MK_NODE
 struct class *stpgps_class;
+#ifdef CONFIG_GPSL5_SUPPORT
+struct class *stpgps2_class;
+#endif
 #endif
 
 static int GPS_init(void)
 {
 	dev_t dev = MKDEV(GPS_major, 0);
-	int alloc_ret = 0;
 	int cdev_err = 0;
 #if WMT_CREATE_NODE_DYNAMIC || REMOVE_MK_NODE
 	struct device *stpgps_dev = NULL;
 #endif
+#ifdef CONFIG_GPSL5_SUPPORT
+	dev_t dev2 = MKDEV(GPS_major, 1);
+	int cdev2_err = 0;
+#if WMT_CREATE_NODE_DYNAMIC || REMOVE_MK_NODE
+	struct device *stpgps2_dev = NULL;
+#endif
+#endif
+	int alloc_ret = 0;
+
 
 	/*static allocate chrdev */
 	alloc_ret = register_chrdev_region(dev, 1, GPS_DRIVER_NAME);
@@ -1171,6 +1196,31 @@ static int GPS_init(void)
 	if (IS_ERR(stpgps_dev))
 		goto error;
 #endif
+
+#ifdef CONFIG_GPSL5_SUPPORT
+	/*static allocate chrdev */
+	alloc_ret = register_chrdev_region(dev2, 1, GPS2_DRIVER_NAME);
+	if (alloc_ret) {
+		pr_info("fail to register chrdev\n");
+		return alloc_ret;
+	}
+
+	cdev_init(&GPS2_cdev, &GPS2_fops);
+	GPS2_cdev.owner = THIS_MODULE;
+
+	cdev2_err = cdev_add(&GPS2_cdev, dev2, GPS2_devs);
+	if (cdev2_err)
+		goto error;
+#if WMT_CREATE_NODE_DYNAMIC || REMOVE_MK_NODE
+
+	stpgps2_class = class_create(THIS_MODULE, "stpgps2");
+	if (IS_ERR(stpgps2_class))
+		goto error;
+	stpgps2_dev = device_create(stpgps2_class, NULL, dev2, NULL, "stpgps2");
+	if (IS_ERR(stpgps2_dev))
+		goto error;
+#endif
+#endif
 	pr_warn("%s driver(major %d) installed.\n", GPS_DRIVER_NAME, GPS_major);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 149)
 	gps_wake_lock_ptr = wakeup_source_register(NULL, gps_wake_lock_name);
@@ -1189,6 +1239,16 @@ static int GPS_init(void)
 	/* init_MUTEX(&rd_mtx); */
 	sema_init(&rd_mtx, 1);
 
+#ifdef CONFIG_GPSL5_SUPPORT
+	wakeup_source_init(&gps2_wake_lock, "gpswakelock");
+
+	sema_init(&status_mtx2, 1);
+	sema_init(&fwctl_mtx2, 1);
+	/* init_MUTEX(&wr_mtx); */
+	sema_init(&wr_mtx2, 1);
+	/* init_MUTEX(&rd_mtx); */
+	sema_init(&rd_mtx2, 1);
+#endif
 	return 0;
 
 error:
@@ -1200,12 +1260,27 @@ error:
 		class_destroy(stpgps_class);
 		stpgps_class = NULL;
 	}
+#ifdef CONFIG_GPSL5_SUPPORT
+	if (!IS_ERR(stpgps2_dev))
+		device_destroy(stpgps2_class, dev2);
+	if (!IS_ERR(stpgps2_class)) {
+		class_destroy(stpgps2_class);
+		stpgps2_class = NULL;
+	}
+#endif
 #endif
 	if (cdev_err == 0)
 		cdev_del(&GPS_cdev);
-
-	if (alloc_ret == 0)
+#ifdef CONFIG_GPSL5_SUPPORT
+	if (cdev2_err == 0)
+		cdev_del(&GPS2_cdev);
+#endif
+	if (alloc_ret == 0) {
 		unregister_chrdev_region(dev, GPS_devs);
+#ifdef CONFIG_GPSL5_SUPPORT
+		unregister_chrdev_region(dev2, GPS2_devs);
+#endif
+	}
 
 	return -1;
 }
@@ -1213,16 +1288,29 @@ error:
 static void GPS_exit(void)
 {
 	dev_t dev = MKDEV(GPS_major, 0);
+#ifdef CONFIG_GPSL5_SUPPORT
+	dev_t dev2 = MKDEV(GPS_major, 1);
+#endif
 #if WMT_CREATE_NODE_DYNAMIC || REMOVE_MK_NODE
 	device_destroy(stpgps_class, dev);
 	class_destroy(stpgps_class);
 	stpgps_class = NULL;
+#ifdef CONFIG_GPSL5_SUPPORT
+	device_destroy(stpgps2_class, dev2);
+	class_destroy(stpgps2_class);
+	stpgps2_class = NULL;
+#endif
 #endif
 
 	cdev_del(&GPS_cdev);
 	unregister_chrdev_region(dev, GPS_devs);
 	pr_warn("%s driver removed.\n", GPS_DRIVER_NAME);
 
+#ifdef CONFIG_GPSL5_SUPPORT
+	cdev_del(&GPS2_cdev);
+	unregister_chrdev_region(dev2, GPS2_devs);
+	pr_info("%s driver removed.\n", GPS2_DRIVER_NAME);
+#endif
 	wakeup_source_unregister(gps_wake_lock_ptr);
 }
 
