@@ -37,18 +37,26 @@ enum GDL_RET_STATUS gps_dl_reset_level_set_and_trigger(
 		old_level = p->reset_level;
 
 		switch (old_state) {
-		case LINK_RESET_DONE:
 		case LINK_CLOSED:
 			need_wait[link_id] = false;
-			if (level == GPS_DL_RESET_LEVEL_CONNSYS) {
-				p->state_for_user = LINK_DISABLED;
-				p->reset_level = level;
-			}
+			p->state_for_user = LINK_DISABLED;
+			p->reset_level = level;
+
+			/* Send reset event to ctld:
+			 *
+			 * for GPS_DL_RESET_LEVEL_GPS_SUBSYS ctrld do nothing but
+			 *   just change state from DISABLED back to CLOSED
+			 *
+			 * for GPS_DL_RESET_LEVEL_CONNSYS ctrld do nothing but
+			 *   just change state from DISABLED state back to CLOSED
+			 */
+			to_send_reset_event = true;
 			break;
 
 		case LINK_OPENING:
 		case LINK_OPENED:
 		case LINK_CLOSING:
+		case LINK_RESET_DONE:
 			need_wait[link_id] = true;
 			p->state_for_user = LINK_RESETTING;
 			p->reset_level = level;
@@ -83,9 +91,10 @@ enum GDL_RET_STATUS gps_dl_reset_level_set_and_trigger(
 				gps_dl_link_event_send(GPS_DL_EVT_LINK_RESET_GPS, link_id);
 		}
 
-		GDL_LOGXE(link_id, "level = %d (%d -> %d), state: %s -> %s, is_sent = %d, to_wait = %d",
-			level, old_level, new_level,
+		GDL_LOGXE(link_id,
+			"state change: %s -> %s, level = %d (%d -> %d), is_sent = %d, to_wait = %d",
 			gps_dl_link_state_name(old_state), gps_dl_link_state_name(new_state),
+			level, old_level, new_level,
 			to_send_reset_event, need_wait[link_id]);
 	}
 
@@ -132,6 +141,7 @@ void gps_dl_handle_connsys_reset_done(void)
 	enum gps_dl_link_id_enum link_id;
 	struct gps_each_link *p;
 	enum gps_each_link_state_enum state;
+	enum gps_each_link_reset_level level;
 	bool to_send_reset_event;
 
 	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
@@ -140,15 +150,19 @@ void gps_dl_handle_connsys_reset_done(void)
 
 		gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 		state = p->state_for_user;
-		if (state == LINK_RESETTING || state == LINK_DISABLED)
-			to_send_reset_event = true;
+		level = p->reset_level;
+
+		if (level == GPS_DL_RESET_LEVEL_CONNSYS) {
+			if (state == LINK_DISABLED || state == LINK_RESETTING)
+				to_send_reset_event = true;
+		}
 		gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
 		if (to_send_reset_event)
 			gps_dl_link_event_send(GPS_DL_EVT_LINK_POST_CONN_RESET, link_id);
 
-		GDL_LOGXE(link_id, "state = %s, is_sent = %d",
-			gps_dl_link_state_name(state), to_send_reset_event);
+		GDL_LOGXE(link_id, "state check: %s, level = %d, is_sent = %d",
+			gps_dl_link_state_name(state), level, to_send_reset_event);
 	}
 }
 
