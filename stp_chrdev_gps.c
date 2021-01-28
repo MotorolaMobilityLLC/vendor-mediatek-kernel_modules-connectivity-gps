@@ -67,6 +67,9 @@ MODULE_LICENSE("GPL");
 #define COMBO_IOC_GIVE_GPS_WAKELOCK  15
 #define COMBO_IOC_GET_GPS_LNA_PIN    16
 #define COMBO_IOC_GPS_FWCTL          17
+#define COMBO_IOC_GPS_HW_SUSPEND     18
+#define COMBO_IOC_GPS_HW_RESUME      19
+#define COMBO_IOC_GPS_LISTEN_RST_EVT 20
 
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761) || defined(CONFIG_MACH_MT6779) \
 || defined(CONFIG_MACH_MT6768)
@@ -75,7 +78,12 @@ MODULE_LICENSE("GPL");
 
 #ifdef GPS_FWCTL_SUPPORT
 /* Disable: #define GPS_FWCTL_IOCTL_SUPPORT */
+
+#if defined(CONFIG_MACH_MT6768)
+#define GPS_HW_SUSPEND_SUPPORT
 #endif
+
+#endif /* GPS_FWCTL_SUPPORT */
 
 static UINT32 gDbgLevel = GPS_LOG_DBG;
 
@@ -123,10 +131,73 @@ static unsigned char wake_lock_acquired;   /* default: 0 */
 #endif
 static unsigned char i_buf[STP_GPS_BUFFER_SIZE];	/* input buffer of read() */
 static unsigned char o_buf[STP_GPS_BUFFER_SIZE];	/* output buffer of write() */
-static struct semaphore wr_mtx, rd_mtx, fwctl_mtx;
+static struct semaphore wr_mtx, rd_mtx, fwctl_mtx, status_mtx;
 static DECLARE_WAIT_QUEUE_HEAD(GPS_wq);
+static DECLARE_WAIT_QUEUE_HEAD(GPS_rst_wq);
 static int flag;
 static int rstflag;
+static int rst_listening_flag;
+static int rst_happened_or_gps_close_flag;
+
+enum gps_ctrl_status_enum {
+	GPS_CLOSED,
+	GPS_OPENED,
+	GPS_SUSPENDED,
+	GPS_RESET_START,
+	GPS_RESET_DONE,
+	GPS_CTRL_STATUS_NUM
+};
+static enum gps_ctrl_status_enum g_gps_ctrl_status;
+
+static void GPS_check_and_wakeup_rst_listener(enum gps_ctrl_status_enum to)
+{
+	if (to == GPS_RESET_START || to == GPS_RESET_DONE  || to == GPS_CLOSED) {
+		rst_happened_or_gps_close_flag = 1;
+		if (rst_listening_flag) {
+			wake_up(&GPS_rst_wq);
+			GPS_WARN_FUNC("Set GPS rst_happened_or_gps_close_flag because to = %d", to);
+		}
+	}
+}
+
+#ifdef GPS_HW_SUSPEND_SUPPORT
+static void GPS_ctrl_status_change_from_to(enum gps_ctrl_status_enum from, enum gps_ctrl_status_enum to)
+{
+	bool okay = true;
+	enum gps_ctrl_status_enum status_backup;
+
+	down(&status_mtx);
+	/* Due to checking status and setting status are not atomic,
+	 * mutex is needed to make sure they are an atomic operation.
+	 * Note: reading the status is no need to protect
+	 */
+	status_backup = g_gps_ctrl_status;
+	if (status_backup == from)
+		g_gps_ctrl_status = to;
+	else
+		okay = false;
+	up(&status_mtx);
+
+	if (!okay)
+		GPS_WARN_FUNC("GPS unexpected status %d, not chagne from %d to %d", status_backup, from, to);
+	else
+		GPS_check_and_wakeup_rst_listener(to);
+}
+#endif
+
+static enum gps_ctrl_status_enum GPS_ctrl_status_change_to(enum gps_ctrl_status_enum to)
+{
+	enum gps_ctrl_status_enum status_backup;
+
+	down(&status_mtx);
+	status_backup = g_gps_ctrl_status;
+	g_gps_ctrl_status = to;
+	up(&status_mtx);
+
+	GPS_check_and_wakeup_rst_listener(to);
+
+	return status_backup;
+}
 
 static void GPS_event_cb(void);
 
@@ -483,6 +554,130 @@ void GPS_fwlog_ctrl_inner(bool on)
 	pr_info("GPS_fwlog: st=%d, rx_len=%u ([0]=%u, [1]=%u), ms0=%u, ms1=%u, fw_tick=%u",
 		status, rx_len, rx0, rx1, local_ms0, local_ms1, fw_tick);
 }
+
+#ifdef GPS_HW_SUSPEND_SUPPORT
+#define HW_SUSPEND_CTRL_TX_LEN	(2)
+#define HW_SUSPEND_CTRL_RX_LEN	(3)
+
+/* return 0 if okay, otherwise is fail */
+static int GPS_hw_suspend_ctrl(bool to_suspend)
+{
+	UINT8 tx_buf[HW_SUSPEND_CTRL_TX_LEN];
+	UINT8 rx_buf[HW_SUSPEND_CTRL_RX_LEN];
+	UINT8 rx0 = 0;
+	UINT8 rx1 = 0;
+	UINT32 tx_len;
+	UINT32 rx_len = 0;
+	INT32 wmt_status;
+	UINT32 local_ms0, local_ms1;
+	struct timeval tv;
+	UINT64 tmp;
+
+	do_gettimeofday(&tv);
+	tmp = local_clock();
+	do_div(tmp, 1e6);
+	local_ms0 = (UINT32)tmp; /* overflow almost 4.9 days */
+
+	tx_buf[0] = to_suspend ? GPS_FWCTL_OPCODE_ENTER_STOP_MODE :
+		GPS_FWCTL_OPCODE_EXIT_STOP_MODE;
+	tx_len = 1;
+
+	wmt_status = mtk_wmt_gps_mcu_ctrl(&tx_buf[0], tx_len,
+		&rx_buf[0], HW_SUSPEND_CTRL_RX_LEN, &rx_len);
+
+	/* local_ms1 = jiffies_to_msecs(jiffies); */
+	tmp = local_clock();
+	do_div(tmp, 1e6);
+	local_ms1 = (UINT32)tmp;
+
+	if (wmt_status == 0) { /* 0 is okay */
+		if (rx_len >= 2) {
+			rx0 = rx_buf[0]; /* fw_status, 0 is okay */
+			rx1 = rx_buf[1]; /* opcode */
+		}
+	}
+
+	if (wmt_status != 0 || rx0 != 0) {
+		/* Fail due to WMT fail or FW not support,
+		 * bypass the following operations
+		 */
+		GPS_WARN_FUNC("GPS_hw_suspend_ctrl %d: st=%d, rx_len=%u ([0]=%u, [1]=%u), ms0=%u, ms1=%u",
+			to_suspend, wmt_status, rx_len, rx0, rx1, local_ms0, local_ms1);
+		return -1;
+	}
+
+	/* Okay */
+	GPS_INFO_FUNC("GPS_hw_suspend_ctrl %d: st=%d, rx_len=%u ([0]=%u, [1]=%u), ms0=%u, ms1=%u",
+		to_suspend, wmt_status, rx_len, rx0, rx1, local_ms0, local_ms1);
+	return 0;
+}
+
+
+static void GPS_handle_desense(bool on);
+
+static int GPS_hw_suspend(void)
+{
+	MTK_WCN_BOOL wmt_okay;
+	enum gps_ctrl_status_enum gps_status;
+
+	gps_status = g_gps_ctrl_status;
+	if (gps_status == GPS_OPENED) {
+		if (GPS_hw_suspend_ctrl(true) != 0)
+			return -EINVAL; /* Stands for not support */
+
+		wmt_okay = mtk_wmt_gps_suspend_ctrl(MTK_WCN_BOOL_TRUE);
+		if (!wmt_okay)
+			GPS_WARN_FUNC("mtk_wmt_gps_suspend_ctrl(1), is_ok = %d", wmt_okay);
+
+		/* register event cb will clear GPS STP buffer */
+		mtk_wcn_stp_register_event_cb(GPS_TASK_INDX, 0x0);
+		GPS_DBG_FUNC("mtk_wcn_stp_register_event_cb to null");
+
+		/* No need to clear the flag due to it just a flag and not stands for has data
+		 * flag = 0;
+		 *
+		 * Keep msgcb due to GPS still need to recevice reset event under HW suspend mode
+		 * mtk_wcn_wmt_msgcb_unreg(WMTDRV_TYPE_GPS);
+		 */
+
+		GPS_handle_desense(false);
+		gps_hold_wake_lock(0);
+		GPS_WARN_FUNC("gps_hold_wake_lock(0)\n");
+
+		GPS_ctrl_status_change_from_to(GPS_OPENED, GPS_SUSPENDED);
+	} else
+		GPS_WARN_FUNC("GPS_hw_suspend(): status %d not match\n", gps_status);
+
+	return 0;
+}
+
+static int GPS_hw_resume(void)
+{
+	MTK_WCN_BOOL wmt_okay;
+	enum gps_ctrl_status_enum gps_status;
+
+	gps_status = g_gps_ctrl_status;
+	if (gps_status == GPS_SUSPENDED) {
+		GPS_handle_desense(true);
+		gps_hold_wake_lock(1);
+		GPS_WARN_FUNC("gps_hold_wake_lock(1)\n");
+
+		wmt_okay = mtk_wmt_gps_suspend_ctrl(MTK_WCN_BOOL_FALSE);
+		if (!wmt_okay)
+			GPS_WARN_FUNC("mtk_wmt_gps_suspend_ctrl(0), is_ok = %d", wmt_okay);
+
+		if (GPS_hw_suspend_ctrl(false) != 0)
+			return -EINVAL; /* Stands for not support */
+
+		mtk_wcn_stp_register_event_cb(GPS_TASK_INDX, GPS_event_cb);
+		GPS_ctrl_status_change_from_to(GPS_SUSPENDED, GPS_OPENED);
+	} else
+		GPS_WARN_FUNC("GPS_hw_resume(): status %d not match\n", gps_status);
+
+	return 0;
+}
+#endif /* GPS_HW_SUSPEND_SUPPORT */
+
 #endif /* GPS_FWCTL_SUPPORT */
 
 void GPS_fwlog_ctrl(bool on)
@@ -495,6 +690,29 @@ void GPS_fwlog_ctrl(bool on)
 	fgGps_fwlog_on = on;
 	up(&fwctl_mtx);
 #endif
+}
+
+/* block until wmt reset happen or GPS_close */
+static int GPS_listen_wmt_rst(void)
+{
+	long val = 0;
+
+	rst_listening_flag = 1;
+	while (!rst_happened_or_gps_close_flag) {
+		val = wait_event_interruptible(GPS_rst_wq, rst_happened_or_gps_close_flag);
+
+		GPS_WARN_FUNC("GPS_listen_wmt_rst(): val = %ld, cond = %d, rstflag = %d, status = %d\n",
+			val, rst_happened_or_gps_close_flag, rstflag, g_gps_ctrl_status);
+
+		/* if we are signaled */
+		if (val) {
+			rst_listening_flag = 0;
+			return val;
+		}
+	}
+
+	rst_listening_flag = 0;
+	return 0;
 }
 
 /* int GPS_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg) */
@@ -642,6 +860,23 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		retval = GPS_fwctl((struct gps_fwctl_data *)arg);
 		break;
 #endif
+
+#ifdef GPS_HW_SUSPEND_SUPPORT
+	case COMBO_IOC_GPS_HW_SUSPEND:
+		GPS_INFO_FUNC("COMBO_IOC_GPS_HW_SUSPEND\n");
+		retval = GPS_hw_suspend();
+		break;
+	case COMBO_IOC_GPS_HW_RESUME:
+		GPS_INFO_FUNC("COMBO_IOC_GPS_HW_RESUME\n");
+		retval = GPS_hw_resume();
+		break;
+#endif /* GPS_HW_SUSPEND_SUPPORT */
+
+	case COMBO_IOC_GPS_LISTEN_RST_EVT:
+		GPS_INFO_FUNC("COMBO_IOC_GPS_LISTEN_RST_EVT\n");
+		retval = GPS_listen_wmt_rst();
+		break;
+
 	case COMBO_IOC_GET_GPS_LNA_PIN:
 		gps_lna_pin = mtk_wmt_get_gps_lna_pin_num();
 		GPS_DBG_FUNC("GPS_ioctl(): get gps lna pin = %d\n", gps_lna_pin);
@@ -691,6 +926,7 @@ static void gps_cdev_rst_cb(ENUM_WMTDRV_TYPE_T src,
 				fgGps_fwctl_ready = false;
 				/* up(&fwctl_mtx); */
 #endif
+				GPS_ctrl_status_change_to(GPS_RESET_START);
 				break;
 			case WMTRSTMSG_RESET_END:
 			case WMTRSTMSG_RESET_END_FAIL:
@@ -699,6 +935,8 @@ static void gps_cdev_rst_cb(ENUM_WMTDRV_TYPE_T src,
 				else
 					GPS_INFO_FUNC("Whole chip reset fail!\n");
 				rstflag = 2;
+
+				GPS_ctrl_status_change_to(GPS_RESET_DONE);
 				break;
 			default:
 				break;
@@ -710,8 +948,29 @@ static void gps_cdev_rst_cb(ENUM_WMTDRV_TYPE_T src,
 	}
 }
 
+static bool desense_handled_flag;
 static void GPS_handle_desense(bool on)
 {
+	bool to_do, handled;
+
+	down(&status_mtx);
+	handled = desense_handled_flag;
+	if ((on && !handled) || (!on && handled))
+		to_do = true;
+	else
+		to_do = false;
+
+	if (on)
+		desense_handled_flag = true;
+	else
+		desense_handled_flag = false;
+	up(&status_mtx);
+
+	if (!to_do) {
+		GPS_WARN_FUNC("GPS_handle_desense(%d) not to go due to handled = %d", on, handled);
+		return;
+	}
+
 	if (on) {
 #if defined(CONFIG_MACH_MT6739)
 		if (freqhopping_config(FH_MEM_PLLID, 0, 1) == 0)
@@ -800,17 +1059,23 @@ static int GPS_open(struct inode *inode, struct file *file)
 #endif
 	up(&fwctl_mtx);
 #endif /* GPS_FWCTL_SUPPORT */
+
+	rst_happened_or_gps_close_flag = 0;
+	GPS_ctrl_status_change_to(GPS_OPENED);
 	return 0;
 }
 
 static int GPS_close(struct inode *inode, struct file *file)
 {
+	int ret = 0;
 	pr_warn("%s: major %d minor %d (pid %d)\n", __func__, imajor(inode), iminor(inode), current->pid);
 	if (current->pid == 1)
 		return 0;
+
 	if (rstflag == 1) {
 		GPS_WARN_FUNC("whole chip resetting...\n");
-		return -EPERM;
+		ret = -EPERM;
+		goto _out;
 	}
 
 #ifdef GPS_FWCTL_SUPPORT
@@ -821,8 +1086,9 @@ static int GPS_close(struct inode *inode, struct file *file)
 
 	if (mtk_wcn_wmt_func_off(WMTDRV_TYPE_GPS) == MTK_WCN_BOOL_FALSE) {
 		GPS_WARN_FUNC("WMT turn off GPS fail!\n");
-		return -EIO;	/* mostly, native programer does not care this return vlaue, */
+		ret = -EIO;	/* mostly, native programer does not care this return vlaue, */
 				/* but we still return error code. */
+		goto _out;
 	}
 	GPS_WARN_FUNC("WMT turn off GPS OK!\n");
 	rstflag = 0;
@@ -830,12 +1096,14 @@ static int GPS_close(struct inode *inode, struct file *file)
 	mtk_wcn_stp_register_event_cb(GPS_TASK_INDX, 0x0);	/* unregister event callback function */
 	mtk_wcn_wmt_msgcb_unreg(WMTDRV_TYPE_GPS);
 
+_out:
 	gps_hold_wake_lock(0);
 	GPS_WARN_FUNC("gps_hold_wake_lock(0)\n");
 
 	GPS_handle_desense(false);
 
-	return 0;
+	GPS_ctrl_status_change_to(GPS_CLOSED);
+	return ret;
 }
 
 const struct file_operations GPS_fops = {
@@ -895,6 +1163,7 @@ static int GPS_init(void)
 
 	wakeup_source_init(&gps_wake_lock, "gpswakelock");
 
+	sema_init(&status_mtx, 1);
 	sema_init(&fwctl_mtx, 1);
 	/* init_MUTEX(&wr_mtx); */
 	sema_init(&wr_mtx, 1);
