@@ -149,6 +149,7 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 				gps_dsp_state_change_to(GPS_DSP_ST_TURNED_ON, link_id);
 #endif
 			gps_dsp_state_change_to(GPS_DSP_ST_TURNED_ON, link_id);
+			abnormal_flag = false;
 		} else
 			abnormal_flag = true;
 		break;
