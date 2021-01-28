@@ -29,7 +29,7 @@
 #include <linux/printk.h>
 #include <linux/version.h>
 #include <asm/memblock.h>
-#define EMI_MPU_PROTECTION_IS_READY  1
+#define EMI_MPU_PROTECTION_IS_READY  0
 #if EMI_MPU_PROTECTION_IS_READY
 #include <mt_emi_api.h>
 #endif
@@ -337,6 +337,7 @@ static const struct file_operations gps_emi_fops = {
 };
 
 /*****************************************************************************/
+#if EMI_MPU_PROTECTION_IS_READY
 static int gps_emi_probe(struct platform_device *dev)
 {
 	int ret = 0, err = 0;
@@ -388,8 +389,9 @@ err_out:
 	}
 	return -1;
 }
-
+#endif
 /*****************************************************************************/
+#if EMI_MPU_PROTECTION_IS_READY
 static int gps_emi_remove(struct platform_device *dev)
 {
 	if (!devobj) {
@@ -406,10 +408,11 @@ static int gps_emi_remove(struct platform_device *dev)
 	GPS_DBG("Done\n");
 	return 0;
 }
-
+#endif
 /*****************************************************************************/
 #ifdef CONFIG_PM
 /*****************************************************************************/
+#if EMI_MPU_PROTECTION_IS_READY
 static int gps_emi_suspend(struct platform_device *dev, pm_message_t state)
 {
 	GPS_DBG("dev = %p, event = %u,", dev, state.event);
@@ -417,14 +420,15 @@ static int gps_emi_suspend(struct platform_device *dev, pm_message_t state)
 		GPS_DBG("Receive PM_EVENT_SUSPEND!!\n");
 	return 0;
 }
-
+#endif
 /*****************************************************************************/
+#if EMI_MPU_PROTECTION_IS_READY
 static int gps_emi_resume(struct platform_device *dev)
 {
 	GPS_DBG("");
 	return 0;
 }
-
+#endif
 /*****************************************************************************/
 #endif        /* CONFIG_PM */
 /*****************************************************************************/
@@ -434,6 +438,7 @@ static const struct of_device_id apgps_of_ids[] = {
 	{}
 };
 #endif
+#if EMI_MPU_PROTECTION_IS_READY
 static struct platform_driver gps_emi_driver = {
 	.probe = gps_emi_probe,
 	.remove = gps_emi_remove,
@@ -449,13 +454,14 @@ static struct platform_driver gps_emi_driver = {
 #endif
 	},
 };
-
+#endif
 /*****************************************************************************/
 static int __init gps_emi_mod_init(void)
 {
-	GPS_ERR("gps emi mod register begin");
 	int ret = 0;
 	int err = 0;
+
+	GPS_ERR("gps emi mod register begin");
 
 	sema_init(&fw_dl_mtx, 1);
 
