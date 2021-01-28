@@ -73,6 +73,10 @@ MODULE_LICENSE("GPL");
 #define GPS_FWCTL_SUPPORT
 #endif
 
+#ifdef GPS_FWCTL_SUPPORT
+/* Disable: #define GPS_FWCTL_IOCTL_SUPPORT */
+#endif
+
 static UINT32 gDbgLevel = GPS_LOG_DBG;
 
 #define GPS_DBG_FUNC(fmt, arg...)	\
@@ -319,6 +323,7 @@ OUT:
 #define GPS_FWCTL_OPCODE_LOG_CFG          (6)
 #define GPS_FWCTL_OPCODE_LOOPBACK_TEST    (7)
 
+#ifdef GPS_FWCTL_IOCTL_SUPPORT
 struct gps_fwctl_data {
 	UINT32 size;
 	UINT32 tx_len;
@@ -411,6 +416,7 @@ long GPS_fwctl(struct gps_fwctl_data *user_ptr)
 		status, ctl_data.tx_len, tx0, rx_len, (UINT32)delta_time, (UINT32)fwctl_ready);
 	return -EFAULT;
 }
+#endif /* GPS_FWCTL_IOCTL_SUPPORT */
 
 #define GPS_FWLOG_CTRL_BUF_MAX  (20)
 void GPS_fwlog_ctrl_inner(bool on)
@@ -626,7 +632,7 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		else
 			retval = -EAGAIN;
 		break;
-#ifdef GPS_FWCTL_SUPPORT
+#ifdef GPS_FWCTL_IOCTL_SUPPORT
 	case COMBO_IOC_GPS_FWCTL:
 		GPS_INFO_FUNC("COMBO_IOC_GPS_FWCTL\n");
 		retval = GPS_fwctl((struct gps_fwctl_data *)arg);
