@@ -461,32 +461,15 @@ void gps_dl_hal_conn_infra_driver_off(void)
 }
 
 #if GPS_DL_HAS_PTA
-bool gps_dl_hal_md_blanking_init_pta(void)
+bool gps_dl_hal_md_blanking_init_pta_idc_mode(void)
 {
 	bool okay, done;
-
-	if (g_gps_pta_init_done) {
-		GDL_LOGW("already init done, do nothing return");
-		return false;
-	}
-
-	if (!gps_dl_hw_is_pta_clk_cfg_ready()) {
-		GDL_LOGE("gps_dl_hw_is_pta_clk_cfg_ready fail");
-		return false;
-	}
-
-	okay = gps_dl_hw_take_conn_coex_hw_sema(100);
-	if (!okay) {
-		GDL_LOGE("gps_dl_hw_take_conn_coex_hw_sema fail");
-		return false;
-	}
 
 	/* do pta uart init firstly */
 	done = gps_dl_hw_is_pta_uart_init_done();
 	if (!done) {
 		okay = gps_dl_hw_init_pta_uart();
 		if (!okay) {
-			gps_dl_hw_give_conn_coex_hw_sema();
 			GDL_LOGE("gps_dl_hw_init_pta_uart fail");
 			return false;
 		}
@@ -502,7 +485,63 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 
 	gps_dl_hw_claim_pta_used_by_gps();
 
-	gps_dl_hw_set_pta_blanking_parameter();
+	/* use_direct_path = false */
+	gps_dl_hw_set_pta_blanking_parameter(false);
+	return true;
+}
+
+void gps_dl_hal_md_blanking_init_pta_direct_path(void)
+{
+	/* use_direct_path = true */
+	gps_dl_hw_set_pta_blanking_parameter(true);
+}
+
+bool gps_dl_hal_md_blanking_init_pta(void)
+{
+	bool okay, done;
+	bool is_mt6885;
+	bool clk_is_ready;
+
+	is_mt6885 = gps_dl_hal_conn_infra_ver_is_mt6885();
+	GDL_LOGW("is_mt6885 = %d", is_mt6885);
+
+	if (g_gps_pta_init_done) {
+		GDL_LOGW("already init done, do nothing return");
+		return false;
+	}
+
+	clk_is_ready = true;
+	if (!gps_dl_hw_is_pta_clk_cfg_ready()) {
+		GDL_LOGE("gps_dl_hw_is_pta_clk_cfg_ready fail");
+		clk_is_ready = false;
+	}
+
+	okay = gps_dl_hw_take_conn_coex_hw_sema(100);
+	if (!okay) {
+		GDL_LOGE("gps_dl_hw_take_conn_coex_hw_sema fail");
+		return false;
+	}
+
+	if (!clk_is_ready) {
+		gps_dl_hw_set_ptk_clk_cfg();
+		if (!gps_dl_hw_is_pta_clk_cfg_ready()) {
+			GDL_LOGE("gps_dl_hw_is_pta_clk_cfg_ready 2nd fail");
+			gps_dl_hw_give_conn_coex_hw_sema();
+			return false;
+		}
+	}
+
+	if (is_mt6885) {
+		/* idc mode */
+		okay = gps_dl_hal_md_blanking_init_pta_idc_mode();
+		if (!okay) {
+			gps_dl_hw_give_conn_coex_hw_sema();
+			return false;
+		}
+	} else {
+		/* direct path */
+		gps_dl_hal_md_blanking_init_pta_direct_path();
+	}
 
 	gps_dl_hw_give_conn_coex_hw_sema();
 
