@@ -65,6 +65,7 @@ ccflags-y += -I$(srctree)/drivers/devfreq
 MODULE_NAME := gps_drv
 obj-m += $(MODULE_NAME).o
 
+GPS_DRV_CONTROL_LNA := n
 SELECT_GPS_DL_DRV := n
 GPS_DL_HAS_MOCK := n
 GPS_DL_HAS_CONNINFRA_DRV := n
@@ -72,6 +73,14 @@ GPS_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps
 
 ifeq ($(CONFIG_ARCH_MTK_PROJECT),"k6833v1_64_swrgo")
 ccflags-y += -DCONFIG_GPSL5_SUPPORT
+ccflags-y += -DCONFIG_GPS_CTRL_LNA_SUPPORT
+GPS_DRV_CONTROL_LNA := y
+endif
+
+ifeq ($(CONFIG_MACH_MT6833),y)
+ccflags-y += -DCONFIG_GPSL5_SUPPORT
+ccflags-y += -DCONFIG_GPS_CTRL_LNA_SUPPORT
+GPS_DRV_CONTROL_LNA := y
 endif
 ifeq ($(CONFIG_MACH_MT6833),y)
 ccflags-y += -DCONFIG_GPSL5_SUPPORT
@@ -189,6 +198,9 @@ ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/platform/include
 ifneq ($(CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH),)
 ccflags-y += -I$(WMT_SRC_FOLDER)/debug_utility
 endif
+ifeq ($(GPS_DRV_CONTROL_LNA),y)
+ccflags-y += -I$(GPS_SRC_FOLDER)/lna_ctrl/inc
+endif
 
 ifeq ($(CONFIG_MTK_CONN_MT3337_CHIP_SUPPORT),y)
         $(MODULE_NAME)-objs += gps_mt3337.o
@@ -199,6 +211,9 @@ ifeq ($(CONFIG_ARCH_MTK_PROJECT),"k6833v1_64_swrgo")
 endif
 ifeq ($(CONFIG_MACH_MT6833),y)
         $(MODULE_NAME)-objs += stp_chrdev_gps2.o
+endif
+ifeq ($(GPS_DRV_CONTROL_LNA),y)
+        $(MODULE_NAME)-objs += lna_ctrl/src/gps_lna_drv.o
 endif
 endif
 ifneq ($(CONFIG_MTK_GPS_EMI),)
