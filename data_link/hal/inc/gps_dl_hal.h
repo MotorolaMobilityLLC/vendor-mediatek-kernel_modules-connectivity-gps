@@ -21,8 +21,9 @@
 
 
 /* for gps_each_link.c */
+void gps_dl_hal_conn_infra_driver_off(void);
 int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op);
-void gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op);
+int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op);
 
 void gps_dl_hal_a2d_tx_dma_start(enum gps_dl_link_id_enum link_id,
 	struct gdl_dma_buf_entry *p_entry);

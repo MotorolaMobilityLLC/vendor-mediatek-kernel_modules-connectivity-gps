@@ -95,33 +95,47 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 #define POLL_FOREVER (-1)
 #define POLL_DEFAULT (1000 * POLL_US)
 #if (GPS_DL_ON_CTP || GPS_DL_ON_LINUX)
-#define GDL_HW_POLL_ENTRY(Bus_ID, Field, ValueExpected, TimeoutUsec)   \
-	do {                                                               \
-		if (POLL_1_TIME == TimeoutUsec) {                              \
+#define GDL_HW_POLL_ENTRY(Bus_ID, Field, ValueExpected, TimeoutUsec, pIsOkay)      \
+	do {                                                                       \
+		if (pIsOkay != NULL) {                                             \
+			*pIsOkay = false;                                          \
+		}                                                                  \
+		if (POLL_1_TIME == TimeoutUsec) {                                  \
 			if (ValueExpected == GDL_HW_GET_ENTRY(Bus_ID, Field)) {    \
-				;                                                      \
+				if (pIsOkay != NULL) {                             \
+					*pIsOkay = true;                           \
+				}                                                  \
 			}                                                          \
-		} else if (TimeoutUsec > 0) {                                  \
+		} else if (TimeoutUsec > 0) {                                      \
 			unsigned int poll_wait_cnt = 0;                            \
-			while (ValueExpected != GDL_HW_GET_ENTRY(Bus_ID, Field)) { \
-				if (poll_wait_cnt >= TimeoutUsec) {                    \
-					break;                                             \
-				}                                                      \
-				gps_dl_wait_us(POLL_INTERVAL_US);                      \
-				poll_wait_cnt += POLL_INTERVAL_US;                     \
+			while (true) {                                             \
+				if (ValueExpected == GDL_HW_GET_ENTRY(Bus_ID, Field)) { \
+					if (pIsOkay != NULL) {                     \
+						*pIsOkay = true;                   \
+					}                                          \
+					break;                                     \
+				}                                                  \
+				if (poll_wait_cnt >= TimeoutUsec) {                \
+					break;                                     \
+				}                                                  \
+				gps_dl_wait_us(POLL_INTERVAL_US);                  \
+				poll_wait_cnt += POLL_INTERVAL_US;                 \
 			}                                                          \
-		} else if (TimeoutUsec <= POLL_FOREVER) {                      \
+		} else if (TimeoutUsec <= POLL_FOREVER) {                          \
 			while (ValueExpected != GDL_HW_GET_ENTRY(Bus_ID, Field)) { \
-				gps_dl_wait_us(POLL_INTERVAL_US);                      \
+				gps_dl_wait_us(POLL_INTERVAL_US);                  \
 			}                                                          \
-		}                                                              \
+			if (pIsOkay != NULL) {                                     \
+				*pIsOkay = true;                                   \
+			}                                                          \
+		}                                                                  \
 	} while (0)
 #else
-#define GDL_HW_POLL_ENTRY(Bus_ID, Field, ValueExpected, TimeoutUsec)   \
-	do {                                                               \
-		if (ValueExpected == GDL_HW_GET_ENTRY(Bus_ID, Field)) {        \
+#define GDL_HW_POLL_ENTRY(Bus_ID, Field, ValueExpected, TimeoutUsec, pIsOkay)      \
+	do {                                                                       \
+		if (ValueExpected == GDL_HW_GET_ENTRY(Bus_ID, Field)) {            \
 			;                                                          \
-		}                                                              \
+		}                                                                  \
 	} while (0)
 #endif
 
@@ -129,13 +143,13 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 
 #define GDL_HW_SET_CONN_INFRA_ENTRY(Field, Value) GDL_HW_SET_ENTRY(GPS_DL_CONN_INFRA_BUS, Field, Value)
 #define GDL_HW_GET_CONN_INFRA_ENTRY(Field)        GDL_HW_GET_ENTRY(GPS_DL_CONN_INFRA_BUS, Field)
-#define GDL_HW_POLL_CONN_INFRA_ENTRY(Field, ValueExpected, TimeoutUsec) \
-	GDL_HW_POLL_ENTRY(GPS_DL_CONN_INFRA_BUS, Field, ValueExpected, TimeoutUsec)
+#define GDL_HW_POLL_CONN_INFRA_ENTRY(Field, ValueExpected, TimeoutUsec, pIsOkay) \
+	GDL_HW_POLL_ENTRY(GPS_DL_CONN_INFRA_BUS, Field, ValueExpected, TimeoutUsec, pIsOkay)
 
 #define GDL_HW_SET_BGF_ENTRY(Field, Value) GDL_HW_SET_ENTRY(GPS_DL_BGF_BUS, Field, Value)
 #define GDL_HW_GET_BGF_ENTRY(Field)        GDL_HW_GET_ENTRY(GPS_DL_BGF_BUS, Field)
-#define GDL_HW_POLL_BGF_ENTRY(Field, ValueExpected, TimeoutUsec) \
-	GDL_HW_POLL_ENTRY(GPS_DL_BGF_BUS, Field, ValueExpected, TimeoutUsec)
+#define GDL_HW_POLL_BGF_ENTRY(Field, ValueExpected, TimeoutUsec, pIsOkay) \
+	GDL_HW_POLL_ENTRY(GPS_DL_BGF_BUS, Field, ValueExpected, TimeoutUsec, pIsOkay)
 
 #define GDL_HW_SET_GPS_ENTRY(Field, Value) GDL_HW_SET_ENTRY(GPS_DL_GPS_BUS, Field, Value)
 #define GDL_HW_SET_GPS_ENTRY2(LinkID, Value, Field1, Field2) do {\
@@ -153,8 +167,8 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 			GDL_HW_GET_GPS_ENTRY(Field2) : 0)                    \
 	)
 
-#define GDL_HW_POLL_GPS_ENTRY(Field, ValueExpected, TimeoutUsec) \
-	GDL_HW_POLL_ENTRY(GPS_DL_GPS_BUS, Field, ValueExpected, TimeoutUsec)
+#define GDL_HW_POLL_GPS_ENTRY(Field, ValueExpected, TimeoutUsec, pIsOkay) \
+	GDL_HW_POLL_ENTRY(GPS_DL_GPS_BUS, Field, ValueExpected, TimeoutUsec, pIsOkay)
 
 struct gps_dl_addr_map_entry {
 	unsigned int host_addr;

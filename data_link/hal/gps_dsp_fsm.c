@@ -68,6 +68,8 @@ void gps_dsp_state_change_to(enum gps_dsp_state_t next_state, enum gps_dl_link_i
 			GPS_Reroute_Buffer_to_GPS_port_real();
 		}
 #endif
+		gps_dl_link_set_ready_to_write(link_id, true);
+		gps_dl_link_start_tx_dma_if_has_data(link_id);
 	}
 
 	if (next_state == GPS_DSP_ST_WAKEN_UP)
