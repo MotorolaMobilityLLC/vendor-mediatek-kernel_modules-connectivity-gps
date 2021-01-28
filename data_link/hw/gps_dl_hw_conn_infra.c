@@ -170,7 +170,7 @@ void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log)
 
 	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x000F0001, 15);
 	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x00030002, 3);
-	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x00040002, 4);
+	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x00040003, 4);
 
 	if (force_show_log)
 		gps_dl_set_show_reg_rw_log(show_log);
