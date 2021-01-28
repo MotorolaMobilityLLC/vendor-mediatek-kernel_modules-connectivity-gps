@@ -664,10 +664,11 @@ static int GPS_hw_resume(void)
 		if (!wmt_okay)
 			GPS_WARN_FUNC("mtk_wmt_gps_suspend_ctrl(0), is_ok = %d", wmt_okay);
 
+		/* should register it before real resuming to prepare for receiving data */
+		mtk_wcn_stp_register_event_cb(GPS_TASK_INDX, GPS_event_cb);
 		if (GPS_hw_suspend_ctrl(false) != 0)
 			return -EINVAL; /* Stands for not support */
 
-		mtk_wcn_stp_register_event_cb(GPS_TASK_INDX, GPS_event_cb);
 		GPS_ctrl_status_change_from_to(GPS_SUSPENDED, GPS_OPENED);
 	} else
 		GPS_WARN_FUNC("GPS_hw_resume(): status %d not match\n", gps_status);
