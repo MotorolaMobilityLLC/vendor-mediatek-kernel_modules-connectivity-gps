@@ -301,46 +301,56 @@ bool gps_dl_conninfra_is_okay_or_handle_it(int *p_hung_value, bool dump_on_hung_
 	int hung_value = 0;
 	bool trigger = false;
 	int trigger_ret = 0;
+	bool check_again;
+	int check_cnt = 0;
 
-	readable = conninfra_reg_readable();
-	if (readable) {
-		GDL_LOGD("readable = %d, okay", readable);
-		return true;
-	}
+	do {
+		check_again = false;
+		readable = conninfra_reg_readable();
+		if (readable) {
+			GDL_LOGD("readable = %d, okay", readable);
+			return true;
+		}
 
-	hung_value = conninfra_is_bus_hang();
-	if (p_hung_value != NULL)
-		*p_hung_value = hung_value;
+		hung_value = conninfra_is_bus_hang();
+		if (p_hung_value != NULL)
+			*p_hung_value = hung_value;
 
-	/* hung_value > 0, need to trigger reset
-	 * hung_value < 0, already in reset status
-	 * hung_value = 0, connsys may not in proper status (such as conn_top_off is in sleep)
-	 */
-	if (hung_value > 0) {
-		/* it's safe to cump gps host csr even hang value > 0 */
-		gps_dl_hw_dump_host_csr_gps_info(true);
-
-		trigger = true;
-		trigger_ret = conninfra_trigger_whole_chip_rst(CONNDRV_TYPE_GPS, "GPS detect hung");
-	} else if (hung_value == 0) {
-#if 0
-		/* show not happended, dump GPS csr for debug */
-		gps_dl_hw_dump_host_csr_gps_info(true);
-
-		/* sometimes, caller has choice not to trigger GPS reset */
-		if (dump_on_hung_value_zero)
-			gps_dl_trigger_gps_subsys_reset(false);
-#else
-		if (dump_on_hung_value_zero)
-			gps_dl_hw_dump_host_csr_gps_info(true);
-#endif
-	} else {
-		/* alreay in connsys resetting
-		 * do nothing
+		/* hung_value > 0, need to trigger reset
+		 * hung_value < 0, already in reset status
+		 * hung_value = 0, connsys may not in proper status (such as conn_top_off is in sleep)
 		 */
-	}
-	GDL_LOGE("readable = %d, hung_value = %d, trigger_reset = %d(%d) / %d",
-		readable, hung_value, trigger, trigger_ret, dump_on_hung_value_zero);
+		if (hung_value > 0) {
+			/* it's safe to cump gps host csr even hang value > 0 */
+			gps_dl_hw_dump_host_csr_gps_info(true);
+
+			trigger = true;
+			trigger_ret = conninfra_trigger_whole_chip_rst(
+				CONNDRV_TYPE_GPS, "GPS detect hung - case1");
+		} else if (hung_value == 0) {
+			if (dump_on_hung_value_zero)
+				gps_dl_hw_dump_host_csr_gps_info(true);
+			if (check_cnt < 1) {
+				/* readable = 0 and hung_value = 0 may not be a stable state,
+				 * check again to double confirm
+				 */
+				check_again = true;
+			} else {
+				/* trigger connsys reset if same result of checking again */
+				trigger = true;
+				trigger_ret = conninfra_trigger_whole_chip_rst(
+					CONNDRV_TYPE_GPS, "GPS detect hung - case2");
+			}
+		} else {
+			/* alreay in connsys resetting
+			 * do nothing
+			 */
+		}
+
+		check_cnt++;
+		GDL_LOGE("cnt=%d, readable=%d, hung_value=0x%x, trigger_reset=%d(%d,%d)",
+			check_cnt, readable, hung_value, trigger, trigger_ret, dump_on_hung_value_zero);
+	} while (check_again);
 	return false;
 #else
 	return true;
