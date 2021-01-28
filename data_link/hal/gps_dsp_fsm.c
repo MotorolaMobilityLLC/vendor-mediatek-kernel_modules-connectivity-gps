@@ -28,6 +28,9 @@
 #include "gps_dl_log.h"
 #include "gps_each_link.h"
 #include "gps_dl_name_list.h"
+#include "gps_dl_hal.h"
+#include "gps_dl_hw_api.h"
+
 
 /* extern kal_uint32 g_mcu_real_clock_rate; */
 /* extern kal_uint32 g_max_mcu_clock_rate; */
@@ -72,11 +75,16 @@ void gps_dsp_state_change_to(enum gps_dsp_state_t next_state, enum gps_dl_link_i
 		gps_dl_link_start_tx_dma_if_has_data(link_id);
 	}
 
-	if (next_state == GPS_DSP_ST_WAKEN_UP)
-		; /* gps_ctrl_timer_start(GPS_DSP_WAKEUP_TIMEOUT_MS); */
+	if (next_state == GPS_DSP_ST_WAKEN_UP) {
+		/* gps_ctrl_timer_start(GPS_DSP_WAKEUP_TIMEOUT_MS);
+		 */
+	}
 
-	if (next_state == GPS_DSP_ST_WORKING)
-		; /* gps_clock_switch (GPS_REQ_CLOCK_FREQ_MHZ_NORMAL); */
+	if (next_state == GPS_DSP_ST_WORKING) {
+		/* gps_clock_switch (GPS_REQ_CLOCK_FREQ_MHZ_NORMAL); */
+		gps_dl_hal_link_clear_hw_pwr_stat(link_id);
+		gps_dl_hal_set_need_clk_ext_flag(link_id, false);
+	}
 
 	if (next_state == GPS_DSP_ST_OFF) {
 		/* gps_clock_switch (0); - already done before gps_dsp_fsm */
@@ -113,7 +121,8 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 			/* GPS_Reroute_Cos_Sleep_Enable(); */
 		}
 #endif
-		if (GPS_DSP_ST_RESET_DONE == last_state)
+		if (GPS_DSP_ST_RESET_DONE == last_state ||
+			GPS_DSP_ST_HW_STOP_MODE == last_state)
 			abnormal_flag = false;
 		gps_dsp_state_change_to(GPS_DSP_ST_OFF, link_id);
 		goto _last_check;
@@ -186,8 +195,13 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 			/* gps_ctrl_timer_stop(); */
 			gps_dsp_state_change_to(GPS_DSP_ST_WORKING, link_id);
 			abnormal_flag = false;
-		} /* add GPS_DSP_EVT_REQUEST_HW_SLEEP_MODE == evt */
-		else
+		} else if (GPS_DSP_EVT_HW_STOP_REQ == evt) {
+			/* already done outside
+			 * GPS_Reroute_Ext_Power_Ctrl_Inner(4);
+			 */
+			gps_dsp_state_change_to(GPS_DSP_ST_HW_STOP_MODE, link_id);
+			abnormal_flag = false;
+		} else
 			abnormal_flag = true;
 		break;
 
@@ -196,6 +210,12 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 			/* PMTK101 like restart or to be powered off */
 			gps_dsp_state_change_to(GPS_DSP_ST_RESET_DONE, link_id);
 			abnormal_flag = false;
+		}  else if (GPS_DSP_EVT_HW_STOP_REQ == evt) {
+			/* already done outside
+			 * GPS_Reroute_Ext_Power_Ctrl_Inner(4);
+			 */
+			gps_dsp_state_change_to(GPS_DSP_ST_HW_STOP_MODE, link_id);
+			abnormal_flag = true; /* just show warning */
 		} else
 			abnormal_flag = true;
 #if 0
@@ -204,9 +224,6 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 			/* to_do_timer check!!! - dynamic change timer */
 			/* gps_ctrl_timer_start(800); */
 			gps_dsp_state_change_to(GPS_DSP_ST_HW_SLEEP_MODE, link_id);
-		} else if (GPS_DSP_EVT_HW_STOP_REQ == evt) {
-			GPS_Reroute_Ext_Power_Ctrl_Inner(4);
-			gps_dsp_state_change_to(GPS_DSP_ST_HW_STOP_MODE, link_id);
 		} else
 			abnormal_flag = true;
 #endif
@@ -225,31 +242,26 @@ void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
 		break;
 
 	case GPS_DSP_ST_HW_STOP_MODE:
-#if 0
 		if (GPS_DSP_EVT_HW_STOP_EXIT == evt) {
-			/* from host */
-			GPS_Reroute_Ext_Power_Ctrl_Inner(5);
+			/* GPS_Reroute_Ext_Power_Ctrl_Inner(5); */
 			gps_dsp_state_change_to(GPS_DSP_ST_WAKEN_UP, link_id);
+			abnormal_flag = false;
+		} else if (GPS_DSP_EVT_RESET_DONE == evt) {
+			gps_dsp_state_change_to(GPS_DSP_ST_RESET_DONE, link_id);
+			abnormal_flag = false;
 		} else
 			abnormal_flag = true;
-#endif
-		abnormal_flag = true;
 		break;
 
 	case GPS_DSP_ST_WAKEN_UP:
-#if 0
-		if (GPS_DSP_EVT_RESET_DONE == evt) {
-			/* May need to set 6631/35 flag to DSP or change to RESET_DONE */
-			/* Note: here is just a candidate caller, if no problem, we call it */
-			/* in GPS_Reroute_Ext_Power_Ctrl_Inner */
-			/* GPS_Reroute_Set_DSP_Config_By_MCUB(); */
-		} else if (GPS_DSP_EVT_RAM_CODE_READY == evt) {
-			gps_ctrl_timer_stop();
+		if (GPS_DSP_EVT_RAM_CODE_READY == evt) {
+			/* gps_ctrl_timer_stop(); */
+			gps_dl_link_set_ready_to_write(link_id, true);
+			gps_dl_link_start_tx_dma_if_has_data(link_id);
 			gps_dsp_state_change_to(GPS_DSP_ST_WORKING, link_id);
+			abnormal_flag = false;
 		} else
 			abnormal_flag = true;
-#endif
-		abnormal_flag = true;
 		break;
 
 	default:

@@ -40,8 +40,9 @@ void gps_dl_hw_usrt_rx_irq_enable(enum gps_dl_link_id_enum link_id, bool enable)
 #define GPS_DSP_CFG_BITMASK_ADIE_IS_MT6635_E2_OR_AFTER  (1UL << 2)
 #define GPS_DSP_CFG_BITMASK_USRT_4BYTE_MODE             (1UL << 3)
 #define GPS_DSP_CFG_BITMASK_COLOCK_USE_TIA              (1UL << 6)
+#define GPS_DSP_CFG_BITMASK_CLOCK_EXTENSION_WAKEUP      (1UL << 7)
 
-unsigned int gps_dl_hw_get_mcub_a2d1_cfg(bool is_1byte_mode)
+unsigned int gps_dl_hw_get_mcub_a2d1_cfg(enum gps_dl_link_id_enum link_id, bool is_1byte_mode)
 {
 	unsigned int cfg = 0;
 
@@ -52,6 +53,8 @@ unsigned int gps_dl_hw_get_mcub_a2d1_cfg(bool is_1byte_mode)
 #if GPS_DL_USE_TIA
 	cfg |= GPS_DSP_CFG_BITMASK_COLOCK_USE_TIA;
 #endif
+	if (gps_dl_hal_get_need_clk_ext_flag(link_id))
+		cfg |= GPS_DSP_CFG_BITMASK_CLOCK_EXTENSION_WAKEUP;
 	return cfg;
 }
 
@@ -82,7 +85,7 @@ void gps_dl_hw_usrt_ctrl(enum gps_dl_link_id_enum link_id,
 		GDL_HW_SET_GPS_ENTRY2(link_id, 0, GPS_USRT_APB_APB_INTEN_NODAIEN, GPS_L5_USRT_APB_APB_INTEN_NODAIEN);
 	}
 
-	GDL_HW_SET_GPS_ENTRY2(link_id, gps_dl_hw_get_mcub_a2d1_cfg(is_1byte_mode),
+	GDL_HW_SET_GPS_ENTRY2(link_id, gps_dl_hw_get_mcub_a2d1_cfg(link_id, is_1byte_mode),
 		GPS_USRT_APB_MCU_A2D1_A2D_1, GPS_L5_USRT_APB_MCU_A2D1_A2D_1);
 
 	GDL_HW_SET_GPS_ENTRY2(link_id, 1, GPS_USRT_APB_MCUB_A2DF_A2DF3, GPS_L5_USRT_APB_MCUB_A2DF_A2DF3);
@@ -141,7 +144,7 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_data(
 {
 	struct gps_dl_hw_usrt_status_struct usrt_status;
 	bool last_rw_log_on;
-	unsigned int tick0, tick1;
+	unsigned long tick0, tick1;
 
 	tick0 = gps_dl_tick_get();
 
@@ -179,18 +182,17 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_data(
 }
 
 enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_done(
-	enum gps_dl_link_id_enum link_id, int timeout_usec)
+	enum gps_dl_link_id_enum link_id, int timeout_usec, bool to_handle)
 {
 	struct gps_dl_hw_dma_status_struct dma_status;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
 	enum gps_dl_hal_dma_ch_index dma_ch;
 	bool last_rw_log_on;
-	unsigned int tick0, tick1;
-
-	tick0 = gps_dl_tick_get();
-
-	if (gps_dl_show_reg_wait_log())
-		GDL_LOGXD(link_id, "timeout = %d", timeout_usec);
+	unsigned long tick0, tick1;
+	bool conninfra_okay;
+	bool do_stop = true;
+	enum GDL_RET_STATUS ret = GDL_OKAY;
+	int loop_cnt;
 
 	if (link_id == GPS_DATA_LINK_ID0)
 		dma_ch = GPS_DL_DMA_LINK0_D2A;
@@ -199,7 +201,19 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_d
 	else
 		return GDL_FAIL;
 
+	if (gps_dl_show_reg_wait_log())
+		GDL_LOGXD(link_id, "timeout = %d", timeout_usec);
+
+	tick0 = gps_dl_tick_get();
+	loop_cnt = 0;
 	while (1) {
+		conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+		if (!conninfra_okay) {
+			ret = GDL_FAIL_CONN_NOT_OKAY;
+			do_stop = false;
+			break;
+		}
+
 		gps_dl_hw_save_dma_status_struct(dma_ch, &dma_status);
 		if (gps_dl_only_show_wait_done_log())
 			last_rw_log_on = gps_dl_set_show_reg_rw_log(false);
@@ -218,7 +232,10 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_d
 			gps_dl_hw_set_dma_stop(dma_ch);
 			gps_dl_hw_save_dma_status_struct(dma_ch, &dma_status);
 			gps_dl_hw_print_dma_status_struct(dma_ch, &dma_status);
-			gps_dl_hal_event_send(GPS_DL_HAL_EVT_D2A_RX_DMA_DONE, link_id);
+			if (to_handle)
+				gps_dl_hal_event_send(GPS_DL_HAL_EVT_D2A_RX_DMA_DONE, link_id);
+			ret = GDL_OKAY;
+			do_stop = true;
 			break;
 		}
 
@@ -235,20 +252,35 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_d
 				gps_dl_hw_print_usrt_status_struct(link_id, &usrt_status);
 				gps_dl_hw_save_usrt_status_struct(link_id, &usrt_status);
 			}
-
-			gps_dl_hal_event_send(GPS_DL_HAL_EVT_D2A_RX_HAS_NODATA, link_id);
+			if (to_handle)
+				gps_dl_hal_event_send(GPS_DL_HAL_EVT_D2A_RX_HAS_NODATA, link_id);
+			else {
+				gps_dl_hw_set_dma_stop(dma_ch);
+				gps_dl_hw_save_dma_status_struct(dma_ch, &dma_status);
+				gps_dl_hw_print_dma_status_struct(dma_ch, &dma_status);
+			}
+			ret = GDL_OKAY;
+			do_stop = true;
 			break;
 		}
 
 		tick1 = gps_dl_tick_get();
-		if (timeout_usec > GPS_DL_RW_NO_TIMEOUT &&
-			gps_dl_tick_delta_to_usec(tick0, tick1) >= timeout_usec)
-			return GDL_FAIL_TIMEOUT;
+		if (timeout_usec > GPS_DL_RW_NO_TIMEOUT && (
+			gps_dl_tick_delta_to_usec(tick0, tick1) >= timeout_usec ||
+			loop_cnt * GDL_HW_STATUS_POLL_INTERVAL_USEC >= timeout_usec)) {
+			ret = GDL_FAIL_TIMEOUT;
+			do_stop = false;
+			break;
+		}
 
 		gps_dl_wait_us(GDL_HW_STATUS_POLL_INTERVAL_USEC);
+		loop_cnt++;
 	}
 
-	return GDL_OKAY;
+	tick1 = gps_dl_tick_get();
+	GDL_LOGXW(link_id, "d_us = %d, cnt = %d, do_stop = %d, ret = %s",
+		gps_dl_tick_delta_to_usec(tick0, tick1), loop_cnt, do_stop, gdl_ret_to_name(ret));
+	return ret;
 }
 
 void gps_dl_hal_poll_single_link(enum gps_dl_link_id_enum link_id,
@@ -297,7 +329,7 @@ enum GDL_RET_STATUS gps_dl_hal_poll_event(
 	unsigned int L1_evt_out = 0;
 	unsigned int L5_evt_out = 0;
 	enum GDL_RET_STATUS ret_val = GDL_OKAY;
-	unsigned int tick0, tick1;
+	unsigned long tick0, tick1;
 	int take_usec;
 
 	if (L1_evt_in == 0 && L5_evt_in == 0) {

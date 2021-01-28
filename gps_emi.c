@@ -31,7 +31,11 @@
 #include <asm/memblock.h>
 #define EMI_MPU_PROTECTION_IS_READY  0
 #if EMI_MPU_PROTECTION_IS_READY
+#if defined(CONFIG_MACH_MT6873)
+#include <memory/mediatek/emi.h>
+#else
 #include <mt_emi_api.h>
+#endif
 #endif
 #include "gps.h"
 
@@ -66,9 +70,11 @@
 #define GPS_EMI_MPU_SIZE             (SZ_1M)
 #endif
 #if defined(CONFIG_MACH_MT6873)
-#define GPS_EMI_MPU_REGION           18
+#define GPS_EMI_MPU_REGION           29
 #define GPS_EMI_BASE_ADDR_OFFSET     (3*SZ_1M + 0x10000)
 #define GPS_EMI_MPU_SIZE             (0xF0000)
+#define GPS_DL_EMI_MPU_DOMAIN_AP      0
+#define GPS_DL_EMI_MPU_DOMAIN_CONN    2
 #endif
 #define GPS_ADC_CAPTURE_BUFF_SIZE   0x50000
 /******************************************************************************
@@ -120,7 +126,22 @@ void mtk_wcn_consys_gps_memory_reserve(void)
 
 INT32 gps_emi_mpu_set_region_protection(INT32 region)
 {
-	#if EMI_MPU_PROTECTION_IS_READY
+#if EMI_MPU_PROTECTION_IS_READY
+#if defined(CONFIG_MACH_MT6873)
+	struct emimpu_region_t region_info;
+	int emimpu_ret1, emimpu_ret2, emimpu_ret3, emimpu_ret4, emimpu_ret5, emimpu_ret6;
+	/* Set EMI MPU permission */
+	GPS_DBG("emi mpu cfg: region = %d, no protection domain = %d, %d",
+	    region, GPS_DL_EMI_MPU_DOMAIN_AP, GPS_DL_EMI_MPU_DOMAIN_CONN);
+	emimpu_ret1 = mtk_emimpu_init_region(&region_info, region);
+	emimpu_ret2 = mtk_emimpu_set_addr(&region_info, gGpsEmiPhyBase, gGpsEmiPhyBase + GPS_EMI_MPU_SIZE - 1);
+	emimpu_ret3 = mtk_emimpu_set_apc(&region_info, GPS_DL_EMI_MPU_DOMAIN_AP, MTK_EMIMPU_NO_PROTECTION);
+	emimpu_ret4 = mtk_emimpu_set_apc(&region_info, GPS_DL_EMI_MPU_DOMAIN_CONN, MTK_EMIMPU_NO_PROTECTION);
+	emimpu_ret5 = mtk_emimpu_set_protection(&region_info);
+	emimpu_ret6 = mtk_emimpu_free_region(&region_info);
+	GPS_DBG("emi mpu cfg: ret = %d, %d, %d, %d, %d, %d",
+	    emimpu_ret1, emimpu_ret2, emimpu_ret3, emimpu_ret4, emimpu_ret5, emimpu_ret6);
+#else
 	struct emi_region_info_t region_info;
 	/*set MPU for EMI share Memory */
 	GPS_DBG("setting MPU for EMI share memory\n");
@@ -132,7 +153,8 @@ INT32 gps_emi_mpu_set_region_protection(INT32 region)
 	FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN,
 	NO_PROTECTION, FORBIDDEN, NO_PROTECTION);
 	emi_mpu_set_protection(&region_info);
-	#endif
+#endif
+#endif
 	return 0;
 }
 
