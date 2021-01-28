@@ -25,6 +25,7 @@
 #include "gps_dl_name_list.h"
 #include "gps_dl_context.h"
 #include "gps_dl_subsys_reset.h"
+
 #include "linux/jiffies.h"
 
 #include "linux/errno.h"
@@ -148,7 +149,7 @@ void gps_each_link_inc_session_id(enum gps_dl_link_id_enum link_id)
 	sid = p->session_id;
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
-	GDL_LOGXW_STA(link_id, "new sid = %d, 1byte_mode = %d", sid, gps_dl_is_1byte_mode());
+	GDL_LOGXD(link_id, "new sid = %d, 1byte_mode = %d", sid, gps_dl_is_1byte_mode());
 }
 
 int gps_each_link_get_session_id(enum gps_dl_link_id_enum link_id)
