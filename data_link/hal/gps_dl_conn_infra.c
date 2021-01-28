@@ -87,3 +87,16 @@ void gps_dl_emi_remap_calc_and_set(void)
 	gps_dl_emi_remap_set(min_addr, max_addr);
 }
 
+
+unsigned int g_gps_dl_hal_conn_infra_poll_ok_ver;
+
+void gps_dl_hw_gps_set_conn_infra_ver(unsigned int ver)
+{
+	g_gps_dl_hal_conn_infra_poll_ok_ver = ver;
+}
+
+unsigned int gps_dl_hw_gps_get_conn_infra_ver(void)
+{
+	return g_gps_dl_hal_conn_infra_poll_ok_ver;
+}
+
