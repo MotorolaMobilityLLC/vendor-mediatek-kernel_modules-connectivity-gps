@@ -61,6 +61,7 @@ struct gdl_dma_buf_entry {
 	bool is_nodata;
 };
 
+#define GPS_DL_DMA_BUF_ENTRY_MAX (2) /* if set to 2, it likes not use multi entry */
 struct gps_dl_dma_buf {
 	int dev_index;
 	enum gps_dl_dma_dir dir;
@@ -77,16 +78,14 @@ struct gps_dl_dma_buf {
 	unsigned int transfer_max;
 	bool writer_working;
 	bool reader_working;
-	/*
-	 * TODO: nodata should binding to entry rather than dma_buf
-	 * Due to now is 1buf-1entry, it should work
-	 */
-	bool is_nodata;
 
 	/* TODO: better way is put it to LINK rather than dma_buf */
 	bool has_pending_rx;
 
 	struct gdl_dma_buf_entry dma_working_entry;
+	struct gdl_dma_buf_entry data_entries[GPS_DL_DMA_BUF_ENTRY_MAX];
+	unsigned int entry_r;
+	unsigned int entry_w;
 
 #if 0
 	struct gdl_dma_buf_idx reader;
@@ -106,7 +105,7 @@ struct gdl_hw_dma_transfer {
 int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, int dev_index,
 	enum gps_dl_dma_dir dir, unsigned int len);
 void gps_dma_buf_reset(struct gps_dl_dma_buf *p_dma);
-void gps_dma_buf_show(struct gps_dl_dma_buf *p_dma);
+void gps_dma_buf_show(struct gps_dl_dma_buf *p_dma, bool is_warning);
 void gps_dma_buf_align_as_byte_mode(struct gps_dl_dma_buf *p_dma);
 bool gps_dma_buf_is_empty(struct gps_dl_dma_buf *p_dma);
 
