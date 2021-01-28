@@ -213,7 +213,7 @@ ssize_t GPS2_write(struct file *filp, const char __user *buf, size_t count, loff
 #if GPS2_DEBUG_TRACE_GPIO
 		mtk_wcn_stp_debug_gpio_assert(IDX_GPS_TX, DBG_TIE_LOW);
 #endif
-/*		written = mtk_wcn_stp_send_data(&o_buf2[0], copy_size, INFO_TASK_INDX);need open*/
+		written = mtk_wcn_stp_send_data(&o_buf2[0], copy_size, GPSL5_TASK_INDX);
 #if GPS2_DEBUG_TRACE_GPIO
 		mtk_wcn_stp_debug_gpio_assert(IDX_GPS_TX, DBG_TIE_HIGH);
 #endif
@@ -273,7 +273,7 @@ ssize_t GPS2_read(struct file *filp, char __user *buf, size_t count, loff_t *f_p
 #if GPS2_DEBUG_TRACE_GPIO
 	mtk_wcn_stp_debug_gpio_assert(IDX_GPS_RX, DBG_TIE_LOW);
 #endif
-/*	retval = mtk_wcn_stp_receive_data(i_buf2, count, INFO_TASK_INDX);need open*/
+	retval = mtk_wcn_stp_receive_data(i_buf2, count, GPSL5_TASK_INDX);
 #if GPS2_DEBUG_TRACE_GPIO
 	mtk_wcn_stp_debug_gpio_assert(IDX_GPS_RX, DBG_TIE_HIGH);
 #endif
@@ -294,7 +294,7 @@ ssize_t GPS2_read(struct file *filp, char __user *buf, size_t count, loff_t *f_p
 		mtk_wcn_stp_debug_gpio_assert(IDX_GPS_RX, DBG_TIE_LOW);
 #endif
 
-/*		retval = mtk_wcn_stp_receive_data(i_buf2, count, INFO_TASK_INDX);need open*/
+		retval = mtk_wcn_stp_receive_data(i_buf2, count, GPSL5_TASK_INDX);
 
 #if GPS2_DEBUG_TRACE_GPIO
 		mtk_wcn_stp_debug_gpio_assert(IDX_GPS_RX, DBG_TIE_HIGH);
@@ -417,7 +417,7 @@ static int GPS2_hw_suspend(void)
 			GPS2_WARN_FUNC("mtk_wmt_gps_l5_suspend_ctrl(1), is_ok = %d", wmt_okay);
 
 		/* register event cb will clear GPS STP buffer */
-/*		mtk_wcn_stp_register_event_cb(INFO_TASK_INDX, 0x0);need open*/
+		mtk_wcn_stp_register_event_cb(GPSL5_TASK_INDX, 0x0);
 		GPS2_DBG_FUNC("mtk_wcn_stp_register_event_cb to null");
 
 		/* No need to clear the flag2 due to it just a flag2 and not stands for has data
@@ -456,7 +456,7 @@ static int GPS2_hw_resume(void)
 		if (GPS2_hw_suspend_ctrl(false) != 0)
 			return -EINVAL; /* Stands for not support */
 
-/*		mtk_wcn_stp_register_event_cb(INFO_TASK_INDX, GPS2_event_cb);need open*/
+		mtk_wcn_stp_register_event_cb(GPSL5_TASK_INDX, GPS2_event_cb);
 		GPS2_ctrl_status_change_from_to(GPS_SUSPENDED, GPS_OPENED);
 	} else
 		GPS2_WARN_FUNC("GPS2_hw_resume(): status %d not match\n", gps_status);
@@ -751,7 +751,7 @@ static int GPS2_open(struct inode *inode, struct file *file)
 		}
 		GPS2_DBG_FUNC("WMT turn on GPS2 OK!\n");
 #endif
-/*		mtk_wcn_stp_register_event_cb(INFO_TASK_INDX, GPS2_event_cb);need open*/
+		mtk_wcn_stp_register_event_cb(GPSL5_TASK_INDX, GPS2_event_cb);
 	} else {
 		GPS2_ERR_FUNC("STP is not ready, Cannot open GPS2 Devices\n\r");
 
@@ -811,7 +811,7 @@ static int GPS2_close(struct inode *inode, struct file *file)
 	GPS2_WARN_FUNC("WMT turn off GPS2 OK!\n");
 	rstflag2 = 0;
 	/*Flush Rx Queue */
-/*	mtk_wcn_stp_register_event_cb(INFO_TASK_INDX, 0x0);need open*/	/* unregister event callback function */
+	mtk_wcn_stp_register_event_cb(GPSL5_TASK_INDX, 0x0);	/* unregister event callback function */
 	mtk_wcn_wmt_msgcb_unreg(WMTDRV_TYPE_GPSL5);
 
 _out:
