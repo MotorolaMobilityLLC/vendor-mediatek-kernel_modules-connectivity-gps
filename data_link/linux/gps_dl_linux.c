@@ -49,7 +49,7 @@ int gps_dl_linux_irqs_register(struct gps_each_irq *p_irqs, int irq_num)
 		irq_id = gps_dl_linux_irq_index_to_id(p_irqs[i].cfg.index);
 
 		if (irq_id == 0) {
-			GDL_LOGE("i = %d, irq_id = %d, name = %s, bypass",
+			GDL_LOGE_INI("i = %d, irq_id = %d, name = %s, bypass",
 				i, irq_id, p_irqs[i].cfg.name);
 			continue;
 		}
@@ -73,7 +73,7 @@ int gps_dl_linux_irqs_register(struct gps_each_irq *p_irqs, int irq_num)
 			(irq_handler_t)p_irqs[i].cfg.isr, /* gps_dl_linux_irq_dispatcher */
 			sys_irq_flags, p_irqs[i].cfg.name, &p_irqs[i]);
 #endif
-		GDL_LOGE("i = %d, irq_id = %d, name = %s, flags = 0x%x, ret = %d",
+		GDL_LOGW_INI("i = %d, irq_id = %d, name = %s, flags = 0x%x, ret = %d",
 			i, irq_id, p_irqs[i].cfg.name, sys_irq_flags, i_ret);
 		if (i_ret) {
 			/* show error log */

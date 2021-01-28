@@ -57,11 +57,11 @@ void gps_dma_buf_show(struct gps_dl_dma_buf *p_dma, bool is_warning)
 	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 
 	if (is_warning) {
-		GDL_LOGXW(p_dma->dev_index,
+		GDL_LOGXW_DRW(p_dma->dev_index,
 			"dir = %d, l = %d, r = %d(%d), w = %d(%d), fl = %d, re = %d, we = %d, fe = %d",
 			p_dma->dir, p_dma->len, ri, r_working, wi, w_working, fl, re, we, fe);
 	} else {
-		GDL_LOGXD(p_dma->dev_index,
+		GDL_LOGXD_DRW(p_dma->dev_index,
 			"dir = %d, l = %d, r = %d(%d), w = %d(%d), fl = %d, re = %d, we = %d, fe = %d",
 			p_dma->dir, p_dma->len, ri, r_working, wi, w_working, fl, re, we, fe);
 	}

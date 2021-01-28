@@ -28,13 +28,36 @@ int gps_dl_procfs_dummy_op(int y, int z)
 
 int gps_dl_procfs_set_opt(int y, int z)
 {
-	if (y == 1) {
+	if (y == 0)
+		gps_dl_log_info_show();
+	else if (y == 1) {
 		enum gps_dl_log_level_enum level_old, level_new;
 
 		level_old = gps_dl_log_level_get();
 		gps_dl_log_level_set(z);
 		level_new = gps_dl_log_level_get();
 		GDL_LOGW("log level change: %d to %d", level_old, level_new);
+	} else if (y == 2) {
+		unsigned int mod_old, mod_new;
+
+		mod_old = gps_dl_log_mod_bitmask_get();
+		gps_dl_log_mod_bitmask_set(z);
+		mod_new = gps_dl_log_level_get();
+		GDL_LOGW("log modules change: 0x%x to 0x%x", mod_old, mod_new);
+	} else if (y == 3) {
+		unsigned int mod_old, mod_new;
+
+		mod_old = gps_dl_log_mod_bitmask_get();
+		gps_dl_log_mod_on(z);
+		mod_new = gps_dl_log_level_get();
+		GDL_LOGW("log modules change: 0x%x to 0x%x", mod_old, mod_new);
+	} else if (y == 4) {
+		unsigned int mod_old, mod_new;
+
+		mod_old = gps_dl_log_mod_bitmask_get();
+		gps_dl_log_mod_off(z);
+		mod_new = gps_dl_log_level_get();
+		GDL_LOGW("log modules change: 0x%x to 0x%x", mod_old, mod_new);
 	}
 
 	return 0;

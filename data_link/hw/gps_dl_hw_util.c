@@ -70,7 +70,7 @@ void gps_dl_bus_wr_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsig
 	void __iomem *host_vir_addr = phys_to_virt(host_addr);
 #endif
 	if (host_vir_addr == NULL) {
-		GDL_LOGW("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, NULL!",
+		GDL_LOGW_RRW("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, NULL!",
 			bus_id, host_vir_addr, host_addr, bus_addr);
 		return;
 	}
@@ -112,23 +112,23 @@ void gps_dl_bus_wr_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsig
 	 * Do printing if need
 	 */
 	if (no_read_back && (!full_print)) {
-		GDL_LOGI("bus_id = %d, addr = 0x%08x, w_val = 0x%08x",
+		GDL_LOGI_RRW("bus_id = %d, addr = 0x%08x, w_val = 0x%08x",
 			bus_id, host_addr, val);
 	} else if (no_read_back && (full_print && !print_vir_addr)) {
-		GDL_LOGI("bus_id = %d, addr = 0x%08x/0x%08x, w_val = 0x%08x",
+		GDL_LOGI_RRW("bus_id = %d, addr = 0x%08x/0x%08x, w_val = 0x%08x",
 			bus_id, host_addr, bus_addr, val);
 	} else if (no_read_back && (full_print && print_vir_addr)) {
-		GDL_LOGI("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, w_val = 0x%08x",
+		GDL_LOGI_RRW("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, w_val = 0x%08x",
 			bus_id, host_vir_addr, host_addr, bus_addr, val);
 	} else if (!no_read_back && (!full_print)) {
-		GDL_LOGI("bus_id = %d, addr = 0x%08x, w_val = 0x%08x, r_back = 0x%08x",
+		GDL_LOGI_RRW("bus_id = %d, addr = 0x%08x, w_val = 0x%08x, r_back = 0x%08x",
 			bus_id, host_addr, val, read_back_val);
 	} else if (!no_read_back && (full_print && !print_vir_addr)) {
-		GDL_LOGI("bus_id = %d, addr = 0x%08x/0x%08x, w_val = 0x%08x, r_back = 0x%08x",
+		GDL_LOGI_RRW("bus_id = %d, addr = 0x%08x/0x%08x, w_val = 0x%08x, r_back = 0x%08x",
 			bus_id, host_addr, bus_addr, val, read_back_val);
 	} else {
 		/* if (!no_read_back && (full_print && print_vir_addr)) */
-		GDL_LOGI("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, w_val = 0x%08x, r_back = 0x%08x",
+		GDL_LOGI_RRW("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, w_val = 0x%08x, r_back = 0x%08x",
 			bus_id, host_vir_addr, host_addr, bus_addr, val, read_back_val);
 	}
 }
@@ -166,7 +166,7 @@ unsigned int gps_dl_bus_rd_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_add
 	void __iomem *host_vir_addr = phys_to_virt(host_addr);
 #endif
 	if (host_vir_addr == NULL) {
-		GDL_LOGW("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, NULL!",
+		GDL_LOGW_RRW("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, NULL!",
 			bus_id, host_vir_addr, host_addr, bus_addr);
 		return 0;
 	}
@@ -195,14 +195,14 @@ unsigned int gps_dl_bus_rd_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_add
 	 * Do printing if need
 	 */
 	if (!full_print) {
-		GDL_LOGI("bus_id = %d, addr = 0x%08x, r_val = 0x%08x",
+		GDL_LOGI_RRW("bus_id = %d, addr = 0x%08x, r_val = 0x%08x",
 			bus_id, host_addr, val);
 	} else if (full_print && !print_vir_addr) {
-		GDL_LOGI("bus_id = %d, addr = 0x%08x/0x%08x, r_val = 0x%08x",
+		GDL_LOGI_RRW("bus_id = %d, addr = 0x%08x/0x%08x, r_val = 0x%08x",
 			bus_id, host_addr, bus_addr, val);
 	} else {
 		/* if (full_print && print_vir_addr) */
-		GDL_LOGI("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, r_val = 0x%08x",
+		GDL_LOGI_RRW("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, r_val = 0x%08x",
 			bus_id, host_vir_addr, host_addr, bus_addr, val);
 	}
 	return val;

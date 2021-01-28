@@ -192,13 +192,6 @@ int gps_each_link_enter_dstop(enum gps_dl_link_id_enum link_id);
 int gps_each_link_leave_dstop(enum gps_dl_link_id_enum link_id);
 int gps_each_link_close(enum gps_dl_link_id_enum link_id);
 int gps_each_link_check(enum gps_dl_link_id_enum link_id);
-int gps_each_link_send_data(char *buffer, unsigned int len, unsigned int data_link_num);
-int gps_each_link_power_control(bool on_off, unsigned int data_link_num);
-int gps_each_link_receive_data(char *buffer, unsigned int length, unsigned int data_link_num);
-
-#if GPS_DL_HAS_CTRLD
-int gps_each_link_register_event_cb(GPS_DL_RX_EVENT_CB func);
-#endif
 
 int gps_each_link_write(enum gps_dl_link_id_enum link_id,
 	unsigned char *buf, unsigned int len);
