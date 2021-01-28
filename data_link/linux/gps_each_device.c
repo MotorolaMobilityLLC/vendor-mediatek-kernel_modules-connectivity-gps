@@ -12,6 +12,7 @@
  */
 #include "gps_each_device.h"
 #include "gps_each_link.h"
+#include "gps_dsp_fsm.h"
 #if GPS_DL_MOCK_HAL
 #include "gps_mock_mvcd.h"
 #endif
@@ -29,7 +30,9 @@ static ssize_t gps_each_device_read(struct file *filp,
 
 	dev = (struct gps_each_device *)filp->private_data;
 
-	GDL_LOGXI_DRW(dev->index, "buf_len = %d, pid = %d", count, current->pid);
+	/* show read log after ram code downloading to avoid print too much */
+	if (gps_dsp_state_get(dev->index) == GPS_DSP_ST_WORKING)
+		GDL_LOGXW_DRW(dev->index, "buf_len = %d, pid = %d", count, current->pid);
 
 #if GPS_DL_HAS_LINK_LAYER
 	i_len = gps_each_link_read((enum gps_dl_link_id_enum)dev->index,
@@ -71,7 +74,8 @@ static ssize_t gps_each_device_read(struct file *filp,
 		return -EFAULT;
 	}
 
-	GDL_LOGXI_DRW(dev->index, "ret_len = %d", i_len);
+	if (gps_dsp_state_get(dev->index) == GPS_DSP_ST_WORKING)
+		GDL_LOGXW_DRW(dev->index, "ret_len = %d", i_len);
 	return i_len;
 }
 
@@ -84,7 +88,9 @@ static ssize_t gps_each_device_write(struct file *filp,
 
 	dev = (struct gps_each_device *)filp->private_data;
 
-	GDL_LOGXI_DRW(dev->index, "len = %d, pid = %d", count, current->pid);
+	/* show write log after ram code downloading to avoid print too much */
+	if (gps_dsp_state_get(dev->index) == GPS_DSP_ST_WORKING)
+		GDL_LOGXW_DRW(dev->index, "len = %d, pid = %d", count, current->pid);
 
 	if (count > 0) {
 		/* TODO: this size GPS_DATA_PATH_BUF_MAX for what? */
@@ -322,7 +328,7 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 	case 21515:
 		/* known unsupported cmd */
 		retval = -EFAULT;
-		GDL_LOGXI_DRW(dev->index, "cmd = %d, not support", cmd);
+		GDL_LOGXD_DRW(dev->index, "cmd = %d, not support", cmd);
 		break;
 	default:
 		retval = -EFAULT;

@@ -82,6 +82,7 @@ static struct gps_dl_runtime_cfg s_gps_rt_cfg = {
 	.only_show_wait_done_log = false,
 	.log_level = GPS_DL_LOG_DEF_SETTING_LEVEL,
 	.log_mod_bitmask = GPS_DL_LOG_DEF_SETTING_MODULES,
+	.log_reg_rw_bitmask = GPS_DL_LOG_REG_RW_BITMASK,
 };
 
 struct gps_each_link *gps_dl_link_get(enum gps_dl_link_id_enum link_id)
@@ -234,6 +235,11 @@ void gps_dl_log_mod_bitmask_set(unsigned int bitmask)
 unsigned int gps_dl_log_mod_bitmask_get(void)
 {
 	return s_gps_rt_cfg.log_mod_bitmask;
+}
+
+bool gps_dl_log_reg_rw_is_on(enum gps_dl_log_reg_rw_ctrl_enum log_reg_rw)
+{
+	return (bool)(s_gps_rt_cfg.log_reg_rw_bitmask & (1UL << log_reg_rw));
 }
 
 void gps_dl_log_info_show(void)

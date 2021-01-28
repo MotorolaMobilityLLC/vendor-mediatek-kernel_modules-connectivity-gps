@@ -62,7 +62,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	int curr_sid;
 	bool last_session_msg = false;
 	unsigned long j0, j1;
-	bool show_log;
+	bool show_log, reg_rw_log;
 	bool conninfra_okay, dma_irq_en;
 
 	j0 = jiffies;
@@ -223,10 +223,13 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		break;
 
 	case GPS_DL_HAL_EVT_MCUB_HAS_IRQ:
-		show_log = gps_dl_set_show_reg_rw_log(true);
+		reg_rw_log = gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_MCUB_IRQ_HANDLER);
+		if (reg_rw_log)
+			show_log = gps_dl_set_show_reg_rw_log(true);
 		gps_dl_hal_mcub_flag_handler(link_id);
 		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_HAL);
-		gps_dl_set_show_reg_rw_log(show_log);
+		if (reg_rw_log)
+			gps_dl_set_show_reg_rw_log(show_log);
 		break;
 
 #if 0
@@ -360,7 +363,7 @@ void gps_dl_hal_emi_usage_claim(enum gps_dl_hal_emi_user user, bool use_emi)
 	}
 
 	if (changed) {
-		GDL_LOGI("user = %d, use = %d, old_mask = 0x%x, new_mask = 0x%x, change = %d/%d",
+		GDL_LOGD("user = %d, use = %d, old_mask = 0x%x, new_mask = 0x%x, change = %d/%d",
 			user, use_emi, old_mask, new_mask, changed, usage);
 	} else {
 		GDL_LOGD("user = %d, use = %d, old_mask = 0x%x, new_mask = 0x%x, change = %d",
