@@ -178,7 +178,7 @@ int gps_dl_hw_gps_common_on(void)
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL, 0x80);
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG, 2,
 		POLL_DEFAULT, &poll_okay);
-	if (gps_dl_hw_gps_sleep_prot_ctrl(1) != 0) {
+	if (!poll_okay) {
 		GDL_LOGE("_fail_gps_top_off_active_not_okay");
 		goto _fail_gps_top_off_active_not_okay;
 	}
@@ -186,7 +186,7 @@ int gps_dl_hw_gps_common_on(void)
 	/* 0x18c21010[31:0] bgf ip version */
 	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION, 0x20010000,
 		POLL_DEFAULT, &poll_okay);
-	if (gps_dl_hw_gps_sleep_prot_ctrl(1) != 0) {
+	if (!poll_okay) {
 		GDL_LOGE("_fail_bgf_ip_ver_not_okay");
 		goto _fail_bgf_ip_ver_not_okay;
 	}
@@ -194,7 +194,7 @@ int gps_dl_hw_gps_common_on(void)
 	/* 0x18c21014[7:0] bgf ip cfg */
 	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_CONFIG_BGFSYS_CONFIG, 0,
 		POLL_DEFAULT, &poll_okay);
-	if (gps_dl_hw_gps_sleep_prot_ctrl(1) != 0) {
+	if (!poll_okay) {
 		GDL_LOGE("_fail_bgf_ip_cfg_not_okay");
 		goto _fail_bgf_ip_cfg_not_okay;
 	}

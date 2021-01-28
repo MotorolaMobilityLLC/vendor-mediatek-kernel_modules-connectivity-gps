@@ -24,6 +24,24 @@ enum GPS_DL_BUS_ENUM {
 	GPS_DL_BUS_NUM
 };
 
+enum gps_dl_bus_rw_opt_enum {
+	WR_NO_READ_BACK,
+	RW_DO_CHECK,
+	RW_FORCE_PRINT,
+	RW_FULL_PRINT,
+	RW_OPT_MAX = 32
+};
+#define BMASK_WR_NO_READ_BACK (1UL << WR_NO_READ_BACK)
+#define BMASK_RW_DO_CHECK     (1UL << RW_DO_CHECK)
+#define BMASK_RW_FORCE_PRINT  (1UL << RW_FORCE_PRINT)
+#define BMASK_RW_FULL_PRINT   (1UL << RW_FULL_PRINT)
+
+void gps_dl_bus_wr_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsigned int val,
+	unsigned int opt_bitmask);
+unsigned int gps_dl_bus_rd_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr,
+	unsigned int opt_bitmask);
+
+
 /* the function will convert bus addr to host-view addr by remaping */
 #if 0
 void gps_dl_bus_wr32(u32 bus_addr, u32 val);
@@ -32,7 +50,7 @@ u32  gps_dl_bus_rd32(u32 bus_addr);
 void gps_dl_bus_write(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsigned int val);
 void gps_dl_bus_write_no_rb(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsigned int val);
 unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr);
-
+void gps_dl_bus_check_and_print(unsigned int host_addr);
 
 
 /* provide function/macro declaration for c files under hal folder */
