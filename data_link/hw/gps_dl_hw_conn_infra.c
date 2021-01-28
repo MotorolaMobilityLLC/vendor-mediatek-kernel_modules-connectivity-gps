@@ -88,6 +88,8 @@ void gps_dl_hw_do_gps_a2z_dump(void)
 {
 	GDL_HW_WR_GPS_REG(0x80073120, 1); /* enable A2Z */
 	GDL_HW_RD_GPS_REG(0x800706C0);
+	GDL_HW_RD_GPS_REG(0x80070450);
+	GDL_HW_RD_GPS_REG(0x80080450);
 }
 
 void gps_dl_hw_dump_sleep_prot_status(void)
