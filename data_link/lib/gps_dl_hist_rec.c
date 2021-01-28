@@ -46,8 +46,8 @@ static void gps_dl_hist_rec_rw_do_dump(enum gps_dl_link_id_enum link_id,
 	GDL_LOGXW_DRW(link_id, "%s: dp=%d, pid=%d, i=%d, n=%d(%d), l=%d %d %d %d; %d %d %d %d",
 		(p_list->type == GPS_DL_HIST_REC_RW_READ) ? "rd" : "wr",
 		dump_point, p_list->pid, p_list->rec_idx, p_list->n_item, p_list->rec_point,
-		p_list->items[0], p_list->items[1], p_list->items[2], p_list->items[3],
-		p_list->items[4], p_list->items[5], p_list->items[6], p_list->items[7]);
+		p_list->items[0].len, p_list->items[1].len, p_list->items[2].len, p_list->items[3].len,
+		p_list->items[4].len, p_list->items[5].len, p_list->items[6].len, p_list->items[7].len);
 	p_list->rec_idx += p_list->n_item;
 	p_list->n_item = 0;
 	memset(&p_list->items, 0, sizeof(p_list->items));

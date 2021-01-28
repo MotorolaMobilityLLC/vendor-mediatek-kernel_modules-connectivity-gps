@@ -142,7 +142,7 @@ static ssize_t gps_icap_read(struct file *file, char __user *buf, size_t count, 
 		return 0;
 	}
 
-	GDL_LOGI("finish, count = %d", count);
+	GDL_LOGI("finish, count = %ld", count);
 	return count;
 }
 
@@ -152,7 +152,7 @@ static ssize_t gps_icap_write(struct file *file, const char __user *buf, size_t 
 {
 	ssize_t ret = 0;
 
-	GDL_LOGW("count = %d", count);
+	GDL_LOGW("count = %ld", count);
 
 	return ret;
 }

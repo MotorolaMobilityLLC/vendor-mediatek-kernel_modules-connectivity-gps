@@ -38,10 +38,10 @@ static ssize_t gps_each_device_read(struct file *filp,
 
 	/* show read log after ram code downloading to avoid print too much */
 	if (gps_dsp_state_get(link_id) != GPS_DSP_ST_RESET_DONE) {
-		GDL_LOGXI_DRW(link_id, "buf_len = %d, pid = %d", count, pid);
+		GDL_LOGXI_DRW(link_id, "buf_len = %ld, pid = %d", count, pid);
 		print_log = true;
 	} else {
-		GDL_LOGXD_DRW(link_id, "buf_len = %d, pid = %d", count, pid);
+		GDL_LOGXD_DRW(link_id, "buf_len = %ld, pid = %d", count, pid);
 	}
 	gps_each_link_rec_read(link_id, pid, count, DRW_ENTER);
 
@@ -79,16 +79,16 @@ static ssize_t gps_each_device_write(struct file *filp,
 
 	/* show write log after ram code downloading to avoid print too much */
 	if (gps_dsp_state_get(link_id) != GPS_DSP_ST_RESET_DONE) {
-		GDL_LOGXI_DRW(link_id, "len = %d, pid = %d", count, pid);
+		GDL_LOGXI_DRW(link_id, "len = %ld, pid = %d", count, pid);
 		print_log = true;
 	} else {
-		GDL_LOGXD_DRW(link_id, "len = %d, pid = %d", count, pid);
+		GDL_LOGXD_DRW(link_id, "len = %ld, pid = %d", count, pid);
 	}
 	gps_each_link_rec_write(link_id, pid, count, DRW_ENTER);
 
 	if (count > 0) {
 		if (count > GPS_DATA_PATH_BUF_MAX) {
-			GDL_LOGXW_DRW(link_id, "len = %d is too long", count);
+			GDL_LOGXW_DRW(link_id, "len = %ld is too long", count);
 			copy_size = GPS_DATA_PATH_BUF_MAX;
 		} else
 			copy_size = count;
@@ -254,7 +254,7 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 	switch (cmd) {
 	case GPSDL_IOC_TRIGGER_ASSERT:
 		/* Trigger FW assert for debug */
-		GDL_LOGXW_DRW(dev->index, "GPSDL_IOC_TRIGGER_ASSERT, reason = %d", arg);
+		GDL_LOGXW_DRW(dev->index, "GPSDL_IOC_TRIGGER_ASSERT, reason = %ld", arg);
 
 		/* TODO: assert dev->is_open */
 		if (dev->index == GPS_DATA_LINK_ID0)
