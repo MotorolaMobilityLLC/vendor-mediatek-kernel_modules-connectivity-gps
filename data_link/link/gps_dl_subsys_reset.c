@@ -12,9 +12,11 @@
  */
 #include "gps_dl_config.h"
 
+#include "gps_dl_context.h"
 #include "gps_dl_subsys_reset.h"
 #include "gps_each_link.h"
 #include "gps_dl_name_list.h"
+#include "gps_dl_hw_api.h"
 
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
@@ -184,7 +186,7 @@ int gps_dl_trigger_connsys_reset(void)
 	int ret;
 
 	GDL_LOGE("");
-	ret = conninfra_trigger_whole_chip_rst(CONNDRV_TYPE_GPS, "GPS test");
+	ret = conninfra_trigger_whole_chip_rst(CONNDRV_TYPE_GPS, "GPS debug");
 	GDL_LOGE("conninfra_trigger_whole_chip_rst return = %d", ret);
 #else
 	GDL_LOGE("has no conninfra_drv");
@@ -238,6 +240,81 @@ void gps_dl_unregister_conninfra_reset_cb(void)
 {
 #if GPS_DL_HAS_CONNINFRA_DRV
 	conninfra_sub_drv_ops_unregister(CONNDRV_TYPE_GPS);
+#endif
+}
+
+bool gps_dl_conninfra_is_readable(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	return (conninfra_reg_readable() != 0);
+#else
+	return true;
+#endif
+}
+
+void gps_dl_conninfra_not_readable_show_warning(unsigned int host_addr)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	int readable;
+	int hung_value = 0;
+
+	readable = conninfra_reg_readable();
+	if (readable)
+		return;
+
+	hung_value = conninfra_is_bus_hang();
+	GDL_LOGW("readable = %d, hung_value = %d, before access 0x%08x",
+		readable, hung_value, host_addr);
+#endif
+}
+
+bool gps_dl_conninfra_is_okay_or_handle_it(int *p_hung_value, bool dump_on_hung_value_zero)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	int readable;
+	int hung_value = 0;
+	bool trigger = false;
+	int trigger_ret = 0;
+
+	readable = conninfra_reg_readable();
+	if (readable) {
+		GDL_LOGD("readable = %d, okay", readable);
+		return true;
+	}
+
+	hung_value = conninfra_is_bus_hang();
+	if (p_hung_value != NULL)
+		*p_hung_value = hung_value;
+
+	/* hung_value > 0, need to trigger reset
+	 * hung_value < 0, already in reset status
+	 * hung_value = 0, connsys may not in proper status (such as conn_top_off is in sleep)
+	 */
+	if (hung_value > 0) {
+		trigger = true;
+		trigger_ret = conninfra_trigger_whole_chip_rst(CONNDRV_TYPE_GPS, "GPS detect hung");
+	} else if (hung_value == 0) {
+#if 0
+		/* show not happended, dump GPS csr for debug */
+		gps_dl_hw_dump_host_csr_gps_info(true);
+
+		/* sometimes, caller has choice not to trigger GPS reset */
+		if (dump_on_hung_value_zero)
+			gps_dl_trigger_gps_subsys_reset(false);
+#else
+		if (dump_on_hung_value_zero)
+			gps_dl_hw_dump_host_csr_gps_info(true);
+#endif
+	} else {
+		/* alreay in connsys resetting
+		 * do nothing
+		 */
+	}
+	GDL_LOGE("readable = %d, hung_value = %d, trigger_reset = %d(%d) / %d",
+		readable, hung_value, trigger, trigger_ret, dump_on_hung_value_zero);
+	return false;
+#else
+	return true;
 #endif
 }
 

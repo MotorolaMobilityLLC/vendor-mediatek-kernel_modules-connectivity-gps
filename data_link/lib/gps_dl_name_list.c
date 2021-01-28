@@ -160,6 +160,23 @@ const char *gps_dl_link_event_name(enum gps_dl_link_event_id event)
 	return retval;
 }
 
+const char *gps_dl_hal_event_name_list[GPD_DL_HAL_EVT_NUM + 1] = {
+	[GPS_DL_HAL_EVT_A2D_TX_DMA_DONE]   = "HAL_TX_DMA_DONE",
+	[GPS_DL_HAL_EVT_D2A_RX_HAS_DATA]   = "HAL_RX_HAS_DATA",
+	[GPS_DL_HAL_EVT_D2A_RX_HAS_NODATA] = "HAL_RX_HAS_NODATA",
+	[GPS_DL_HAL_EVT_D2A_RX_DMA_DONE]   = "HAL_RX_DMA_DONE",
+	[GPS_DL_HAL_EVT_MCUB_HAS_IRQ]      = "HAL_MCUB_HAS_FLAG",
+	[GPS_DL_HAL_EVT_DMA_ISR_PENDING]   = "HAL_DMA_ISR_PENDING",
+	[GPD_DL_HAL_EVT_NUM]               = "HAL_INVALID_EVT",
+};
+
+const char *gps_dl_hal_event_name(enum gps_dl_hal_event_id event)
+{
+	const char *retval;
+
+	RETURN_NAME_IN_LIST(gps_dl_hal_event_name_list, GPD_DL_HAL_EVT_NUM, event, retval);
+	return retval;
+}
 
 const char *const gps_dl_waitable_name_list[GPS_DL_WAIT_NUM + 1] = {
 	[GPS_DL_WAIT_OPEN_CLOSE] = "OPEN_OR_CLOSE",

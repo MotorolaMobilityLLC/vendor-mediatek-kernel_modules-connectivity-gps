@@ -185,6 +185,7 @@ void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay)
 	struct gdl_dma_buf_entry dma_buf_entry;
 #endif
 	struct gps_each_link *p = gps_dl_link_get(link_id);
+	bool send_msg = false;
 
 	GDL_LOGXD(link_id, "");
 
@@ -210,12 +211,15 @@ void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay)
 		GDL_LOGXW(link_id, "okay = %d or user already offline, try to change to closing", okay);
 
 		/* Note: if pre_status not OPENING, it might be RESETTING, not handle it here */
-		if (gps_each_link_change_state_from(link_id, LINK_OPENING, LINK_CLOSING)) {
-			gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
-			gps_each_link_set_bool_flag(link_id, LINK_TO_BE_CLOSED, true);
-		}
+		if (gps_each_link_change_state_from(link_id, LINK_OPENING, LINK_CLOSING))
+			send_msg = true;
 	}
 	gps_each_link_give_big_lock(link_id);
+
+	if (send_msg) {
+		gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
+		gps_each_link_set_bool_flag(link_id, LINK_TO_BE_CLOSED, true);
+	}
 }
 
 void gps_each_link_init(enum gps_dl_link_id_enum link_id)
@@ -355,8 +359,10 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 
 		if (okay)
 			retval = 0;
-		else
+		else {
+			gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
 			retval = -EBUSY;
+		}
 		break;
 
 	default:
@@ -1139,8 +1145,8 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		if (evt != GPS_DL_EVT_LINK_CLOSE)
 			show_log = gps_dl_set_show_reg_rw_log(true);
 
+		/* handle open fail case */
 		if (!gps_each_link_get_bool_flag(link_id, LINK_OPEN_RESULT_OKAY)) {
-			/* hanle open fail case */
 			GDL_LOGXD(link_id, "not open okay, just power off for %s",
 				gps_dl_link_event_name(evt));
 
@@ -1170,6 +1176,12 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		/* TODO: avoid twice mask need to be handled */
 		gps_dl_link_set_ready_to_write(link_id, false);
 		gps_dl_link_irq_set(link_id, false);
+
+		if (evt != GPS_DL_EVT_LINK_CLOSE) {
+			/* try to dump host csr info if not normal close operation */
+			if (gps_dl_conninfra_is_okay_or_handle_it(NULL, true))
+				gps_dl_hw_dump_host_csr_gps_info(true);
+		}
 
 		gps_dl_hal_link_power_ctrl(link_id, 0);
 		gps_dl_hal_conn_power_ctrl(link_id, 0);
@@ -1205,10 +1217,18 @@ _close_or_reset_ack:
 		break;
 
 	case GPS_DL_EVT_LINK_PRINT_HW_STATUS:
-		show_log = gps_dl_set_show_reg_rw_log(true);
-		gps_dl_hw_print_hw_status(link_id);
-		gps_each_dsp_reg_gourp_read_start(link_id);
-		gps_dl_set_show_reg_rw_log(show_log);
+		if (!gps_each_link_is_active(link_id)) {
+			GDL_LOGXW(link_id, "inactive, do not dump hw status");
+			break;
+		}
+
+		if (gps_dl_conninfra_is_okay_or_handle_it(NULL, true)) {
+			show_log = gps_dl_set_show_reg_rw_log(true);
+			gps_dl_hw_dump_host_csr_gps_info(true);
+			gps_dl_hw_print_hw_status(link_id);
+			gps_each_dsp_reg_gourp_read_start(link_id);
+			gps_dl_set_show_reg_rw_log(show_log);
+		}
 		break;
 
 	case GPS_DL_EVT_LINK_DSP_FSM_TIMEOUT:
