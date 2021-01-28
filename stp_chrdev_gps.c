@@ -1151,6 +1151,9 @@ static int GPS_init(void)
 #endif
 	int alloc_ret = 0;
 
+#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
+	gps_lna_linux_plat_drv_register();
+#endif
 
 	/*static allocate chrdev */
 	alloc_ret = register_chrdev_region(dev, 1, GPS_DRIVER_NAME);
@@ -1225,10 +1228,10 @@ static int GPS_init(void)
 	sema_init(&wr_mtx2, 1);
 	/* init_MUTEX(&rd_mtx); */
 	sema_init(&rd_mtx2, 1);
+	/* init_MUTEX(&lna_mtx); */
+	sema_init(&lna_mtx, 1);
 #endif
-#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
-	gps_lna_linux_plat_drv_register();
-#endif
+
 	return 0;
 
 error:

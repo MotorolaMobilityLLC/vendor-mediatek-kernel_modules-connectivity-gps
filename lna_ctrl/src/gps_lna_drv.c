@@ -38,6 +38,7 @@ do { if (gDbgLevel >= GPS_LOG_INFO)	\
 		pr_info(PFX "[I]%s: "  fmt, __func__, ##arg);	\
 } while (0)
 
+struct semaphore lna_mtx;
 
 /* #ifdef CONFIG_OF */
 const struct of_device_id gps_lna_of_ids[] = {
@@ -64,7 +65,7 @@ const char *const gps_lna_pinctrl_state_name_list[GPS_DL_PINCTRL_STATE_CNT] = {
 	"gps_l5_lna_dsp_ctrl",
 	"gps_l5_lna_enable",
 };
-
+enum gps_lna_pinctrl_state_enum gps_lna_pin_state[GPS_DATA_LINK_NUM] = {GPS_DL_L1_LNA_DISABLE, GPS_DL_L5_LNA_DISABLE};
 struct pinctrl_state *g_gps_lna_pinctrl_state_struct_list[GPS_DL_PINCTRL_STATE_CNT];
 struct pinctrl *g_gps_lna_pinctrl_ptr;
 
@@ -112,43 +113,68 @@ void gps_lna_pinctrl_context_init(void)
 void gps_lna_pin_ctrl(enum gps_data_link_id_enum link_id, bool dsp_is_on, bool force_en)
 {
 	struct pinctrl_state *p_state = NULL;
+	enum gps_lna_pinctrl_state_enum gps_lna_pin_act[GPS_DATA_LINK_NUM] = {
+		GPS_DL_L1_LNA_DISABLE,
+		GPS_DL_L5_LNA_DISABLE};
 	int ret;
+
+	down(&lna_mtx);
 
 	/*ASSERT_LINK_ID(link_id, GDL_VOIDF());*/
 
 	if (GPS_DATA_LINK_ID0 == link_id) {
-		if (dsp_is_on && force_en)
+		if (dsp_is_on && force_en) {
 			p_state = g_gps_lna_pinctrl_state_struct_list[GPS_DL_L1_LNA_ENABLE];
-		else if (dsp_is_on)
+			gps_lna_pin_act[link_id] = GPS_DL_L1_LNA_ENABLE;
+		} else if (dsp_is_on) {
 			p_state = g_gps_lna_pinctrl_state_struct_list[GPS_DL_L1_LNA_DSP_CTRL];
-		else
+			gps_lna_pin_act[link_id] = GPS_DL_L1_LNA_DSP_CTRL;
+		} else {
 			p_state = g_gps_lna_pinctrl_state_struct_list[GPS_DL_L1_LNA_DISABLE];
+			gps_lna_pin_act[link_id] = GPS_DL_L1_LNA_DISABLE;
+		}
 	}
 
 	if (GPS_DATA_LINK_ID1 == link_id) {
-		if (dsp_is_on && force_en)
+		if (dsp_is_on && force_en) {
 			p_state = g_gps_lna_pinctrl_state_struct_list[GPS_DL_L5_LNA_ENABLE];
-		else if (dsp_is_on)
+			gps_lna_pin_act[link_id] = GPS_DL_L5_LNA_ENABLE;
+		} else if (dsp_is_on) {
 			p_state = g_gps_lna_pinctrl_state_struct_list[GPS_DL_L5_LNA_DSP_CTRL];
-		else
+			gps_lna_pin_act[link_id] = GPS_DL_L5_LNA_DSP_CTRL;
+		} else {
 			p_state = g_gps_lna_pinctrl_state_struct_list[GPS_DL_L5_LNA_DISABLE];
+			gps_lna_pin_act[link_id] = GPS_DL_L5_LNA_DISABLE;
+		}
 	}
 
 	if (p_state == NULL) {
 		GPS_INFO_FUNC("link_id = %d, on = %d, force = %d, state is null", link_id, dsp_is_on, force_en);
+		up(&lna_mtx);
 		return;
 	}
 
 	if (g_gps_lna_pinctrl_ptr == NULL) {
 		GPS_INFO_FUNC("link_id = %d, on = %d, force = %d, g_gps_lna_pinctrl_ptr is null",
 			link_id, dsp_is_on, force_en);
+		up(&lna_mtx);
 		return;
 	}
-	ret = pinctrl_select_state(g_gps_lna_pinctrl_ptr, p_state);
-	if (ret != 0)
-		GPS_INFO_FUNC("link_id = %d, on = %d, force = %d, select ret = %d", link_id,  dsp_is_on, force_en, ret);
-	else
-		GPS_INFO_FUNC("link_id = %d, on = %d, force = %d, select ret = %d", link_id,  dsp_is_on, force_en, ret);
+	if (gps_lna_pin_act[link_id] != gps_lna_pin_state[link_id]) {
+		ret = pinctrl_select_state(g_gps_lna_pinctrl_ptr, p_state);
+		if (ret != 0)
+			GPS_INFO_FUNC("pinctrl fail link_id = %d, on = %d, force = %d, select ret = %d",
+				link_id,  dsp_is_on, force_en, ret);
+		else {
+			GPS_INFO_FUNC("link_id = %d, on = %d, force = %d, select ret = %d",
+				link_id,  dsp_is_on, force_en, ret);
+			GPS_INFO_FUNC("link_id = %d, gps_lna_pin_act = %d, gps_lna_pin_state = %d",
+				link_id,  gps_lna_pin_act[link_id], gps_lna_pin_state[link_id]);
+			if (gps_lna_pin_act[link_id] != gps_lna_pin_state[link_id])
+				gps_lna_pin_state[link_id] = gps_lna_pin_act[link_id];
+		}
+	}
+	up(&lna_mtx);
 }
 
 static int gps_lna_probe(struct platform_device *pdev)
