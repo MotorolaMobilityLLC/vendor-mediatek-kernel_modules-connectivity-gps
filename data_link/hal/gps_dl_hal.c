@@ -24,6 +24,10 @@
 
 #include "linux/jiffies.h"
 
+
+static bool s_gps_has_data_irq_masked[GPS_DATA_LINK_NUM];
+
+
 void gps_dl_hal_event_send(enum gps_dl_hal_event_id evt,
 	enum gps_dl_link_id_enum link_id)
 {
@@ -123,6 +127,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		gdl_ret = gdl_dma_buf_get_free_entry(
 			&p_link->rx_dma_buf, &dma_buf_entry, true);
 
+		s_gps_has_data_irq_masked[link_id] = true;
 		if (gdl_ret == GDL_OKAY) {
 			gps_dl_hal_d2a_rx_dma_claim_emi_usage(link_id, true);
 			gps_dl_hal_d2a_rx_dma_start(link_id, &dma_buf_entry);
@@ -160,7 +165,11 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 
 		gps_dl_hal_d2a_rx_dma_claim_emi_usage(link_id, false);
 		/* mask data irq */
-		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_HAL);
+		if (s_gps_has_data_irq_masked[link_id] == true) {
+			gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_HAL);
+			s_gps_has_data_irq_masked[link_id] = false;
+		} else
+			GDL_LOGXW_DRW(link_id, "D2A_RX_DMA_DONE  while s_gps_has_data_irq_masked is false");
 		break;
 
 	case GPS_DL_HAL_EVT_D2A_RX_HAS_NODATA:
@@ -196,8 +205,14 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 			GDL_LOGXE(link_id, "test mask hasdata irq, not unmask irq and wait reset");
 			gps_dl_test_mask_hasdata_irq_set(link_id, false);
 			gps_dl_hal_set_irq_dis_flag(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, true);
-		} else
-			gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_HAL);
+		} else {
+			if (s_gps_has_data_irq_masked[link_id] == true) {
+				gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA,
+					GPS_DL_IRQ_CTRL_FROM_HAL);
+				s_gps_has_data_irq_masked[link_id] = false;
+			} else
+				GDL_LOGXW_DRW(link_id, "D2A_RX_HAS_NODATA  while s_gps_has_data_irq_masked is false");
+		}
 		break;
 
 	case GPS_DL_HAL_EVT_A2D_TX_DMA_DONE:
