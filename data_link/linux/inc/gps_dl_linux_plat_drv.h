@@ -16,6 +16,15 @@
 #include "gps_dl_config.h"
 
 #if GPS_DL_HAS_PLAT_DRV
+#include <linux/io.h>
+struct gps_dl_iomem_addr_map_entry {
+	void __iomem *host_virt_addr;
+	unsigned int host_phys_addr;
+	unsigned int length;
+};
+#endif
+
+#if GPS_DL_HAS_PLAT_DRV
 int gps_dl_linux_plat_drv_register(void);
 int gps_dl_linux_plat_drv_unregister(void);
 void __iomem *gps_dl_host_addr_to_virt(unsigned int host_addr);

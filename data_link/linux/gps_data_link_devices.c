@@ -24,6 +24,7 @@
 #include "gps_each_link.h"
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
+#include "gps_dl_linux_reserved_mem.h"
 #endif
 #if GPS_DL_MOCK_HAL
 #include "gps_mock_hal.h"
@@ -89,6 +90,39 @@ int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, int dev_index,
 	return 0;
 }
 
+int gps_dl_dma_buf_alloc2(enum gps_dl_link_id_enum link_id)
+{
+	int retval;
+	struct gps_each_device *p_dev;
+	struct gps_each_link *p_link;
+
+	p_dev = gps_dl_device_get(link_id);
+	p_link = gps_dl_link_get(link_id);
+
+	of_dma_configure(p_dev->dev, p_dev->dev->of_node);
+
+	if (!p_dev->dev->coherent_dma_mask)
+		p_dev->dev->coherent_dma_mask = DMA_BIT_MASK(32);
+
+	if (!p_dev->dev->dma_mask)
+		p_dev->dev->dma_mask = &p_dev->dev->coherent_dma_mask;
+
+
+	retval = gps_dl_dma_buf_alloc(
+		&p_link->tx_dma_buf, link_id, GDL_DMA_A2D, p_link->cfg.tx_buf_size);
+
+	if (retval)
+		return retval;
+
+	retval = gps_dl_dma_buf_alloc(
+		&p_link->rx_dma_buf, link_id, GDL_DMA_D2A, p_link->cfg.rx_buf_size);
+
+	if (retval)
+		return retval;
+
+	return 0;
+}
+
 void gps_dl_ctx_links_deinit(void)
 {
 	enum gps_dl_link_id_enum link_id;
@@ -100,7 +134,14 @@ void gps_dl_ctx_links_deinit(void)
 		p_dev = gps_dl_device_get(link_id);
 		p_link = gps_dl_link_get(link_id);
 
-		gps_dl_dma_buf_free(&p_link->rx_dma_buf, link_id);
+		if (gps_dl_reserved_mem_is_ready()) {
+			gps_dl_reserved_mem_dma_buf_deinit(&p_link->tx_dma_buf);
+			gps_dl_reserved_mem_dma_buf_deinit(&p_link->rx_dma_buf);
+
+		} else {
+			gps_dl_dma_buf_free(&p_link->tx_dma_buf, link_id);
+			gps_dl_dma_buf_free(&p_link->rx_dma_buf, link_id);
+		}
 
 		/* un-binding each device and link */
 		p_link->p_device = NULL;
@@ -121,33 +162,24 @@ int gps_dl_ctx_links_init(void)
 		p_dev = gps_dl_device_get(link_id);
 		p_link = gps_dl_link_get(link_id);
 
-		of_dma_configure(p_dev->dev, p_dev->dev->of_node);
+		if (gps_dl_reserved_mem_is_ready()) {
+			gps_dl_reserved_mem_dma_buf_init(&p_link->tx_dma_buf,
+				link_id, GDL_DMA_A2D, p_link->cfg.tx_buf_size);
 
-		if (!p_dev->dev->coherent_dma_mask)
-			p_dev->dev->coherent_dma_mask = DMA_BIT_MASK(32);
-
-		if (!p_dev->dev->dma_mask)
-			p_dev->dev->dma_mask = &p_dev->dev->coherent_dma_mask;
-
-
-		retval = gps_dl_dma_buf_alloc(
-			&p_link->tx_dma_buf, link_id, GDL_DMA_A2D, p_link->cfg.tx_buf_size);
-
-		if (retval)
-			return retval;
-
-		retval = gps_dl_dma_buf_alloc(
-			&p_link->rx_dma_buf, link_id, GDL_DMA_D2A, p_link->cfg.rx_buf_size);
-
-		if (retval)
-			return retval;
+			gps_dl_reserved_mem_dma_buf_init(&p_link->rx_dma_buf,
+				link_id, GDL_DMA_D2A, p_link->cfg.rx_buf_size);
+		} else {
+			retval = gps_dl_dma_buf_alloc2(link_id);
+			if (retval)
+				return retval;
+		}
 
 		for (j = 0; j < GPS_DL_WAIT_NUM; j++)
 			gps_dl_link_waitable_init(&p_link->waitables[j], j);
+
 		/* binding each device and link */
 		p_link->p_device = p_dev;
 		p_dev->p_link = p_link;
-
 
 		/* Todo: MNL read buf is 512, here is work-around */
 		/* the solution should be make on gdl_dma_buf_get */
@@ -192,6 +224,7 @@ void gps_dl_device_context_deinit(void)
 #endif
 
 	gps_dl_ctx_links_deinit();
+	gps_dl_reserved_mem_deinit();
 }
 
 #if GPS_DL_CTRLD_MOCK_LINK_LAYER
@@ -274,6 +307,7 @@ static int gps_dl_devices_init(void)
 
 void gps_dl_device_context_init(void)
 {
+	gps_dl_reserved_mem_init();
 	gps_dl_ctx_links_init();
 
 #if GPS_DL_MOCK_HAL

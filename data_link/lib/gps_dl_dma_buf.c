@@ -401,12 +401,12 @@ void gps_dma_buf_memcpy_from_rx(void *p_dst, const void *p_src, unsigned int len
 	 * dma_sync_single_for_cpu(DMA_FROM_DEVICE);
 	 */
 #endif
-	memcpy(p_dst, p_src, len);
+	memcpy_fromio(p_dst, p_src, len);
 }
 
 void gps_dma_buf_memcpy_to_tx(void *p_dst, const void *p_src, unsigned int len)
 {
-	memcpy(p_dst, p_src, len);
+	memcpy_toio(p_dst, p_src, len);
 #if GPS_DL_ON_LINUX
 	/* Use mb to make sure memcpy is done by CPU, and then DMA can be started.  */
 	mb();
