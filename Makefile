@@ -121,6 +121,7 @@ $(MODULE_NAME)-objs += data_link/linux/gps_each_device.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_linux.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_linux_plat_drv.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_linux_reserved_mem.o
+$(MODULE_NAME)-objs += data_link/linux/gps_dl_emi.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_ctrld.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_procfs.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_osal.o
