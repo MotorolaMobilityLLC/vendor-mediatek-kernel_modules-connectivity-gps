@@ -24,6 +24,7 @@
 #include "gps_dl_osal.h"
 #include "gps_dl_name_list.h"
 #include "gps_dl_context.h"
+#include "gps_dl_subsys_reset.h"
 #include "linux/jiffies.h"
 
 #include "linux/errno.h"
@@ -1445,16 +1446,28 @@ bool gps_each_link_change_state_from(enum gps_dl_link_id_enum link_id,
 	bool is_okay = false;
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 	enum gps_each_link_state_enum pre_state;
+	enum gps_each_link_reset_level old_level, new_level;
 
 	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	pre_state = p->state_for_user;
 	if (from == pre_state) {
 		p->state_for_user = to;
 		is_okay = true;
+
+		if (to == LINK_RESETTING) {
+			old_level = p->reset_level;
+			if (old_level < GPS_DL_RESET_LEVEL_GPS_SINGLE_LINK)
+				p->reset_level = GPS_DL_RESET_LEVEL_GPS_SINGLE_LINK;
+			new_level = p->reset_level;
+		}
 	}
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
-	if (is_okay) {
+	if (is_okay && (to == LINK_RESETTING)) {
+		GDL_LOGXD(link_id, "state change: %s -> %s, okay, level: %s -> %s",
+			gps_dl_link_state_name(from), gps_dl_link_state_name(to),
+			old_level, new_level);
+	} else if (is_okay) {
 		GDL_LOGXD(link_id, "state change: %s -> %s, okay",
 			gps_dl_link_state_name(from), gps_dl_link_state_name(to));
 	} else {
