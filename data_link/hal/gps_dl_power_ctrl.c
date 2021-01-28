@@ -335,9 +335,9 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 		return false;
 	}
 
-	okay = gps_dl_hw_take_conn_hw_sema(100);
+	okay = gps_dl_hw_take_conn_coex_hw_sema(100);
 	if (!okay) {
-		GDL_LOGE("gps_dl_hw_take_conn_hw_sema fail");
+		GDL_LOGE("gps_dl_hw_take_conn_coex_hw_sema fail");
 		return false;
 	}
 
@@ -346,7 +346,7 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 	if (!done) {
 		okay = gps_dl_hw_init_pta_uart();
 		if (!okay) {
-			gps_dl_hw_give_conn_hw_sema();
+			gps_dl_hw_give_conn_coex_hw_sema();
 			GDL_LOGE("gps_dl_hw_init_pta_uart fail");
 			return false;
 		}
@@ -364,7 +364,7 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 
 	gps_dl_hw_set_pta_blanking_parameter();
 
-	gps_dl_hw_give_conn_hw_sema();
+	gps_dl_hw_give_conn_coex_hw_sema();
 
 	/* okay, update flags */
 #if GPS_DL_HAS_PLAT_DRV
@@ -392,9 +392,9 @@ void gps_dl_hal_md_blanking_deinit_pta(void)
 	/* Currently, deinit is no need.
 	 * Just keep the bellow code for future usage.
 	 */
-	okay = gps_dl_hw_take_conn_hw_sema(0); /* 0 stands for polling just one time */
+	okay = gps_dl_hw_take_conn_coex_hw_sema(0); /* 0 stands for polling just one time */
 	if (!okay) {
-		GDL_LOGE("gps_dl_hw_take_conn_hw_sema fail");
+		GDL_LOGE("gps_dl_hw_take_conn_coex_hw_sema fail");
 		return;
 	}
 
@@ -410,6 +410,6 @@ void gps_dl_hal_md_blanking_deinit_pta(void)
 	else
 		GDL_LOGW("pta uart already deinit done");
 
-	gps_dl_hw_give_conn_hw_sema();
+	gps_dl_hw_give_conn_coex_hw_sema();
 }
 #endif /* GPS_DL_ON_LINUX */
