@@ -216,10 +216,21 @@ bool gps_dl_hw_is_pta_uart_init_done(void)
 	return done;
 }
 
+/* Only check bit7, so not use CONN_UART_PTA_FCR_RFTL */
+#define CONN_UART_PTA_FCR_RFTL_HIGH_BIT_ADDR CONN_UART_PTA_FCR_ADDR
+#define CONN_UART_PTA_FCR_RFTL_HIGH_BIT_MASK 0x00000080
+#define CONN_UART_PTA_FCR_RFTL_HIGH_BIT_SHFT 7
+
 bool gps_dl_hw_init_pta_uart(void)
 {
+#if 0
 	unsigned int pta_uart_en;
+#endif
+	bool show_log;
+	bool poll_okay;
 
+	/* 20191008 after DE checking, bellow steps are no need */
+#if 0
 	/* Set pta uart to MCU mode before init it.
 	 * Note: both wfset and btset = 0, then pta_uart_en should become 0,
 	 * set one of them = 1, then pta_uart_en should become 1.
@@ -232,8 +243,10 @@ bool gps_dl_hw_init_pta_uart(void)
 		GDL_LOGE("ro_uart_apb_hw_en not become 0, fail");
 		return false;
 	}
+#endif
 
 	gps_dl_hw_dump_host_csr_conninfra_info(true);
+	show_log = gps_dl_set_show_reg_rw_log(true);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_UART_PTA_HIGHSPEED_SPEED, 3);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_UART_PTA_SAMPLE_COUNT_SAMPLE_COUNT, 5);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_UART_PTA_SAMPLE_POINT_SAMPLE_POINT, 2);
@@ -258,13 +271,29 @@ bool gps_dl_hw_init_pta_uart(void)
 	GDL_HW_WR_CONN_INFRA_REG(CONN_UART_PTA_DLL_ADDR, 1);
 	GDL_HW_WR_CONN_INFRA_REG(CONN_UART_PTA_DLM_ADDR, 0);
 	GDL_HW_WR_CONN_INFRA_REG(CONN_UART_PTA_LCR_ADDR, 3);
+
+	/* 20191008 after DE checking, add CONN_UART_PTA_FCR_ADDR read-back checking */
+
+	/* dump value before setting */
+	GDL_HW_RD_CONN_INFRA_REG(CONN_UART_PTA_FCR_ADDR);
 	GDL_HW_WR_CONN_INFRA_REG(CONN_UART_PTA_FCR_ADDR, 0x37);
+	/* dump value after setting and poll until bit7 become 1 or timeout */
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_UART_PTA_FCR_RFTL_HIGH_BIT, 1, POLL_DEFAULT, &poll_okay);
+	if (!poll_okay) {
+		gps_dl_set_show_reg_rw_log(show_log);
+		GDL_LOGE("CONN_UART_PTA_FCR bit7 not become 1, fail");
+		return false;
+	}
 
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_PTA6_WFSET_PTA_CTRL_r_wfset_uart_apb_hw_en, 1);
+
+	/* 20191008 after DE checking, add this step */
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_PTA6_BTSET_PTA_CTRL_r_btset_uart_apb_hw_en, 1);
+
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_PTA6_WFSET_PTA_CTRL_r_wfset_lte_pta_en, 1);
 
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_PTA6_TMR_CTRL_1_r_idc_2nd_byte_tmout, 4); /* us */
-
+	gps_dl_set_show_reg_rw_log(show_log);
 	return true;
 }
 
