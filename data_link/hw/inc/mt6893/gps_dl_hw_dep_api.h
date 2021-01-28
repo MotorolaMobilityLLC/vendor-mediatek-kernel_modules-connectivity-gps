@@ -7,7 +7,8 @@
 
 #include "conn_infra/conn_infra_cfg.h"
 
-#define GDL_HW_CONN_INFRA_VER (0x20010000)
+/* For MT6893, the CODA is in connac2_0 */
+#define GDL_HW_CONN_INFRA_VER (0x20010101)
 #define GDL_HW_BGF_VER        (0x20010000)
 
 
@@ -48,15 +49,15 @@
 
 #if (GPS_DL_HAS_CONNINFRA_DRV)
 /*
- * For MT6885, conninfra driver do it due to GPS/BT share same bit,
+ * For MT6893, conninfra driver do it due to GPS/BT share same bit,
  * so do nothing here if conninfra driver ready.
  */
-#define GDL_HW_SET_CONN_INFRA_BGF_EN_MT6885(val)
+#define GDL_HW_SET_CONN_INFRA_BGF_EN_MT6893(val)
 #else
-#define GDL_HW_SET_CONN_INFRA_BGF_EN_MT6885(val) \
+#define GDL_HW_SET_CONN_INFRA_BGF_EN_MT6893(val) \
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFYS_ON_TOP_PWR_CTL_BGFSYS_ON_TOP_PWR_ON, val)
 #endif
-#define GDL_HW_SET_CONN_INFRA_BGF_EN(val) GDL_HW_SET_CONN_INFRA_BGF_EN_MT6885(val)
+#define GDL_HW_SET_CONN_INFRA_BGF_EN(val) GDL_HW_SET_CONN_INFRA_BGF_EN_MT6893(val)
 
 #define GDL_HW_SET_GPS_FUNC_EN(val) \
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, val)

@@ -68,10 +68,23 @@ obj-m += $(MODULE_NAME).o
 SELECT_GPS_DL_DRV := n
 GPS_DL_HAS_MOCK := n
 GPS_DL_HAS_CONNINFRA_DRV := n
+GPS_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps
 
 ifeq ($(CONFIG_MACH_MT6885),y)
 SELECT_GPS_DL_DRV := y
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0/coda_gen
 ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6885),y)
+GPS_DL_HAS_CONNINFRA_DRV := y
+endif
+endif
+
+ifeq ($(CONFIG_MACH_MT6893),y)
+SELECT_GPS_DL_DRV := y
+# For MT6893, the CODA is same as connac2_0
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/mt6893
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0/coda_gen
+ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6893),y)
 GPS_DL_HAS_CONNINFRA_DRV := y
 endif
 endif
@@ -83,17 +96,12 @@ ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/include
 ccflags-y += -DGPS_DL_HAS_CONNINFRA_DRV=1
 endif
 
-GPS_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/linux/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/link/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/lib/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hal/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc
-ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0
-ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0/coda_gen
-#ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0_1_0
-#ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0_1_0/coda_gen
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link_mock/mock/inc
 
 $(MODULE_NAME)-objs += gps_dl_module.o
