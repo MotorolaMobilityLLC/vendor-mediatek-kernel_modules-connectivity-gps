@@ -73,7 +73,10 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 		gps_each_link_reset(z);
 	else if (y == 3)
 		gps_dl_trigger_gps_print_hw_status();
-
+	else if (y == 4 && (z >= 0 && z <= GPS_DATA_LINK_NUM))
+		gps_dl_test_mask_hasdata_irq_set(z, true);
+	else if (y == 6 && (z >= 0 && z <= GPS_DATA_LINK_NUM))
+		gps_dl_test_mask_mcub_irq_on_open_set(z, true);
 	return 0;
 }
 

@@ -357,3 +357,35 @@ bool gps_dl_conninfra_is_okay_or_handle_it(int *p_hung_value, bool dump_on_hung_
 #endif
 }
 
+
+bool g_gps_dl_test_mask_mcub_irq_on_open_flag[GPS_DATA_LINK_NUM];
+bool g_gps_dl_test_mask_hasdata_irq_flag[GPS_DATA_LINK_NUM];
+
+void gps_dl_test_mask_mcub_irq_on_open_set(enum gps_dl_link_id_enum link_id, bool mask)
+{
+	ASSERT_LINK_ID(link_id, GDL_VOIDF());
+
+	g_gps_dl_test_mask_mcub_irq_on_open_flag[link_id] = mask;
+}
+
+bool gps_dl_test_mask_mcub_irq_on_open_get(enum gps_dl_link_id_enum link_id)
+{
+	ASSERT_LINK_ID(link_id, false);
+
+	return g_gps_dl_test_mask_mcub_irq_on_open_flag[link_id];
+}
+
+void gps_dl_test_mask_hasdata_irq_set(enum gps_dl_link_id_enum link_id, bool mask)
+{
+	ASSERT_LINK_ID(link_id, GDL_VOIDF());
+
+	g_gps_dl_test_mask_hasdata_irq_flag[link_id] = mask;
+}
+
+bool gps_dl_test_mask_hasdata_irq_get(enum gps_dl_link_id_enum link_id)
+{
+	ASSERT_LINK_ID(link_id, false);
+
+	return g_gps_dl_test_mask_hasdata_irq_flag[link_id];
+}
+

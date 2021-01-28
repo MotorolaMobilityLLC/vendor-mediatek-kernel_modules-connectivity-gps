@@ -17,6 +17,7 @@
 #include "gps_dl_isr.h"
 #include "gps_dl_context.h"
 #include "gps_dl_name_list.h"
+#include "gps_dl_subsys_reset.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
 #endif
@@ -191,7 +192,12 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		gps_dl_hal_d2a_rx_dma_claim_emi_usage(link_id, false);
 		gps_dl_hw_usrt_clear_nodata_irq(link_id);
 		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_NODATA, GPS_DL_IRQ_CTRL_FROM_HAL);
-		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_HAL);
+		if (gps_dl_test_mask_hasdata_irq_get(link_id)) {
+			GDL_LOGXE(link_id, "test mask hasdata irq, not unmask irq and wait reset");
+			gps_dl_test_mask_hasdata_irq_set(link_id, false);
+			gps_dl_hal_set_irq_dis_flag(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, true);
+		} else
+			gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_HAL);
 		break;
 
 	case GPS_DL_HAL_EVT_A2D_TX_DMA_DONE:

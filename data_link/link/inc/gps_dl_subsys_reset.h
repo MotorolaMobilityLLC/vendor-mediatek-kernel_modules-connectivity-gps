@@ -42,5 +42,11 @@ bool gps_dl_conninfra_is_readable(void);
 void gps_dl_conninfra_not_readable_show_warning(unsigned int host_addr);
 bool gps_dl_conninfra_is_okay_or_handle_it(int *p_hung_value, bool dump_on_hung_value_zero);
 
+void gps_dl_test_mask_mcub_irq_on_open_set(enum gps_dl_link_id_enum link_id, bool mask);
+bool gps_dl_test_mask_mcub_irq_on_open_get(enum gps_dl_link_id_enum link_id);
+
+void gps_dl_test_mask_hasdata_irq_set(enum gps_dl_link_id_enum link_id, bool mask);
+bool gps_dl_test_mask_hasdata_irq_get(enum gps_dl_link_id_enum link_id);
+
 #endif /* _GPS_DL_SUBSYS_RESET_H */
 
