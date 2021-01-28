@@ -104,6 +104,37 @@ void gps_dl_hw_usrt_clear_nodata_irq(enum gps_dl_link_id_enum link_id)
 	GDL_HW_SET_GPS_ENTRY2(link_id, 1, GPS_USRT_APB_APB_STA_NODAINTB, GPS_L5_USRT_APB_APB_STA_NODAINTB);
 }
 
+void gps_dl_hw_print_usrt_status(enum gps_dl_link_id_enum link_id)
+{
+	bool show_log;
+	unsigned int value;
+
+	show_log = gps_dl_set_show_reg_rw_log(true);
+	if (link_id == GPS_DATA_LINK_ID0) {
+		value = GDL_HW_RD_GPS_REG(GPS_USRT_APB_APB_STA_ADDR);
+		value = GDL_HW_RD_GPS_REG(GPS_USRT_APB_MONF_ADDR);
+	} else if (link_id == GPS_DATA_LINK_ID1) {
+		value = GDL_HW_RD_GPS_REG(GPS_L5_USRT_APB_APB_STA_ADDR);
+		value = GDL_HW_RD_GPS_REG(GPS_L5_USRT_APB_MONF_ADDR);
+	}
+	gps_dl_set_show_reg_rw_log(show_log);
+}
+
+bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id)
+{
+	bool poll_okay = false;
+
+	if (link_id == GPS_DATA_LINK_ID0)
+		GDL_HW_POLL_GPS_ENTRY(GPS_USRT_APB_APB_STA_RX_EMP, 1, 10000 * POLL_US, &poll_okay);
+	else if (link_id == GPS_DATA_LINK_ID1)
+		GDL_HW_POLL_GPS_ENTRY(GPS_L5_USRT_APB_APB_STA_RX_EMP, 1, 10000 * POLL_US, &poll_okay);
+
+	if (!poll_okay)
+		GDL_LOGXE(link_id, "okay = %d", poll_okay);
+
+	return poll_okay;
+}
+
 enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_data(
 	enum gps_dl_link_id_enum link_id, int timeout_usec)
 {
