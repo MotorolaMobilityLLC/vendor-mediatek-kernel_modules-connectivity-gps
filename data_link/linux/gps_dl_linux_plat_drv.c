@@ -428,27 +428,31 @@ int gps_dl_linux_plat_drv_unregister(void)
 	return 0;
 }
 
-static struct wakeup_source g_gps_dl_wake_lock;
+static struct wakeup_source *g_gps_dl_wake_lock_ptr;
 const char c_gps_dl_wake_lock_name[] = "gpsdl_wakelock";
 void gps_dl_wake_lock_init(void)
 {
 	GDL_LOGD_INI("");
-	wakeup_source_init(&g_gps_dl_wake_lock, c_gps_dl_wake_lock_name);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 149)
+	g_gps_dl_wake_lock_ptr = wakeup_source_register(NULL, c_gps_dl_wake_lock_name);
+#else
+	g_gps_dl_wake_lock_ptr = wakeup_source_register(c_gps_dl_wake_lock_name);
+#endif
 }
 
 void gps_dl_wake_lock_deinit(void)
 {
 	GDL_LOGD_INI("");
-	wakeup_source_trash(&g_gps_dl_wake_lock);
+	wakeup_source_unregister(g_gps_dl_wake_lock_ptr);
 }
 
 void gps_dl_wake_lock_hold(bool hold)
 {
 	GDL_LOGD_ONF("hold = %d", hold);
 	if (hold)
-		__pm_stay_awake(&g_gps_dl_wake_lock);
+		__pm_stay_awake(g_gps_dl_wake_lock_ptr);
 	else
-		__pm_relax(&g_gps_dl_wake_lock);
+		__pm_relax(g_gps_dl_wake_lock_ptr);
 }
 
 #endif /* GPS_DL_HAS_PLAT_DRV */
