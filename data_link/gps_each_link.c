@@ -50,6 +50,24 @@ char *gps_dl_waitable_type_name(enum gps_each_link_waitable_type type)
 		return waitable_type_name[GPS_DL_WAIT_NUM];
 }
 
+const char * const state_name_str_list[LINK_STATE_NUM + 1] = {
+	[LINK_UNINIT]      = "UNINIT",
+	[LINK_CLOSED]      = "CLOSED",
+	[LINK_OPENING]     = "OPENING",
+	[LINK_OPENED]      = "OPENED",
+	[LINK_CLOSING]     = "CLOSING",
+	[LINK_RESETTING]   = "RESETTING",
+	[LINK_RESET_DONE]  = "RESET_DONE",
+	[LINK_STATE_NUM]   = "INVALID",
+};
+
+const char *gps_dl_state_name(enum gps_each_link_state_enum state)
+{
+	if (state >= 0 && state < LINK_STATE_NUM)
+		return state_name_str_list[state];
+	else
+		return state_name_str_list[GPS_DL_WAIT_NUM];
+}
 
 void gps_each_link_set_bool_flag(enum gps_dl_link_id_enum link_id,
 	enum gps_each_link_bool_state name, bool value)
@@ -216,6 +234,7 @@ void gps_each_link_init(enum gps_dl_link_id_enum link_id)
 
 	p->session_id = 0;
 	gps_each_link_mutexes_init(p);
+	gps_each_link_spin_locks_init(p);
 	gps_each_link_set_active(link_id, false);
 	gps_dl_link_set_ready_to_write(link_id, false);
 	gps_each_link_context_reset(link_id);
@@ -226,7 +245,9 @@ void gps_each_link_deinit(enum gps_dl_link_id_enum link_id)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 
+	gps_each_link_set_state(link_id, LINK_UNINIT);
 	gps_each_link_mutexes_deinit(p);
+	gps_each_link_spin_locks_deinit(p);
 }
 
 void gps_each_link_context_reset(enum gps_dl_link_id_enum link_id)
@@ -275,12 +296,16 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 		break;
 
 	case LINK_OPENED:
+	case LINK_OPENING:
 		retval = -EBUSY;; /* twice open not allowed */
 		break;
 
 	case LINK_CLOSED:
-		gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_OPEN);
-		gps_each_link_set_state(link_id, LINK_OPENING);
+		okay = gps_each_link_change_state_from(link_id, LINK_CLOSED, LINK_OPENING);
+		if (!okay) {
+			retval = -EBUSY;
+			break;
+		}
 
 		/* TODO: simplify the flags */
 		gps_each_link_set_bool_flag(link_id, LINK_TO_BE_CLOSED, false);
@@ -289,6 +314,10 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 		gps_dl_link_event_send(GPS_DL_EVT_LINK_OPEN, link_id);
 		gps_dl_link_open_wait(link_id, &sigval);
 
+		/* TODO: Check this mutex can be removed?
+		 * the possible purepos is make it's atomic from LINK_USER_OPEN and LINK_OPEN_RESULT_OKAY.
+		 */
+		gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_OPEN);
 		if (sigval != 0) {
 			gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
 			gps_each_link_give_big_lock(link_id);
@@ -311,9 +340,9 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 	}
 
 	if (retval == 0)
-		GDL_LOGXD(link_id, "prev_state = %d, retval = %d", state, retval);
+		GDL_LOGXD(link_id, "prev_state = %s, retval = %d", gps_dl_state_name(state), retval);
 	else
-		GDL_LOGXW(link_id, "prev_state = %d, retval = %d", state, retval);
+		GDL_LOGXW(link_id, "prev_state = %s, retval = %d", gps_dl_state_name(state), retval);
 
 	return retval;
 }
@@ -324,11 +353,13 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 	 * - set each link resetting flag
 	 */
 	enum gps_each_link_state_enum state, state2;
+	bool okay;
 	int retval;
 
 	state = gps_each_link_get_state(link_id);
 
 	switch (state) {
+	case LINK_OPENING:
 	case LINK_CLOSING:
 	case LINK_CLOSED:
 		retval = -EBUSY;
@@ -340,13 +371,13 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 		break;
 
 	case LINK_OPENED:
-		gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_RESET);
+		okay = gps_each_link_change_state_from(link_id, LINK_OPENED, LINK_RESETTING);
+		if (!okay) {
+			state2 = gps_each_link_get_state(link_id);
 
-		state2 = gps_each_link_get_state(link_id);
-		if (state2 != LINK_OPENED) {
 			/* Already reset or close, not trigger reseeting again */
-			gps_each_link_give_big_lock(link_id);
-			GDL_LOGXW(link_id, "state changed: %d -> %d", state, state2);
+			GDL_LOGXW(link_id, "state changed: %s -> %s",
+				gps_dl_state_name(state), gps_dl_state_name(state2));
 			if (state2 == LINK_RESETTING || state2 == LINK_RESET_DONE)
 				retval = 0;
 			else
@@ -355,8 +386,11 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 		}
 
 		gps_each_link_set_bool_flag(link_id, LINK_IS_RESETTING, true);
+
+		/* no need to wait reset ack
+		 * TODO: make sure message send okay
+		 */
 		gps_dl_link_event_send(GPS_DL_EVT_LINK_RESET_DSP, link_id);
-		gps_each_link_give_big_lock(link_id);
 		retval = 0;
 		break;
 
@@ -367,9 +401,9 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 
 	/* wait until cttld thread ack the status */
 	if (retval == 0)
-		GDL_LOGXD(link_id, "prev_state = %d, retval = %d", state, retval);
+		GDL_LOGXD(link_id, "prev_state = %s, retval = %d", gps_dl_state_name(state), retval);
 	else
-		GDL_LOGXW(link_id, "prev_state = %d, retval = %d", state, retval);
+		GDL_LOGXW(link_id, "prev_state = %s, retval = %d", gps_dl_state_name(state), retval);
 
 	return retval;
 }
@@ -462,11 +496,13 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 {
 	enum gps_each_link_state_enum state;
 	long sigval = 0;
+	bool okay;
 	int retval;
 
 	state = gps_each_link_get_state(link_id);
 
 	switch (state) {
+	case LINK_OPENING:
 	case LINK_CLOSING:
 	case LINK_CLOSED:
 		/* twice close */
@@ -485,8 +521,11 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 		break;
 
 	case LINK_OPENED:
-		gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_CLOSE);
-		gps_each_link_set_state(link_id, LINK_CLOSING);
+		okay = gps_each_link_change_state_from(link_id, LINK_OPENED, LINK_CLOSING);
+		if (!okay) {
+			retval = -EBUSY;
+			break;
+		}
 
 		/* set this status, hal proc will by pass the message from the link
 		 * it can make LINK_CLOSE be processed faster
@@ -496,6 +535,7 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 		gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
 		gps_dl_link_close_wait(link_id, &sigval);
 
+		gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_CLOSE);
 		if (sigval) {
 			gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
 			gps_each_link_give_big_lock(link_id);
@@ -513,9 +553,9 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 	}
 
 	if (retval == 0)
-		GDL_LOGXD(link_id, "prev_state = %d, retval = %d", state, retval);
+		GDL_LOGXD(link_id, "prev_state = %s, retval = %d", gps_dl_state_name(state), retval);
 	else
-		GDL_LOGXW(link_id, "prev_state = %d, retval = %d", state, retval);
+		GDL_LOGXW(link_id, "prev_state = %s, retval = %d", gps_dl_state_name(state), retval);
 
 	return retval;
 }
@@ -561,7 +601,7 @@ int gps_each_link_check(enum gps_dl_link_id_enum link_id)
 		break;
 	}
 
-	GDL_LOGXW(link_id, "prev_state = %d, retval = %d", state, retval);
+	GDL_LOGXW(link_id, "prev_state = %s, retval = %d", gps_dl_state_name(state), retval);
 
 	return retval;
 }
@@ -854,7 +894,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 			break; /* wait hal handle it */
 
 		/* true: */
-		if (!gps_each_link_change_state(link_id, LINK_OPENED, LINK_RESETTING)) {
+		if (!gps_each_link_change_state_from(link_id, LINK_OPENED, LINK_RESETTING)) {
 			/* no handle it again */
 			break;
 		}
@@ -1035,6 +1075,24 @@ void gps_each_link_mutexes_deinit(struct gps_each_link *p)
 		osal_sleepable_lock_deinit(&p->mutexes[i]);
 }
 
+void gps_each_link_spin_locks_init(struct gps_each_link *p)
+{
+	enum gps_each_link_mutex i;
+
+	for (i = 0; i < GPS_DL_SPINLOCK_NUM; i++)
+		osal_unsleepable_lock_init(&p->spin_locks[i]);
+}
+
+void gps_each_link_spin_locks_deinit(struct gps_each_link *p)
+{
+#if 0
+	enum gps_each_link_mutex i;
+
+	for (i = 0; i < GPS_DL_SPINLOCK_NUM; i++)
+		osal_unsleepable_lock_deinit(&p->spin_locks[i]);
+#endif
+}
+
 void gps_each_link_mutex_take(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id)
 {
 	/* TODO: check range */
@@ -1050,6 +1108,22 @@ void gps_each_link_mutex_give(enum gps_dl_link_id_enum link_id, enum gps_each_li
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 
 	osal_unlock_sleepable_lock(&p->mutexes[mtx_id]);
+}
+
+void gps_each_link_spin_lock_take(enum gps_dl_link_id_enum link_id, enum gps_each_link_spinlock spin_lock_id)
+{
+	/* TODO: check range */
+	struct gps_each_link *p = gps_dl_link_get(link_id);
+
+	osal_lock_unsleepable_lock(&p->spin_locks[spin_lock_id]);
+}
+
+void gps_each_link_spin_lock_give(enum gps_dl_link_id_enum link_id, enum gps_each_link_spinlock spin_lock_id)
+{
+	/* TODO: check range */
+	struct gps_each_link *p = gps_dl_link_get(link_id);
+
+	osal_unlock_unsleepable_lock(&p->spin_locks[spin_lock_id]);
 }
 
 int gps_each_link_take_big_lock(enum gps_dl_link_id_enum link_id,
@@ -1068,24 +1142,50 @@ int gps_each_link_give_big_lock(enum gps_dl_link_id_enum link_id)
 enum gps_each_link_state_enum gps_each_link_get_state(enum gps_dl_link_id_enum link_id)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
+	enum gps_each_link_state_enum state;
 
-	return p->state_for_user;
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	state = p->state_for_user;
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+
+	return state;
 }
 
 void gps_each_link_set_state(enum gps_dl_link_id_enum link_id, enum gps_each_link_state_enum state)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
-	enum gps_each_link_state_enum pre_state = p->state_for_user;
+	enum gps_each_link_state_enum pre_state;
 
-	GDL_LOGXD(link_id, "%d -> %d", pre_state, state);
+
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	pre_state = p->state_for_user;
 	p->state_for_user = state;
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+
+	GDL_LOGXD(link_id, "%s -> %s", gps_dl_state_name(pre_state), gps_dl_state_name(state));
 }
 
-bool gps_each_link_change_state(enum gps_dl_link_id_enum link_id, enum gps_each_link_state_enum from,
-	enum gps_each_link_state_enum to)
+bool gps_each_link_change_state_from(enum gps_dl_link_id_enum link_id,
+	enum gps_each_link_state_enum from, enum gps_each_link_state_enum to)
 {
-	/* TODO */
+	bool is_okay = false;
+	struct gps_each_link *p = gps_dl_link_get(link_id);
+	enum gps_each_link_state_enum pre_state;
 
-	return false;
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	pre_state = p->state_for_user;
+	if (from == pre_state) {
+		p->state_for_user = to;
+		is_okay = true;
+	}
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+
+	if (is_okay)
+		GDL_LOGXD(link_id, "%s -> %s, okay", gps_dl_state_name(from), gps_dl_state_name(to));
+	else
+		GDL_LOGXW(link_id, "%s -> %s, fail, pre_state = %s",
+			gps_dl_state_name(from), gps_dl_state_name(to), gps_dl_state_name(pre_state));
+
+	return is_okay;
 }
 
