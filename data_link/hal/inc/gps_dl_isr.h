@@ -122,7 +122,7 @@ void gps_dl_isr_usrt_has_nodata(enum gps_dl_link_id_enum link_id);
 void gps_dl_isr_a2d_tx_dma_done(enum gps_dl_link_id_enum link_id);
 void gps_dl_isr_d2a_rx_dma_done(enum gps_dl_link_id_enum link_id);
 void gps_dl_isr_mcub(enum gps_dl_link_id_enum link_id);
-void gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id);
+bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id);
 
 #if GPS_DL_ON_CTP
 void gps_dl_isr_dl0_has_data(void);
