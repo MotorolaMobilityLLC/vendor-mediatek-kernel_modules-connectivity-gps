@@ -10,7 +10,7 @@ LOCAL_INIT_RC := init.gps_drv.rc
 
 ifneq (,$(filter MT6885,$(MTK_PLATFORM)))
 #Only set dependency to conninfra.ko when CONSYS_6885 set.
-ifeq ($(MTK_COMBO_CHIP),CONSYS_6885)
+ifneq (,$(filter CONSYS_6885,$(MTK_COMBO_CHIP)))
 LOCAL_REQUIRED_MODULES := conninfra.ko
 else
 $(warning MTK_PLATFORM=$(MTK_PLATFORM), MTK_COMBO_CHIP=$(MTK_COMBO_CHIP))
