@@ -42,6 +42,7 @@ bool g_gps_conninfa_on;
 bool g_gps_pta_init_done;
 bool g_gps_tia_on;
 bool g_gps_dma_irq_en;
+bool g_gps_mcub_irq_dis[GPS_DATA_LINK_NUM];
 
 unsigned int g_conn_user;
 
@@ -62,6 +63,25 @@ void gps_dl_hal_set_dma_irq_en_flag(bool enable)
 {
 	gps_each_link_spin_lock_take(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	g_gps_dma_irq_en = enable;
+	gps_each_link_spin_lock_give(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+}
+
+bool gps_dl_hal_get_mcub_irq_dis_flag(enum gps_dl_link_id_enum link_id)
+{
+	bool disable;
+
+	ASSERT_LINK_ID(link_id, false);
+	gps_each_link_spin_lock_take(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	disable = g_gps_mcub_irq_dis[link_id];
+	gps_each_link_spin_lock_give(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	return disable;
+}
+
+void gps_dl_hal_set_mcub_irq_dis_flag(enum gps_dl_link_id_enum link_id, bool disable)
+{
+	ASSERT_LINK_ID(link_id, GDL_VOIDF());
+	gps_each_link_spin_lock_take(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	g_gps_mcub_irq_dis[link_id] = disable;
 	gps_each_link_spin_lock_give(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 }
 
