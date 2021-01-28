@@ -59,7 +59,8 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id)
 	gps_dl_hw_save_dma_status_struct(d2a_dma_ch, &d2a_dma_status);
 	gps_dl_hw_print_dma_status_struct(d2a_dma_ch, &d2a_dma_status);
 
-	value = GDL_HW_RD_GPS_REG(0x80073160);
+	value = GDL_HW_RD_GPS_REG(0x80073160); /* DL0 */
+	value = GDL_HW_RD_GPS_REG(0x80073134); /* DL1 */
 	value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL);
 	value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG);
 }

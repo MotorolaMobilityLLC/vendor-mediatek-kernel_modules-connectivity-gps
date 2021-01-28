@@ -19,10 +19,11 @@
 #include "linux/jiffies.h"
 
 char *hal_event_name[GPD_DL_HAL_EVT_NUM + 1] = {
-	[GPS_DL_HAL_EVT_A2D_TX_DMA_DONE] = "HAL_TX_DMA_DONE",
-	[GPS_DL_HAL_EVT_D2A_RX_HAS_DATA] = "HAL_RX_HAS_DATA",
+	[GPS_DL_HAL_EVT_A2D_TX_DMA_DONE]   = "HAL_TX_DMA_DONE",
+	[GPS_DL_HAL_EVT_D2A_RX_HAS_DATA]   = "HAL_RX_HAS_DATA",
 	[GPS_DL_HAL_EVT_D2A_RX_HAS_NODATA] = "HAL_RX_HAS_NODATA",
-	[GPS_DL_HAL_EVT_D2A_RX_DMA_DONE] = "HAL_RX_DMA_DONE",
+	[GPS_DL_HAL_EVT_D2A_RX_DMA_DONE]   = "HAL_RX_DMA_DONE",
+	[GPS_DL_HAL_EVT_MCUB_HAS_IRQ]      = "HAL_MCUB_HAS_FLAG",
 	[GPD_DL_HAL_EVT_NUM] = "HAL_INVALID_EVT",
 };
 
@@ -257,7 +258,7 @@ void gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 	while (1) {
 		gps_dl_hw_get_mcub_info(link_id, &d2a);
 
-		GDL_LOGXD(link_id, "d2a: flag = 0x%04x, d0 = 0x%04x, d1 = 0x%04x",
+		GDL_LOGXI(link_id, "d2a: flag = 0x%04x, d0 = 0x%04x, d1 = 0x%04x",
 			d2a.flag, d2a.dat0, d2a.dat1);
 
 		if (d2a.flag == 0)
