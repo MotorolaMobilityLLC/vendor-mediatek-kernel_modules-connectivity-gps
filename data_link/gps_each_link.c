@@ -1283,6 +1283,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 {
 	struct gps_each_link *p_link = gps_dl_link_get(link_id);
 	bool show_log = false;
+	bool show_log2 = false;
 	unsigned long j0, j1;
 	int ret;
 	enum gps_dsp_state_t dsp_state;
@@ -1441,9 +1442,9 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		}
 
 		if (gps_each_link_get_bool_flag(link_id, LINK_NEED_A2Z_DUMP)) {
-			show_log = gps_dl_set_show_reg_rw_log(true);
+			show_log2 = gps_dl_set_show_reg_rw_log(true);
 			gps_dl_hw_do_gps_a2z_dump();
-			gps_dl_set_show_reg_rw_log(show_log);
+			gps_dl_set_show_reg_rw_log(show_log2);
 		}
 
 		gps_dl_hal_link_power_ctrl(link_id, GPS_DL_HAL_POWER_OFF);

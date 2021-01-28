@@ -47,11 +47,14 @@ enum gps_dsp_state_t gps_dsp_state_get(enum gps_dl_link_id_enum link_id)
 
 bool gps_dsp_state_is(enum gps_dsp_state_t state, enum gps_dl_link_id_enum link_id)
 {
+	ASSERT_LINK_ID(link_id, false);
 	return !!(g_gps_dsp_state[link_id] == state);
 }
 
 void gps_dsp_state_change_to(enum gps_dsp_state_t next_state, enum gps_dl_link_id_enum link_id)
 {
+	ASSERT_LINK_ID(link_id, GDL_VOIDF());
+
 	if (next_state == GPS_DSP_ST_TURNED_ON) {
 		/* gps_clock_switch (GPS_REQ_CLOCK_FREQ_MHZ_MVCD); */
 		/* gps_ctrl_timer_start(GPS_DSP_RESET_TIMEOUT_MS); */

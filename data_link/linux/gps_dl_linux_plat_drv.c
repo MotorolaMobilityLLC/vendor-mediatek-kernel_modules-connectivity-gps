@@ -343,8 +343,8 @@ static int gps_dl_get_reserved_memory(struct device *dev)
 static int gps_dl_probe(struct platform_device *pdev)
 {
 	struct resource *irq;
-	struct gps_each_device *p_each_dev0 = gps_dl_device_get(0);
-	struct gps_each_device *p_each_dev1 = gps_dl_device_get(1);
+	struct gps_each_device *p_each_dev0 = gps_dl_device_get(GPS_DATA_LINK_ID0);
+	struct gps_each_device *p_each_dev1 = gps_dl_device_get(GPS_DATA_LINK_ID1);
 	int i;
 	bool okay;
 
@@ -397,7 +397,7 @@ static int gps_dl_probe(struct platform_device *pdev)
 
 static int gps_dl_remove(struct platform_device *pdev)
 {
-	struct gps_each_device *p_each_dev = gps_dl_device_get(0);
+	struct gps_each_device *p_each_dev = gps_dl_device_get(GPS_DATA_LINK_ID0);
 
 	GDL_LOGW_INI("do gps_dl_remove");
 	platform_set_drvdata(pdev, NULL);
