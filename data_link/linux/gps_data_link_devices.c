@@ -155,9 +155,6 @@ int gps_dl_ctx_links_init(void)
 		gps_each_link_init(link_id);
 	}
 
-	/* TODO: move it to open, rather at init */
-	gps_dl_remap_ctx_cal_and_set();
-
 	return 0;
 }
 
