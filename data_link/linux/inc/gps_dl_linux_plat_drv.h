@@ -20,6 +20,9 @@ int gps_dl_linux_plat_drv_register(void);
 int gps_dl_linux_plat_drv_unregister(void);
 void __iomem *gps_dl_host_addr_to_virt(unsigned int host_addr);
 void gps_dl_update_status_for_md_blanking(bool gps_is_on);
+void gps_dl_tia_gps_ctrl(bool gps_is_on);
+void gps_dl_lna_pin_ctrl(enum gps_dl_link_id_enum link_id, bool dsp_is_on, bool force_en);
+void gps_dl_reserved_mem_show_info(void);
 #endif
 
 #endif /* _GPS_DL_LINUX_PLAT_DRV_H */

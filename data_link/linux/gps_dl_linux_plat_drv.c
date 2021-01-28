@@ -14,6 +14,7 @@
 
 #if GPS_DL_HAS_PLAT_DRV
 #include <linux/of_reserved_mem.h>
+#include <linux/pinctrl/consumer.h>
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -39,7 +40,7 @@
 
 /* #ifdef CONFIG_OF */
 const struct of_device_id gps_dl_of_ids[] = {
-	{ .compatible = "mediatek,mt6789-gps", },
+	{ .compatible = "mediatek,mt6885-gps", },
 	{}
 };
 /* #endif */
@@ -52,6 +53,7 @@ struct gps_dl_iomem_addr_map_entry {
 
 struct gps_dl_iomem_addr_map_entry g_gps_dl_iomem_arrary[GPS_DL_IOMEM_NUM];
 struct gps_dl_iomem_addr_map_entry g_gps_dl_status_dummy_cr;
+struct gps_dl_iomem_addr_map_entry g_gps_dl_tia_gps;
 
 void __iomem *gps_dl_host_addr_to_virt(unsigned int host_addr)
 {
@@ -89,48 +91,188 @@ void gps_dl_update_status_for_md_blanking(bool gps_is_on)
 		GDL_LOGW("dummy cr addr is invalid, can not update (on = %d)", gps_is_on);
 }
 
-static int gps_dl_probe(struct platform_device *pdev)
+void gps_dl_tia_gps_ctrl(bool gps_is_on)
+{
+	void __iomem *p = g_gps_dl_tia_gps.host_virt_addr;
+	unsigned int tia_gps_on, tia_gps_ctrl, tia_temp;
+	unsigned int tia_gps_on1, tia_gps_ctrl1, tia_temp1;
+
+	if (p == NULL) {
+		GDL_LOGE("on = %d, tia_gps addr is null", gps_is_on);
+		return;
+	}
+
+	tia_gps_on = __raw_readl(p);
+	tia_gps_ctrl = __raw_readl(p + 4);
+	tia_temp = __raw_readl(p + 8);
+
+	if (gps_is_on) {
+		/* 0x1001C01C[11:0] = 100 (~3ms update period, 1/32k = 0.03125ms)
+		 * 0x1001C01C[12] = 1 (enable TSX)
+		 * 0x1001C01C[13] = 1 (enable DCXO)
+		 */
+		mt_reg_sync_writel((100UL | (1UL << 12) | (1UL << 13)), p);
+
+		/* 0x1001C018[0] = 1 (GPS on) */
+		mt_reg_sync_writel(tia_gps_on | 1UL, p);
+	} else {
+		/* 0x1001C018[0] = 0 (GPS off) */
+		mt_reg_sync_writel(tia_gps_on & ~1UL, p);
+	}
+
+	tia_gps_on1 = __raw_readl(p);
+	tia_gps_ctrl1 = __raw_readl(p + 4);
+	tia_temp1 = __raw_readl(p + 8);
+
+	GDL_LOGD("on = %d, tia_gps_on = 0x%08x/0x%08x, ctrl = 0x%08x/0x%08x, temp = 0x%08x/0x%08x",
+		gps_is_on, tia_gps_on, tia_gps_on1,
+		tia_gps_ctrl, tia_gps_ctrl,
+		tia_temp, tia_temp1);
+}
+
+enum gps_dl_pinctrl_state_enum {
+	GPS_DL_L1_LNA_DISABLE,
+	GPS_DL_L1_LNA_DSP_CTRL,
+	GPS_DL_L1_LNA_ENABLE,
+	GPS_DL_L5_LNA_DISABLE,
+	GPS_DL_L5_LNA_DSP_CTRL,
+	GPS_DL_L5_LNA_ENABLE,
+	GPS_DL_PINCTRL_STATE_CNT
+};
+
+const char *const gps_dl_pinctrl_state_name_list[GPS_DL_PINCTRL_STATE_CNT] = {
+	"gps_l1_lna_disable",
+	"gps_l1_lna_dsp_ctrl",
+	"gps_l1_lna_enable",
+	"gps_l5_lna_disable",
+	"gps_l5_lna_dsp_ctrl",
+	"gps_l5_lna_enable",
+};
+
+struct pinctrl_state *g_gps_dl_pinctrl_state_struct_list[GPS_DL_PINCTRL_STATE_CNT];
+struct pinctrl *g_gps_dl_pinctrl_ptr;
+
+void gps_dl_pinctrl_show_info(void)
+{
+	enum gps_dl_pinctrl_state_enum state_id;
+	const char *p_name;
+	struct pinctrl_state *p_state;
+
+	GDL_LOGD("pinctrl_ptr = 0x%p", g_gps_dl_pinctrl_ptr);
+
+	for (state_id = 0; state_id < GPS_DL_PINCTRL_STATE_CNT; state_id++) {
+		p_name = gps_dl_pinctrl_state_name_list[state_id];
+		p_state = g_gps_dl_pinctrl_state_struct_list[state_id];
+		GDL_LOGD("state id = %d, ptr = 0x%p, name = %s",
+			state_id, p_state, p_name);
+	}
+}
+
+void gps_dl_pinctrl_context_init(void)
+{
+	enum gps_dl_pinctrl_state_enum state_id;
+	const char *p_name;
+	struct pinctrl_state *p_state;
+
+	if (IS_ERR(g_gps_dl_pinctrl_ptr)) {
+		GDL_LOGE("pinctrl is error");
+		return;
+	}
+
+	for (state_id = 0; state_id < GPS_DL_PINCTRL_STATE_CNT; state_id++) {
+		p_name = gps_dl_pinctrl_state_name_list[state_id];
+		p_state = pinctrl_lookup_state(g_gps_dl_pinctrl_ptr, p_name);
+
+		if (IS_ERR(p_state)) {
+			GDL_LOGE("lookup fail: state id = %d, name = %s", state_id, p_name);
+			g_gps_dl_pinctrl_state_struct_list[state_id] = NULL;
+			continue;
+		}
+
+		g_gps_dl_pinctrl_state_struct_list[state_id] = p_state;
+		GDL_LOGE("lookup okay: state id = %d, name = %s", state_id, p_name);
+	}
+}
+
+void gps_dl_lna_pin_ctrl(enum gps_dl_link_id_enum link_id, bool dsp_is_on, bool force_en)
+{
+	struct pinctrl_state *p_state = NULL;
+	int ret;
+
+	ASSERT_LINK_ID(link_id, GDL_VOIDF());
+
+	if (GPS_DATA_LINK_ID0 == link_id) {
+		if (dsp_is_on && force_en)
+			p_state = g_gps_dl_pinctrl_state_struct_list[GPS_DL_L1_LNA_ENABLE];
+		else if (dsp_is_on)
+			p_state = g_gps_dl_pinctrl_state_struct_list[GPS_DL_L1_LNA_DSP_CTRL];
+		else
+			p_state = g_gps_dl_pinctrl_state_struct_list[GPS_DL_L1_LNA_DISABLE];
+	}
+
+	if (GPS_DATA_LINK_ID1 == link_id) {
+		if (dsp_is_on && force_en)
+			p_state = g_gps_dl_pinctrl_state_struct_list[GPS_DL_L5_LNA_ENABLE];
+		else if (dsp_is_on)
+			p_state = g_gps_dl_pinctrl_state_struct_list[GPS_DL_L5_LNA_DSP_CTRL];
+		else
+			p_state = g_gps_dl_pinctrl_state_struct_list[GPS_DL_L5_LNA_DISABLE];
+	}
+
+	if (p_state == NULL) {
+		GDL_LOGXW(link_id, "on = %d, force = %d, state is null", dsp_is_on, force_en);
+		return;
+	}
+
+	ret = pinctrl_select_state(g_gps_dl_pinctrl_ptr, p_state);
+	if (ret != 0)
+		GDL_LOGXW(link_id, "on = %d, force = %d, select ret = %d", dsp_is_on, force_en, ret);
+	else
+		GDL_LOGXD(link_id, "on = %d, force = %d, select ret = %d", dsp_is_on, force_en, ret);
+}
+
+bool gps_dl_get_iomem_by_name(struct platform_device *pdev, const char *p_name,
+	struct gps_dl_iomem_addr_map_entry *p_entry)
 {
 	struct resource *regs;
+	bool okay;
+
+	regs = platform_get_resource_byname(pdev, IORESOURCE_MEM, p_name);
+	if (regs != NULL) {
+		p_entry->length = resource_size(regs);
+		p_entry->host_phys_addr = regs->start;
+		p_entry->host_virt_addr = devm_ioremap(&pdev->dev, p_entry->host_phys_addr, p_entry->length);
+		okay = true;
+		gps_dl_update_status_for_md_blanking(false);
+	} else {
+		p_entry->length = 0;
+		p_entry->host_phys_addr = 0;
+		p_entry->host_virt_addr = 0;
+		okay = false;
+	}
+
+	GDL_LOGE("phy_addr = 0x%08x, vir_addr = 0x%p, ok = %d, size = 0x%x, name = %s",
+		p_entry->host_phys_addr, p_entry->host_virt_addr, okay, p_entry->length, p_name);
+
+	return okay;
+}
+
+static int gps_dl_probe(struct platform_device *pdev)
+{
 	struct resource *irq;
 	struct gps_each_device *p_each_dev0 = gps_dl_device_get(0);
 	struct gps_each_device *p_each_dev1 = gps_dl_device_get(1);
-	void __iomem *p_base;
 	int i;
-	unsigned int of_ret, status_dummy_cr;
+	bool okay;
 
-	of_ret = of_property_read_u32(pdev->dev.of_node, "status-dummy-cr", &status_dummy_cr);
-	if (of_ret == 0) {
-		g_gps_dl_status_dummy_cr.length = 4;
-		g_gps_dl_status_dummy_cr.host_phys_addr = status_dummy_cr;
-		g_gps_dl_status_dummy_cr.host_virt_addr = devm_ioremap(&pdev->dev,
-			status_dummy_cr, g_gps_dl_status_dummy_cr.length);
+	gps_dl_get_iomem_by_name(pdev, "conn_infra_base", &g_gps_dl_iomem_arrary[0]);
+	gps_dl_get_iomem_by_name(pdev, "conn_gps_base", &g_gps_dl_iomem_arrary[1]);
+
+	okay = gps_dl_get_iomem_by_name(pdev, "status_dummy_cr", &g_gps_dl_status_dummy_cr);
+	if (okay)
 		gps_dl_update_status_for_md_blanking(false);
-	} else {
-		g_gps_dl_status_dummy_cr.length = 0;
-		g_gps_dl_status_dummy_cr.host_phys_addr = 0;
-		g_gps_dl_status_dummy_cr.host_virt_addr = 0;
-	}
 
-	GDL_LOGE("status_dummy_cr, of_ret = %d, phy_addr = 0x%08x, size = 0x%x, vir_addr = 0x%p",
-		of_ret, g_gps_dl_status_dummy_cr.host_phys_addr,
-		g_gps_dl_status_dummy_cr.length, g_gps_dl_status_dummy_cr.host_virt_addr);
-
-
-	for (i = 0; i < GPS_DL_IOMEM_NUM; i++) {
-		regs = platform_get_resource(pdev, IORESOURCE_MEM, i);
-		p_base = devm_ioremap(&pdev->dev, regs->start,
-						 resource_size(regs));
-
-		g_gps_dl_iomem_arrary[i].host_virt_addr = p_base;
-		g_gps_dl_iomem_arrary[i].host_phys_addr = regs->start;
-		g_gps_dl_iomem_arrary[i].length = resource_size(regs);
-
-		GDL_LOGE("regs idx = %d, phy_addr = 0x%08x, size = 0x%x, vir_addr = 0x%p",
-			i, g_gps_dl_iomem_arrary[i].host_phys_addr,
-			g_gps_dl_iomem_arrary[i].length,
-			g_gps_dl_iomem_arrary[i].host_virt_addr);
-	}
+	gps_dl_get_iomem_by_name(pdev, "tia_gps", &g_gps_dl_tia_gps);
 
 	for (i = 0; i < GPS_DL_IRQ_NUM; i++) {
 		irq = platform_get_resource(pdev, IORESOURCE_IRQ, i);
@@ -143,6 +285,16 @@ static int gps_dl_probe(struct platform_device *pdev)
 			i, irq->start, irq->end, irq->name, irq->flags);
 		gps_dl_irq_set_id(i, irq->start);
 	}
+
+	g_gps_dl_pinctrl_ptr = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(g_gps_dl_pinctrl_ptr))
+		GDL_LOGE("devm_pinctrl_get fail");
+	else {
+		gps_dl_pinctrl_context_init();
+		gps_dl_pinctrl_show_info();
+	}
+
+	gps_dl_reserved_mem_show_info();
 
 	GDL_LOGE("do gps_dl_probe\n");
 	platform_set_drvdata(pdev, p_each_dev0);
@@ -291,20 +443,11 @@ int gps_dl_linux_plat_drv_unregister(void)
 phys_addr_t g_gps_emi_mem_base;
 int g_gps_emi_mem_size;
 
-/*Reserved memory by device tree!*/
-
-int reserve_memory_gps_fn(struct reserved_mem *rmem)
+void gps_dl_reserved_mem_show_info(void)
 {
-	GDL_LOGE("[W]%s: name: %s,base: 0x%llx,size: 0x%llx\n",
-		__func__, rmem->name, (unsigned long long)rmem->base,
-		(unsigned long long)rmem->size);
-	g_gps_emi_mem_base = rmem->base;
-	g_gps_emi_mem_size = rmem->size;
-	return 0;
+	GDL_LOGE("base = 0x%llx, size = 0x%llx",
+		(unsigned long long)g_gps_emi_mem_base, (unsigned long long)g_gps_emi_mem_size);
 }
-
-RESERVEDMEM_OF_DECLARE(gps_reserve_memory_test, "mediatek,gps-reserve-memory",
-			reserve_memory_gps_fn);
 
 #endif /* GPS_DL_HAS_PLAT_DRV */
 
