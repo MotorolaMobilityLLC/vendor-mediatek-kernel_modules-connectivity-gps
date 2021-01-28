@@ -27,13 +27,18 @@
 #include <linux/io.h>
 #include <asm/io.h>
 #include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
+#include <linux/of_reserved_mem.h>
 #include <linux/platform_device.h>
 #include <linux/pm_wakeup.h>
 
 #include "gps_dl_linux.h"
 #include "gps_dl_linux_plat_drv.h"
+#include "gps_dl_linux_reserved_mem.h"
 #include "gps_dl_isr.h"
 #include "gps_each_device.h"
 
@@ -252,6 +257,32 @@ bool gps_dl_get_iomem_by_name(struct platform_device *pdev, const char *p_name,
 	return okay;
 }
 
+#if (GPS_DL_GET_RSV_MEM_IN_MODULE)
+phys_addr_t gGpsRsvMemPhyBase;
+unsigned long long gGpsRsvMemSize;
+static int gps_dl_get_reserved_memory(struct device *dev)
+{
+	struct device_node *np;
+	struct reserved_mem *rmem;
+
+	np = of_parse_phandle(dev->of_node, "memory-region", 0);
+	if (!np) {
+		GDL_LOGE_INI("no memory-region 1");
+		return -EINVAL;
+	}
+	rmem = of_reserved_mem_lookup(np);
+	of_node_put(np);
+	if (!rmem) {
+		GDL_LOGE_INI("no memory-region 2");
+		return -EINVAL;
+	}
+	GDL_LOGW_INI("resource base=%pa, size=%pa", &rmem->base, &rmem->size);
+	gGpsRsvMemPhyBase = (phys_addr_t)rmem->base;
+	gGpsRsvMemSize = (unsigned long long)rmem->size;
+	return 0;
+}
+#endif
+
 static int gps_dl_probe(struct platform_device *pdev)
 {
 	struct resource *irq;
@@ -260,6 +291,9 @@ static int gps_dl_probe(struct platform_device *pdev)
 	int i;
 	bool okay;
 
+#if (GPS_DL_GET_RSV_MEM_IN_MODULE)
+	gps_dl_get_reserved_memory(&pdev->dev);
+#endif
 	gps_dl_get_iomem_by_name(pdev, "conn_infra_base", &g_gps_dl_iomem_arrary[0]);
 	gps_dl_get_iomem_by_name(pdev, "conn_gps_base", &g_gps_dl_iomem_arrary[1]);
 
