@@ -594,3 +594,24 @@ void gps_dl_hw_gps_adie_force_off(void)
 #endif
 }
 
+void gps_dl_hw_gps_dump_top_rf_cr(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	unsigned int spi_data;
+	int rd_status;
+	int i;
+	const int rd_addr_list[] = {0x03C, 0xA18, 0xA1C, 0x0C8, 0xA00, 0x0B4, 0x34C};
+	int rd_addr;
+
+	for (i = 0; i < ARRAY_SIZE(rd_addr_list); i++) {
+		rd_addr = rd_addr_list[i];
+		spi_data = 0;
+		rd_status = conninfra_spi_read(SYS_SPI_TOP, rd_addr, &spi_data);
+		GDL_LOGW("rd: addr = 0x%x, val = 0x%x, rd_status = %d",
+			rd_addr, spi_data, rd_status);
+	}
+#else
+	GDL_LOGE("no conninfra driver");
+#endif
+}
+
