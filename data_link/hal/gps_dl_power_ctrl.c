@@ -44,7 +44,7 @@ bool g_gps_tia_on;
 bool g_gps_dma_irq_en;
 bool g_gps_irqs_dis[GPS_DATA_LINK_NUM][GPS_DL_IRQ_TYPE_NUM];
 bool g_gps_need_clk_ext[GPS_DATA_LINK_NUM];
-
+int g_gps_conn_clock_flag = GPSDL_CLOCK_FLAG_COTMS;
 unsigned int g_conn_user;
 
 bool gps_dl_hal_get_dma_irq_en_flag(void)
@@ -318,6 +318,7 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			if (!gps_dl_hal_conn_infra_driver_on())
 				return -1;
 
+			gps_dl_hal_load_clock_flag();
 			gps_dl_emi_remap_calc_and_set();
 #if GPS_DL_HAS_PLAT_DRV
 			gps_dl_wake_lock_hold(true);
@@ -566,5 +567,39 @@ void gps_dl_hal_md_blanking_ctrl(bool on)
 	gps_dl_update_status_for_md_blanking(on);
 #endif
 #endif
+}
+
+int gps_dl_hal_get_clock_flag(void)
+{
+	return g_gps_conn_clock_flag;
+}
+
+void gps_dl_hal_load_clock_flag(void)
+{
+	int gps_clock_flag;
+#if GPS_DL_HAS_CONNINFRA_DRV
+	enum connsys_clock_schematic clock_sch;
+
+	clock_sch = (enum connsys_clock_schematic)conninfra_get_clock_schematic();
+	switch (clock_sch) {
+	case CONNSYS_CLOCK_SCHEMATIC_26M_COTMS:
+		gps_clock_flag = GPSDL_CLOCK_FLAG_COTMS;
+		break;
+	case CONNSYS_CLOCK_SCHEMATIC_52M_COTMS:
+		gps_clock_flag = GPSDL_CLOCK_FLAG_52M_COTMS;
+		break;
+	case CONNSYS_CLOCK_SCHEMATIC_26M_EXTCXO:
+		gps_clock_flag = GPSDL_CLOCK_FLAG_TCXO;
+		break;
+	default:
+		gps_clock_flag = GPSDL_CLOCK_FLAG_COTMS;
+		break;
+	}
+	GDL_LOGW("clk: sch from conninfra = %d, mapping to flag = 0x%x", clock_sch, gps_clock_flag);
+#else
+	gps_clock_flag = GPSDL_CLOCK_FLAG_COTMS;
+	GDL_LOGW("clk: no conninfra drv, default flag = 0x%x", gps_clock_flag);
+#endif
+	g_gps_conn_clock_flag = gps_clock_flag;
 }
 
