@@ -6,12 +6,15 @@
 #include "gps_dl_osal.h"
 #include "gps_dl_procfs.h"
 #include "gps_each_link.h"
+#include "gps_dl_subsys_reset.h"
 
 int gps_dl_procfs_trigger_reset(int par1, int par2, int par3)
 {
 	if (par2 == 0)
-		gps_dl_whole_chip_reset();
-	else if (par2 == 1 && par3 >= 0 && par3 <= GPS_DATA_LINK_NUM)
+		gps_dl_trigger_connsys_reset();
+	else if (par2 == 1)
+		gps_dl_trigger_gps_subsys_reset((bool)par3);
+	else if (par2 == 2 && (par3 >= 0 && par3 <= GPS_DATA_LINK_NUM))
 		gps_each_link_reset(par3);
 
 	return 0;
