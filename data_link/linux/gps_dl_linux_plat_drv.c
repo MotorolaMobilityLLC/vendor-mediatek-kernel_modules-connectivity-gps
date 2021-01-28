@@ -26,14 +26,13 @@
 
 #include <linux/io.h>
 #include <asm/io.h>
-#include <sync_write.h>
-
 #include <linux/module.h>
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/pm_wakeup.h>
 
+#include "gps_dl_linux.h"
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_dl_isr.h"
 #include "gps_each_device.h"
@@ -78,7 +77,7 @@ void gps_dl_update_status_for_md_blanking(bool gps_is_on)
 
 	if (p != NULL) {
 		val_old = __raw_readl(p);
-		mt_reg_sync_writel(val, p);
+		gps_dl_linux_sync_writel(val, p);
 		val_new = __raw_readl(p);
 		GDL_LOGI_INI("dummy cr updated: %d -> %d, due to on = %d",
 			val_old, val_new, gps_is_on);
@@ -103,17 +102,17 @@ void gps_dl_tia_gps_ctrl(bool gps_is_on)
 
 	if (gps_is_on) {
 		/* 0x1001C018[0] = 1 (GPS on) */
-		mt_reg_sync_writel(tia_gps_on | 1UL, p);
+		gps_dl_linux_sync_writel(tia_gps_on | 1UL, p);
 
 		/* 0x1001C01C[11:0] = 100 (~3ms update period, 1/32k = 0.03125ms)
 		 * 0x1001C01C[12] = 1 (enable TSX)
 		 * 0x1001C01C[13] = 1 (enable DCXO)
 		 */
 		/* 20190923 period changed to 196 (0xC4, 6ms) */
-		mt_reg_sync_writel((196UL | (1UL << 12) | (1UL << 13)), p + 4);
+		gps_dl_linux_sync_writel((196UL | (1UL << 12) | (1UL << 13)), p + 4);
 	} else {
 		/* 0x1001C018[0] = 0 (GPS off) */
-		mt_reg_sync_writel(tia_gps_on & ~1UL, p);
+		gps_dl_linux_sync_writel(tia_gps_on & ~1UL, p);
 	}
 
 	tia_gps_on1 = __raw_readl(p);
