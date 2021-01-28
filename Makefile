@@ -90,7 +90,10 @@ ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/link/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/lib/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hal/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0/coda_gen
+#ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0_1_0
+#ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0_1_0/coda_gen
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link_mock/mock/inc
 
 $(MODULE_NAME)-objs += gps_dl_module.o

@@ -45,6 +45,7 @@ void gps_dl_hal_link_clear_hw_pwr_stat(enum gps_dl_link_id_enum link_id);
 bool gps_dl_hal_md_blanking_init_pta(void);
 void gps_dl_hal_md_blanking_deinit_pta(void);
 #endif
+void gps_dl_hal_md_blanking_ctrl(bool on);
 void gps_dl_hal_a2d_tx_dma_start(enum gps_dl_link_id_enum link_id,
 	struct gdl_dma_buf_entry *p_entry);
 void gps_dl_hal_d2a_rx_dma_start(enum gps_dl_link_id_enum link_id,
