@@ -136,7 +136,7 @@ bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 
 	if (enable) {
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
-#if (GDL_HW_CONN_INFRA_VER == 0x20010000)
+#if ((GDL_HW_CONN_INFRA_VER == 0x20010000) || (GDL_HW_CONN_INFRA_VER == 0x20010101))
 		/* Wait until sleep prot disabled, 10 times per 1ms */
 		GDL_HW_POLL_CONN_INFRA_ENTRY(
 			CONN_HOST_CSR_TOP_CONN_SLP_PROT_CTRL_CONN_INFRA_ON2OFF_SLP_PROT_ACK, 0,

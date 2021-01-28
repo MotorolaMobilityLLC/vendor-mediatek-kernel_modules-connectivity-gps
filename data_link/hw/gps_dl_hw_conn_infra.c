@@ -95,7 +95,7 @@ void gps_dl_hw_dump_sleep_prot_status(void)
 	bool show_log = true;
 
 	show_log = gps_dl_set_show_reg_rw_log(true);
-#if (GDL_HW_CONN_INFRA_VER == 0x20010000)
+#if ((GDL_HW_CONN_INFRA_VER == 0x20010000) || (GDL_HW_CONN_INFRA_VER == 0x20010101))
 	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
 		CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_ADDR,
 		BMASK_RW_FORCE_PRINT);
