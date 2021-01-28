@@ -106,6 +106,7 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			gps_dl_remap_ctx_cal_and_set();
 
 #if GPS_DL_HAS_PLAT_DRV
+			gps_dl_wake_lock_hold(true);
 			gps_dl_tia_gps_ctrl(true);
 			gps_dl_update_status_for_md_blanking(true);
 #endif
@@ -122,6 +123,7 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 #if GPS_DL_HAS_PLAT_DRV
 			gps_dl_update_status_for_md_blanking(false);
 			gps_dl_tia_gps_ctrl(false);
+			gps_dl_wake_lock_hold(false);
 #endif
 #if GPS_DL_HAS_CONNINFRA_DRV
 			conninfra_pwr_off(CONNDRV_TYPE_GPS);

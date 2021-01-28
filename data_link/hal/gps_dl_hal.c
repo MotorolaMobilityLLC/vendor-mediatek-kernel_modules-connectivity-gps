@@ -15,6 +15,7 @@
 #include "gps_dsp_fsm.h"
 #include "gps_each_link.h"
 #include "gps_dl_isr.h"
+#include "gps_dl_context.h"
 #include "linux/jiffies.h"
 
 char *hal_event_name[GPD_DL_HAL_EVT_NUM + 1] = {
@@ -75,6 +76,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	int curr_sid;
 	bool last_session_msg = false;
 	unsigned long j0, j1;
+	bool show_log;
 
 	j0 = jiffies;
 	curr_sid = gps_each_link_get_session_id(link_id);
@@ -115,7 +117,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		GDL_LOGXW(link_id, "curr_sid = %d, evt = %s, on_sid = %d, out of range",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
 	} else {
-		GDL_LOGXD(link_id, "curr_sid = %d, evt = %s, on_sid = %d",
+		GDL_LOGXI(link_id, "curr_sid = %d, evt = %s, on_sid = %d",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
 	}
 
@@ -216,8 +218,10 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		break;
 
 	case GPS_DL_HAL_EVT_MCUB_HAS_IRQ:
+		show_log = gps_dl_set_show_reg_rw_log(true);
 		gps_dl_hal_mcub_flag_handler(link_id);
 		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_HAL);
+		gps_dl_set_show_reg_rw_log(show_log);
 		break;
 
 #if 0
