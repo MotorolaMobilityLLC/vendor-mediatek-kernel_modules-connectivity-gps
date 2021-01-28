@@ -17,6 +17,9 @@
 #include "gps_dl_isr.h"
 #include "gps_dl_context.h"
 #include "gps_dl_name_list.h"
+#if GPS_DL_HAS_CONNINFRA_DRV
+#include "conninfra.h"
+#endif
 
 #include "linux/jiffies.h"
 
@@ -292,6 +295,22 @@ bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 		}
 
 		if (d2a.flag & GPS_MCUB_D2AF_MASK_DSP_RAMCODE_READY) {
+			if (d2a.dat1 == 0xDEAD || d2a.dat1 == 0xBEEF) {
+				GDL_LOGXW(link_id,
+					"d2a: flag = 0x%04x, d0 = 0x%04x, d1 = 0x%04x, do dump",
+					d2a.flag, d2a.dat0, d2a.dat1);
+				gps_dl_hw_dump_host_csr_gps_info(true);
+#if GPS_DL_HAS_CONNINFRA_DRV
+				/* API to check and dump host csr */
+				conninfra_is_bus_hang();
+#else
+				gps_dl_hw_dump_host_csr_conninfra_info(true);
+#endif
+				gps_dl_hw_print_hw_status(link_id);
+				gps_dl_hw_dump_host_csr_gps_info(true);
+				continue;
+			}
+
 			/* gps_dl_hal_event_send(GPS_DL_HAL_EVT_DSP_RAM_START, link_id); */
 			gps_dsp_fsm(GPS_DSP_EVT_RAM_CODE_READY, link_id);
 
