@@ -156,6 +156,7 @@ char *osal_strcat(char *dst, const char *src);
 char *osal_strncat(char *dst, const char *src, unsigned int len);
 char *osal_strchr(const char *str, unsigned char c);
 char *osal_strsep(char **str, const char *c);
+int osal_strtol(const char *str, unsigned int adecimal, long *res);
 int osal_snprintf(char *buf, unsigned int len, const char *fmt, ...);
 int osal_err_print(const char *str, ...);
 int osal_dbg_print(const char *str, ...);
