@@ -74,11 +74,22 @@ int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, enum gps_dl_link_id_e
 
 	GDL_LOGI_INI("p_linux_plat_dev = 0x%p", p_linux_plat_dev);
 	if (p_linux_plat_dev == NULL) {
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+		p_dma_buf->vir_addr = dma_alloc_coherent(
+			p_dev->dev, len, &p_dma_buf->phy_addr, GFP_DMA | GFP_DMA32 | __GFP_ZERO);
+	#else
 		p_dma_buf->vir_addr = dma_zalloc_coherent(
 			p_dev->dev, len, &p_dma_buf->phy_addr, GFP_DMA | GFP_DMA32);
+	#endif
+
 	} else {
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+		p_dma_buf->vir_addr = dma_alloc_coherent(
+			p_linux_plat_dev, len, &p_dma_buf->phy_addr, GFP_DMA | __GFP_ZERO);/* | GFP_DMA32); */
+	#else
 		p_dma_buf->vir_addr = dma_zalloc_coherent(
 			p_linux_plat_dev, len, &p_dma_buf->phy_addr, GFP_DMA);/* | GFP_DMA32); */
+	#endif
 	}
 
 	GDL_LOGI_INI(
@@ -113,7 +124,11 @@ int gps_dl_dma_buf_alloc2(enum gps_dl_link_id_enum link_id)
 		return -1;
 	}
 
-	of_dma_configure(p_dev->dev, p_dev->dev->of_node);
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+		of_dma_configure(p_dev->dev, p_dev->dev->of_node, false);
+	#else
+		of_dma_configure(p_dev->dev, p_dev->dev->of_node);
+	#endif
 
 	if (!p_dev->dev->coherent_dma_mask)
 		p_dev->dev->coherent_dma_mask = DMA_BIT_MASK(32);
