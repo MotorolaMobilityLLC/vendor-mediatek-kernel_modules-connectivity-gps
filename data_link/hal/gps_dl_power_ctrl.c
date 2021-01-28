@@ -20,10 +20,18 @@
 #include "gps_mock_hal.h"
 #endif
 #if GPS_DL_HAS_CONNINFRA_DRV
+#if GPS_DL_ON_LINUX
 #include "conninfra.h"
+#elif GPS_DL_ON_CTP
+#include "conninfra_ext.h"
 #endif
+#endif
+
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
+#endif
+#if GPS_DL_ON_CTP
+#include "gps_dl_ctp.h"
 #endif
 
 /* TODO: move them into a single structure */
@@ -81,6 +89,32 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			return 0;
 		} else
 			return -1;
+	} else if (3 == op || 5 == op) {
+		if (GPS_DATA_LINK_ID0 == link_id) {
+			if (3 == op)
+				gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_EXIT_DSLEEP);
+			else if (5 == op)
+				gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_EXIT_DSTOP);
+		} else if (GPS_DATA_LINK_ID1 == link_id) {
+			if (3 == op)
+				gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_EXIT_DSLEEP);
+			else if (5 == op)
+				gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_EXIT_DSTOP);
+		}
+		gps_dl_hw_usrt_ctrl(link_id, true, gps_dl_is_dma_enabled(), gps_dl_is_1byte_mode());
+	} else if (2 == op || 4 == op) {
+		gps_dl_hw_usrt_ctrl(link_id, false, gps_dl_is_dma_enabled(), gps_dl_is_1byte_mode());
+		if (GPS_DATA_LINK_ID0 == link_id) {
+			if (2 == op)
+				gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_ENTER_DSLEEP);
+			else if (4 == op)
+				gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_ENTER_DSTOP);
+		} else if (GPS_DATA_LINK_ID1 == link_id) {
+			if (2 == op)
+				gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_ENTER_DSLEEP);
+			else if (4 == op)
+				gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_ENTER_DSTOP);
+		}
 	} else if (0 == op) {
 		if (g_gps_dsp_on_array[link_id]) {
 			g_gps_dsp_on_array[link_id] = false;
