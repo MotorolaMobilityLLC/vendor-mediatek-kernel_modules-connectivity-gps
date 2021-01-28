@@ -109,6 +109,14 @@ _fail_disable_gps_slp_prot:
 	return 0;
 }
 
+void gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
+{
+	if (enable)
+		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
+	else
+		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 0);
+}
+
 int gps_dl_hw_gps_common_on(void)
 {
 	bool poll_okay;
@@ -118,7 +126,7 @@ int gps_dl_hw_gps_common_on(void)
 	 */
 
 	/* GPS SW force wakeup conninfra top off */
-	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
+	gps_dl_hw_gps_force_wakeup_conninfra_top_off(true);
 
 	/* Wait until sleep prot disabled, 10 times per 1ms */
 	GDL_HW_POLL_CONN_INFRA_ENTRY(
@@ -218,7 +226,7 @@ _fail_bgf_top_1st_pwr_ack_not_okay:
 
 _fail_conn_hw_ver_not_okay:
 _fail_conn_slp_prot_not_okay:
-	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 0);
+	gps_dl_hw_gps_force_wakeup_conninfra_top_off(false);
 	return -1;
 }
 
@@ -256,6 +264,7 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_MEM_DLY_CTL_RGU_GPSSYS_L1_MEM_ADJ_DLY_EN, 1);
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DLY_CHAIN_CTL_RGU_GPS_L1_MEM_PDN_DELAY_DUMMY_NUM, 5);
+		gps_dl_wait_us(1000); /* 3 x 32k clk ~= 1ms */
 		break;
 
 	case GPS_L1_DSP_OFF:
@@ -318,6 +327,7 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_MEM_DLY_CTL_RGU_GPSSYS_L5_MEM_ADJ_DLY_EN, 1);
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DLY_CHAIN_CTL_RGU_GPS_L5_MEM_PDN_DELAY_DUMMY_NUM, 9);
+		gps_dl_wait_us(1000); /* 3 x 32k clk ~= 1ms */
 		break;
 
 	case GPS_L5_DSP_OFF:
