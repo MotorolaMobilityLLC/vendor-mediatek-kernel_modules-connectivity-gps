@@ -184,6 +184,12 @@ void gps_dl_link_open_wait(enum gps_dl_link_id_enum link_id, long *p_sigval)
 
 	gdl_ret = gps_dl_link_wait_on(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE], &sigval);
 	if (gdl_ret == GDL_FAIL_SIGNALED) {
+		/*
+		 * LINK_OPENING should be a temp state. if code arriving here,
+		 * it means something block LINK_OPENING changing to LINK_OPENED
+		 * use the api to dump and check whether it's blocked by conn infra driver operation
+		 */
+		gps_dl_hal_conn_infra_driver_debug_dump();
 		if (p_sigval != NULL) {
 			*p_sigval = sigval;
 			return;

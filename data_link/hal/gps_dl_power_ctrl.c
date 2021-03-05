@@ -468,6 +468,17 @@ void gps_dl_hal_conn_infra_driver_off(void)
 #endif
 }
 
+void gps_dl_hal_conn_infra_driver_debug_dump(void)
+{
+#if 0 /* GPS_DL_HAS_CONNINFRA_DRV - only need/support for mt6880 */
+	GDL_LOGW("conninfra_debug_dump - start");
+	conninfra_debug_dump();
+	GDL_LOGW("conninfra_debug_dump - end");
+#else
+	GDL_LOGW("conninfra_debug_dump - not support");
+#endif
+}
+
 #if GPS_DL_HAS_PTA
 bool gps_dl_hal_md_blanking_init_pta_idc_mode(void)
 {
