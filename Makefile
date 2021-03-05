@@ -66,7 +66,7 @@ MODULE_NAME := gps_drv
 obj-m += $(MODULE_NAME).o
 
 GPS_DRV_CONTROL_LNA := n
-SELECT_GPS_DL_DRV := n
+GPS_DL_SUPPORT := n
 GPS_DL_HAS_MOCK := n
 GPS_DL_HAS_CONNINFRA_DRV := n
 GPS_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps
@@ -84,31 +84,25 @@ GPS_DRV_CONTROL_LNA := y
 endif
 
 ifeq ($(CONFIG_MACH_MT6885),y)
-SELECT_GPS_DL_DRV := y
-ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0
-ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0/coda_gen
+GPS_DL_SUPPORT := y
+GPS_DL_PLATFORM := connac2_0
+endif
+ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6893),y)
+GPS_DL_SUPPORT := y
+GPS_DL_PLATFORM := connac2_0
+endif
+
 ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6885),y)
 GPS_DL_HAS_CONNINFRA_DRV := y
 endif
 ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6893),y)
 GPS_DL_HAS_CONNINFRA_DRV := y
 endif
-endif
 
-ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6893),y)
-SELECT_GPS_DL_DRV := y
-# For MT6893, the CODA is same as connac2_0
-ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0
-ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0/coda_gen
-ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6885),y)
-GPS_DL_HAS_CONNINFRA_DRV := y
-endif
-ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6893),y)
-GPS_DL_HAS_CONNINFRA_DRV := y
-endif
-endif
-
-ifeq ($(SELECT_GPS_DL_DRV),y) # New GPS driver with L1+L5 support
+ifeq ($(GPS_DL_SUPPORT),y) # New GPS driver with L1+L5 support
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/plat/$(GPS_DL_PLATFORM)/inc
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/$(GPS_DL_PLATFORM)
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/$(GPS_DL_PLATFORM)/coda_gen
 ifeq ($(GPS_DL_HAS_CONNINFRA_DRV),y)
 CONNINFRA_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/conninfra
 ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/include
@@ -161,6 +155,10 @@ $(MODULE_NAME)-objs += data_link/linux/gps_dl_emi.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_ctrld.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_procfs.o
 $(MODULE_NAME)-objs += data_link/linux/gps_dl_osal.o
+
+$(MODULE_NAME)-objs += data_link/plat/$(GPS_DL_PLATFORM)/gps_dl_hw_dep_bgf.o
+$(MODULE_NAME)-objs += data_link/plat/$(GPS_DL_PLATFORM)/gps_dl_hw_dep_gps.o
+$(MODULE_NAME)-objs += data_link/plat/$(GPS_DL_PLATFORM)/gps_dl_hw_dep_debug.o
 
 ifeq ($(GPS_DL_HAS_MOCK),y)
 $(MODULE_NAME)-objs += data_link_mock/mock/gps_mock_mvcd.o

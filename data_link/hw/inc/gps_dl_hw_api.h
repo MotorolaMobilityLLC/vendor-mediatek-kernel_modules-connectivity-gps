@@ -17,6 +17,8 @@
 #include "gps_dl_dma_buf.h"
 #include "gps_dl_hal_api.h"
 #include "gps_dl_hal_type.h"
+#include "gps_dsp_fsm.h"
+#include "gps_dl_hw_dep_api.h"
 
 enum GDL_HW_RET {
 	HW_OKAY,        /* hw CRs access okay */
@@ -32,23 +34,6 @@ enum GDL_HW_RET {
 #define GDL_HW_STATUS_POLL_INTERVAL_USEC	(2*1000) /* 2ms */
 #endif
 
-enum dsp_ctrl_enum {
-	GPS_L1_DSP_ON,
-	GPS_L1_DSP_OFF,
-	GPS_L5_DSP_ON,
-	GPS_L5_DSP_OFF,
-	GPS_L1_DSP_ENTER_DSLEEP,
-	GPS_L1_DSP_EXIT_DSLEEP,
-	GPS_L1_DSP_ENTER_DSTOP,
-	GPS_L1_DSP_EXIT_DSTOP,
-	GPS_L5_DSP_ENTER_DSLEEP,
-	GPS_L5_DSP_EXIT_DSLEEP,
-	GPS_L5_DSP_ENTER_DSTOP,
-	GPS_L5_DSP_EXIT_DSTOP,
-	GPS_L1_DSP_CLEAR_PWR_STAT,
-	GPS_L5_DSP_CLEAR_PWR_STAT,
-	GPS_DSP_CTRL_MAX
-};
 int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl);
 bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_gps_adie_force_off(void);

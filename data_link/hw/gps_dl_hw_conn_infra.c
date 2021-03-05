@@ -14,7 +14,7 @@
 
 #include "gps_dl_context.h"
 #include "gps_dl_hw_api.h"
-#include "gps_dl_hw_dep_api.h"
+#include "gps_dl_hw_dep_macro.h"
 #include "gps_dl_hw_priv_util.h"
 
 #include "conn_infra/conn_host_csr_top.h"
@@ -28,15 +28,12 @@
 
 void gps_dl_hw_set_gps_emi_remapping(unsigned int _20msb_of_36bit_phy_addr)
 {
-	GDL_HW_SET_CONN_INFRA_ENTRY(
-		CONN_HOST_CSR_TOP_CONN2AP_REMAP_GPS_EMI_BASE_ADDR_CONN2AP_REMAP_GPS_EMI_BASE_ADDR,
-		_20msb_of_36bit_phy_addr);
+	GDL_HW_SET_CONN_INFRA_ENTRY(GDL_HW_SET_EMI_REMAP_FIELD, _20msb_of_36bit_phy_addr);
 }
 
 unsigned int gps_dl_hw_get_gps_emi_remapping(void)
 {
-	return GDL_HW_GET_CONN_INFRA_ENTRY(
-		CONN_HOST_CSR_TOP_CONN2AP_REMAP_GPS_EMI_BASE_ADDR_CONN2AP_REMAP_GPS_EMI_BASE_ADDR);
+	return GDL_HW_GET_CONN_INFRA_ENTRY(GDL_HW_SET_EMI_REMAP_FIELD);
 }
 
 void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr)
@@ -69,11 +66,7 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr
 	GDL_HW_RD_GPS_REG(0x80073160); /* DL0 */
 	GDL_HW_RD_GPS_REG(0x80073134); /* DL1 */
 
-	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_STA_ADDR);
-	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_ADDR_ADDR);
-	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_WDAT_ADDR);
-	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_RDAT_ADDR);
-	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_STA_ADDR);
+	GDL_HW_RD_SPI_GPS_STATUS();
 
 	if (dump_rf_cr) {
 		gps_dl_hw_gps_dump_top_rf_cr();
@@ -103,12 +96,13 @@ void gps_dl_hw_dump_sleep_prot_status(void)
 
 void gps_dl_hw_dump_host_csr_gps_info(bool force_show_log)
 {
-	int i;
 	bool show_log = true;
 
 	if (force_show_log)
 		show_log = gps_dl_set_show_reg_rw_log(true);
-
+#if 1
+	gps_dl_hw_dep_dump_host_csr_gps_info();
+#else
 #if 0
 	GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL);
 	GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG);
@@ -134,11 +128,16 @@ void gps_dl_hw_dump_host_csr_gps_info(bool force_show_log)
 			BMASK_RW_FORCE_PRINT);
 #endif
 	}
-
+#endif
 	if (force_show_log)
 		gps_dl_set_show_reg_rw_log(show_log);
 }
 
+/*
+ * gps_dl_bus_check_and_print: is changed to gps_dl_hw_dep_may_do_bus_check_and_print
+ * gps_dl_hw_dump_host_csr_conninfra_info_inner: is moved to another c file
+ */
+#if 0
 void gps_dl_bus_check_and_print(unsigned int host_addr)
 {
 	/* not do rw check because here is the checking */
@@ -194,6 +193,7 @@ void gps_dl_hw_dump_host_csr_conninfra_info_inner(unsigned int selection, int n)
 		selection -= 0x10000;
 	}
 }
+#endif
 
 void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log)
 {
@@ -201,11 +201,13 @@ void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log)
 
 	if (force_show_log)
 		show_log = gps_dl_set_show_reg_rw_log(true);
-
+#if 1
+	gps_dl_hw_dep_dump_host_csr_conninfra_info();
+#else
 	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x000F0001, 15);
 	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x00030002, 3);
 	gps_dl_hw_dump_host_csr_conninfra_info_inner(0x00040003, 4);
-
+#endif
 	if (force_show_log)
 		gps_dl_set_show_reg_rw_log(show_log);
 }

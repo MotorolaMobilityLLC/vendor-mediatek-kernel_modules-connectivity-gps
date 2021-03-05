@@ -79,6 +79,23 @@ enum gps_dsp_event_t {
 #define GPS_DSP_MVCD_TIMEOUT_MS         (1000)
 #define GPS_DSP_WAKEUP_TIMEOUT_MS       (180)
 
+enum dsp_ctrl_enum {
+	GPS_L1_DSP_ON,
+	GPS_L1_DSP_OFF,
+	GPS_L5_DSP_ON,
+	GPS_L5_DSP_OFF,
+	GPS_L1_DSP_ENTER_DSLEEP,
+	GPS_L1_DSP_EXIT_DSLEEP,
+	GPS_L1_DSP_ENTER_DSTOP,
+	GPS_L1_DSP_EXIT_DSTOP,
+	GPS_L5_DSP_ENTER_DSLEEP,
+	GPS_L5_DSP_EXIT_DSLEEP,
+	GPS_L5_DSP_ENTER_DSTOP,
+	GPS_L5_DSP_EXIT_DSTOP,
+	GPS_L1_DSP_CLEAR_PWR_STAT,
+	GPS_L5_DSP_CLEAR_PWR_STAT,
+	GPS_DSP_CTRL_MAX
+};
 
 enum gps_dsp_state_t gps_dsp_state_get(enum gps_dl_link_id_enum link_id);
 void gps_dsp_state_change_to(enum gps_dsp_state_t state, enum gps_dl_link_id_enum link_id);
