@@ -18,11 +18,6 @@
 #else
 #include <memory/mediatek/emi.h>
 #endif
-#if (defined(CONFIG_MACH_MT6885) || defined(CONFIG_MACH_MT6893))
-#define GPS_DL_EMI_MPU_DOMAIN_AP      0
-#define GPS_DL_EMI_MPU_DOMAIN_CONN    2
-#define GPS_DL_EMI_MPU_REGION_NUM     29
-#endif
 #endif
 
 #define GPS_ICAP_MEM_SIZE (GPS_ICAP_BUF_SIZE)

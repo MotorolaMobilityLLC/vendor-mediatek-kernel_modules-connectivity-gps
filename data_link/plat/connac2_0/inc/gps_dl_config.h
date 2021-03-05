@@ -57,6 +57,9 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_GET_RSV_MEM_IN_MODULE (0)
 #endif
 
+#define GPS_DL_EMI_MPU_DOMAIN_AP      (0)
+#define GPS_DL_EMI_MPU_DOMAIN_CONN    (2)
+#define GPS_DL_EMI_MPU_REGION_NUM     (29)
 
 #include "gps_dl_log.h"
 
