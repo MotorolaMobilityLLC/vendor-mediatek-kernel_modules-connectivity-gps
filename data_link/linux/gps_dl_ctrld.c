@@ -352,21 +352,14 @@ int gps_dl_ctrld_deinit(void)
 
 	pThread = &gps_dl_ctrld.thread;
 
-	iRet = gps_dl_osal_thread_stop(pThread);
-	if (iRet)
-		GDL_LOGE("gps data link ontrol thread stop fail:%d", iRet);
-	else
-		GDL_LOGI("gps data link ontrol thread stop okay:%d", iRet);
-
-	gps_dl_osal_event_deinit(&gps_dl_ctrld.rgpsdlWq);
-
 	iRet = gps_dl_osal_thread_destroy(pThread);
 	if (iRet) {
 		GDL_LOGE("gps data link ontrol thread destroy fail:%d", iRet);
 		return -1;
 	}
-	GDL_LOGI("gps data link ontrol thread destroy okay:%d\n", iRet);
 
+	GDL_LOGI("gps data link ontrol thread destroy okay:%d\n", iRet);
+	gps_dl_osal_event_deinit(&gps_dl_ctrld.rgpsdlWq);
 	return 0;
 }
 
