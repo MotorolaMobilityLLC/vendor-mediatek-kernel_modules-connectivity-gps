@@ -14,13 +14,13 @@
 #include "gps_dl_context.h"
 #include "gps_dl_hw_priv_util.h"
 #include "gps_dl_hw_dep_api.h"
-#include "gps_dl_subsys_reset.h"
 
 #if GPS_DL_ON_LINUX
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <asm/io.h>
 #include "gps_dl_linux.h"
+#include "gps_dl_subsys_reset.h"
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
 #endif

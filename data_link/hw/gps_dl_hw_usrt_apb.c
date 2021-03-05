@@ -53,8 +53,11 @@ unsigned int gps_dl_hw_get_mcub_a2d1_cfg(enum gps_dl_link_id_enum link_id, bool 
 #if GPS_DL_USE_TIA
 	cfg |= GPS_DSP_CFG_BITMASK_COLOCK_USE_TIA;
 #endif
+
+#if GPS_DL_ON_LINUX
 	if (gps_dl_hal_get_need_clk_ext_flag(link_id))
 		cfg |= GPS_DSP_CFG_BITMASK_CLOCK_EXTENSION_WAKEUP;
+#endif
 	return cfg;
 }
 
@@ -133,7 +136,6 @@ bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id)
 	else if (link_id == GPS_DATA_LINK_ID1)
 		GDL_HW_POLL_GPS_ENTRY(GPS_L5_USRT_APB_APB_STA_RX_EMP, 1, 10000 * POLL_US, &poll_okay);
 
-
 #if GPS_DL_ON_LINUX
 	if (!poll_okay)
 		GDL_LOGXE_DRW(link_id, "okay = %d", poll_okay);
@@ -151,7 +153,7 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_data(
 	tick0 = gps_dl_tick_get();
 
 	if (gps_dl_show_reg_wait_log())
-		GDL_LOGXD(link_id, "timeout = %d", timeout_usec);
+		GDL_LOGXD(link_id, "timeout_usec = %d", timeout_usec);
 
 	while (1) {
 		gps_dl_hw_save_usrt_status_struct(link_id, &usrt_status);
@@ -191,7 +193,7 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_d
 	enum gps_dl_hal_dma_ch_index dma_ch;
 	bool last_rw_log_on;
 	unsigned long tick0, tick1;
-	bool conninfra_okay;
+	bool conninfra_okay = true;
 	bool do_stop = true;
 	enum GDL_RET_STATUS ret = GDL_OKAY;
 	int loop_cnt;
@@ -204,18 +206,19 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_d
 		return GDL_FAIL;
 
 	if (gps_dl_show_reg_wait_log())
-		GDL_LOGXD(link_id, "timeout = %d", timeout_usec);
+		GDL_LOGXD(link_id, "timeout_usec = %d", timeout_usec);
 
 	tick0 = gps_dl_tick_get();
 	loop_cnt = 0;
 	while (1) {
+#if GPS_DL_ON_LINUX
 		conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+#endif
 		if (!conninfra_okay) {
 			ret = GDL_FAIL_CONN_NOT_OKAY;
 			do_stop = false;
 			break;
 		}
-
 		gps_dl_hw_save_dma_status_struct(dma_ch, &dma_status);
 		if (gps_dl_only_show_wait_done_log())
 			last_rw_log_on = gps_dl_set_show_reg_rw_log(false);
