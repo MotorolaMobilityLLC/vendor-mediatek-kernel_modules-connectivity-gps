@@ -103,7 +103,7 @@ static ssize_t gps_each_device_write(struct file *filp,
 			if (retval == 0)
 				retlen = copy_size;
 			else
-				retlen = 0;
+				retlen = retval;
 		}
 	}
 
