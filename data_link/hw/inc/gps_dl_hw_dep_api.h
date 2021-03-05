@@ -11,6 +11,7 @@
 /*
  * BGF
  */
+void gps_dl_hw_dep_gps_sw_request_peri_usage(bool request);
 bool gps_dl_hw_dep_en_gps_func_and_poll_bgf_ack(void);
 bool gps_dl_hw_dep_poll_bgf_bus_and_gps_top_ack(void);
 void gps_dl_hw_dep_may_set_bus_debug_flag(void);

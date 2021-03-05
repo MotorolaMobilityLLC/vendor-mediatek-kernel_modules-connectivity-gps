@@ -138,6 +138,11 @@ bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 	return true;
 }
 
+void gps_dl_hw_gps_sw_request_peri_usage(bool request)
+{
+	gps_dl_hw_dep_gps_sw_request_peri_usage(request);
+}
+
 void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 {
 	bool show_log = false;
@@ -153,17 +158,21 @@ void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_BT_ADDR);
 		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_GPS_ADDR);
 	}
-#if (GPS_DL_USE_TIA)
+#if (GPS_DL_USE_TIA && GPS_DL_USE_TOP_EMI_REQ_FOR_TIA)
 	/* If use TIA, CONN_INFRA_CFG_EMI_CTL_GPS used by DSP, driver use TOP's. */
 	if (request)
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_TOP_EMI_REQ_TOP, 1);
-	else
+	else {
+		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_TOP_EMI_REQ_TOP, 1);
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_TOP_EMI_REQ_TOP, 0);
+	}
 #else
 	if (request)
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 1);
-	else
+	else {
+		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 1);
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
+	}
 #endif
 	if (reg_rw_log)
 		gps_dl_set_show_reg_rw_log(show_log);
@@ -193,12 +202,15 @@ int gps_dl_hw_gps_common_on(void)
 #endif
 	GDL_LOGW("%s: poll_ver = 0x%08x is ok", GDL_HW_SUPPORT_LIST, poll_ver);
 
-#if GPS_DL_ON_LINUX
-	/* GPS SW EMI request
-	 * gps_dl_hw_gps_sw_request_emi_usage(true);
-	 */
+#if GPS_DL_ON_CTP
+	/* Request EMI anyway */
+	gps_dl_hw_gps_sw_request_emi_usage(true);
+#elif GPS_DL_ON_LINUX
+	/* Will not request EMI until data routing */
 	gps_dl_hal_emi_usage_init();
 #endif
+	gps_dl_hw_gps_sw_request_peri_usage(true);
+
 	poll_okay = gps_dl_hw_dep_en_gps_func_and_poll_bgf_ack();
 	if (!poll_okay)
 		goto _fail_bgf_top_pwr_ack_not_okay;
@@ -260,12 +272,16 @@ int gps_dl_hw_gps_common_off(void)
 		return -1;
 	}
 
-#if GPS_DL_ON_LINUX
-	/* GPS SW EMI request
-	 * gps_dl_hw_gps_sw_request_emi_usage(false);
-	 */
+#if GPS_DL_ON_CTP
+	/* Release EMI anyway */
+	gps_dl_hw_gps_sw_request_emi_usage(false);
+
+#elif GPS_DL_ON_LINUX
+	/* Will force to release EMI */
 	gps_dl_hal_emi_usage_deinit();
 #endif
+	gps_dl_hw_gps_sw_request_peri_usage(false);
+
 	if (gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_HOST_CSR_GPS_OFF))
 		gps_dl_hw_dump_host_csr_conninfra_info(true);
 

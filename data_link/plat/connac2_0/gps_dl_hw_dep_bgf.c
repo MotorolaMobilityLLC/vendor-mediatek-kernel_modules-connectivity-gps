@@ -7,6 +7,7 @@
 #include "gps_dl_hw_dep_api.h"
 #include "../gps_dl_hw_priv_util.h"
 #include "gps_dl_hw_dep_macro.h"
+#include "gps_dl_hw_api.h"
 
 #if GPS_DL_HAS_CONNINFRA_DRV
 #if GPS_DL_ON_LINUX
@@ -15,6 +16,11 @@
 #include "conninfra_ext.h"
 #endif
 #endif
+
+void gps_dl_hw_dep_gps_sw_request_peri_usage(bool request)
+{
+	/* Do nothing for MT6893 or MT6885 */
+}
 
 bool gps_dl_hw_dep_en_gps_func_and_poll_bgf_ack(void)
 {
