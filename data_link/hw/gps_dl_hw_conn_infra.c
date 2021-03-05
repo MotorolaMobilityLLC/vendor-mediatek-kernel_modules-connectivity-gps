@@ -19,10 +19,6 @@
 
 #include "conn_infra/conn_host_csr_top.h"
 #include "conn_infra/conn_infra_cfg.h"
-#if GPS_DL_HAS_PTA
-#include "conn_infra/conn_uart_pta.h"
-#include "conn_infra/conn_pta6.h"
-#endif
 #include "conn_infra/conn_semaphore.h"
 #include "conn_infra/conn_rf_spi_mst_reg.h"
 

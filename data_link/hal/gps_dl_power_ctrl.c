@@ -47,6 +47,13 @@ bool g_gps_need_clk_ext[GPS_DATA_LINK_NUM];
 int g_gps_conn_clock_flag = GPSDL_CLOCK_FLAG_COTMS;
 unsigned int g_conn_user;
 
+enum gps_blanking_setting_enum {
+	USE_PTA_DEFAULT,
+	USE_PTA_IDC_MODE,
+	USE_PTA_DIRECT_PATH,
+	NO_PTA
+};
+
 bool gps_dl_hal_get_dma_irq_en_flag(void)
 {
 	bool enable;
@@ -503,8 +510,6 @@ bool gps_dl_hal_md_blanking_init_pta_idc_mode(void)
 	else
 		GDL_LOGW("pta already init done");
 
-	gps_dl_hw_claim_pta_used_by_gps();
-
 	/* use_direct_path = false */
 	gps_dl_hw_set_pta_blanking_parameter(false);
 	return true;
@@ -518,14 +523,20 @@ void gps_dl_hal_md_blanking_init_pta_direct_path(void)
 
 bool gps_dl_hal_md_blanking_init_pta(void)
 {
-	bool okay;
-	bool is_mt6885;
-	bool clk_is_ready;
-	bool use_direct_path;
+	bool okay = false;
+	bool is_mt6885 = false;
+	bool clk_is_ready = false;
+	enum gps_blanking_setting_enum setting_val = USE_PTA_DEFAULT;
+
+	bool is_mt6893 = false;
 
 	is_mt6885 = gps_dl_hal_conn_infra_ver_is_mt6885();
-	use_direct_path = true;
-	GDL_LOGW("is_mt6885 = %d, use_direct_path = %d", is_mt6885, use_direct_path);
+	is_mt6893 = gps_dl_hal_conn_infra_ver_is_mt6893();
+
+	if (is_mt6885 || is_mt6893)
+		setting_val = USE_PTA_DIRECT_PATH;
+
+	GDL_LOGW("setting_val = %d", setting_val);
 
 	if (g_gps_pta_init_done) {
 		GDL_LOGW("already init done, do nothing return");
@@ -553,18 +564,19 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 		}
 	}
 
-	if (!use_direct_path) {
+	if (setting_val == USE_PTA_IDC_MODE) {
 		/* idc mode */
 		okay = gps_dl_hal_md_blanking_init_pta_idc_mode();
 		if (!okay) {
 			gps_dl_hw_give_conn_coex_hw_sema();
 			return false;
 		}
-	} else {
+	} else if (setting_val == USE_PTA_DIRECT_PATH) {
 		/* direct path */
 		gps_dl_hal_md_blanking_init_pta_direct_path();
 	}
 
+	gps_dl_hw_claim_pta_used_by_gps();
 	gps_dl_hw_give_conn_coex_hw_sema();
 
 	/* okay, update flags */

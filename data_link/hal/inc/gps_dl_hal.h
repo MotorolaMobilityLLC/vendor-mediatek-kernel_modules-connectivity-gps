@@ -107,6 +107,7 @@ void gps_dl_hal_load_clock_flag(void);
 void gps_dl_hal_set_conn_infra_ver(unsigned int ver);
 unsigned int gps_dl_hal_get_conn_infra_ver(void);
 bool gps_dl_hal_conn_infra_ver_is_mt6885(void);
+bool gps_dl_hal_conn_infra_ver_is_mt6893(void);
 
 #endif /* _GPS_DL_HAL_H */
 
