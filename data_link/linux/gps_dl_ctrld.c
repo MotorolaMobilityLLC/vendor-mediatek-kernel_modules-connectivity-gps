@@ -58,7 +58,7 @@ static int gps_dl_opfunc_hal_event_proc(struct gps_dl_osal_op_dat *pOpDat)
 
 unsigned int gps_dl_wait_event_checker(struct gps_dl_osal_thread *pThread)
 {
-	struct gps_dl_ctrld_context *pgps_dl_ctrld;
+	struct gps_dl_ctrld_context *pgps_dl_ctrld = NULL;
 
 	if (pThread) {
 		pgps_dl_ctrld = (struct gps_dl_ctrld_context *) (pThread->pThreadData);
@@ -209,7 +209,7 @@ struct gps_dl_osal_lxop *gps_dl_get_free_op(void)
 
 static struct gps_dl_osal_lxop *gps_dl_get_op(struct gps_dl_osal_lxop_q *pOpQ)
 {
-	struct gps_dl_osal_lxop *pOp;
+	struct gps_dl_osal_lxop *pOp = NULL;
 	int iRet;
 
 	if (pOpQ == NULL) {
@@ -251,7 +251,7 @@ static int gps_dl_ctrl_thread(void *pData)
 {
 	struct gps_dl_ctrld_context *pgps_dl_ctrld = (struct gps_dl_ctrld_context *) pData;
 	struct gps_dl_osal_event *pEvent = NULL;
-	struct gps_dl_osal_lxop *pOp;
+	struct gps_dl_osal_lxop *pOp = NULL;
 	int iResult;
 
 	if (pgps_dl_ctrld == NULL) {
@@ -302,8 +302,8 @@ static int gps_dl_ctrl_thread(void *pData)
 
 int gps_dl_ctrld_init(void)
 {
-	struct gps_dl_ctrld_context *pgps_dl_ctrld;
-	struct gps_dl_osal_thread *pThread;
+	struct gps_dl_ctrld_context *pgps_dl_ctrld = NULL;
+	struct gps_dl_osal_thread *pThread = NULL;
 	int iRet;
 	int i;
 

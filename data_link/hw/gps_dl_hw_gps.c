@@ -32,7 +32,7 @@ static const struct gps_dl_addr_map_entry g_gps_addr_table[GPS_ADDR_ENTRY_NUM] =
 unsigned int gps_bus_to_host(unsigned int gps_addr)
 {
 	unsigned int i;
-	const struct gps_dl_addr_map_entry *p;
+	const struct gps_dl_addr_map_entry *p = NULL;
 
 	for (i = 0; i < GPS_ADDR_ENTRY_NUM; i++) {
 		p = &g_gps_addr_table[i];
@@ -205,7 +205,7 @@ enum GDL_RET_STATUS gps_dl_hw_wait_until_dma_complete_and_stop_it(
 	struct gps_dl_hw_dma_status_struct dma_status;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
 	enum gps_dl_link_id_enum link_id = DMA_CH_TO_LINK_ID(ch);
-	bool last_rw_log_on;
+	bool last_rw_log_on = false;
 	unsigned long tick0, tick1;
 	bool conninfra_okay = true;
 	bool do_stop = true;

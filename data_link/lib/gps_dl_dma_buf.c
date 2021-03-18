@@ -43,7 +43,8 @@ void gps_dma_buf_reset(struct gps_dl_dma_buf *p_dma)
 void gps_dma_buf_show(struct gps_dl_dma_buf *p_dma, bool is_warning)
 {
 	unsigned int ri, wi, fl, re, we, fe;
-	bool r_working, w_working;
+	bool r_working = false;
+	bool w_working = false;
 
 	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 	ri = p_dma->read_index;
@@ -114,7 +115,7 @@ enum GDL_RET_STATUS gdl_dma_buf_deinit(struct gps_dl_dma_buf *p_dma_buf)
 
 bool gps_dma_buf_is_empty(struct gps_dl_dma_buf *p_dma)
 {
-	bool is_empty;
+	bool is_empty = false;
 
 	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 	is_empty = (p_dma->read_index == p_dma->write_index);
@@ -255,7 +256,7 @@ enum GDL_RET_STATUS gdl_dma_buf_get(struct gps_dl_dma_buf *p_dma,
 static enum GDL_RET_STATUS gdl_dma_buf_get_data_entry_inner(struct gps_dl_dma_buf *p_dma,
 	struct gdl_dma_buf_entry *p_entry)
 {
-	struct gdl_dma_buf_entry *p_data_entry;
+	struct gdl_dma_buf_entry *p_data_entry = NULL;
 	unsigned int data_len;
 
 	if (p_dma->reader_working)
@@ -314,7 +315,7 @@ enum GDL_RET_STATUS gdl_dma_buf_get_data_entry(struct gps_dl_dma_buf *p_dma,
 static enum GDL_RET_STATUS gdl_dma_buf_set_data_entry_inner(struct gps_dl_dma_buf *p_dma,
 	struct gdl_dma_buf_entry *p_entry)
 {
-	struct gdl_dma_buf_entry *p_data_entry;
+	struct gdl_dma_buf_entry *p_data_entry = NULL;
 
 	if (!p_dma->reader_working)
 		return GDL_FAIL_STATE_MISMATCH;
@@ -428,7 +429,7 @@ enum GDL_RET_STATUS gdl_dma_buf_get_free_entry(struct gps_dl_dma_buf *p_dma,
 static enum GDL_RET_STATUS gdl_dma_buf_set_free_entry_inner(struct gps_dl_dma_buf *p_dma,
 	struct gdl_dma_buf_entry *p_entry)
 {
-	struct gdl_dma_buf_entry *p_data_entry;
+	struct gdl_dma_buf_entry *p_data_entry = NULL;
 
 	if (!p_dma->writer_working)
 		return GDL_FAIL_STATE_MISMATCH;
@@ -530,7 +531,7 @@ enum GDL_RET_STATUS gdl_dma_buf_entry_to_buf(const struct gdl_dma_buf_entry *p_e
 {
 	unsigned int data_len;
 	unsigned int wrap_len;
-	unsigned char *p_src;
+	unsigned char *p_src = NULL;
 
 	ASSERT_NOT_NULL(p_entry, GDL_FAIL_ASSERT);
 	ASSERT_NOT_NULL(p_buf, GDL_FAIL_ASSERT);
@@ -572,7 +573,7 @@ enum GDL_RET_STATUS gdl_dma_buf_buf_to_entry(const struct gdl_dma_buf_entry *p_e
 	unsigned int write_index;
 	unsigned int alligned_data_len;
 	unsigned int fill_zero_len;
-	unsigned char *p_dst;
+	unsigned char *p_dst = NULL;
 
 	if (gps_dl_is_1byte_mode()) {
 		alligned_data_len = data_len;

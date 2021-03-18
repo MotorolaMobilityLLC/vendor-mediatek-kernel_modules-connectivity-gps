@@ -65,7 +65,7 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 	enum gps_each_link_state_enum state, state2;
 	enum GDL_RET_STATUS gdl_ret;
 	long sigval = 0;
-	bool okay;
+	bool okay = false;
 	int retval;
 #if GPS_DL_ON_CTP
 	/* Todo: is it need on LINUX? */
@@ -196,7 +196,7 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 	 * - set each link resetting flag
 	 */
 	enum gps_each_link_state_enum state, state2;
-	bool okay;
+	bool okay = false;
 	int retval;
 
 	state = gps_each_link_get_state(link_id);
@@ -273,7 +273,7 @@ int gps_each_link_close_or_suspend_inner(enum gps_dl_link_id_enum link_id,
 	enum gps_each_link_close_or_suspend_op close_or_suspend_op)
 {
 	enum gps_each_link_state_enum state2;
-	bool okay;
+	bool okay = false;
 	int retval = 0;
 	bool hw_suspend;
 
@@ -522,7 +522,7 @@ int gps_each_link_hw_resume(enum gps_dl_link_id_enum link_id)
 {
 	enum gps_each_link_state_enum state;
 	long sigval = 0;
-	bool okay;
+	bool okay = false;
 	int retval;
 #if GPS_DL_ON_CTP
 	struct gps_each_link *p_link = gps_dl_link_get(link_id);
@@ -571,6 +571,7 @@ int gps_each_link_hw_resume(enum gps_dl_link_id_enum link_id)
 	}
 	return retval;
 }
+
 /* TODO: determine return value type */
 int gps_each_link_write(enum gps_dl_link_id_enum link_id,
 	unsigned char *buf, unsigned int len)

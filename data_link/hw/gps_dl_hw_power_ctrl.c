@@ -34,7 +34,7 @@
 
 static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 {
-	bool poll_okay;
+	bool poll_okay = false;
 
 	if (1 == op) {
 		/* disable when on */
@@ -123,7 +123,7 @@ _fail_enable_gps_slp_prot:
 
 bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 {
-	bool poll_okay;
+	bool poll_okay = false;
 
 	if (enable) {
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
@@ -180,7 +180,7 @@ void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 
 int gps_dl_hw_gps_common_on(void)
 {
-	bool poll_okay;
+	bool poll_okay = false;
 	unsigned int poll_ver;
 
 	/* Enable Conninfra BGF */
@@ -361,8 +361,8 @@ int gps_dl_hw_gps_pwr_stat_ctrl(enum dsp_ctrl_enum ctrl)
 
 int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 {
-	bool poll_okay;
-	bool dsp_off_done;
+	bool poll_okay = false;
+	bool dsp_off_done = false;
 
 	switch (ctrl) {
 	case GPS_L1_DSP_ON:
@@ -445,8 +445,8 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 {
 	int i;
-	bool done;
-	bool show_log;
+	bool done = false;
+	bool show_log = false;
 
 	/* TODO: move it to proper place */
 	if (GPS_DSP_ST_HW_STOP_MODE == gps_dsp_state_get(link_id)) {

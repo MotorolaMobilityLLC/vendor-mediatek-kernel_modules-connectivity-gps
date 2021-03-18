@@ -61,7 +61,7 @@ void __iomem *gps_dl_host_addr_to_virt(unsigned int host_addr)
 {
 	int i;
 	int offset;
-	struct gps_dl_iomem_addr_map_entry *p;
+	struct gps_dl_iomem_addr_map_entry *p = NULL;
 
 	for (i = 0; i < GPS_DL_IOMEM_NUM; i++) {
 		p = &g_gps_dl_iomem_arrary[i];
@@ -213,8 +213,8 @@ struct pinctrl *g_gps_dl_pinctrl_ptr;
 void gps_dl_pinctrl_show_info(void)
 {
 	enum gps_dl_pinctrl_state_enum state_id;
-	const char *p_name;
-	struct pinctrl_state *p_state;
+	const char *p_name = NULL;
+	struct pinctrl_state *p_state = NULL;
 
 	GDL_LOGD_INI("pinctrl_ptr = 0x%p", g_gps_dl_pinctrl_ptr);
 
@@ -229,8 +229,8 @@ void gps_dl_pinctrl_show_info(void)
 void gps_dl_pinctrl_context_init(void)
 {
 	enum gps_dl_pinctrl_state_enum state_id;
-	const char *p_name;
-	struct pinctrl_state *p_state;
+	const char *p_name = NULL;
+	struct pinctrl_state *p_state = NULL;
 
 	if (IS_ERR(g_gps_dl_pinctrl_ptr)) {
 		GDL_LOGE_INI("pinctrl is error");
@@ -293,7 +293,7 @@ bool gps_dl_get_iomem_by_name(struct platform_device *pdev, const char *p_name,
 	struct gps_dl_iomem_addr_map_entry *p_entry)
 {
 	struct resource *regs;
-	bool okay;
+	bool okay = false;
 
 	regs = platform_get_resource_byname(pdev, IORESOURCE_MEM, p_name);
 	if (regs != NULL) {
@@ -319,8 +319,8 @@ phys_addr_t gGpsRsvMemPhyBase;
 unsigned long long gGpsRsvMemSize;
 static int gps_dl_get_reserved_memory(struct device *dev)
 {
-	struct device_node *np;
-	struct reserved_mem *rmem;
+	struct device_node *np = NULL;
+	struct reserved_mem *rmem = NULL;
 
 	np = of_parse_phandle(dev->of_node, "memory-region", 0);
 	if (!np) {
@@ -342,11 +342,11 @@ static int gps_dl_get_reserved_memory(struct device *dev)
 
 static int gps_dl_probe(struct platform_device *pdev)
 {
-	struct resource *irq;
+	struct resource *irq = NULL;
 	struct gps_each_device *p_each_dev0 = gps_dl_device_get(GPS_DATA_LINK_ID0);
 	struct gps_each_device *p_each_dev1 = gps_dl_device_get(GPS_DATA_LINK_ID1);
 	int i;
-	bool okay;
+	bool okay = false;
 
 	GDL_LOGW_INI("compatible = %s", pdev->dev.of_node->properties->value);
 

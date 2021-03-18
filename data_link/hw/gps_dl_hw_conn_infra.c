@@ -280,7 +280,7 @@ bool gps_dl_hw_init_pta_uart(void)
 	unsigned int pta_uart_en;
 #endif
 	bool show_log;
-	bool poll_okay;
+	bool poll_okay = false;
 	bool reg_rw_log = gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_HOST_CSR_PTA_INIT);
 
 	/* 20191008 after DE checking, bellow steps are no need */
@@ -449,7 +449,7 @@ void gps_dl_hw_set_pta_blanking_parameter(bool use_direct_path)
 static bool gps_dl_hw_gps_fmspi_state_backup(unsigned int *p_rd_ext_en_bk, unsigned int *p_rd_ext_cnt_bk)
 {
 	bool okay = true;
-	bool poll_okay;
+	bool poll_okay = false;
 
 	if (p_rd_ext_en_bk == NULL || p_rd_ext_cnt_bk == NULL)
 		return false;
@@ -476,7 +476,7 @@ static bool gps_dl_hw_gps_fmspi_read_rfcr(unsigned int addr, unsigned int *p_val
 {
 	unsigned int val;
 	bool okay;
-	bool poll_okay;
+	bool poll_okay = false;
 	unsigned int tmp;
 
 	if (p_val == NULL)
@@ -510,7 +510,7 @@ static bool gps_dl_hw_gps_fmspi_read_rfcr(unsigned int addr, unsigned int *p_val
 static bool gps_dl_hw_gps_fmspi_write_rfcr(unsigned int addr, unsigned int val)
 {
 	bool okay;
-	bool poll_okay;
+	bool poll_okay = false;
 	unsigned int tmp;
 
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_SPI_STA_FM_BUSY, 0,
@@ -535,7 +535,8 @@ static bool gps_dl_hw_gps_fmspi_write_rfcr(unsigned int addr, unsigned int val)
 
 void gps_dl_hw_gps_dump_gps_rf_cr(void)
 {
-	bool show_log, backup_okay;
+	bool show_log = false;
+	bool backup_okay = false;
 	unsigned int addr, val;
 	unsigned int rd_ext_en_bk, rd_ext_cnt_bk;
 

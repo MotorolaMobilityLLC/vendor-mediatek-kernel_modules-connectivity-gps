@@ -107,7 +107,7 @@ ssize_t gps_dl_procfs_write(struct file *filp, const char __user *buffer, size_t
 {
 	size_t len = count, sub_len;
 	char buf[PROCFS_WR_BUF_SIZE];
-	char *pBuf;
+	char *pBuf = NULL;
 	int x = 0, y = 0, z = 0;
 	char *pToken = NULL;
 	long res;

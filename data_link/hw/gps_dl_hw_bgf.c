@@ -25,7 +25,7 @@ static const struct gps_dl_addr_map_entry g_bfg_addr_table[BGF_ADDR_ENTRY_NUM] =
 unsigned int bgf_bus_to_host(unsigned int bgf_addr)
 {
 	unsigned int i;
-	const struct gps_dl_addr_map_entry *p;
+	const struct gps_dl_addr_map_entry *p = NULL;
 
 	for (i = 0; i < BGF_ADDR_ENTRY_NUM; i++) {
 		p = &g_bfg_addr_table[i];

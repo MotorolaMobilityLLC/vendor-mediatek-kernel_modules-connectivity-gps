@@ -88,7 +88,7 @@ void gps_dl_hal_set_mcub_irq_dis_flag(enum gps_dl_link_id_enum link_id, bool dis
 bool gps_dl_hal_get_irq_dis_flag(enum gps_dl_link_id_enum link_id,
 	enum gps_dl_each_link_irq_type type)
 {
-	bool disable;
+	bool disable = false;
 
 	ASSERT_LINK_ID(link_id, false);
 	ASSERT_IRQ_TYPE(type, false);
@@ -110,7 +110,7 @@ void gps_dl_hal_set_irq_dis_flag(enum gps_dl_link_id_enum link_id,
 
 bool gps_dl_hal_get_need_clk_ext_flag(enum gps_dl_link_id_enum link_id)
 {
-	bool need;
+	bool need = false;
 
 	ASSERT_LINK_ID(link_id, false);
 	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
@@ -369,7 +369,8 @@ void gps_dl_hal_link_confirm_dma_stop(enum gps_dl_link_id_enum link_id)
 {
 	struct gps_each_link *p_link = gps_dl_link_get(link_id);
 	unsigned int conn_user;
-	bool tx_working, rx_working;
+	bool tx_working = false;
+	bool rx_working = false;
 	enum GDL_RET_STATUS stop_tx_status, stop_rx_status;
 	bool old_dma_en, do_dma_en_ctrl;
 
@@ -591,7 +592,7 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 
 void gps_dl_hal_md_blanking_deinit_pta(void)
 {
-	bool okay;
+	bool okay = false;
 
 	/* clear the flags anyway */
 #if GPS_DL_HAS_PLAT_DRV

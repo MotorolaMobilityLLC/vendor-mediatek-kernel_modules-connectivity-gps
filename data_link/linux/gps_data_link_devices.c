@@ -56,8 +56,8 @@ void gps_dl_dma_buf_free(struct gps_dl_dma_buf *p_dma_buf, enum gps_dl_link_id_e
 int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, enum gps_dl_link_id_enum link_id,
 	enum gps_dl_dma_dir dir, unsigned int len)
 {
-	struct gps_each_device *p_dev;
-	struct device *p_linux_plat_dev;
+	struct gps_each_device *p_dev = NULL;
+	struct device *p_linux_plat_dev = NULL;
 
 	p_dev = gps_dl_device_get(link_id);
 	if (p_dev == NULL) {
@@ -156,8 +156,8 @@ void gps_dl_ctx_links_deinit(void)
 {
 	enum gps_dl_link_id_enum link_id;
 
-	struct gps_each_device *p_dev;
-	struct gps_each_link *p_link;
+	struct gps_each_device *p_dev = NULL;
+	struct gps_each_link *p_link = NULL;
 
 	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
 		p_dev = gps_dl_device_get(link_id);
@@ -183,8 +183,8 @@ int gps_dl_ctx_links_init(void)
 {
 	int retval;
 	enum gps_dl_link_id_enum link_id;
-	struct gps_each_device *p_dev;
-	struct gps_each_link *p_link;
+	struct gps_each_device *p_dev = NULL;
+	struct gps_each_link *p_link = NULL;
 	enum gps_each_link_waitable_type j;
 
 	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
@@ -223,7 +223,7 @@ static void gps_dl_devices_exit(void)
 {
 	enum gps_dl_link_id_enum link_id;
 	dev_t devno = MKDEV(gps_dl_devno_major, gps_dl_devno_minor);
-	struct gps_each_device *p_dev;
+	struct gps_each_device *p_dev = NULL;
 
 	gps_dl_device_context_deinit();
 
@@ -284,7 +284,7 @@ static int gps_dl_devices_init(void)
 	int result;
 	enum gps_dl_link_id_enum link_id;
 	dev_t devno = 0;
-	struct gps_each_device *p_dev;
+	struct gps_each_device *p_dev = NULL;
 
 	result = alloc_chrdev_region(&devno, gps_dl_devno_minor,
 		GPS_DATA_LINK_NUM, GPS_DATA_LINK_DEV_NAME);
