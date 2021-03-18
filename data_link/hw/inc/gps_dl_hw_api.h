@@ -154,11 +154,6 @@ void gps_dl_hw_claim_pta_used_by_gps(void);
 void gps_dl_hw_disclaim_pta_used_by_gps(void);
 void gps_dl_hw_set_pta_blanking_parameter(bool use_direct_path);
 
-bool gps_dl_hw_take_conn_coex_hw_sema(unsigned int timeout_ms);
-void gps_dl_hw_give_conn_coex_hw_sema(void);
-bool gps_dl_hw_take_conn_rfspi_hw_sema(unsigned int timeout_ms);
-void gps_dl_hw_give_conn_rfspi_hw_sema(void);
-
 unsigned int gps_dl_hw_get_mcub_a2d1_cfg(enum gps_dl_link_id_enum link_id, bool is_1byte_mode);
 
 #endif /* _GPS_DL_HW_API_H */

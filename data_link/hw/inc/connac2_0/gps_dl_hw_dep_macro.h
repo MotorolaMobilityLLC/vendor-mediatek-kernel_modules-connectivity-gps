@@ -9,6 +9,8 @@
 #include "conn_infra/conn_infra_cfg.h"
 #include "conn_infra/conn_host_csr_top.h"
 #include "conn_infra/conn_infra_rgu.h"
+#include "conn_infra/conn_semaphore.h"
+
 #include "gps/bgf_gps_cfg.h"
 #include "gps/gps_rgu_on.h"
 #include "gps/gps_cfg_on.h"
@@ -158,6 +160,27 @@
 #define GPS_L5_REG_DBG_POLL_LIST { \
 	0xEF00, 0xEF01, 0xEF02, 0xEF03, 0xEF04, 0x0100, 0x0101, 0x5014, 0x5015, \
 	0x4880, 0x4881, 0x4882, 0x4883, 0x4884, 0x4885, 0x4886, 0x4887, 0x4888, 0x4889, 0x488a, }
+
+
+/* For for COS_SEMA index definition, see:
+ * conninfra/platform/mt6885/include/mt6885.h
+ * conninfra/platform/mt6893/include/mt6893.h
+ */
+#if GPS_DL_HAS_PTA
+/* COS_SEMA_COEX_INDEX = 5, GPS use M3 */
+#define COS_SEMA_COEX_STA_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_STA_CONN_SEMA05_M3_OWN_STA
+
+#define COS_SEMA_COEX_REL_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_REL_CONN_SEMA05_M3_OWN_REL
+#endif
+
+/* COS_SEMA_RFSPI_INDEX = 11, GPS use M3 */
+#define COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_STA_CONN_SEMA11_M3_OWN_STA
+
+#define COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_REL_CONN_SEMA11_M3_OWN_REL
 
 
 #endif /* _GPS_DL_HW_DEP_MACRO_H */
