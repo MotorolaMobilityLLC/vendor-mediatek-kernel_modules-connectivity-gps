@@ -9,6 +9,8 @@
 #include "gps_dl_hw_dep_macro.h"
 #include "conn_infra/conn_infra_cfg.h"
 #include "gps_dl_hw_api.h"
+#include "conn_infra/conn_afe_ctl.h"
+#include "conn_infra/conn_cfg.h"
 
 #if GPS_DL_HAS_CONNINFRA_DRV
 #if GPS_DL_ON_LINUX
@@ -103,6 +105,25 @@ _fail_gps_top_off_active_not_okay:
 _fail_bgf_ip_ver_not_okay:
 _fail_bgf_ip_cfg_not_okay:
 	return false;
+}
+
+bool gps_dl_hw_dep_may_enable_bpll(void)
+{
+	bool poll_okay = false;
+
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_AFE_CTL_RG_DIG_EN_03_RG_WBG_EN_BPLL_UP, 1);
+
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_CFG_PLL_STATUS_BPLL_RDY, 1,
+		POLL_DEFAULT, &poll_okay);
+	if (!poll_okay)
+		GDL_LOGE("_fail_set_CONN_AFE_CTL_RG_DIG_EN_03_RG_WBG_EN_BPLL_UP_not_okay");
+
+	return poll_okay;
+}
+
+void gps_dl_hw_dep_may_disable_bpll(void)
+{
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_AFE_CTL_RG_DIG_EN_03_RG_WBG_EN_BPLL_UP, 0);
 }
 
 void gps_dl_hw_dep_may_set_bus_debug_flag(void)

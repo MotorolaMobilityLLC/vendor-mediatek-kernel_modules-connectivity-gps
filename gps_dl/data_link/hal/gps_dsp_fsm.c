@@ -78,6 +78,8 @@ void gps_dsp_state_change_to(enum gps_dsp_state_t next_state, enum gps_dl_link_i
 	if (next_state == GPS_DSP_ST_WORKING) {
 		/* gps_clock_switch (GPS_REQ_CLOCK_FREQ_MHZ_NORMAL); */
 		gps_dl_hal_link_clear_hw_pwr_stat(link_id);
+		if (link_id == GPS_DATA_LINK_ID0)
+			gps_dl_hal_link_may_disable_bpll();
 		gps_dl_hal_set_need_clk_ext_flag(link_id, false);
 	}
 

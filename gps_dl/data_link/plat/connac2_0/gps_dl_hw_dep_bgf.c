@@ -99,6 +99,19 @@ _fail_bgf_ip_cfg_not_okay:
 	return false;
 }
 
+bool gps_dl_hw_dep_may_enable_bpll(void)
+{
+	/*mt6885 mt6893 do nothing*/
+	/*avoid return check, return true*/
+	return true;
+}
+
+
+void gps_dl_hw_dep_may_disable_bpll(void)
+{
+	/*mt6885 mt6893 do nothing*/
+}
+
 void gps_dl_hw_dep_may_set_bus_debug_flag(void)
 {
 #if (GPS_DL_HAS_CONNINFRA_DRV)

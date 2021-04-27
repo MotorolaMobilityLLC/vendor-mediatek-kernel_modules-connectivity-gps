@@ -9,6 +9,41 @@
 #include "gps_dl_hw_dep_macro.h"
 #include "gps_dl_hw_semaphore.h"
 #include "conn_infra/conn_vdnr_gen_on_debug_ctrl_ao.h"
+#include "gps/gps_aon_top.h"
+
+void gps_dl_hw_dep_dump_gps_pos_info(enum gps_dl_link_id_enum link_id)
+{
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS,
+		GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_ON_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS,
+		GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_SOFT_RST_B_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS,
+		GPS_CFG_ON_GPS_L1_SLP_PWR_CTL_GPS_L1_SLP_PWR_CTL_CS_ADDR,
+		BMASK_RW_FORCE_PRINT);
+
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS,
+		GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_ON_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS,
+		GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_SOFT_RST_B_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS,
+		GPS_CFG_ON_GPS_L5_SLP_PWR_CTL_GPS_L5_SLP_PWR_CTL_CS_ADDR,
+		BMASK_RW_FORCE_PRINT);
+
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS,
+		GPS_AON_TOP_TCXO_MS_H_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS,
+		GPS_AON_TOP_TCXO_MS_L_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS,
+		GPS_AON_TOP_DSLEEP_CTL_ADDR,
+		BMASK_RW_FORCE_PRINT);
+
+}
 
 void gps_dl_hw_dep_dump_host_csr_gps_info(void)
 {
