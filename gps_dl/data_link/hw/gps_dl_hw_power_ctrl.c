@@ -447,6 +447,7 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 	int i;
 	bool done = false;
 	bool show_log = false;
+	struct gps_dl_hw_usrt_status_struct usrt_status;
 
 	/* TODO: move it to proper place */
 	if (GPS_DSP_ST_HW_STOP_MODE == gps_dsp_state_get(link_id)) {
@@ -477,6 +478,15 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 			/* poll 10ms */
 			if (i > 10) {
 				done = false;
+				gps_dl_hw_save_usrt_status_struct(link_id, &usrt_status);
+				gps_dl_hw_print_usrt_status_struct(link_id, &usrt_status);
+				gps_dl_hw_dep_dump_gps_pos_info(link_id);
+				/* it means a2z dump is already done */
+				if (gps_each_link_get_bool_flag(link_id, LINK_NEED_A2Z_DUMP))
+					break;
+
+				/* dump anyway for No IOC_QUERY case */
+				gps_dl_hw_do_gps_a2z_dump();
 				break;
 			}
 			gps_dl_wait_us(1000);
