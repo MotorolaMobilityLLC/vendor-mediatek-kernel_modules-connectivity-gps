@@ -306,6 +306,11 @@ void gps_dl_hal_link_clear_hw_pwr_stat(enum gps_dl_link_id_enum link_id)
 		gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_CLEAR_PWR_STAT);
 }
 
+void gps_dl_hal_link_may_disable_bpll(void)
+{
+	gps_dl_hw_dep_may_disable_bpll();
+}
+
 int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 {
 	bool dma_en_flag = gps_dl_hal_get_dma_irq_en_flag();

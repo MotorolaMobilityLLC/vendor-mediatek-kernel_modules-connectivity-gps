@@ -240,8 +240,17 @@ int gps_dl_hw_gps_common_on(void)
 	/* Enable PLL driver */
 	GDL_HW_SET_GPS_ENTRY(GPS_CFG_ON_GPS_CLKGEN1_CTL_CR_GPS_DIGCK_DIV_EN, 1);
 
+	/*Enable BPLL driver*/
+	poll_okay = gps_dl_hw_dep_may_enable_bpll();
+	if (!poll_okay) {
+		gps_dl_hw_dep_may_disable_bpll();
+		GDL_LOGE("_fail_gps_dl_hw_dep_may_enable_bpll_not_okay");
+		goto _fail_gps_dl_hw_dep_may_enable_bpll_not_okay;
+	}
+
 	return 0;
 
+_fail_gps_dl_hw_dep_may_enable_bpll_not_okay:
 _fail_adie_top_clk_en_not_okay:
 _fail_bgf_bus_or_gps_top_pwr_ack_not_okay:
 _fail_disable_gps_slp_prot_not_okay:
@@ -256,6 +265,9 @@ _fail_conn_hw_ver_not_okay:
 int gps_dl_hw_gps_common_off(void)
 {
 	bool poll_okay;
+
+	/*Disable BPLL driver*/
+	gps_dl_hw_dep_may_disable_bpll();
 
 	/* Power off A-die top clock */
 	GDL_HW_ADIE_TOP_CLK_EN(0, &poll_okay);
