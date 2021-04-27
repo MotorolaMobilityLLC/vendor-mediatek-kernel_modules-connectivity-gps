@@ -12,6 +12,15 @@
 #include "kernel_to_ctp.h"
 #endif
 
+void gps_dl_sleep_us(unsigned int min_us, unsigned int max_us)
+{
+#if GPS_DL_ON_LINUX
+	usleep_range(min_us, max_us);
+#elif GPS_DL_ON_CTP
+	usleep_range(min_us, max_us);
+#endif
+}
+
 void gps_dl_wait_us(unsigned int us)
 {
 #if GPS_DL_ON_LINUX

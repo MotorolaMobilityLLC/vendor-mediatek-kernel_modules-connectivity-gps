@@ -399,11 +399,11 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 	case GPS_L1_DSP_OFF:
 	case GPS_L1_DSP_ENTER_DSTOP:
 	case GPS_L1_DSP_ENTER_DSLEEP:
-		gps_dl_hw_usrt_ctrl(GPS_DATA_LINK_ID0,
-			false, gps_dl_is_dma_enabled(), gps_dl_is_1byte_mode());
-
 		/* poll */
 		dsp_off_done = gps_dl_hw_gps_dsp_is_off_done(GPS_DATA_LINK_ID0);
+
+		gps_dl_hw_usrt_ctrl(GPS_DATA_LINK_ID0,
+			false, gps_dl_is_dma_enabled(), gps_dl_is_1byte_mode());
 		gps_dl_hw_gps_pwr_stat_ctrl(ctrl);
 		gps_dl_hw_dep_cfg_dsp_mem(ctrl);
 		gps_dl_hw_dep_set_dsp_off(GPS_DATA_LINK_ID0);
@@ -434,11 +434,11 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 	case GPS_L5_DSP_OFF:
 	case GPS_L5_DSP_ENTER_DSTOP:
 	case GPS_L5_DSP_ENTER_DSLEEP:
-		gps_dl_hw_usrt_ctrl(GPS_DATA_LINK_ID1,
-			false, gps_dl_is_dma_enabled(), gps_dl_is_1byte_mode());
-
 		/* poll */
 		dsp_off_done = gps_dl_hw_gps_dsp_is_off_done(GPS_DATA_LINK_ID1);
+
+		gps_dl_hw_usrt_ctrl(GPS_DATA_LINK_ID1,
+			false, gps_dl_is_dma_enabled(), gps_dl_is_1byte_mode());
 		gps_dl_hw_gps_pwr_stat_ctrl(ctrl);
 		gps_dl_hw_dep_cfg_dsp_mem(ctrl);
 		gps_dl_hw_dep_set_dsp_off(GPS_DATA_LINK_ID1);
@@ -487,33 +487,38 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 
 		done = true;
 		while (GPS_DSP_ST_RESET_DONE != gps_dsp_state_get(link_id)) {
-			/* poll 10ms */
-			if (i > 10) {
+			/* poll 200ms */
+			if (i >= 200) {
 				done = false;
-				gps_dl_hw_save_usrt_status_struct(link_id, &usrt_status);
-				gps_dl_hw_print_usrt_status_struct(link_id, &usrt_status);
+				gps_dl_hw_save_usrt_status_struct(GPS_DATA_LINK_ID0, &usrt_status);
+				gps_dl_hw_print_usrt_status_struct(GPS_DATA_LINK_ID0, &usrt_status);
+				gps_dl_hw_save_usrt_status_struct(GPS_DATA_LINK_ID1, &usrt_status);
+				gps_dl_hw_print_usrt_status_struct(GPS_DATA_LINK_ID1, &usrt_status);
 				gps_dl_hw_dep_dump_gps_pos_info(link_id);
 				/* it means a2z dump is already done */
 				if (gps_each_link_get_bool_flag(link_id, LINK_NEED_A2Z_DUMP))
 					break;
 
-				/* dump anyway for No IOC_QUERY case */
+				/* dump for No IOC_QUERY case */
 				gps_dl_hw_do_gps_a2z_dump();
 				break;
 			}
-			gps_dl_wait_us(1000);
+			gps_dl_sleep_us(999, 1001);
 
 			/* read dummy cr confirm dsp state for debug */
-			if (GPS_DATA_LINK_ID0 == link_id)
-				GDL_HW_RD_GPS_REG(0x80073160);
-			else if (GPS_DATA_LINK_ID1 == link_id)
-				GDL_HW_RD_GPS_REG(0x80073134);
+			GDL_HW_RD_GPS_REG(0x80073160);
+			GDL_HW_RD_GPS_REG(0x80073134);
 
 			if (!gps_dl_hal_mcub_flag_handler(link_id)) {
 				done = false;
 				break;
 			}
 			i++;
+
+			if ((i % 20) == 0)
+				show_log = gps_dl_set_show_reg_rw_log(true);
+			else
+				gps_dl_set_show_reg_rw_log(show_log);
 		}
 	} while (0);
 	gps_dl_set_show_reg_rw_log(show_log);
