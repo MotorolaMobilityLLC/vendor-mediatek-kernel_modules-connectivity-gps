@@ -190,20 +190,33 @@ else #Legacy drivers
 WMT_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/common
 
 ifeq ($(CONFIG_MTK_COMBO_CHIP),)
-    $(error CONFIG_MTK_COMBO_CHIP not defined)
-endif
+ifneq ($(filter "y",$(CONFIG_MTK_COMBO_CHIP_MT6620) $(CONFIG_MTK_COMBO_CHIP_MT6628) $(CONFIG_MTK_COMBO_CHIP_MT6630) $(CONFIG_MTK_COMBO_CHIP_MT6632) $(CONFIG_MTK_COMBO_CHIP_MT7668)),)
+        ccflags-y += -DSOC_CO_CLOCK_FLAG=0
+        ccflags-y += -DWMT_CREATE_NODE_DYNAMIC=0
+        ccflags-y += -DREMOVE_MK_NODE=1
+$(warning is combo_chip judge by CONFIG_MTK_COMBO_CHIP_*)
+else
+        ccflags-y += -DSOC_CO_CLOCK_FLAG=1
+        ccflags-y += -DWMT_CREATE_NODE_DYNAMIC=1
+        ccflags-y += -DREMOVE_MK_NODE=0
+$(warning is connsys_chip judge by CONFIG_MTK_COMBO_CHIP_*)
+ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/$(MTK_PLATFORM)/include
 
+endif
+else
 ifneq ($(filter "CONSYS_%",$(CONFIG_MTK_COMBO_CHIP)),)
         ccflags-y += -DSOC_CO_CLOCK_FLAG=1
         ccflags-y += -DWMT_CREATE_NODE_DYNAMIC=1
         ccflags-y += -DREMOVE_MK_NODE=0
-
+$(warning is connsys_chip judge by CONFIG_MTK_COMBO_CHIP)
 ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/$(MTK_PLATFORM)/include
 
 else
         ccflags-y += -DSOC_CO_CLOCK_FLAG=0
         ccflags-y += -DWMT_CREATE_NODE_DYNAMIC=0
         ccflags-y += -DREMOVE_MK_NODE=1
+$(warning is combo_chip judge by CONFIG_MTK_COMBO_CHIP)
+endif
 endif
 
 ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/include
