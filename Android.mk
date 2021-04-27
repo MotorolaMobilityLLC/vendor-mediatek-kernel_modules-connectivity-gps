@@ -1,7 +1,11 @@
 ifeq ($(GPS_CHIP_ID), common)
 LOCAL_PATH_INCLUDE := $(call my-dir)
-#include $(LOCAL_PATH_INCLUDE)/gps_stp/Android.mk
-include $(LOCAL_PATH_INCLUDE)/gps_dl/Android.mk
+
+include $(LOCAL_PATH_INCLUDE)/gps_stp/Android.mk
+GPS_PLATFORM := mt6885
+include $(LOCAL_PATH_INCLUDE)/data_link/Android.mk
+GPS_PLATFORM := mt6877
+include $(LOCAL_PATH_INCLUDE)/data_link/Android.mk
 
 $(warning GPS_CHIP_ID = common)
 

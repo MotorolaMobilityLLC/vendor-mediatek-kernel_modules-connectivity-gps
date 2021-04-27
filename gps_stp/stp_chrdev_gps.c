@@ -38,9 +38,14 @@
 #endif
 #include <linux/version.h>
 
+#ifdef MTK_GENERIC_HAL
+#include "gps_lna_drv.h"
+#else
 #ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
 #include "gps_lna_drv.h"
 #endif
+#endif
+
 MODULE_LICENSE("GPL");
 
 #define GPS_DRIVER_NAME "mtk_stp_GPS_chrdev"
@@ -1282,7 +1287,7 @@ static int GPS_init(void)
 	gps_wake_lock_ptr = wakeup_source_register(gps_wake_lock_name);
 #endif
 	if (!gps_wake_lock_ptr) {
-		pr_info("%s %d: init wakeup source fail!", __func__, __LINE__);
+		pr_info("%s %d: init gps wakeup source fail!", __func__, __LINE__);
 		goto error;
 	}
 
@@ -1294,7 +1299,11 @@ static int GPS_init(void)
 	sema_init(&rd_mtx, 1);
 
 #ifdef MTK_GENERIC_HAL
-	wakeup_source_init(&gps2_wake_lock, "gpswakelock");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 149)
+	gps2_wake_lock_ptr = wakeup_source_register(NULL, gps2_wake_lock_name);
+#else
+	gps2_wake_lock_ptr = wakeup_source_register(gps2_wake_lock_name);
+#endif
 
 	sema_init(&status_mtx2, 1);
 	/* init_MUTEX(&wr_mtx); */
@@ -1303,9 +1312,17 @@ static int GPS_init(void)
 	sema_init(&rd_mtx2, 1);
 	/* init_MUTEX(&lna_mtx); */
 	sema_init(&lna_mtx, 1);
+	if (!gps2_wake_lock_ptr) {
+		pr_info("%s %d: init gps2 wakeup source fail!", __func__, __LINE__);
+		goto error;
+	}
 #else
 #ifdef CONFIG_GPSL5_SUPPORT
-	wakeup_source_init(&gps2_wake_lock, "gpswakelock");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 149)
+	gps2_wake_lock_ptr = wakeup_source_register(NULL, gps2_wake_lock_name);
+#else
+	gps2_wake_lock_ptr = wakeup_source_register(gps2_wake_lock_name);
+#endif
 
 	sema_init(&status_mtx2, 1);
 	/* init_MUTEX(&wr_mtx); */
@@ -1314,7 +1331,13 @@ static int GPS_init(void)
 	sema_init(&rd_mtx2, 1);
 	/* init_MUTEX(&lna_mtx); */
 	sema_init(&lna_mtx, 1);
+	if (!gps2_wake_lock_ptr) {
+		pr_info("%s %d: init gps2 wakeup source fail!", __func__, __LINE__);
+		goto error;
+	}
 #endif
+
+
 #endif
 
 	return 0;
@@ -1418,6 +1441,13 @@ static void GPS_exit(void)
 	gps_lna_linux_plat_drv_unregister();
 #endif
 	wakeup_source_unregister(gps_wake_lock_ptr);
+#ifdef MTK_GENERIC_HAL
+	wakeup_source_unregister(gps2_wake_lock_ptr);
+#else
+#ifdef CONFIG_GPSL5_SUPPORT
+	wakeup_source_unregister(gps2_wake_lock_ptr);
+#endif
+#endif
 }
 
 int mtk_wcn_stpgps_drv_init(void)
