@@ -1,3 +1,13 @@
+ifeq ($(GPS_CHIP_ID), common)
+LOCAL_PATH_INCLUDE := $(call my-dir)
+#include $(LOCAL_PATH_INCLUDE)/gps_stp/Android.mk
+include $(LOCAL_PATH_INCLUDE)/gps_dl/Android.mk
+
+$(warning GPS_CHIP_ID = common)
+
+else
+
+$(warning GPS_CHIP_ID != common)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(MTK_GPS_SUPPORT), yes)
@@ -21,5 +31,7 @@ LOCAL_REQUIRED_MODULES := wmt_drv.ko
 endif
 
 include $(MTK_KERNEL_MODULE)
+
+endif
 
 endif
