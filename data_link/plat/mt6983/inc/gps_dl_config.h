@@ -1,11 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2019-2021 MediaTek Inc.
+ * Copyright (c) 2020 MediaTek Inc.
  */
 #ifndef _GPS_DL_CONFIG_H
 #define _GPS_DL_CONFIG_H
-
-#include <linux/version.h>
 
 enum gps_dl_link_id_enum {
 	GPS_DATA_LINK_ID0	= 0,
@@ -42,39 +40,17 @@ enum gps_dl_link_id_enum {
 #endif
 
 #define GPS_DL_HAS_PLAT_DRV   (1)
-#define GPS_DL_HAS_PTA        (1)
+#define GPS_DL_HAS_PTA        (0)
 #define GPS_DL_USE_TIA        (0)
-#define GPS_DL_USE_TOP_EMI_REQ_FOR_TIA (1) /* Only set to 1 for MT6885/MT6893 */
-#define GPS_DL_USE_BGF_SEL_SEMA (0)
 
 #define GPS_DL_IS_MODULE      (1)
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
-#define GPS_DL_USE_MTK_SYNC_WRITE    (0)
-#define GPS_DL_SET_EMI_MPU_CFG       (0)
-#define GPS_DL_GET_RSV_MEM_IN_MODULE (1)
-#else
 #define GPS_DL_USE_MTK_SYNC_WRITE    (1)
 #define GPS_DL_SET_EMI_MPU_CFG       (1)
 #define GPS_DL_GET_RSV_MEM_IN_MODULE (0)
-#endif
-
-#define GPS_DL_EMI_MPU_DOMAIN_AP      (0)
-#define GPS_DL_EMI_MPU_DOMAIN_CONN    (2)
-#define GPS_DL_EMI_MPU_REGION_NUM     (29)
-
-
-/*MET2.0 feature depends on:
-*1. conninfra api
-*2. linux platform based api
-*/
-#if GPS_DL_HAS_PLAT_DRV
-#if GPS_DL_HAS_CONNINFRA_DRV
-#define GPS_DL_ENABLE_MET             (1)
-#endif
-#endif
 
 
 #include "gps_dl_log.h"
 
 #endif /* _GPS_DL_CONFIG_H */
+

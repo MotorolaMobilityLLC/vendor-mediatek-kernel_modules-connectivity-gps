@@ -20,7 +20,6 @@
 #endif
 
 
-
 struct gps_dl_iomem_addr_map_entry g_gps_dl_res_emi;
 
 void gps_dl_reserved_mem_init(void)
