@@ -5,10 +5,9 @@
 #include "gps_dl_config.h"
 
 #if GPS_DL_HAS_PLAT_DRV
-#include "gps_dl_context.h"
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_dl_linux_reserved_mem.h"
-#include "gps_dl_emi.h"
+
 
 #include <linux/of_reserved_mem.h>
 
@@ -20,15 +19,7 @@
 #endif
 #endif
 
-#define GPS_ICAP_MEM_SIZE (GPS_ICAP_BUF_SIZE)
-#define GPS_RESERVED_MEM_PADDING_SIZE (4*1024)
 
-struct gps_dl_reserved_mem_layout {
-	unsigned char icap_buf[GPS_ICAP_MEM_SIZE];
-	unsigned char padding1[GPS_RESERVED_MEM_PADDING_SIZE];
-	unsigned char tx_dma_buf[GPS_DATA_LINK_NUM][GPS_DL_RX_BUF_SIZE + GPS_RESERVED_MEM_PADDING_SIZE];
-	unsigned char rx_dma_buf[GPS_DATA_LINK_NUM][GPS_DL_RX_BUF_SIZE + GPS_RESERVED_MEM_PADDING_SIZE];
-};
 
 struct gps_dl_iomem_addr_map_entry g_gps_dl_res_emi;
 
