@@ -14,7 +14,7 @@
 
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761) || defined(CONFIG_MACH_MT6779) \
 || defined(CONFIG_MACH_MT6768) || defined(CONFIG_MACH_MT6785) || defined(CONFIG_MACH_MT6873) \
-|| defined(CONFIG_MACH_MT6853) || defined(CONFIG_MACH_MT6833)
+|| defined(CONFIG_MACH_MT6853) || defined(CONFIG_MACH_MT6833) || defined(CONFIG_MACH_MT6781)
 #define GPS_FWCTL_SUPPORT
 #endif
 
@@ -77,15 +77,13 @@ void GPS_fwlog_ctrl(bool on);
 
 #ifdef MTK_GENERIC_HAL
 /* stp_chrdev_gps2 */
-extern struct wakeup_source *gps2_wake_lock_ptr;
-extern const char gps2_wake_lock_name[];
+extern struct wakeup_source gps2_wake_lock;
 extern struct semaphore wr_mtx2, rd_mtx2, status_mtx2;
 extern const struct file_operations GPS2_fops;
 #else
 #ifdef CONFIG_GPSL5_SUPPORT
 /* stp_chrdev_gps2 */
-extern struct wakeup_source *gps2_wake_lock_ptr;
-extern const char gps2_wake_lock_name[];
+extern struct wakeup_source gps2_wake_lock;
 extern struct semaphore wr_mtx2, rd_mtx2, status_mtx2;
 extern const struct file_operations GPS2_fops;
 #endif
