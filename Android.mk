@@ -13,8 +13,11 @@ GPS_PLATFORM := v030
 include $(LOCAL_PATH_INCLUDE)/data_link/Android.mk
 endif
 
-$(warning GPS_CHIP_ID = common)
+ifneq ($(wildcard $(LOCAL_PATH_INCLUDE)/gps_scp),)
+include $(LOCAL_PATH_INCLUDE)/gps_scp/Android.mk
+endif
 
+$(warning GPS_CHIP_ID = common)
 else
 
 $(warning GPS_CHIP_ID != common)
