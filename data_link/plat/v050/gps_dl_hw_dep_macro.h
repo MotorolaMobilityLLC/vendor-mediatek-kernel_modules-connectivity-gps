@@ -12,18 +12,19 @@
 #include "conn_infra/conn_wt_slp_ctl_reg.h"
 #include "conn_infra/conn_infra_bus_cr.h"
 #include "conn_infra/conn_infra_rgu_on.h"
+#include "conn_infra/conn_semaphore.h"
 #include "gps/bgf_gps_rgu_on.h"
 #include "gps/bgf_gps_cfg.h"
 #include "gps/bgf_gps_cfg_on.h"
 
-#define GDL_HW_SUPPORT_LIST "SUPPORT:MT6893"
+#define GDL_HW_SUPPORT_LIST "SUPPORT:MT6983"
 
 
 #define GDL_HW_CHECK_CONN_INFRA_VER(p_poll_okay, p_poll_ver)             \
 	GDL_HW_POLL_ENTRY_VERBOSE(GPS_DL_CONN_INFRA_BUS,                 \
 		CONN_INFRA_CFG_IP_VERSION_IP_VERSION,                    \
 		p_poll_okay, p_poll_ver, POLL_DEFAULT, (                 \
-			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6893))   \
+			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6983))   \
 	)
 
 #define GDL_HW_SET_EMI_REMAP_FIELD \
@@ -94,7 +95,7 @@
 		BMASK_RW_FORCE_PRINT); \
 } while (0)
 
-/* For MT6893, the address for GPS is 0x18000028 */
+/* For MT6983, the address for GPS is 0x18000028 */
 #define GDL_HW_SET_CONN_INFRA_BGF_EN(val) do { \
 	unsigned int tmp_val; \
 	tmp_val = GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_RGU_ON_BGFYS_ON_TOP_PWR_CTL_1_ADDR); \
@@ -109,7 +110,7 @@
 #define GDL_HW_SET_GPS_FUNC_EN(val) \
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_ON_CONN_INFRA_CFG_GPS_PWRCTRL0_GPS_FUNCTION_EN, val)
 
-/* For MT6893, GPS has dedicate entry for top clk control
+/* For MT6983, GPS has dedicate entry for top clk control
  * add CONN_WT_SLP_CTL_REG_WB_GPS_CTL_GPS_HW_MODE_EN = 1
  */
 #define GDL_HW_ADIE_TOP_CLK_EN(val, p_poll_okay) do { \
@@ -161,6 +162,24 @@
 	0x9FF0, 0x9FF1, 0x9FF2, 0x9FF3, 0x9FF4, 0x0100, 0x0101, 0x5014, 0x5015, \
 	0x4880, 0x4881, 0x4882, 0x4883, 0x4884, 0x4885, 0x4886, 0x4887, 0x4888, 0x4889, 0x488a, }
 
+/* For for COS_SEMA index definition, see:
+ * conninfra/platform/mt6983/include/mt6983.h
+ */
+#if GPS_DL_HAS_PTA
+/* COS_SEMA_COEX_INDEX = 5, GPS use M3 */
+#define COS_SEMA_COEX_STA_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_STA_CONN_SEMA05_M3_OWN_STA
+
+#define COS_SEMA_COEX_REL_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_REL_CONN_SEMA05_M3_OWN_REL
+#endif
+
+/* COS_SEMA_RFSPI_INDEX = 11, GPS use M3 */
+#define COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_STA_CONN_SEMA11_M3_OWN_STA
+
+#define COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_REL_CONN_SEMA11_M3_OWN_REL
 
 #endif /* _GPS_DL_HW_DEP_MACRO_H */
 
