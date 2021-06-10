@@ -19,11 +19,10 @@ $(warning GPS_CHIP_ID != common)
 MTK_PLATFORM := $(subst ",,$(CONFIG_MTK_PLATFORM))
 ifeq ($(CONFIG_MTK_GPS_SUPPORT), y)
 
-ifeq ($(AUTOCONF_H),)
-    $(error AUTOCONF_H is not defined)
+ifneq ($(KERNEL_OUT),)
+    ccflags-y += -imacros $(KERNEL_OUT)/include/generated/autoconf.h
 endif
 
-ccflags-y += -imacros $(AUTOCONF_H)
 ifndef TOP
     TOP := $(srctree)/..
 endif
@@ -86,11 +85,7 @@ ccflags-y += -DCONFIG_GPSL5_SUPPORT
 ccflags-y += -DCONFIG_GPS_CTRL_LNA_SUPPORT
 GPS_DRV_CONTROL_LNA := y
 endif
-ifeq ($(CONFIG_MACH_MT6781),y)
-ccflags-y += -DCONFIG_GPSL5_SUPPORT
-ccflags-y += -DCONFIG_GPS_CTRL_LNA_SUPPORT
-GPS_DRV_CONTROL_LNA := y
-endif
+
 ifeq ($(CONFIG_MACH_MT6877),y)
 GPS_DL_SUPPORT := y
 GPS_DL_PLATFORM := v030
@@ -251,9 +246,6 @@ ifeq ($(CONFIG_ARCH_MTK_PROJECT),"k6833v1_64_swrgo")
         $(MODULE_NAME)-objs += gps_stp/stp_chrdev_gps2.o
 endif
 ifeq ($(CONFIG_MACH_MT6833),y)
-        $(MODULE_NAME)-objs += gps_stp/stp_chrdev_gps2.o
-endif
-ifeq ($(CONFIG_MACH_MT6781),y)
         $(MODULE_NAME)-objs += gps_stp/stp_chrdev_gps2.o
 endif
 ifeq ($(GPS_DRV_CONTROL_LNA),y)
