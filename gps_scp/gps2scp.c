@@ -249,7 +249,6 @@ long gps2scp_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 
 long gps2scp_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	conap_scp_unregister_drv(DRV_TYPE_GPS);
 	return gps2scp_unlocked_ioctl(filp, cmd, arg);
 }
 
