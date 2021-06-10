@@ -12,13 +12,13 @@
 #include "gps_dl_name_list.h"
 #include "gps_dl_subsys_reset.h"
 #include "gps_dl_time_tick.h"
+#include "gps_dl_hist_rec2.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
 #endif
 
 
 static bool s_gps_has_data_irq_masked[GPS_DATA_LINK_NUM];
-
 void gps_dl_hal_event_send(enum gps_dl_hal_event_id evt,
 	enum gps_dl_link_id_enum link_id)
 {
@@ -115,6 +115,8 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	GDL_LOGXD_EVT(link_id, "evt = %s", gps_dl_hal_event_name(evt));
 	switch (evt) {
 	case GPS_DL_HAL_EVT_D2A_RX_HAS_DATA:
+		gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_START);
+
 		gdl_ret = gdl_dma_buf_get_free_entry(
 			&p_link->rx_dma_buf, &dma_buf_entry, true);
 
@@ -133,6 +135,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	/* the rx_dma_done and usrt_has_nodata both happen. */
 	case GPS_DL_HAL_EVT_D2A_RX_DMA_DONE:
 		/* TODO: to make mock work with it */
+		gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_CONTINUE);
 
 		/* stop and clear int flag in isr */
 		/* gps_dl_hal_d2a_rx_dma_stop(link_id); */
@@ -183,6 +186,8 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 
 		} else
 			GDL_LOGD("gps_dl_hal_d2a_rx_dma_get_write_index ret = %s", gdl_ret_to_name(gdl_ret));
+
+		gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_END);
 
 		if (gdl_ret == GDL_OKAY) {
 			p_link->rx_dma_buf.dma_working_entry.is_valid = false;
