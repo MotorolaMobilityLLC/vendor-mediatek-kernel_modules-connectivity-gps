@@ -86,11 +86,7 @@ ccflags-y += -DCONFIG_GPSL5_SUPPORT
 ccflags-y += -DCONFIG_GPS_CTRL_LNA_SUPPORT
 GPS_DRV_CONTROL_LNA := y
 endif
-ifeq ($(CONFIG_MACH_MT6781),y)
-ccflags-y += -DCONFIG_GPSL5_SUPPORT
-ccflags-y += -DCONFIG_GPS_CTRL_LNA_SUPPORT
-GPS_DRV_CONTROL_LNA := y
-endif
+
 ifeq ($(CONFIG_MACH_MT6877),y)
 GPS_DL_SUPPORT := y
 GPS_DL_PLATFORM := v030
@@ -146,6 +142,7 @@ $(MODULE_NAME)-objs += data_link/gps_dl_context.o
 $(MODULE_NAME)-objs += data_link/lib/gps_dl_dma_buf.o
 $(MODULE_NAME)-objs += data_link/lib/gps_dl_lib_misc.o
 $(MODULE_NAME)-objs += data_link/lib/gps_dl_hist_rec.o
+$(MODULE_NAME)-objs += data_link/lib/gps_dl_hist_rec2.o
 $(MODULE_NAME)-objs += data_link/lib/gps_dl_time_tick.o
 $(MODULE_NAME)-objs += data_link/lib/gps_dl_name_list.o
 
@@ -251,9 +248,6 @@ ifeq ($(CONFIG_ARCH_MTK_PROJECT),"k6833v1_64_swrgo")
         $(MODULE_NAME)-objs += gps_stp/stp_chrdev_gps2.o
 endif
 ifeq ($(CONFIG_MACH_MT6833),y)
-        $(MODULE_NAME)-objs += gps_stp/stp_chrdev_gps2.o
-endif
-ifeq ($(CONFIG_MACH_MT6781),y)
         $(MODULE_NAME)-objs += gps_stp/stp_chrdev_gps2.o
 endif
 ifeq ($(GPS_DRV_CONTROL_LNA),y)
