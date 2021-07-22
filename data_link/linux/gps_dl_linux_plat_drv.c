@@ -145,7 +145,7 @@ void gps_dl_tia2_gps_ctrl(bool gps_is_on)
 	tia2_gps_on_old = __raw_readl(p_gps_on);
 	if (gps_is_on) {
 		/* 0x1001C000[5] = 1 (GPS on) */
-		gps_dl_linux_sync_writel(tia2_gps_on_old | (1UL << 5), p_gps_on);
+		/*gps_dl_linux_sync_writel(tia2_gps_on_old | (1UL << 5), p_gps_on);*/
 
 		if (p_gps_rc_sel == NULL)
 			GDL_LOGW_INI("on = %d, p_gps_rc_sel addr is null", gps_is_on);
@@ -164,7 +164,7 @@ void gps_dl_tia2_gps_ctrl(bool gps_is_on)
 		tia2_gps_rc_sel_old = __raw_readl(p_gps_rc_sel);
 
 		/* 0x1001C000[5] = 0 (GPS off) */
-		gps_dl_linux_sync_writel(tia2_gps_on_old & ~(1UL << 5), p_gps_on);
+		/*gps_dl_linux_sync_writel(tia2_gps_on_old & ~(1UL << 5), p_gps_on);*/
 	}
 	tia2_gps_on_new = __raw_readl(p_gps_on);
 	GDL_LOGI_INI(
