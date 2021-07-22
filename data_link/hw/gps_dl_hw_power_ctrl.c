@@ -192,9 +192,8 @@ int gps_dl_hw_gps_common_on(void)
 
 	gps_dl_hw_dep_may_remap_conn2ap_gps_peri();
 
-	/*set gps emi remap here for mt6983*/
-	if (poll_ver == GDL_HW_CONN_INFRA_VER_MT6983)
-		gps_dl_emi_remap_calc_and_set();
+	/*set gps emi remap here*/
+	gps_dl_emi_remap_calc_and_set();
 
 	/* Enable Conninfra BGF */
 	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
