@@ -190,10 +190,16 @@ int gps_dl_hw_gps_common_on(void)
 		goto _fail_conn_hw_ver_not_okay;
 	}
 
+	/* Poll conninfra hw cmdbt restore done */
+	poll_okay = gps_dl_hw_dep_may_check_conn_infra_restore_done();
+	if (!poll_okay)
+		goto _fail_check_conn_infra_restore_done;
+
 	gps_dl_hw_dep_may_remap_conn2ap_gps_peri();
 
-	/*set gps emi remap here*/
-	gps_dl_emi_remap_calc_and_set();
+	/*set gps emi remap here for mt6983*/
+	if (poll_ver == GDL_HW_CONN_INFRA_VER_MT6983)
+		gps_dl_emi_remap_calc_and_set();
 
 	/* Enable Conninfra BGF */
 	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
@@ -225,6 +231,9 @@ int gps_dl_hw_gps_common_on(void)
 	gps_dl_hal_emi_usage_init();
 #endif
 	gps_dl_hw_gps_sw_request_peri_usage(true);
+
+	/* L1 infra request, only for mt6983\6879\... */
+	gps_dl_hw_dep_may_set_conn_infra_l1_request(true);
 
 	poll_okay = gps_dl_hw_dep_en_gps_func_and_poll_bgf_ack();
 	if (!poll_okay)
@@ -285,7 +294,9 @@ _fail_bgf_top_pwr_ack_not_okay:
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
 
 _fail_adie_ver_not_okay:
+_fail_check_conn_infra_restore_done:
 _fail_conn_hw_ver_not_okay:
+
 	return -1;
 }
 
@@ -328,6 +339,10 @@ int gps_dl_hw_gps_common_off(void)
 	/* Will force to release EMI */
 	gps_dl_hal_emi_usage_deinit();
 #endif
+
+	/* L1 infra request, only for mt6983\6879\... */
+	gps_dl_hw_dep_may_set_conn_infra_l1_request(false);
+
 	gps_dl_hw_gps_sw_request_peri_usage(false);
 
 	if (gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_HOST_CSR_GPS_OFF))
