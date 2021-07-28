@@ -221,7 +221,7 @@ ssize_t read_scp2gps_data(char __user *buf,  size_t count)
 }
 void gps2scp_msg_cb(unsigned int msg_id, unsigned int *buf, unsigned int size)
 {
-	pr_info("gps2scp_msg_cb been called, msg_id=%d,*buf=0x%x,size=%d\n", msg_id, buf, size);
+	pr_info("gps2scp_msg_cb been called, msg_id=%d,*buf=0x%p,size=%d\n", msg_id, buf, size);
 	if (msg_id == 0) {
 		save_scp2gps_data(msg_id, buf, size);
 		wake_up_interruptible(&GPS2SCP_wq);
@@ -417,7 +417,7 @@ static ssize_t gps2scp_write_test(struct file *filp, const char __user *buf, siz
 
 	if (written == 0) {
 		retval = copy_size;
-		pr_info("conap_scp_send_message success count= %d\n", count);
+		pr_info("conap_scp_send_message success count= %zd\n", count);
 	} else {
 		retval = -EFAULT;
 		pr_info("conap_scp_send_message failed retval=%d , written=%d\n", retval, written);
@@ -453,7 +453,7 @@ static ssize_t gps2scp_write(struct file *filp, const char __user *buf, size_t c
 
 	if (written == 0) {
 		retval = copy_size;
-		pr_info("conap_scp_send_message success count= %d\n", count);
+		pr_info("conap_scp_send_message success count= %zd\n", count);
 	} else {
 		retval = -EFAULT;
 		pr_info("conap_scp_send_message failed retval=%d , written=%d\n", retval, written);
