@@ -98,6 +98,13 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		/* gps_dl_set_show_reg_rw_log(show_log); */
 		break;
 	case GPS_DL_EVT_LINK_LEAVE_DPSTOP:
+		/*leave deep stop mode with incorrect status*/
+		if (GPS_DSP_ST_WAKEN_UP == gps_dsp_state_get(link_id)) {
+			GDL_LOGXE(link_id, "not leave stop mode correct due to dsp state keep wakeup");
+			gps_dl_link_open_ack(link_id, true, true);
+			break;
+		}
+
 		gps_dl_link_pre_leave_dpstop_setting(link_id);
 		gps_each_dsp_reg_gourp_read_init(link_id);
 		gps_each_link_inc_session_id(link_id);
