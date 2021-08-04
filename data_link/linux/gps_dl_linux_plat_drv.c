@@ -344,7 +344,7 @@ static int gps_dl_probe(struct platform_device *pdev)
 	int i;
 	bool okay = false;
 
-	GDL_LOGW_INI("compatible = %s", pdev->dev.of_node->properties->value);
+	GDL_LOGW_INI("compatible = %s", (char *)pdev->dev.of_node->properties->value);
 
 #if (GPS_DL_GET_RSV_MEM_IN_MODULE)
 	gps_dl_get_reserved_memory(&pdev->dev);

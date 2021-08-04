@@ -487,6 +487,7 @@ void gps_dl_hal_conn_infra_driver_debug_dump(void)
 }
 
 #if GPS_DL_HAS_PTA
+#if GPS_DL_BLANKING_KEEP_IDC_MODE
 bool gps_dl_hal_md_blanking_init_pta_idc_mode(void)
 {
 	bool okay = false;
@@ -514,6 +515,7 @@ bool gps_dl_hal_md_blanking_init_pta_idc_mode(void)
 	gps_dl_hw_set_pta_blanking_parameter(false);
 	return true;
 }
+#endif
 
 void gps_dl_hal_md_blanking_init_pta_direct_path(void)
 {
@@ -564,6 +566,7 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 		}
 	}
 
+#if GPS_DL_BLANKING_KEEP_IDC_MODE
 	if (setting_val == USE_PTA_IDC_MODE) {
 		/* idc mode */
 		okay = gps_dl_hal_md_blanking_init_pta_idc_mode();
@@ -571,7 +574,9 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 			gps_dl_hw_give_conn_coex_hw_sema();
 			return false;
 		}
-	} else if (setting_val == USE_PTA_DIRECT_PATH) {
+	} else
+#endif
+	if (setting_val == USE_PTA_DIRECT_PATH) {
 		/* direct path */
 		gps_dl_hal_md_blanking_init_pta_direct_path();
 	}
