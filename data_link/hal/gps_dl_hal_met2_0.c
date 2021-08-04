@@ -64,7 +64,7 @@ int gps_debug_met_start(struct gps_debug_met_contex *contex)
 	}
 	p_mem_met_phy = p_mem_phy+offsetof(struct gps_dl_reserved_mem_layout, met_buf);
 
-	if (gps_dl_emi_remap_phy_to_bus_addr(p_mem_met_phy, &bus_emi_met_phy_addr)) {
+	if (gps_dl_emi_remap_phy_to_bus_addr(p_mem_met_phy, &bus_emi_met_phy_addr) == GDL_FAIL) {
 		GDL_LOGE("MET remap EMI phy to bus addr fail\n");
 		return -1;
 	}
