@@ -121,8 +121,15 @@ void gps_each_link_rec_read(enum gps_dl_link_id_enum link_id, int pid, int len,
 void gps_each_link_rec_write(enum gps_dl_link_id_enum link_id, int pid, int len,
 	enum gps_dl_hist_rec_rw_rec_point rec_point)
 {
+	bool take_okay;
+
 	ASSERT_LINK_ID(link_id, GDL_VOIDF());
-	gps_each_link_mutex_take(link_id, GPS_DL_MTX_BIG_LOCK);
+	take_okay = gps_each_link_mutex_take2(link_id, GPS_DL_MTX_BIG_LOCK);
+	if (!take_okay) {
+		GDL_LOGXW_DRW(link_id, "mutex_take_fail: pid=%d, len=%d, rec_pint=%d", pid, len, rec_point);
+		return;
+	}
+
 	gps_dl_hist_rec_rw_add_rec(link_id, GPS_DL_HIST_REC_RW_WRITE, rec_point, pid, len);
 	gps_each_link_mutex_give(link_id, GPS_DL_MTX_BIG_LOCK);
 }
