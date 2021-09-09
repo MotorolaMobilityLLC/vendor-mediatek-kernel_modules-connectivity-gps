@@ -25,6 +25,7 @@ void gps_dma_buf_reset(struct gps_dl_dma_buf *p_dma)
 	p_dma->write_index = 0;
 	p_dma->writer_working = 0;
 	p_dma->dma_working_entry.is_valid = false;
+	p_dma->dma_working_counter = 0;
 	p_dma->entry_r = 0;
 	p_dma->entry_w = 0;
 	memset(&p_dma->data_entries[0], 0, sizeof(p_dma->data_entries));
