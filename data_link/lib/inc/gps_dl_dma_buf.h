@@ -86,6 +86,8 @@ struct gps_dl_dma_buf {
 	unsigned int entry_r;
 	unsigned int entry_w;
 
+	unsigned int dma_working_counter;
+
 #if 0
 	struct gdl_dma_buf_idx reader;
 	struct gdl_dma_buf_idx writer;
