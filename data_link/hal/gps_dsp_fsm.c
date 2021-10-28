@@ -90,8 +90,13 @@ void gps_dsp_state_change_to(enum gps_dsp_state_t next_state, enum gps_dl_link_i
 {
 	struct gps_dsp_state_history_item_t *p_item;
 	unsigned int item_index;
+	enum gps_dsp_state_t other_dsp_state;
+	enum gps_dl_link_id_enum link_id2;
 
 	ASSERT_LINK_ID(link_id, GDL_VOIDF());
+
+	link_id2 = (link_id == GPS_DATA_LINK_ID0) ? (GPS_DATA_LINK_ID1) : (GPS_DATA_LINK_ID0);
+	other_dsp_state = gps_dsp_state_get(link_id2);
 
 	if (next_state == GPS_DSP_ST_TURNED_ON) {
 		/* gps_clock_switch (GPS_REQ_CLOCK_FREQ_MHZ_MVCD); */
@@ -123,7 +128,13 @@ void gps_dsp_state_change_to(enum gps_dsp_state_t next_state, enum gps_dl_link_i
 
 	if (next_state == GPS_DSP_ST_WORKING) {
 		/* gps_clock_switch (GPS_REQ_CLOCK_FREQ_MHZ_NORMAL); */
-		gps_dl_hal_link_clear_hw_pwr_stat(link_id);
+		if ((other_dsp_state == GPS_DSP_ST_WAKEN_UP) || (other_dsp_state == GPS_DSP_ST_HW_STOP_MODE)) {
+			/* avoid case l1 clear pwr state when l5 have not waken up to ram_ready yet
+			 */
+			GDL_LOGXW_STA(link_id, "next_state = %s, other_dsp_state = %s",
+				gps_dl_dsp_state_name(next_state), gps_dl_dsp_state_name(other_dsp_state));
+		} else
+			gps_dl_hal_link_clear_hw_pwr_stat(link_id);
 		if (link_id == GPS_DATA_LINK_ID0)
 			gps_dl_hal_link_may_disable_bpll();
 		gps_dl_hal_set_need_clk_ext_flag(link_id, false);
