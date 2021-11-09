@@ -99,18 +99,18 @@ void gps_each_dsp_reg_read_ack(
 	p_read_context = &g_gps_each_dsp_reg_read_context[link_id];
 	p_read_value = &g_gps_rec_dsp_reg[link_id];
 
-	if (p_read_value->record_d2a0_index >= GPS_DSP_REG_DBG_POLL_MAX) {
+	if (p_read_value->record_d2a_index >= GPS_DSP_REG_DBG_POLL_MAX) {
 		GDL_LOGXW(link_id, "warning : poll_index : %d, write_index : %d, REG_DBG_POLL_MAX : %d",
-			p_read_context->poll_index, p_read_value->record_d2a0_index, GPS_DSP_REG_DBG_POLL_MAX);
+			p_read_context->poll_index, p_read_value->record_d2a_index, GPS_DSP_REG_DBG_POLL_MAX + 1);
 	} else {
-		p_read_value->g_gps_rec_dsp_value[p_read_value->record_d2a0_index] = p_d2a->dat0;
-		p_read_value->record_d2a0_index++;
-		p_read_value->record_d2a1 = p_d2a->dat1;
+		p_read_value->g_gps_rec_dsp_value[p_read_value->record_d2a_index] = p_d2a->dat0;
+		p_read_value->record_d2a_index++;
 
-		if (p_read_value->record_d2a0_index >= p_read_context->poll_list_len) {
+		if (p_read_value->record_d2a_index >= p_read_context->poll_list_len) {
+			p_read_value->g_gps_rec_dsp_value[p_read_value->record_d2a_index] = p_d2a->dat1;
 			gps_dl_hal_show_dsp_reg("dsp_reg_normal", link_id, p_read_value->g_gps_rec_dsp_value,
-				p_read_context->poll_list_len);
-			p_read_value->record_d2a0_index = 0;
+				p_read_value->record_d2a_index + 1);
+			p_read_value->record_d2a_index = 0;
 		}
 	}
 	g_gps_each_dsp_reg_read_context[link_id].poll_ongoing = false;
@@ -125,8 +125,8 @@ void gps_each_dsp_reg_dump_if_any_rec(enum gps_dl_link_id_enum link_id)
 
 	p_read_value = &g_gps_rec_dsp_reg[link_id];
 	gps_dl_hal_show_dsp_reg("dsp_reg_force_dump", link_id, p_read_value->g_gps_rec_dsp_value,
-		p_read_value->record_d2a0_index);
-	p_read_value->record_d2a0_index = 0;
+		p_read_value->record_d2a_index);
+	p_read_value->record_d2a_index = 0;
 }
 
 void gps_each_dsp_reg_gourp_read_start(enum gps_dl_link_id_enum link_id,
@@ -193,7 +193,6 @@ void gps_dl_hal_show_dsp_reg(unsigned char *tag, enum gps_dl_link_id_enum link_i
 #define SHOW_BUF_FMT6 SHOW_BUF_FMT5" %04x"
 #define SHOW_BUF_FMT7 SHOW_BUF_FMT6" %04x"
 #define SHOW_BUF_FMT8 SHOW_BUF_FMT7" %04x"
-#define SHOW_BUF_FMT9 "dsp status = %04x"
 
 #define SHOW_BUF_ARG0 do {GDL_LOGI(SHOW_BUF_FMT0, tag, len); } while (0)
 
@@ -219,8 +218,6 @@ void gps_dl_hal_show_dsp_reg(unsigned char *tag, enum gps_dl_link_id_enum link_i
 #define SHOW_BUF_ARG8 do {GDL_LOGI(SHOW_BUF_FMT8, tag, len, buf[base+0], buf[base+1], buf[base+2], \
 	buf[base+3], buf[base+4], buf[base+5], buf[base+6], buf[base+7]); } while (0)
 
-#define SHOW_BUF_ARG9 do {GDL_LOGI(SHOW_BUF_FMT9, g_gps_rec_dsp_reg[link_id].record_d2a1); } while (0)
-
 	for (left_len = len, base = 0, line_idx = 0;
 		left_len > 0 && line_idx < 3;
 		left_len -= 8, base += 8, line_idx++) {
@@ -232,8 +229,10 @@ void gps_dl_hal_show_dsp_reg(unsigned char *tag, enum gps_dl_link_id_enum link_i
 
 		switch (line_len) {
 		/* case 0 is impossible */
+#if 0
 		case 0:
 			SHOW_BUF_ARG0; break;
+#endif
 		case 1:
 			SHOW_BUF_ARG1; break;
 		case 2:
@@ -251,8 +250,6 @@ void gps_dl_hal_show_dsp_reg(unsigned char *tag, enum gps_dl_link_id_enum link_i
 		default:
 			SHOW_BUF_ARG8; break;
 		}
-		if (left_len > 0 && left_len < 8)
-			SHOW_BUF_ARG9;
 	}
 }
 
