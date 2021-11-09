@@ -517,6 +517,8 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 	struct gps_dl_hw_usrt_status_struct usrt_status;
 
 
+	gps_each_dsp_reg_dump_if_any_rec(link_id);
+
 	/* TODO: move it to proper place */
 	if (GPS_DSP_ST_HW_STOP_MODE == gps_dsp_state_get(link_id)) {
 		/* expect it change to RESET_DONE after this call */
