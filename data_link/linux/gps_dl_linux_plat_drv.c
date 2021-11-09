@@ -52,6 +52,7 @@ struct gps_dl_iomem_addr_map_entry g_gps_dl_status_dummy_cr;
 struct gps_dl_iomem_addr_map_entry g_gps_dl_tia1_gps;
 struct gps_dl_iomem_addr_map_entry g_gps_dl_tia2_gps_on;
 struct gps_dl_iomem_addr_map_entry g_gps_dl_tia2_gps_rc_sel;
+struct gps_dl_iomem_addr_map_entry g_gps_dl_tia2_gps_debug;
 
 
 void __iomem *gps_dl_host_addr_to_virt(unsigned int host_addr)
@@ -131,12 +132,24 @@ void gps_dl_tia1_gps_ctrl(bool gps_is_on)
 		tia_temp, tia_temp1);
 }
 
+#define DEBUG_CR_NUM 10
+struct gps_tia2_gps_ctrl_debug_reg {
+	unsigned int tia2_gps_debug[DEBUG_CR_NUM];
+};
+
+struct gps_tia2_gps_ctrl_debug_reg gps_tia2_gps_reg;
+
 void gps_dl_tia2_gps_ctrl(bool gps_is_on)
 {
 	void __iomem *p_gps_on = g_gps_dl_tia2_gps_on.host_virt_addr;
 	void __iomem *p_gps_rc_sel = g_gps_dl_tia2_gps_rc_sel.host_virt_addr;
+	void __iomem *p_gps_debug = g_gps_dl_tia2_gps_debug.host_virt_addr;
+
 	unsigned int tia2_gps_on_old = 0, tia2_gps_rc_sel_old = 0;
 	unsigned int tia2_gps_on_new = 0, tia2_gps_rc_sel_new = 0;
+	struct gps_tia2_gps_ctrl_debug_reg *gps_tia2_reg_p = &gps_tia2_gps_reg;
+	unsigned int i;
+	unsigned int gps_debug_length = g_gps_dl_tia2_gps_debug.length;
 
 	if (p_gps_on == NULL) {
 		GDL_LOGW_INI("on = %d, tia2_gps_on addr is null", gps_is_on);
@@ -163,11 +176,31 @@ void gps_dl_tia2_gps_ctrl(bool gps_is_on)
 		}
 	} else {
 		tia2_gps_rc_sel_old = __raw_readl(p_gps_rc_sel);
-
 		/* 0x1001C000[5] = 0 (GPS off) */
 		/*gps_dl_linux_sync_writel(tia2_gps_on_old & ~(1UL << 5), p_gps_on);*/
 	}
 	tia2_gps_on_new = __raw_readl(p_gps_on);
+
+	if (p_gps_debug == NULL) {
+		GDL_LOGW_INI("on = %d, p_gps_debug addr is null", gps_is_on);
+	} else {
+		/* dump register : base + 0CC/0D0/0D4/0D8/0DC/0E0/0F0 for debug*/
+		for (i = 0; i <= DEBUG_CR_NUM - 1; i++) {
+			if (gps_debug_length > (i * 4))
+				gps_tia2_reg_p->tia2_gps_debug[i] = __raw_readl(p_gps_debug + (i * 0x4));
+			else
+				gps_tia2_reg_p->tia2_gps_debug[i] = 0xdeadbeef;
+		}
+		if (gps_debug_length < (i * 4))
+			GDL_LOGW_INI("warning : memory access is out of bounds : %d/%d", gps_debug_length, i * 4);
+
+		GDL_LOGI_INI(
+			"gps_tia2_reg_debug [CC~E0]: 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x, [F0]: 0x%08x",
+			gps_tia2_reg_p->tia2_gps_debug[0], gps_tia2_reg_p->tia2_gps_debug[1],
+			gps_tia2_reg_p->tia2_gps_debug[2], gps_tia2_reg_p->tia2_gps_debug[3],
+			gps_tia2_reg_p->tia2_gps_debug[4], gps_tia2_reg_p->tia2_gps_debug[5],
+			gps_tia2_reg_p->tia2_gps_debug[9]);
+	}
 	GDL_LOGI_INI(
 		"on = %d, tia2_gps_on = 0x%08x/0x%08x, rc_sel = 0x%08x/0x%08x",
 		gps_is_on,
@@ -399,6 +432,7 @@ static int gps_dl_probe(struct platform_device *pdev)
 	/* TIA 2 */
 	gps_dl_get_iomem_by_name(pdev, "tia2_gps_on", &g_gps_dl_tia2_gps_on);
 	gps_dl_get_iomem_by_name(pdev, "tia2_gps_rc_sel", &g_gps_dl_tia2_gps_rc_sel);
+	gps_dl_get_iomem_by_name(pdev, "tia2_gps_debug", &g_gps_dl_tia2_gps_debug);
 
 	for (i = 0; i < GPS_DL_IRQ_NUM; i++) {
 		irq = platform_get_resource(pdev, IORESOURCE_IRQ, i);
