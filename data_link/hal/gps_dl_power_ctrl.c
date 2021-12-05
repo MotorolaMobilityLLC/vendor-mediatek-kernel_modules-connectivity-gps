@@ -218,29 +218,46 @@ int gps_dl_hal_link_power_ctrl_inner(enum gps_dl_link_id_enum link_id,
 	} else if (3 == op || 5 == op) {
 		gps_dl_lna_pin_ctrl(link_id, true, false);
 		if (GPS_DATA_LINK_ID0 == link_id) {
-			if (3 == op)
+			if (3 == op) {
 				gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_EXIT_DSLEEP);
-			else if (5 == op)
+				g_gps_dsp_off_ret_array[link_id] = 0;
+			} else if (5 == op) {
 				gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_EXIT_DSTOP);
+				g_gps_dsp_off_ret_array[link_id] = 0;
+			}
 		} else if (GPS_DATA_LINK_ID1 == link_id) {
-			if (3 == op)
+			if (3 == op) {
 				gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_EXIT_DSLEEP);
-			else if (5 == op)
+				g_gps_dsp_off_ret_array[link_id] = 0;
+			} else if (5 == op) {
 				gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_EXIT_DSTOP);
+				g_gps_dsp_off_ret_array[link_id] = 0;
+			}
 		}
 		return 0;
 	} else if (2 == op || 4 == op) {
 		if (GPS_DATA_LINK_ID0 == link_id) {
 			if (2 == op)
-				gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_ENTER_DSLEEP);
+				g_gps_dsp_off_ret_array[link_id] = gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_ENTER_DSLEEP);
 			else if (4 == op)
-				gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_ENTER_DSTOP);
+				g_gps_dsp_off_ret_array[link_id] = gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_ENTER_DSTOP);
+
 		} else if (GPS_DATA_LINK_ID1 == link_id) {
 			if (2 == op)
-				gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_ENTER_DSLEEP);
+				g_gps_dsp_off_ret_array[link_id] = gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_ENTER_DSLEEP);
 			else if (4 == op)
-				gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_ENTER_DSTOP);
+				g_gps_dsp_off_ret_array[link_id] = gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_ENTER_DSTOP);
 		}
+
+		/*force adie off when enter deep stop mode timeout*/
+		if ((g_gps_dsp_off_ret_array[GPS_DATA_LINK_ID0] != 0) ||
+				(g_gps_dsp_off_ret_array[GPS_DATA_LINK_ID1] != 0)) {
+			GDL_LOGXE(link_id, "l1 ret = %d, l5 ret = %d, enter deep stop mode with force adie off",
+				g_gps_dsp_off_ret_array[GPS_DATA_LINK_ID0],
+				g_gps_dsp_off_ret_array[GPS_DATA_LINK_ID1]);
+			gps_dl_hw_gps_adie_force_off();
+		}
+
 		gps_dl_lna_pin_ctrl(link_id, false, false);
 		return 0;
 	} else if (0 == op) {

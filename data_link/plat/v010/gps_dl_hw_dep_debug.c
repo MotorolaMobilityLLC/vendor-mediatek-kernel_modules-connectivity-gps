@@ -110,3 +110,8 @@ void gps_dl_hw_dep_may_do_bus_check_and_print(unsigned int host_addr)
 		BMASK_RW_FORCE_PRINT);
 }
 
+void gps_dl_hw_gps_dump_gps_rf_temp_cr(void)
+{
+	/* TODO */
+}
+
