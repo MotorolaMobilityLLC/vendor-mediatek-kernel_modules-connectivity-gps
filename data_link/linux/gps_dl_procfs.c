@@ -130,6 +130,28 @@ int gps_dl_procfs_set_data_routing_status(int y, int z)
 	return 0;
 }
 
+int gps_dl_procfs_set_opid_duration(int y, int z)
+{
+	if (y == 0)
+		gps_dl_opid_timeout_info_show();
+	else if (y == 1) {
+		unsigned long enque_timeout_old, enque_timeout_new;
+
+		enque_timeout_old = gps_dl_opid_enque_timeout_get();
+		gps_dl_opid_enque_timeout_set((unsigned long)z);
+		enque_timeout_new = gps_dl_opid_enque_timeout_get();
+		GDL_LOGW("opid enque timeout change: %lu to %lu", enque_timeout_old, enque_timeout_new);
+	} else if (y == 2) {
+		unsigned long opfunc_timeout_old, opfunc_timeout_new;
+
+		opfunc_timeout_old = gps_dl_opid_opfunc_timeout_get();
+		gps_dl_opid_opfunc_timeout_set((unsigned long)z);
+		opfunc_timeout_new = gps_dl_opid_opfunc_timeout_get();
+		GDL_LOGW("opfunc timeout change: %lu to %lu", opfunc_timeout_old, opfunc_timeout_new);
+	}
+	return 0;
+}
+
 gps_dl_procfs_test_func_type g_gps_dl_proc_test_func_list[] = {
 	[0x00] = gps_dl_procfs_dummy_op,
 	/* [0x01] = TODO: reg read */
@@ -148,6 +170,7 @@ gps_dl_procfs_test_func_type g_gps_dl_proc_test_func_list[] = {
 	[0x07] = NULL,
 	#endif
 	[0x08] = gps_dl_procfs_set_data_routing_status,
+	[0x09] = gps_dl_procfs_set_opid_duration,
 };
 
 #define UNLOCK_MAGIC 0xDB9DB9
