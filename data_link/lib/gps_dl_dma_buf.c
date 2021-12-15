@@ -431,6 +431,7 @@ static enum GDL_RET_STATUS gdl_dma_buf_set_free_entry_inner(struct gps_dl_dma_bu
 	if (GDL_COUNT_FREE(p_dma->entry_r, p_dma->entry_w, GPS_DL_DMA_BUF_ENTRY_MAX) <= 1) {
 		/* impossible due to get_free_entry already check it */
 		p_dma->writer_working = false;
+		GDL_LOGI("DMA_entry_r_index = %d, DMA_entry_w_index = %d,", p_dma->entry_r, p_dma->entry_w);
 		return GDL_FAIL_NOENTRY2;
 	}
 
@@ -698,7 +699,11 @@ enum GDL_RET_STATUS gdl_dma_buf_entry_transfer_left_to_write_index(
 	free_len = GDL_COUNT_FREE(p_entry->read_index,
 		p_entry->write_index, p_entry->buf_length);
 
-	GDL_ASSERT(free_len > left_len, GDL_FAIL_ASSERT, "");
+	/*dsp will trigger twice nodata irq*/
+	if (free_len <= left_len) {
+		GDL_LOGI("free_len <= left_len, free_len = %d, left_len = %d", free_len, left_len);
+		return GDL_FAIL_NODATA;
+	}
 
 	new_write_index = p_entry->write_index + free_len - left_len;
 	if (new_write_index >= p_entry->buf_length)

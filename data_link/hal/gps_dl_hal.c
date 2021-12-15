@@ -155,7 +155,8 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		if (gdl_ret == GDL_OKAY) {
 			p_link->rx_dma_buf.dma_working_entry.is_valid = false;
 			gps_dl_link_wake_up(&p_link->waitables[GPS_DL_WAIT_READ]);
-		}
+		} else
+			GDL_LOGXI(link_id, "DMA_DONE : gdl_dma_buf_set_free_entry ret = %s", gdl_ret_to_name(gdl_ret));
 
 		gps_dl_hal_d2a_rx_dma_claim_emi_usage(link_id, false);
 		/* mask data irq */
@@ -182,10 +183,11 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 				&p_link->rx_dma_buf.dma_working_entry);
 
 			if (gdl_ret != GDL_OKAY)
-				GDL_LOGD("gdl_dma_buf_set_free_entry ret = %s", gdl_ret_to_name(gdl_ret));
+				GDL_LOGXI(link_id, "NODATA : gdl_dma_buf_set_free_entry ret = %s",
+					gdl_ret_to_name(gdl_ret));
 
 		} else
-			GDL_LOGD("gps_dl_hal_d2a_rx_dma_get_write_index ret = %s", gdl_ret_to_name(gdl_ret));
+			GDL_LOGXD(link_id, "gps_dl_hal_d2a_rx_dma_get_write_index ret = %s", gdl_ret_to_name(gdl_ret));
 
 		gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_END);
 

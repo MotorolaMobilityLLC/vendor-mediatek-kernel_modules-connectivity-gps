@@ -592,7 +592,10 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 				gps_dl_hw_save_dma_status_struct(d2a_dma_ch, &d2a_dma_status);
 				gps_dl_hw_print_dma_status_struct(d2a_dma_ch, &d2a_dma_status);
 				gps_dl_hw_dep_dump_gps_pos_info(link_id);
+#if GPS_DL_USE_PERI_REMAP
+				gps_dl_hw_get_gps_peri_remapping();
 
+#endif
 				/* it means a2z dump is already done */
 				if (gps_each_link_get_bool_flag(link_id, LINK_NEED_A2Z_DUMP))
 					break;

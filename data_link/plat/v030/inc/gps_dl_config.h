@@ -47,6 +47,7 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_USE_TIA        (1)
 #define GPS_DL_USE_TOP_EMI_REQ_FOR_TIA  (0)
 #define GPS_DL_USE_BGF_SEL_SEMA (1)
+#define GPS_DL_USE_PERI_REMAP (0)
 
 #define GPS_DL_IS_MODULE      (1)
 
