@@ -77,6 +77,7 @@ MODULE_LICENSE("GPL");
 #define COMBO_IOC_GPS_HW_RESUME      19
 #define COMBO_IOC_GPS_LISTEN_RST_EVT 20
 #define COMBO_IOC_GPS_GET_MD_STATUS  21
+#define COMBO_IOC_GPS_CTRL_L5_LNA    22
 
 static UINT32 md_status_addr;
 
@@ -924,6 +925,23 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			retval = -EFAULT;
 			GPS_ERR_FUNC("Can't get MD2GPS_REG in this platform\n");
 		}
+		break;
+	case COMBO_IOC_GPS_CTRL_L5_LNA:
+#ifdef MTK_GENERIC_HAL
+		if (!IS_ERR(g_gps_lna_pinctrl_ptr)) {
+			if (arg == 1)
+				gps_lna_pin_ctrl(GPS_DATA_LINK_ID1, true, false);
+			else
+				gps_lna_pin_ctrl(GPS_DATA_LINK_ID1, false, false);
+			retval = 0;
+		} else {
+			retval = -EFAULT;
+			GPS_DBG_FUNC("g_gps_lna_pinctrl_ptr not ready\n");
+		}
+#else
+		GPS_DBG_FUNC("LD1.0 project dont support\n");
+		retval = -EFAULT;
+#endif
 		break;
 	default:
 		retval = -EFAULT;
