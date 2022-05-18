@@ -56,7 +56,7 @@ enum gps_dl_each_link_irq_type {
 	GPS_DL_IRQ_TYPE_NUM,
 };
 #define IRQ_TYPE_IS_VALID(irq_type) \
-	(((irq_type) >= 0) && ((irq_type) < GPS_DL_IRQ_TYPE_NUM))
+	((unsigned int)(irq_type) < (unsigned int)GPS_DL_IRQ_TYPE_NUM)
 
 #define ASSERT_IRQ_TYPE(irq_type, ret) \
 	GDL_ASSERT(IRQ_TYPE_IS_VALID(irq_type), ret, "invalid irq type: %d", irq_type)
