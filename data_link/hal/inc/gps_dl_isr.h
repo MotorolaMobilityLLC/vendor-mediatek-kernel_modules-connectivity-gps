@@ -41,7 +41,7 @@ struct gps_each_irq {
 };
 
 #define IRQ_IDX_IS_VALID(irq_idx) \
-	(((irq_idx) >= 0) && ((irq_idx) < GPS_DL_IRQ_NUM))
+	((unsigned int)(irq_idx) < (unsigned int)GPS_DL_IRQ_NUM)
 
 #define ASSERT_IRQ_IDX(irq_idx, ret) \
 	GDL_ASSERT(IRQ_IDX_IS_VALID(irq_idx), ret, "invalid irq index: %d", irq_idx)
