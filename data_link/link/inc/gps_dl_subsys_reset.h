@@ -42,6 +42,8 @@ void gps_dl_conninfra_not_readable_show_warning(unsigned int host_addr);
 bool gps_dl_conninfra_is_okay_or_handle_it(int *p_hung_value, bool dump_on_hung_value_zero);
 #if GPS_DL_HAS_MCUDL
 bool gps_mcudl_conninfra_is_okay_or_handle_it(void);
+int gps_mcudl_coredump_conninfra_on_is_readable(void);
+int gps_mcudl_coredump_conninfra_off_is_readable(void);
 int gps_mcudl_coredump_is_readable(void);
 #endif
 void gps_dl_slp_prot_fail_and_dump(void);
