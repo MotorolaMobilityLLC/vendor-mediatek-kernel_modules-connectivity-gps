@@ -319,7 +319,7 @@ void gps_mcudl_mcu_ch1_proc_func(enum gps_mcudl_pkt_type type,
 		int copy_size;
 		bool to_notify = true;
 
-		MDL_LOGYD(y_id, "recv type=%d, len=%d, expected_len=%d",
+		MDL_LOGYD(y_id, "recv type=%d, len=%d, expected_len=%lu",
 			type, payload_len, sizeof(sta));
 
 		/* TODO: struct size check */
@@ -556,7 +556,7 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 
 		if ((curr_tick - last_tick) >= 1000000) {
 			MDL_LOGYI(yid,
-				"send_host_ack:recv_isr=%lu,recv=%lu,last=%lu,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d,ntf=%d",
+				"send_host_ack:recv_isr=%lu,recv=%llu,last=%llu,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%llu,ntf=%d",
 				gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(yid),
 				p_trx_ctx->host_sta.pkt_sta.total_recv,
 				p_trx_ctx->host_sta.last_ack_recv_len,
@@ -591,7 +591,7 @@ void gps_mcudl_flowctrl_dump_host_sta(enum gps_mcudl_yid yid)
 	not_ack_len = p_trx_ctx->host_sta.pkt_sta.total_recv - p_trx_ctx->host_sta.last_ack_recv_len;
 	old_reset_flag = p_trx_ctx->host_sta.reset_flag;
 	MDL_LOGYW(yid,
-		"dump_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d",
+		"dump_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%llu",
 		(gpsmdl_u32)(p_trx_ctx->host_sta.pkt_sta.total_recv),
 		(gpsmdl_u32)(p_trx_ctx->host_sta.last_ack_recv_len),
 		p_trx_ctx->host_sta.pkt_sta.total_parse_proc,
@@ -636,7 +636,7 @@ void gps_mcudl_host_sta_hist_rec(enum gps_mcudl_yid yid, struct geofence_pkt_hos
 	if (in_dump) {
 		gps_mcudl_slot_unprotect();
 		MDL_LOGW(
-			"dump_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d",
+			"dump_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%llu",
 			(gpsmdl_u32)(host_sta->pkt_sta.total_recv),
 			(gpsmdl_u32)(host_sta->last_ack_recv_len),
 			host_sta->pkt_sta.total_parse_proc,
@@ -665,7 +665,7 @@ void gps_mcudl_host_sta_hist_dump_rec(unsigned long index, struct geofence_pkt_h
 	old_reset_flag = host_sta->reset_flag;
 
 	MDL_LOGW(
-		"dump_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d",
+		"dump_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%llu",
 		(gpsmdl_u32)(host_sta->pkt_sta.total_recv),
 		(gpsmdl_u32)(host_sta->last_ack_recv_len),
 		host_sta->pkt_sta.total_parse_proc,
