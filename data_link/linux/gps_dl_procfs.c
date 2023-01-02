@@ -146,7 +146,9 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 		gps_dl_trigger_gps_print_data_status();
 #if GPS_DL_HAS_MCUDL
 	else if (y == 0x10)
-		gps_mcudl_xlink_test_toggle_reset_by_gps_hif((unsigned int)z);
+		(void)gps_mcudl_xlink_test_toggle_reset_by_gps_hif((unsigned int)z);
+	else if (y == 0x11)
+		gps_mcudl_xlink_test_bypass_mcu2ap_data(z != 0);
 #endif
 	return 0;
 }

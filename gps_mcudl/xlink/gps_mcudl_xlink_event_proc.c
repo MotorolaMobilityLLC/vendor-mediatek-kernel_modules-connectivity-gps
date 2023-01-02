@@ -22,6 +22,7 @@
 #include "gps_mcusys_fsm.h"
 #include "gps_mcudl_log.h"
 #include "gps_mcudl_context.h"
+#include "gps_mcudl_xlink.h"
 #include "gps_mcudl_link_util.h"
 #include "gps_mcudl_link_sync.h"
 #include "gps_mcudl_link_state.h"
@@ -69,6 +70,7 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 {
 	struct gps_mcudl_each_link *p_link = gps_mcudl_link_get(link_id);
 	bool show_log = false;
+	bool is_okay = false;
 	unsigned long tick_us0, tick_us1;
 	int ret;
 
@@ -124,7 +126,13 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 		/* gps_dl_set_show_reg_rw_log(show_log); */
 		break;
 
-		/* TODO: go and do close */
+	case GPS_MCUDL_EVT_LINK_RESET2:
+		is_okay = gps_mcudl_xlink_test_toggle_reset_by_gps_hif(0);
+		MDL_LOGXE(link_id, "toggle_reset_by_gps_hif, ok=%d", is_okay);
+		if (!is_okay)
+			gps_dl_trigger_connsys_reset();
+		break;
+
 	case GPS_MCUDL_EVT_LINK_CLOSE:
 	case GPS_MCUDL_EVT_LINK_RESET:
 	case GPS_MCUDL_EVT_LINK_PRE_CONN_RESET:
