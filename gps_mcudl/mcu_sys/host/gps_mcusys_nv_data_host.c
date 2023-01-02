@@ -84,12 +84,12 @@ gpsmdl_u32 gps_mcusys_nv_data_get_block_size(enum gps_mcusys_nv_data_id nv_id)
 	return 0;
 }
 
-void gps_mcussy_nv_data_host_hdr_init(enum gps_mcusys_nv_data_id nv_id,
+void gps_mcusys_nv_data_host_hdr_init(enum gps_mcusys_nv_data_id nv_id,
 	struct gps_mcusys_nv_data_sub_header *p_host)
 {
 	gpsmdl_u32 block_size = gps_mcusys_nv_data_get_block_size(nv_id);
 
-	GPS_OFL_TRC("block_size=%d, p_host=0x%p", block_size, p_host);
+	GPS_OFL_DBG("block_size=%d, p_host=0x%p", block_size, p_host);
 
 	if (block_size == 0)
 		return;
@@ -122,7 +122,7 @@ void gps_mcusys_nv_data_host_init(void)
 		if (p_hdr != NULL)
 			GPS_OFL_TRC("nv_id=%d, p_hdr=0x%p, offset=0x%x",
 				nv_id, p_hdr, gps_mcudl_get_offset_from_conn_base(p_hdr));
-			gps_mcussy_nv_data_host_hdr_init(nv_id, &p_hdr->hdr_host);
+			gps_mcusys_nv_data_host_hdr_init(nv_id, &p_hdr->hdr_host);
 	}
 	GPS_OFL_TRC("");
 }
