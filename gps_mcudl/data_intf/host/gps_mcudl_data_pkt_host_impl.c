@@ -224,7 +224,7 @@ void proc_func1(enum gps_mcudl_pkt_type type,
 		p_trx_ctx->host_sta.reset_flag = true;
 		return;
 
-	case GFNS_RSP_MCU_ACK_DN_PKT_STA:
+	case GFNS_RSP_MCU_ACK_DN_PKT_STA: {
 		struct gps_mcudl_data_pkt_mcu_sta sta;
 		int copy_size;
 		bool to_notify = true;
@@ -253,7 +253,7 @@ void proc_func1(enum gps_mcudl_pkt_type type,
 				GPS_MCUDL_YLINK_EVT_ID_SLOT_FLUSH_ON_RECV_STA);
 		}
 		return;
-
+	}
 	case GPS_MDLYPL_MCUSYS:
 		gps_mcusys_data_frame_proc(payload_ptr, payload_len);
 		break;
