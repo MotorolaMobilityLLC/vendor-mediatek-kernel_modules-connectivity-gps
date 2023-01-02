@@ -37,6 +37,7 @@ void gps_dl_hal_conn_infra_driver_off(void);
 void gps_dl_hal_conn_infra_driver_debug_dump(void);
 void gps_dl_hal_link_confirm_dma_stop(enum gps_dl_link_id_enum link_id);
 int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op);
+void gps_dl_hal_may_set_link_power_flag(enum gps_dl_link_id_enum link_id, bool power_ctrl);
 int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id,
 	enum gps_dl_hal_power_ctrl_op_enum op);
 int gps_dl_hal_link_power_ctrl_inner(enum gps_dl_link_id_enum link_id,

@@ -37,6 +37,11 @@
 #endif
 #include "gps/gps_aon_top.h"
 
+void gps_dl_hw_may_set_link_power_flag(enum gps_dl_link_id_enum link_id, bool power_ctrl)
+{
+	/*no need in Non-ATF*/
+}
+
 bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 {
 	bool poll_okay = false;
