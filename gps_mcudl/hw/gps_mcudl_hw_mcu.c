@@ -407,6 +407,20 @@ void gps_mcudl_hw_mcu_show_status(void)
 	GDL_LOGW("lp_status=0x%08X", lp_status);
 }
 
+void gps_mcudl_hw_mcu_show_pc_log(void)
+{
+	unsigned int flag;
+
+	for (flag = 0xC0040D01; flag <= 0xC0040D31; flag++) {
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, flag,
+			BMASK_RW_FORCE_PRINT);
+		gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
+			BMASK_RW_FORCE_PRINT);
+	}
+}
+
 bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
 {
 	bool is_okay = false;
