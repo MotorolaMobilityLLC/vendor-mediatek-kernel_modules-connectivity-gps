@@ -31,6 +31,7 @@ void gps_dl_hal_a2d_tx_dma_start(enum gps_dl_link_id_enum link_id,
 	struct gps_each_link *p_link = gps_dl_link_get(link_id);
 
 	p_link->tx_dma_buf.dma_working_entry = *p_entry;
+	p_link->tx_dma_buf.dma_working_counter++;
 
 	GDL_LOGXD(link_id, "");
 
@@ -72,6 +73,7 @@ void gps_dl_hal_d2a_rx_dma_start(enum gps_dl_link_id_enum link_id,
 	ASSERT_NOT_NULL(p_entry, GDL_VOIDF());
 
 	p_link->rx_dma_buf.dma_working_entry = *p_entry;
+	p_link->rx_dma_buf.dma_working_counter++;
 
 	if (link_id == GPS_DATA_LINK_ID0)
 		gps_dl_hal_dma_start(GPS_DL_DMA_LINK0_D2A, p_entry);

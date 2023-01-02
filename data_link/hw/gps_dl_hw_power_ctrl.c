@@ -22,6 +22,7 @@
 #include "gps_dl_hw_priv_util.h"
 #include "gps_dl_hal_util.h"
 #include "gps_dsp_fsm.h"
+#include "gps_dl_name_list.h"
 #if GPS_DL_ON_LINUX
 #include "gps_dl_subsys_reset.h"
 #endif
@@ -509,7 +510,9 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 	int i;
 	bool done = false;
 	bool show_log = false;
+	bool need_dump_for_reset_done = false;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
+
 
 	/* TODO: move it to proper place */
 	if (GPS_DSP_ST_HW_STOP_MODE == gps_dsp_state_get(link_id)) {
@@ -522,7 +525,9 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 
 	if (GPS_DSP_ST_RESET_DONE == gps_dsp_state_get(link_id)) {
 		GDL_LOGXD(link_id, "1st return, done = 1");
-		return true;
+		need_dump_for_reset_done = gps_dsp_state_is_dump_needed_for_reset_done(link_id);
+		if (!need_dump_for_reset_done)
+			return true;
 	}
 
 	i = 0;
@@ -536,7 +541,8 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 		}
 
 		done = true;
-		while (GPS_DSP_ST_RESET_DONE != gps_dsp_state_get(link_id)) {
+		while (GPS_DSP_ST_RESET_DONE != gps_dsp_state_get(link_id)
+				|| need_dump_for_reset_done) {
 			/* poll 200ms */
 			if (i >= 200) {
 				done = false;
@@ -572,7 +578,8 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 		}
 	} while (0);
 	gps_dl_set_show_reg_rw_log(show_log);
-	GDL_LOGXW(link_id, "2nd return, done = %d, i = %d", done, i);
+	GDL_LOGXW(link_id, "2nd return, done = %d, i = %d, need_dump_for_reset_done = %d", done, i,
+		need_dump_for_reset_done);
 	return done;
 }
 
