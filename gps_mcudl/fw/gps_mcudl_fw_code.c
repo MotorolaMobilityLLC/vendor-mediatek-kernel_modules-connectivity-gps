@@ -67,7 +67,7 @@ const struct gps_mcudl_fw_list c_gps_mcudl_dummy_fw_list = {
 };
 
 const struct gps_mcudl_fw_desc c_gps_mcudl_rom_only_fw_desc_list[] = {
-	{MCU_FW_ROM, &g_gps_mcudl_v060_mcu_rom_code[0], GPS_MCUDL_V060_MCU_ROM_CODE_SIZE},
+	{MCU_FW_ROM, &g_gps_mcudl_v060_mcu_rom_code[0], 0}, /* GPS_MCUDL_V060_MCU_ROM_CODE_SIZE */
 	{MCU_FW_EMI, &g_gps_mcudl_dummy_mcu_emi_code[0], 0},
 };
 
