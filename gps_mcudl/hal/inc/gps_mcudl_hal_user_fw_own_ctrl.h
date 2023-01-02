@@ -45,5 +45,9 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void);
 void gps_mcudl_hal_user_fw_own_deinit(enum gps_mcudl_fw_own_ctrl_user user);
 void gps_mcudl_hal_user_fw_own_status_dump(void);
 
+void gps_mcudl_hal_set_non_lppm_sleep_flag(bool enable);
+void gps_mcudl_hal_sync_non_flag_lppm_sleep_flag(void);
+bool gps_mcudl_hal_get_non_lppm_sleep_flag(void);
+
 #endif /* _GPS_MCUDL_HAL_USER_FW_OWN_CTRL_H */
 

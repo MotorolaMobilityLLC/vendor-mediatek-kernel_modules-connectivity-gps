@@ -27,6 +27,10 @@ struct gps_mcudl_fw_own_user_context {
 
 struct gps_mcudl_fw_own_user_context g_gps_mcudl_fw_own_ctx;
 
+/* set true to enable sleep even when non lpp mode */
+bool g_gps_mcudl_hal_non_lppm_sleep_flag_ctrl;
+bool g_gps_mcudl_hal_non_lppm_sleep_flag_used;
+
 
 void gps_mcul_hal_user_fw_own_lock(void)
 {
@@ -97,8 +101,8 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 	user_clr_bitmask_new = g_gps_mcudl_fw_own_ctx.user_clr_bitmask;
 	gps_mcul_hal_user_fw_own_unlock();
 
-	if ((do_clear && !clear_okay) || (!do_clear && (user_clr_bitmask == 0))) {
-		MDL_LOGW("clr_bitmask=0x%x,0x%x, fw_own=%d, user=%d, do_clear=%d, okay=%d, cnt=%d",
+	if (do_clear && !clear_okay) {
+		MDL_LOGE("clr_bitmask=0x%x,0x%x, fw_own=%d, user=%d, do_clear=%d, okay=%d, cnt=%d",
 			user_clr_bitmask, user_clr_bitmask_new,
 			is_fw_own, user, do_clear, clear_okay, real_clear_cnt);
 	} else {
@@ -133,9 +137,8 @@ bool gps_mcudl_hal_user_add_if_fw_own_is_clear(enum gps_mcudl_fw_own_ctrl_user u
 		return false;
 	}
 
-	if ((user_clr_bitmask == 0 && !is_fw_own) ||
-		(user_clr_bitmask != 0 && is_fw_own)) {
-		MDL_LOGW("clr_bitmask=0x%x,0x%x, fw_own=%d, user=%d, okay=%d",
+	if (user_clr_bitmask != 0 && is_fw_own) {
+		MDL_LOGE("clr_bitmask=0x%x,0x%x, fw_own=%d, user=%d, okay=%d",
 			user_clr_bitmask, user_clr_bitmask_new,
 			is_fw_own, user, already_cleared);
 	} else {
@@ -217,7 +220,7 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 	gps_mcul_hal_user_fw_own_unlock();
 
 	if (has_recent_clr) {
-		MDL_LOGI("has_recent_clr=%d, user=0x%x, ntf=%d, cnt=%d,%d",
+		MDL_LOGD("has_recent_clr=%d, user=0x%x, ntf=%d, cnt=%d,%d",
 			has_recent_clr, user_clr_bitmask, notified_to_set,
 			user_clr_cnt_on_ntf_set, user_clr_cnt);
 		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_MCU_SET_FW_OWN);
@@ -253,5 +256,21 @@ void gps_mcudl_hal_user_fw_own_deinit(enum gps_mcudl_fw_own_ctrl_user user)
 void gps_mcudl_hal_user_fw_own_status_dump(void)
 {
 	MDL_LOGW("TBD");
+}
+
+void gps_mcudl_hal_set_non_lppm_sleep_flag(bool enable)
+{
+	g_gps_mcudl_hal_non_lppm_sleep_flag_ctrl = enable;
+}
+
+void gps_mcudl_hal_sync_non_flag_lppm_sleep_flag(void)
+{
+	g_gps_mcudl_hal_non_lppm_sleep_flag_used =
+		g_gps_mcudl_hal_non_lppm_sleep_flag_ctrl;
+}
+
+bool gps_mcudl_hal_get_non_lppm_sleep_flag(void)
+{
+	return g_gps_mcudl_hal_non_lppm_sleep_flag_used;
 }
 
