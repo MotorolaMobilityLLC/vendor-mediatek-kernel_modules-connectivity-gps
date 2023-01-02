@@ -186,6 +186,8 @@ int gps_dl_hw_gps_common_on(void)
 	/* Enable Conninfra BGF */
 	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
 
+	gps_dl_hw_dep_may_remap_conn2ap_gps_peri();
+
 	/* Poll conninfra hw version */
 	GDL_HW_CHECK_CONN_INFRA_VER(&poll_okay, &poll_ver);
 	if (!poll_okay) {
