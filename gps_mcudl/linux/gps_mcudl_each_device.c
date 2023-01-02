@@ -192,7 +192,7 @@ static int gps_mcudl_each_device_open(struct inode *inode, struct file *filp)
 	dev = container_of(inode->i_cdev, struct gps_mcudl_each_device, cdev);
 	filp->private_data = dev; /* for other methods */
 
-	MDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d",
+	MDL_LOGXD(dev->index, "major = %d, minor = %d, pid = %d",
 		imajor(inode), iminor(inode), current->pid);
 
 	if (!dev->is_open) {
@@ -203,7 +203,8 @@ static int gps_mcudl_each_device_open(struct inode *inode, struct file *filp)
 		}
 	}
 
-	MDL_LOGXW(dev->index, "retval=%d", retval);
+	MDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d, retval=%d",
+		imajor(inode), iminor(inode), current->pid, retval);
 	return retval;
 }
 
