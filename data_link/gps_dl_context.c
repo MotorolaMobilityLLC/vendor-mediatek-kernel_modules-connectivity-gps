@@ -75,7 +75,7 @@ static struct gps_dl_ctx s_gps_dl_ctx = {
 			.trig_type = GPS_DL_IRQ_TRIG_LEVEL_HIGH,
 			.isr = (void *)GPS_DL_ISR_DMA} },
 		{.cfg = {.index = GPS_DL_IRQ_WDT,	   .name = "gps_wdt",
-			.trig_type = GPS_DL_IRQ_TRIG_LEVEL_HIGH,
+			.trig_type = GPS_DL_IRQ_TRIG_EDGE_RISING,
 			.isr = (void *)GPS_DL_ISR_DMA} },
 		{.cfg = {.index = GPS_DL_IRQ_HIF_ON,	   .name = "gps_hon",
 			.trig_type = GPS_DL_IRQ_TRIG_LEVEL_HIGH,
