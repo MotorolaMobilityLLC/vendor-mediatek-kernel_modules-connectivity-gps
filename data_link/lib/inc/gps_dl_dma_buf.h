@@ -61,10 +61,10 @@ struct gdl_dma_buf_entry {
 #else
 #define GPS_DL_DMA_BUF_ENTRY_MAX (4)
 #endif
-#define GPS_MCUDL_DMA_BUF_ENTRY_MAX (16)
+#define GPS_MCUDL_DMA_BUF_ENTRY_MAX (96)
 
 /* Max(GPS_DL_DMA_BUF_ENTRY_MAX, GPS_MCUDL_DMA_BUF_ENTRY_MAX) */
-#define GPS_DL_DMA_BUF_ENTRY_ARRAY_MAX (16)
+#define GPS_DL_DMA_BUF_ENTRY_ARRAY_MAX (96)
 
 struct gps_dl_dma_buf {
 	int dev_index;
