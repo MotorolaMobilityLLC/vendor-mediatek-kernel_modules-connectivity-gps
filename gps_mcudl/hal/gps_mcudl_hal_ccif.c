@@ -7,6 +7,7 @@
 #include "gps_mcudl_hal_ccif.h"
 #include "gps_mcudl_hw_ccif.h"
 #include "gps_dl_isr.h"
+#include "gps_dl_hw_api.h"
 #include "gps_dl_time_tick.h"
 #include "gps_dl_subsys_reset.h"
 #include "gps_mcu_hif_host.h"
@@ -17,6 +18,7 @@
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
 #include "connsyslog.h"
+#include "gps_dl_linux_plat_drv.h"
 #endif
 
 bool gps_mcudl_hal_ccif_tx_is_busy(enum gps_mcudl_ccif_ch ch)
@@ -150,10 +152,8 @@ recheck_rch:
 
 	tick_us1 = gps_dl_tick_get_us();
 	dt_us = tick_us1 - tick_us0;
-	if (((rch_mask != (1UL << GPS_MCUDL_CCIF_CH4)) &&
-		(rch_mask != (1UL << GPS_MCUDL_CCIF_CH1)) &&
-		(rch_mask != ((1UL << GPS_MCUDL_CCIF_CH1) | (1UL << GPS_MCUDL_CCIF_CH4))))
-		|| (dt_us >= 10000)) {
+	if ((dt_us >= 10 * 1000) || (rch_mask & (1UL << GPS_MCUDL_CCIF_CH2)) ||
+		(rch_mask & (1UL << GPS_MCUDL_CCIF_CH3))) {
 		GDL_LOGW("cnt=%lu, rch_mask=0x%x, dt_us=%lu, recheck=%u, last_mask=0x%x",
 			g_gps_ccif_irq_cnt, rch_mask, dt_us, recheck_cnt, last_rch_mask);
 	} else {
@@ -187,8 +187,15 @@ void gps_mcudl_hal_set_ccif_irq_en_flag(bool enable)
 unsigned long g_gps_wdt_irq_cnt;
 void gps_mcudl_hal_wdt_isr(void)
 {
+	int readable;
+	int hung_value = 0;
+
 	g_gps_wdt_irq_cnt++;
 	MDL_LOGW("cnt=%ld", g_gps_wdt_irq_cnt);
+
+	readable = conninfra_reg_readable();
+	hung_value = conninfra_is_bus_hang();
+	MDL_LOGW("check1: readable=%d, hung_value=%d", readable, hung_value);
 	gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_MCU_WDT_DUMP);
 }
 
@@ -202,21 +209,29 @@ void gps_mcudl_hal_wdt_dump(void)
 	hung_value = conninfra_is_bus_hang();
 	MDL_LOGW("check1: readable=%d, hung_value=%d", readable, hung_value);
 
-	if (readable && hung_value == 0) {
-		gps_mcudl_hal_ccif_show_status();
+#if GPS_DL_HAS_PLAT_DRV
+	gps_dl_tia_gps_ctrl(false);
+#endif
+	if (gps_dl_conninfra_is_readable_by_hung_value(hung_value)) {
+		gps_mcudl_hal_mcu_show_pc_log();
 		gps_mcudl_hal_mcu_show_status();
+		gps_mcudl_hal_ccif_show_status();
 	}
-	gps_dl_sleep_us(2200, 3200);
+	/* gps_dl_sleep_us(2200, 3200); */
 
 	readable = conninfra_reg_readable();
 	hung_value = conninfra_is_bus_hang();
 	MDL_LOGW("check2: readable=%d, hung_value=%d", readable, hung_value);
 
-	if (readable && hung_value == 0) {
-		gps_mcudl_hal_ccif_show_status();
+#if GPS_DL_HAS_PLAT_DRV
+	gps_dl_tia_gps_ctrl(false);
+#endif
+	if (gps_dl_conninfra_is_readable_by_hung_value(hung_value)) {
 		gps_mcudl_hal_mcu_show_status();
+		gps_mcudl_hal_ccif_show_status();
+		gps_dl_hw_dump_host_csr_gps_info(false);
 	}
-	gps_dl_sleep_us(2200, 3200);
+	/* gps_dl_sleep_us(2200, 3200); */
 
 	readable = conninfra_reg_readable();
 	hung_value = conninfra_is_bus_hang();
