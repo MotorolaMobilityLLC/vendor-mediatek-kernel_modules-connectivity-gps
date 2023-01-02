@@ -96,6 +96,11 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 		gps_mcudl_each_link_spin_lock_give(x_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
 		send_reset[x_id] = to_send_reset_event;
+
+		/* reduce log */
+		if (!need_wait[x_id])
+			continue;
+
 		MDL_LOGXE_STA(x_id,
 			"state change: %s -> %s, level = %d (%d -> %d), is_sent = %d, to_wait = %d",
 			gps_dl_link_state_name(old_state), gps_dl_link_state_name(new_state),
