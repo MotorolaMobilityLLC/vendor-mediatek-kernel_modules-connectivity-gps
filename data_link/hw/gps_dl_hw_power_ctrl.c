@@ -414,6 +414,14 @@ int gps_dl_hw_gps_pwr_stat_ctrl(enum dsp_ctrl_enum ctrl)
 
 	case GPS_L1_DSP_EXIT_DSTOP:
 	case GPS_L5_DSP_EXIT_DSTOP:
+		/*gps enter mvcd flow*/
+		if (gps_dl_hal_get_deep_stop_mode_revert_for_mvcd(GPS_DATA_LINK_ID0) ||
+			gps_dl_hal_get_deep_stop_mode_revert_for_mvcd(GPS_DATA_LINK_ID1)) {
+			GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_GPS_PWR_STAT, 0);
+			GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_FORCE_OSC_EN_ON, 0);
+			GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 1);
+			break;
+		}
 		/* do nothing */
 		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 1);
 		gps_dl_hw_print_ms_counter_status();
