@@ -8,6 +8,9 @@
 #if GPS_DL_ON_LINUX
 #include <linux/delay.h>
 #include <linux/jiffies.h>
+#include <asm/div64.h>
+#include <linux/time.h>
+#include <linux/sched/clock.h>
 #elif GPS_DL_ON_CTP
 #include "kernel_to_ctp.h"
 #endif
@@ -39,6 +42,20 @@ unsigned long gps_dl_tick_get(void)
 #else
 	return 0;
 #endif
+}
+
+#define GPS_NSEC_IN_USEC (1000)
+unsigned long gps_dl_tick_get_us(void)
+{
+	unsigned long tmp;
+
+	/* tmp is ns */
+	tmp = local_clock();
+
+	/* tmp is changed to ms after */
+	do_div(tmp, GPS_NSEC_IN_USEC);
+
+	return tmp;
 }
 
 int gps_dl_tick_delta_to_usec(unsigned int tick0, unsigned int tick1)
