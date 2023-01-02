@@ -191,7 +191,7 @@ void gps_icap_probe(void)
 {
 	int ret = 0, err = 0;
 
-	GDL_LOGI("start");
+	GDL_LOGD("start");
 
 	gps_icap_dev_ptr = kzalloc(sizeof(*gps_icap_dev_ptr), GFP_KERNEL);
 	if (gps_icap_dev_ptr == NULL) {
@@ -207,7 +207,7 @@ void gps_icap_probe(void)
 		err = -ENOMEM;
 		goto err_out;
 	} else
-		GDL_LOGI("major: %d, minor: %d",
+		GDL_LOGD("major: %d, minor: %d",
 			MAJOR(gps_icap_dev_ptr->devno), MINOR(gps_icap_dev_ptr->devno));
 
 	cdev_init(&gps_icap_dev_ptr->chdev, &gps_icap_fops);

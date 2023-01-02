@@ -340,7 +340,7 @@ void gps_dl_pinctrl_context_init(void)
 		}
 
 		g_gps_dl_pinctrl_state_struct_list[state_id] = p_state;
-		GDL_LOGW_INI("lookup okay: state id = %d, name = %s", state_id, p_name);
+		GDL_LOGD_INI("lookup okay: state id = %d, name = %s", state_id, p_name);
 	}
 }
 
@@ -547,7 +547,7 @@ static int gps_dl_probe(struct platform_device *pdev)
 			continue;
 		}
 
-		GDL_LOGW_INI("irq idx = %d, start = %lld, end = %lld, name = %s, flag = 0x%lx",
+		GDL_LOGD_INI("irq idx = %d, start = %lld, end = %lld, name = %s, flag = 0x%lx",
 			i, irq->start, irq->end, irq->name, irq->flags);
 		gps_dl_irq_set_id(i, irq->start);
 	}
