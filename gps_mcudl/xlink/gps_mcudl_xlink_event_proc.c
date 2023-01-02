@@ -237,8 +237,9 @@ _close_or_reset_ack:
 			break;
 
 		show_log = gps_dl_set_show_reg_rw_log(true);
-		if (evt == GPS_MCUDL_EVT_LINK_PRINT_HW_STATUS)
-			/*gps_dl_hw_dump_host_csr_gps_info(true);*/
+		/* if (evt == GPS_MCUDL_EVT_LINK_PRINT_HW_STATUS)
+		 *	gps_dl_hw_dump_host_csr_gps_info(true);
+		 */
 		gps_mcudl_hal_mcu_show_status();
 		gps_mcudl_hal_ccif_show_status();
 		gps_dl_set_show_reg_rw_log(show_log);
