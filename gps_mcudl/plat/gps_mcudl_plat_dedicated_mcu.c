@@ -364,6 +364,7 @@ int gps_mcudl_plat_mcu_open(void)
 	gps_mcudl_mcu2ap_set_wait_read_flag(GPS_MDLY_NORMAL, false);
 	gps_mcudl_mcu2ap_set_wait_read_flag(GPS_MDLY_URGENT, false);
 	gps_mcudl_mgmt_cmd_state_init_all();
+	gps_mcu_hif_host_trans_hist_init();
 
 	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMALESS_MGMT,
 		&gps_mcudl_link_drv_on_recv_mgmt_data);
