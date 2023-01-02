@@ -29,7 +29,7 @@ int gps_dl_get_reserved_memory_from_conninfra_drv(void)
 #if GPS_DL_HAS_CONNINFRA_DRV
 	conninfra_get_emi_phy_addr(CONNSYS_EMI_FW, &emi_base, &emi_size);
 #endif
-	GDL_LOGI("conn_emi: base=0x%x, size=0x%x", emi_base, emi_size);
+	GDL_LOGI("conn_emi: base=0x%llx, size=0x%x", emi_base, emi_size);
 	gConnRsvMemPhyBase = emi_base;
 	gConnRsvMemSize = emi_size;
 
@@ -40,7 +40,7 @@ int gps_dl_get_reserved_memory_from_conninfra_drv(void)
 	gps_legacy_emi_base = emi_base + gps_legacy_emi_offset;
 	gGpsRsvMemPhyBase = gps_legacy_emi_base;
 	gGpsRsvMemSize = gps_legacy_emi_size;
-	GDL_LOGI("gps_legacy_emi: offset=0x%x, base=0x%x, size=0x%x",
+	GDL_LOGI("gps_legacy_emi: offset=0x%x, base=0x%llx, size=0x%x",
 		gps_legacy_emi_offset, gps_legacy_emi_base, gps_legacy_emi_size);
 #endif
 	return 0;
@@ -52,7 +52,7 @@ void gps_dl_reserved_mem_init_v2(void)
 	unsigned int min_size = sizeof(struct gps_mcudl_emi_layout);
 
 	if (gConnRsvMemPhyBase == (phys_addr_t)NULL || gConnRsvMemSize < min_size) {
-		GDL_LOGW_INI("res_mem: base = 0x%llx, size = 0x%llx, min_size = 0x%llx, not enough",
+		GDL_LOGW_INI("res_mem: base = 0x%llx, size = 0x%llx, min_size = 0x%x, not enough",
 			(unsigned long long)gConnRsvMemPhyBase,
 			(unsigned long long)gConnRsvMemSize, min_size);
 		/* Just show warning*/
@@ -121,19 +121,19 @@ void gps_mcudl_show_emi_layout(void)
 	struct gps_mcudl_emi_layout *p;
 
 	p = gps_dl_get_conn_emi_layout_ptr();
-	GDL_LOGI("mcu_bin   : 0x%p, offset=0x%06x, sz=0x%x",
+	GDL_LOGI("mcu_bin   : 0x%p, offset=0x%06x, sz=0x%lx",
 		&p->mcu_bin[0], GDL_OFFSET(&p->mcu_bin[0], p), sizeof(p->mcu_bin));
-	GDL_LOGI("gps_bin   : 0x%p, offset=0x%06x, sz=0x%x",
+	GDL_LOGI("gps_bin   : 0x%p, offset=0x%06x, sz=0x%lx",
 		&p->gps_bin[0], GDL_OFFSET(&p->gps_bin[0], p), sizeof(p->gps_bin));
-	GDL_LOGI("mnl_bin   : 0x%p, offset=0x%06x, sz=0x%x",
+	GDL_LOGI("mnl_bin   : 0x%p, offset=0x%06x, sz=0x%lx",
 		&p->mnl_bin[0], GDL_OFFSET(&p->mnl_bin[0], p), sizeof(p->mnl_bin));
-	GDL_LOGI("gps_legacy: 0x%p, offset=0x%06x, sz=0x%x",
+	GDL_LOGI("gps_legacy: 0x%p, offset=0x%06x, sz=0x%lx",
 		&p->gps_legacy[0], GDL_OFFSET(&p->gps_legacy[0], p), sizeof(p->gps_legacy));
-	GDL_LOGI("gps_nv_emi: 0x%p, offset=0x%06x, sz=0x%x",
+	GDL_LOGI("gps_nv_emi: 0x%p, offset=0x%06x, sz=0x%lx",
 		&p->gps_nv_emi[0], GDL_OFFSET(&p->gps_nv_emi[0], p), sizeof(p->gps_nv_emi));
-	GDL_LOGI("gps_ap2mcu: 0x%p, offset=0x%06x, sz=0x%x",
+	GDL_LOGI("gps_ap2mcu: 0x%p, offset=0x%06x, sz=0x%lx",
 		&p->gps_ap2mcu[0], GDL_OFFSET(&p->gps_ap2mcu[0], p), sizeof(p->gps_ap2mcu));
-	GDL_LOGI("gps_mcu2ap: 0x%p, offset=0x%06x, sz=0x%x",
+	GDL_LOGI("gps_mcu2ap: 0x%p, offset=0x%06x, sz=0x%lx",
 		&p->gps_mcu2ap[0], GDL_OFFSET(&p->gps_mcu2ap[0], p), sizeof(p->gps_mcu2ap));
 }
 
