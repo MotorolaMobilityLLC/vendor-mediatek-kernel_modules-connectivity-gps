@@ -225,7 +225,6 @@ void gps_mcusys_nvdata_on_remote_event(enum gps_mcusys_nv_data_id nv_id,
 	struct gps_each_link_waitable *p;
 	bool do_wake_really;
 
-	GPS_OFL_TRC("nv_id=%d, data_evt=%d", nv_id, data_evt);
 	switch (data_evt) {
 	case GPS_MCUSYS_NVDATA_MCU_WRITE:
 	case GPS_MCUSYS_NVDATA_MCU_DELETE:
@@ -236,10 +235,11 @@ void gps_mcusys_nvdata_on_remote_event(enum gps_mcusys_nv_data_id nv_id,
 			break;
 		}
 		do_wake_really = gps_dl_link_wake_up2(p);
-		GPS_OFL_TRC("nv_id=%d, do_wake_really=%d", nv_id, do_wake_really);
+		GPS_OFL_TRC("nv_id=%d, data_evt=%d, do_wake_really=%d", nv_id, data_evt, do_wake_really);
 #endif
 		break;
 	default:
+		GPS_OFL_TRC("nv_id=%d, data_evt=%d", nv_id, data_evt);
 		break;
 	}
 }
