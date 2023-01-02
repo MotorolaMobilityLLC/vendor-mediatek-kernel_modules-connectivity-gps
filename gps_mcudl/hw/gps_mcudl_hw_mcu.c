@@ -370,10 +370,6 @@ bool gps_mcudl_hw_mcu_wait_idle_loop_or_timeout_us(unsigned int timeout_us)
 
 void gps_mcudl_hw_mcu_do_off(void)
 {
-	/* Hold MCU reset */
-	GDL_HW_SET_CONN_INFRA_ENTRY(
-		CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_GPSSYS_CPU_SW_RST_B, 0);
-
 	/* Enable sleep prot */
 	if (gps_dl_hw_gps_sleep_prot_ctrl(0) != 0)
 		GDL_LOGE("_fail_enable_gps_slp_prot_not_okay");
@@ -381,6 +377,10 @@ void gps_mcudl_hw_mcu_do_off(void)
 	GDL_HW_SET_GPS_FUNC_EN(0);
 
 	GDL_HW_SET_CONN_INFRA_BGF_EN(0);
+
+	/* Hold MCU reset */
+	GDL_HW_SET_CONN_INFRA_ENTRY(
+		CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_GPSSYS_CPU_SW_RST_B, 0);
 }
 
 void gps_mcudl_hw_mcu_show_status(void)
