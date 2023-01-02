@@ -155,7 +155,7 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 		meet_state = false;
 		while (1) {
 			new_state = gps_mcudl_each_link_get_state(link_id);
-			MDL_LOGXE(link_id, "cnt=%d, state=%s,%s",
+			MDL_LOGXE(link_id, "cnt=%d, state=%s,%s", cnt,
 				gps_dl_link_state_name(old_state),
 				gps_dl_link_state_name(new_state));
 			if (new_state == LINK_RESETTING || new_state == LINK_RESET_DONE ||
