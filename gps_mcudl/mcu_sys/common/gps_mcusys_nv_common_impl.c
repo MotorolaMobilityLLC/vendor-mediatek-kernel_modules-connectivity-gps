@@ -136,7 +136,7 @@ int gps_mcusys_nv_common_shared_mem_invalidate2(enum gps_mcusys_nv_data_id nv_id
 	p_local->data_size = 0;
 	p_local->version = new_ver;
 	write_times = ++p_local->write_times;
-	gps_mcusys_nv_common_shared_mem_give(nv_id, true);
+	gps_mcusys_nv_common_shared_mem_give(nv_id, NV_IS_ON_MCU);
 	tick1 = GPSMDL_PLAT_TICK_GET();
 
 	GPS_OFL_TRC("nv_id=%d, block_size=%d, wr_times=%d, ver=%d,%d->%d, old_size=%d,%d, dtick=%d%s",
