@@ -32,6 +32,7 @@
 #include "fw_log_gps_lib.h"
 #include "gps_data_link_devices.h"
 #include "gps_dl_config.h"
+#include "gps_dl_time_tick.h"
 #if GPS_DL_HAS_MCUDL
 #include "gps_mcudl_xlink.h"
 #endif
@@ -244,9 +245,13 @@ static const struct file_operations gps_fw_log_fops = {
 #if USE_FW_LOG_GPS_LIB
 #if GPS_DL_HAS_MCUDL
 unsigned char log_event_cb2_buf[20*1024];
+unsigned long log_ret;
 void log_event_cb2(void)
 {
 	int retval = 0;
+	unsigned long curr_tick;
+	static unsigned long last_tick;
+
 #if GPS_DL_HAS_CONNINFRA_DRV
 	retval = connsys_log_read(CONN_DEBUG_TYPE_GPS, &log_event_cb2_buf[0], 20*1024);
 	if (retval <= 0) {
@@ -255,7 +260,16 @@ void log_event_cb2(void)
 	}
 #endif
 	gps_fw_log_data_submit_to_all(&log_event_cb2_buf[0], retval);
-	pr_info("gps_fw_log_event: read retval=%d", retval);
+
+	/*Prevent too much log, print once per 1s*/
+	curr_tick = gps_dl_tick_get_us();
+	log_ret = log_ret + retval;
+
+	if ((curr_tick - last_tick) >= 1000000) {
+		pr_info("gps_fw_log_event: read retval=%d", log_ret);
+		last_tick = curr_tick;
+		log_ret = 0;
+	}
 }
 #endif
 #else
