@@ -49,5 +49,9 @@ void gps_mcudl_hal_set_non_lppm_sleep_flag(bool enable);
 void gps_mcudl_hal_sync_non_flag_lppm_sleep_flag(void);
 bool gps_mcudl_hal_get_non_lppm_sleep_flag(void);
 
+void gps_mcudl_hal_clr_fw_own_fail_handler(void);
+bool gps_mcudl_hal_is_fw_own(void);
+bool gps_mcudl_hal_force_conn_wake_if_fw_own_is_clear(void);
+
 #endif /* _GPS_MCUDL_HAL_USER_FW_OWN_CTRL_H */
 

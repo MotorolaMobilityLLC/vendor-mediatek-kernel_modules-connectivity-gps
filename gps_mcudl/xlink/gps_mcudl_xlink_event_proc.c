@@ -31,6 +31,8 @@
 #include "gps_mcu_hif_mgmt_cmd_send.h"
 #include "gps_mcu_hif_host.h"
 #include "gps_mcudl_data_pkt_payload_struct.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
+
 
 bool g_gps_fw_log_is_on;
 
@@ -245,6 +247,7 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 			gps_mcudl_host_sta_hist_dump(GPS_MDLY_URGENT);
 			gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
 			gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
+			gps_mcudl_hal_user_fw_own_status_dump();
 
 			if (gps_mcudl_coredump_is_readable()) {
 				gps_mcudl_hal_mcu_show_status();
