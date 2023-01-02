@@ -15,6 +15,11 @@
 #include "conninfra.h"
 #endif
 
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_reset.h"
+#endif
+
+
 bool gps_dl_reset_level_is_none(enum gps_dl_link_id_enum link_id)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
@@ -239,6 +244,15 @@ int gps_dl_on_pre_connsys_reset(enum consys_drv_type drv, char *reason)
 		return -1;
 	}
 
+#if GPS_DL_HAS_MCUDL
+	ret_status = gps_mcudl_reset_level_set_and_trigger(GPS_DL_RESET_LEVEL_CONNSYS, true);
+
+	if (ret_status != GDL_OKAY) {
+		GDL_LOGE("mcudl status %s is not okay, return -1", gdl_ret_to_name(ret_status));
+		return -1;
+	}
+#endif
+
 	return 0;
 }
 
@@ -247,6 +261,9 @@ int gps_dl_on_post_connsys_reset(void)
 	GDL_LOGE("already in resetting = %d", gps_dl_connsys_is_resetting);
 	gps_dl_connsys_is_resetting = false;
 
+#if GPS_DL_HAS_MCUDL
+	gps_mcudl_handle_connsys_reset_done();
+#endif
 	gps_dl_handle_connsys_reset_done();
 	return 0;
 }

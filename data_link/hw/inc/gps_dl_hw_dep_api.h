@@ -25,8 +25,8 @@ bool gps_dl_hw_dep_may_set_gps_axi_sleep_prot_ctrl(unsigned int val);
 void gps_dl_hw_dep_gps_sw_request_emi_usage(bool request);
 bool gps_dl_hw_gps_common_on_inner(void);
 int gps_dl_hw_gps_sleep_prot_ctrl(int op);
-
-extern unsigned int adie_ver;
+bool gps_dl_hw_dep_gps_control_adie_on(void);
+void gps_dl_hw_dep_gps_control_adie_off(void);
 
 /*
  * GPS
