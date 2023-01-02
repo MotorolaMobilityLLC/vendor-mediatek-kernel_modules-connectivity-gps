@@ -89,7 +89,11 @@ bool gps_mcudl_link_drv_on_recv_mgmt_data(const unsigned char *p_data, unsigned 
 bool gps_mcudl_link_drv_on_recv_normal_data(const unsigned char *p_data, unsigned int data_len)
 {
 	MDL_LOGW("data_len=%d, data0=0x%x", data_len, p_data[0]);
+#if 1
+	gps_mcudl_mcu2ap_ydata_recv(GPS_MDLY_NORMAL, p_data, data_len);
+#else
 	gps_mcudl_stpgps1_read_proc2(p_data, data_len);
+#endif
 	return true;
 }
 
@@ -193,17 +197,10 @@ int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op)
 	return 0;
 }
 
+#if 0
 void gps_mcudl_stpgps1_event_cb(void)
 {
-	enum gps_mcudl_yid y_id = GPS_MDLY_NORMAL;
-	bool to_notify = true;
-
-	to_notify = !gps_mcudl_ap2mcu_get_wait_read_flag(y_id);
-	if (to_notify) {
-		gps_mcudl_ap2mcu_set_wait_read_flag(y_id, true);
-		gps_mcudl_ylink_event_send(y_id, GPS_MCUDL_YLINK_EVT_ID_RX_DATA_READY);
-	}
-	MDL_LOGYD(GPS_MDLY_NORMAL, "ntf=%d", to_notify);
+	gps_mcudl_mcu2ap_ydata_notify(GPS_MDLY_NORMAL);
 }
 
 void gps_mcudl_stpgps1_read_proc(void)
@@ -220,7 +217,7 @@ void gps_mcudl_stpgps1_read_proc(void)
 		ret_len = gps_mcudl_stpgps1_read_nonblock(&tmp_buf[0], 2048);
 		MDL_LOGYD(y_id, "read: len=%d", ret_len);
 		if (ret_len > 0)
-			gps_mcudl_ap2mcu_ydata_recv(y_id, &tmp_buf[0], ret_len);
+			gps_mcudl_mcu2ap_ydata_recv(y_id, &tmp_buf[0], ret_len);
 	} while (ret_len > 0);
 }
 
@@ -232,8 +229,9 @@ void gps_mcudl_stpgps1_read_proc2(const unsigned char *p_data, unsigned int data
 	gps_mcudl_ap2mcu_set_wait_read_flag(y_id, false);
 	MDL_LOGYD(y_id, "read: len=%u", data_len);
 	if (data_len > 0)
-		gps_mcudl_ap2mcu_ydata_recv(y_id, (gpsmdl_u8 *)p_data, data_len);
+		gps_mcudl_mcu2ap_ydata_recv(y_id, p_data, data_len);
 }
+#endif
 
 void gps_mcudl_stpgps1_reset_start_cb(void)
 {
@@ -260,8 +258,10 @@ int gps_mcudl_stpgps1_open(void)
 #if (GPS_DL_HAS_MCUDL_FW && GPS_DL_HAS_MCUDL_HAL)
 	gps_mcudl_xlink_on(&c_gps_mcudl_rom_only_fw_list);
 #endif
-
 	gps_dl_sleep_us(100*1000, 200*1000);
+
+	gps_mcudl_ap2mcu_set_wait_read_flag(GPS_MDLY_NORMAL, false);
+	gps_mcudl_ap2mcu_set_wait_read_flag(GPS_MDLY_URGENT, false);
 
 	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMALESS_MGMT,
 		&gps_mcudl_link_drv_on_recv_mgmt_data);

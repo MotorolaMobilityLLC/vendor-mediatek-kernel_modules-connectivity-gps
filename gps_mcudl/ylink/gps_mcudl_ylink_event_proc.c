@@ -48,8 +48,12 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 
 	switch (evt) {
 	case GPS_MCUDL_YLINK_EVT_ID_RX_DATA_READY:
+#if 1
+		gps_mcudl_mcu2ap_ydata_proc(y_id);
+#else
 		if (y_id == GPS_MDLY_NORMAL)
 			gps_mcudl_stpgps1_read_proc();
+#endif
 		break;
 
 	case GPS_MCUDL_YLINK_EVT_ID_SLOT_FLUSH_ON_RECV_STA:

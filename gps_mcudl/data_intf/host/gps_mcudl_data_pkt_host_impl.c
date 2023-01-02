@@ -113,7 +113,7 @@ bool gps_mcudl_ap2mcu_xdata_send(enum gps_mcudl_xid xid, struct gdl_dma_buf_entr
 }
 
 bool gps_mcudl_ap2mcu_xdata_send_v2(enum gps_mcudl_xid x_id,
-	gpsmdl_u8 *p_data, gpsmdl_u32 data_len, bool *p_to_notify)
+	const gpsmdl_u8 *p_data, gpsmdl_u32 data_len, bool *p_to_notify)
 {
 	enum gps_mcudl_yid y_id;
 	enum gps_mcudl_pkt_type type;
@@ -161,7 +161,7 @@ void gps_mcudl_ap2mcu_context_init(enum gps_mcudl_yid yid)
 }
 
 bool gps_mcudl_ap2mcu_ydata_send(enum gps_mcudl_yid yid,
-	enum gps_mcudl_pkt_type type, gpsmdl_u8 *p_data, gpsmdl_u32 data_len)
+	enum gps_mcudl_pkt_type type, const gpsmdl_u8 *p_data, gpsmdl_u32 data_len)
 {
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
 
@@ -169,8 +169,36 @@ bool gps_mcudl_ap2mcu_ydata_send(enum gps_mcudl_yid yid,
 	return gps_mcudl_pkt_send(&p_trx_ctx->slot, type, p_data, data_len);
 }
 
-void gps_mcudl_ap2mcu_ydata_recv(enum gps_mcudl_yid yid,
-	gpsmdl_u8 *p_data, gpsmdl_u32 data_len)
+void gps_mcudl_mcu2ap_ydata_recv(enum gps_mcudl_yid yid,
+	const gpsmdl_u8 *p_data, gpsmdl_u32 data_len)
+{
+	struct gps_mcudl_data_trx_context *p_trx_ctx;
+	struct gps_mcudl_data_rbuf_plus_t *p_rbuf;
+
+	p_trx_ctx = get_txrx_ctx(yid);
+	p_rbuf = &p_trx_ctx->rx_rbuf;
+
+	/* writer */
+	gps_mcudl_data_rbuf_put(p_rbuf, p_data, data_len);
+	p_trx_ctx->host_sta.pkt_sta.total_recv += (gpsmdl_u64)data_len;
+
+	/* send msg to call gps_mcudl_ap2mcu_ydata_proc */
+	gps_mcudl_mcu2ap_ydata_notify(yid);
+}
+
+void gps_mcudl_mcu2ap_ydata_notify(enum gps_mcudl_yid y_id)
+{
+	bool to_notify = true;
+
+	to_notify = !gps_mcudl_ap2mcu_get_wait_read_flag(y_id);
+	if (to_notify) {
+		gps_mcudl_ap2mcu_set_wait_read_flag(y_id, true);
+		gps_mcudl_ylink_event_send(y_id, GPS_MCUDL_YLINK_EVT_ID_RX_DATA_READY);
+	}
+	MDL_LOGYD(y_id, "ntf=%d", to_notify);
+}
+
+void gps_mcudl_mcu2ap_ydata_proc(enum gps_mcudl_yid yid)
 {
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
 	struct gps_mcudl_data_rbuf_plus_t *p_rbuf;
@@ -181,9 +209,7 @@ void gps_mcudl_ap2mcu_ydata_recv(enum gps_mcudl_yid yid,
 	p_rbuf = &p_trx_ctx->rx_rbuf;
 	p_parser = &p_trx_ctx->parser;
 
-
-	/* writer */
-	gps_mcudl_data_rbuf_put(p_rbuf, p_data, data_len);
+	gps_mcudl_ap2mcu_set_wait_read_flag(yid, false);
 
 	/* reader */
 	gps_mcudl_data_rbuf_reader_sync_write_idx(p_rbuf);
@@ -196,7 +222,6 @@ void gps_mcudl_ap2mcu_ydata_recv(enum gps_mcudl_yid yid,
 
 	MDL_LOGYD(yid, "reader: w=%d, r=%d", reader_write_idx, reader_read_idx);
 
-	p_trx_ctx->host_sta.pkt_sta.total_recv += (gpsmdl_u64)data_len;
 	p_trx_ctx->host_sta.pkt_sta.total_parse_proc = (gpsmdl_u32)(p_parser->proc_byte_cnt);
 	p_trx_ctx->host_sta.pkt_sta.total_parse_drop = (gpsmdl_u32)(p_parser->drop_byte_cnt);
 	p_trx_ctx->host_sta.pkt_sta.total_route_drop = 0;
@@ -204,7 +229,6 @@ void gps_mcudl_ap2mcu_ydata_recv(enum gps_mcudl_yid yid,
 	p_trx_ctx->host_sta.pkt_sta.LUINT_L32_VALID_BIT = 32;
 	gps_mcudl_flowctrl_may_send_host_sta(yid);
 }
-
 
 void proc_func1(enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len)
