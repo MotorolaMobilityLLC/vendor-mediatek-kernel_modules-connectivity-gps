@@ -92,6 +92,7 @@ $(MODULE_NAME)-objs += gps_dl_module.o
 $(MODULE_NAME)-objs += lib/gps_dl_dma_buf.o
 $(MODULE_NAME)-objs += lib/gps_dl_lib_misc.o
 $(MODULE_NAME)-objs += lib/gps_dl_hist_rec.o
+$(MODULE_NAME)-objs += lib/gps_dl_hist_rec2.o
 $(MODULE_NAME)-objs += lib/gps_dl_time_tick.o
 $(MODULE_NAME)-objs += lib/gps_dl_name_list.o
 
