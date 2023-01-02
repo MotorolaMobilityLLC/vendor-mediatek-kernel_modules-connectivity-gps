@@ -183,17 +183,17 @@ int gps_dl_hw_gps_common_on(void)
 	bool poll_okay = false;
 	unsigned int poll_ver, adie_ver = 0;
 
-	/* Enable Conninfra BGF */
-	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
-
-	gps_dl_hw_dep_may_remap_conn2ap_gps_peri();
-
 	/* Poll conninfra hw version */
 	GDL_HW_CHECK_CONN_INFRA_VER(&poll_okay, &poll_ver);
 	if (!poll_okay) {
 		GDL_LOGE("_fail_conn_hw_ver_not_okay, poll_ver = 0x%08x", poll_ver);
 		goto _fail_conn_hw_ver_not_okay;
 	}
+
+	gps_dl_hw_dep_may_remap_conn2ap_gps_peri();
+
+	/* Enable Conninfra BGF */
+	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
 
 	/* GDL_HW_CHECK_CONN_INFRA_VER may check a list and return ok if poll_ver is in the list,
 	 * record the poll_ver here and we can know which one it is,
