@@ -132,10 +132,10 @@ int gps_dl_hw_gps_common_on(void)
 	return 0;
 
 _fail_gps_dl_hw_dep_may_enable_bpll_not_okay:
+#if GPS_DL_CONNAC2
 #if GPS_DL_HAS_CONNINFRA_DRV
 _fail_open_mt6637_top_clock_buf:
 #endif
-#if GPS_DL_CONNAC2
 _fail_adie_top_clk_en_not_okay:
 #endif
 	GDL_HW_SET_GPS_FUNC_EN(0);
