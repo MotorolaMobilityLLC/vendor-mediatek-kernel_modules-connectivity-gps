@@ -115,15 +115,28 @@ recheck_rch:
 				g_gps_fw_log_irq_cnt++;
 				MDL_LOGW("gps_fw_log_irq_cnt=%d", g_gps_fw_log_irq_cnt);
 			} else if (ch == GPS_MCUDL_CCIF_CH2) {
+#if 0
 				/* SUBSYS reset
 				 * Currently, treat it as whole chip reset
 				 */
 				conninfra_trigger_whole_chip_rst(
 					CONNDRV_TYPE_GPS, "GNSS FW trigger subsys reset");
+#else
+				/* mark irq is not enabled and return for this case */
+				gps_mcudl_hal_set_ccif_irq_en_flag(false);
+
+				/* SUBSYS reset */
+				gps_mcudl_trigger_gps_subsys_reset(false, "GNSS FW trigger subsys reset");
+				return;
+#endif
 			} else if (ch == GPS_MCUDL_CCIF_CH3) {
+				/* mark irq is not enabled and return for this case */
+				gps_mcudl_hal_set_ccif_irq_en_flag(false);
+
 				/* WHOLE_CHIP reset */
 				conninfra_trigger_whole_chip_rst(
 					CONNDRV_TYPE_GPS, "GNSS FW trigger whole chip reset");
+				return;
 			}
 #endif
 		}
