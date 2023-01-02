@@ -236,18 +236,47 @@ bool gps_mcudl_each_link_poll_is_in_data_ready(enum gps_mcudl_xid x_id)
 	struct gps_mcudl_each_link *p = gps_mcudl_link_get(x_id);
 	enum GDL_RET_STATUS gdl_ret;
 	bool is_ready = false;
-
-	gdl_ret = gps_mcudl_link_try_wait_on(x_id, GPS_DL_WAIT_READ);
-	if (gdl_ret == GDL_OKAY)
-		is_ready = true;
-	else
-		is_ready = !gps_dma_buf_is_empty(&p->rx_dma_buf);
+#if 0
+	unsigned int pkt_cnt;
+#endif
+	do {
+		/* The case should be happening only on EPOLLET used.
+		 * It's not the case, so comment it
+		 */
+#if 0
+		/* In normal case, pkt_cnt should be 1.
+		 *
+		 * Here is a suspected case:
+		 * If larger than 1, it means new pkt comes in around
+		 *   ep_wait's `ep_send_events` handling.
+		 * Due to `gps_mcudl_link_try_wait_on` is not being called yet,
+		 *   gps_kctrld will not do `wake_up` in `gps_dl_link_wake_up2`.
+		 * We need to make a `wake_up` here in case of
+		 *   mnld has 1EPOLL_IN-1Read implementation.
+		 */
+		pkt_cnt = gps_dma_buf_count_data_entry(&p->rx_dma_buf);
+		if (pkt_cnt > 1) {
+#if GPS_DL_ON_LINUX
+			wake_up(&p->waitables[GPS_DL_WAIT_READ].wq);
+#endif
+			MDL_LOGXW(x_id, "pkt_cnt=%u, fired=%d, wait=%d", pkt_cnt,
+				p->waitables[GPS_DL_WAIT_READ].fired,
+				p->waitables[GPS_DL_WAIT_READ].waiting);
+			is_ready = true;
+			break;
+		}
+#endif
+		gdl_ret = gps_mcudl_link_try_wait_on(x_id, GPS_DL_WAIT_READ);
+		if (gdl_ret == GDL_OKAY)
+			is_ready = true;
+		else
+			is_ready = !gps_dma_buf_is_empty(&p->rx_dma_buf);
+	} while (0);
 
 	if (is_ready) {
 		p->waitables[GPS_DL_WAIT_READ].waiting = false;
 		p->epoll_flag = true;
 	}
-
 	return is_ready;
 }
 
