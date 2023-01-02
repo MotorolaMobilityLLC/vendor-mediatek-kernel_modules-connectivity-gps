@@ -65,7 +65,7 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 {
 	struct gps_mcudl_each_link *p_link = gps_mcudl_link_get(link_id);
 	bool show_log = false;
-	bool show_log2 = false;
+	/*bool show_log2 = false;*/
 	unsigned long j0, j1;
 	int ret;
 
