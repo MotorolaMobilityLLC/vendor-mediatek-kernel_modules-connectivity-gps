@@ -596,9 +596,10 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 					gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
 				}
 
+#if 0
 				/* dump for No IOC_QUERY case */
 				gps_dl_hw_do_gps_a2z_dump();
-
+#endif
 				break;
 			}
 			gps_dl_sleep_us(999, 1001);
