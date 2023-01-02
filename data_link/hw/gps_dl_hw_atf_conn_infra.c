@@ -101,6 +101,7 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr
 
 void gps_dl_hw_do_gps_a2z_dump(void)
 {
+#if 0
 	GDL_HW_WR_GPS_REG(0x80073120, 1); /* enable A2Z */
 	GDL_HW_RD_GPS_REG(0x80072228);
 	GDL_HW_RD_GPS_REG(0x80082228);
@@ -120,6 +121,7 @@ void gps_dl_hw_do_gps_a2z_dump(void)
 	GDL_HW_RD_GPS_REG(0x800704b4);
 	GDL_HW_RD_GPS_REG(0x800804b4);
 	GDL_HW_WR_GPS_REG(0x80073120, 0);
+#endif
 }
 
 void gps_dl_hw_dump_sleep_prot_status(void)
