@@ -222,6 +222,7 @@ void gps_mcudl_hal_wdt_dump(void)
 		gps_mcudl_hal_mcu_show_pc_log();
 		gps_mcudl_hal_mcu_show_status();
 		gps_mcudl_hal_ccif_show_status();
+		gps_dl_hw_dump_host_csr_gps_info(false);
 	}
 	/* gps_dl_sleep_us(2200, 3200); */
 
@@ -235,6 +236,8 @@ void gps_mcudl_hal_wdt_dump(void)
 	if (gps_dl_conninfra_is_readable_by_hung_value(hung_value)) {
 		gps_mcudl_hal_mcu_show_status();
 		gps_mcudl_hal_ccif_show_status();
+		if (gps_mcudl_hal_bg_is_readable(true))
+			gps_mcudl_hal_vndr_dump();
 		gps_dl_hw_dump_host_csr_gps_info(false);
 	}
 	/* gps_dl_sleep_us(2200, 3200); */

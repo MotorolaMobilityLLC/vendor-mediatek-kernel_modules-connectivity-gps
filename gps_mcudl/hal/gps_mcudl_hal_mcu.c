@@ -16,6 +16,7 @@
 #if GPS_DL_ON_LINUX
 #include "gps_dl_linux_reserved_mem_v2.h"
 #include "gps_dl_linux_plat_drv.h"
+#include "gps_dl_iomem_dump.h"
 #include <asm/io.h>
 #endif
 
@@ -190,5 +191,24 @@ void gps_mcudl_hal_mcu_show_status(void)
 void gps_mcudl_hal_mcu_show_pc_log(void)
 {
 	gps_mcudl_hw_mcu_show_pc_log();
+}
+
+bool gps_mcudl_hal_bg_is_readable(bool check_conn_off)
+{
+	if (check_conn_off) {
+		if (gps_mcudl_coredump_conninfra_off_is_readable() == 0)
+			return false;
+	}
+	return gps_mcudl_hw_bg_is_readable();
+}
+
+void gps_mcudl_hal_vndr_dump(void)
+{
+#if GPS_DL_ON_LINUX
+	gps_dl_iomem_dump(0x18c1f000, 0x4);
+	gps_dl_iomem_dump(0x18c1f408, 0x3c);
+#else
+	MDL_LOGW("not impl!");
+#endif
 }
 
