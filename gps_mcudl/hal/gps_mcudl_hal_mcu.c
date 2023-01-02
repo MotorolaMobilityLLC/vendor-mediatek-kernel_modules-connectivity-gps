@@ -118,7 +118,7 @@ void gps_mcudl_hal_load_fw(const struct gps_mcudl_fw_list *p_fw_list)
 			memcpy(p_dst, p_desc->ptr, p_desc->len);
 #endif
 		}
-		MDL_LOGW("type=%d, ok=%d, p_dst=0x%p(phys=0x%x), p_src=0x%p, len=%d",
+		MDL_LOGW("type=%d, ok=%d, p_dst=0x%p(phys=0x%lx), p_src=0x%p, len=%d",
 			p_desc->type, is_okay, p_dst, phys_addr,
 			p_desc->ptr, p_desc->len);
 	}
