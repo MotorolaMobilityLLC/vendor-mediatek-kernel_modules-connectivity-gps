@@ -190,9 +190,9 @@ void gps_mcudl_mcu2ap_ydata_notify(enum gps_mcudl_yid y_id)
 {
 	bool to_notify = true;
 
-	to_notify = !gps_mcudl_ap2mcu_get_wait_read_flag(y_id);
+	to_notify = !gps_mcudl_mcu2ap_get_wait_read_flag(y_id);
 	if (to_notify) {
-		gps_mcudl_ap2mcu_set_wait_read_flag(y_id, true);
+		gps_mcudl_mcu2ap_set_wait_read_flag(y_id, true);
 		gps_mcudl_ylink_event_send(y_id, GPS_MCUDL_YLINK_EVT_ID_RX_DATA_READY);
 	}
 	MDL_LOGYD(y_id, "ntf=%d", to_notify);
@@ -209,7 +209,7 @@ void gps_mcudl_mcu2ap_ydata_proc(enum gps_mcudl_yid yid)
 	p_rbuf = &p_trx_ctx->rx_rbuf;
 	p_parser = &p_trx_ctx->parser;
 
-	gps_mcudl_ap2mcu_set_wait_read_flag(yid, false);
+	gps_mcudl_mcu2ap_set_wait_read_flag(yid, false);
 
 	/* reader */
 	gps_mcudl_data_rbuf_reader_sync_write_idx(p_rbuf);
@@ -475,7 +475,7 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 	}
 }
 
-bool gps_mcudl_ap2mcu_get_wait_read_flag(enum gps_mcudl_yid y_id)
+bool gps_mcudl_mcu2ap_get_wait_read_flag(enum gps_mcudl_yid y_id)
 {
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
 	bool flag;
@@ -487,7 +487,7 @@ bool gps_mcudl_ap2mcu_get_wait_read_flag(enum gps_mcudl_yid y_id)
 	return flag;
 }
 
-void gps_mcudl_ap2mcu_set_wait_read_flag(enum gps_mcudl_yid y_id, bool flag)
+void gps_mcudl_mcu2ap_set_wait_read_flag(enum gps_mcudl_yid y_id, bool flag)
 {
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
 
