@@ -288,6 +288,68 @@ static loff_t gps_nv_each_device_seek(struct file *filp, loff_t offset, int when
 	return retval;
 }
 
+
+#define GPS_NV_IOC_QUERY_BLOCK_SIZE     1
+#define GPS_NV_IOC_QUERY_DATA_SIZE      2
+#define GPS_NV_IOC_CLEAR_DATA           3
+
+static int gps_nv_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
+{
+	int retval = 0;
+	int pid;
+	struct gps_nv_each_device *p_dev;
+	enum gps_mcusys_nv_data_id nv_id;
+	gpsmdl_u32 data_size = 0, block_size = 0;
+	int get_info_ret;
+	int trim_result;
+
+	p_dev = (struct gps_nv_each_device *)filp->private_data;
+	pid = current->pid;
+	nv_id = p_dev->nv_id;
+
+	switch (cmd) {
+	case GPS_NV_IOC_QUERY_BLOCK_SIZE:
+		get_info_ret = gps_mcusys_nv_common_shared_mem_get_info(nv_id, &data_size, &block_size);
+		if (get_info_ret < 0)
+			retval = -EFAULT;
+		else
+			retval = block_size;
+		break;
+	case GPS_NV_IOC_QUERY_DATA_SIZE:
+		get_info_ret = gps_mcusys_nv_common_shared_mem_get_info(nv_id, &data_size, &block_size);
+		if (get_info_ret < 0)
+			retval = -EFAULT;
+		else
+			retval = data_size;
+		break;
+	case GPS_NV_IOC_CLEAR_DATA:
+		trim_result = gps_mcusys_nv_common_shared_mem_invalidate2(nv_id,
+			&gps_nv_each_device_memset);
+		if (trim_result < 0)
+			retval = -EFAULT;
+		else
+			retval = 0;
+		break;
+	default:
+		retval = -EINVAL;
+		break;
+	}
+
+	GDL_LOGI("pid=%d, nv_id=%d, cmd=%d, arg=%ld, is_compat=%d, retval=%d",
+		pid, nv_id, cmd, arg, is_compat, retval);
+	return retval;
+}
+
+static long gps_nv_each_device_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	return gps_nv_each_device_ioctl_inner(filp, cmd, arg, false);
+}
+
+static long gps_nv_each_device_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	return gps_nv_each_device_ioctl_inner(filp, cmd, arg, true);
+}
+
 static const struct file_operations gps_nv_each_device_fops = {
 	.owner = THIS_MODULE,
 	.open = gps_nv_each_device_open,
@@ -296,10 +358,10 @@ static const struct file_operations gps_nv_each_device_fops = {
 	.write = gps_nv_each_device_write,
 	.release = gps_nv_each_device_release,
 	.llseek = gps_nv_each_device_seek,
-	/* TODO: Add ioctl to support get data/block size and trim data size
-	 */
-	/*.unlocked_ioctl = gps_each_device_unlocked_ioctl,*/
-	/*.compat_ioctl = gps_each_device_compat_ioctl,*/
+
+	/* Add ioctl to support get data/block size and trim data size */
+	.unlocked_ioctl = gps_nv_each_device_unlocked_ioctl,
+	.compat_ioctl = gps_nv_each_device_compat_ioctl,
 };
 
 int  gps_nv_cdev_setup(struct gps_nv_each_device *dev, enum gps_mcusys_nv_data_id nv_id)
