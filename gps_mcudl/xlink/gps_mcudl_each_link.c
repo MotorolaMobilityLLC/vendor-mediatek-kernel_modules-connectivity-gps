@@ -181,12 +181,19 @@ _check_again:
 			break;
 		}
 
-		if (!is_twice_check) {
+		if (!is_twice_check)
+			okay = gps_mcudl_each_link_change_state_from(link_id, LINK_OPENING, LINK_CLOSING);
+		else {
+			/* Currrently, due to LINK_OPENING should not be long,
+			 * no need to handle it by reset
+			 */
+#if 0
 			/* gps_dl_trigger_connsys_reset(); */
 			gps_mcudl_trigger_gps_subsys_reset(false, "GNSS opening fail");
 			okay = false;
-		} else {
+#else
 			okay = gps_mcudl_each_link_change_state_from(link_id, LINK_OPENING, LINK_CLOSING);
+#endif
 		}
 		if (!okay) {
 			/* Not change okay, try again */
@@ -213,7 +220,9 @@ _check_again:
 		gps_mcudl_xlink_event_send(link_id, GPS_MCUDL_EVT_LINK_CLOSE);
 		MDL_LOGXW_ONF(link_id, "is_twice=%d, sigval=%ld, normal case",
 			is_twice_check, sigval);
-		retval = -EINVAL;
+
+		/* sigval should be -ERESTARTSYS */
+		retval = sigval;
 		break;
 
 	default:
