@@ -101,6 +101,18 @@ unsigned int gps_dl_hal_get_conn_infra_ver(void)
 	return g_gps_dl_hal_conn_infra_poll_ok_ver;
 }
 
+unsigned int g_gps_dl_hal_adie_ver;
+
+void gps_dl_hal_set_adie_ver(unsigned int ver)
+{
+	g_gps_dl_hal_adie_ver = ver;
+}
+
+unsigned int gps_dl_hal_get_adie_ver(void)
+{
+	return g_gps_dl_hal_adie_ver;
+}
+
 bool gps_dl_hal_conn_infra_ver_is_mt6885(void)
 {
 	/* is_mt6885 valid after gps_dl_hw_gps_common_on */
