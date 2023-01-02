@@ -316,8 +316,8 @@ long gps_emi_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long a
 
 	case IOCTL_ADC_CAPTURE_ADDR_GET:
 		tmp = (unsigned int *)&gGpsEmiPhyBase;
-		GPS_DBG("gps_emi:gGpsEmiPhyBase (%x)\n", &gGpsEmiPhyBase);
-		GPS_DBG("gps_emi:tmp  (%x)\n", tmp);
+		GPS_DBG("gps_emi:gGpsEmiPhyBase (0x%p)\n", &gGpsEmiPhyBase);
+		GPS_DBG("gps_emi:tmp  (0x%p)\n", tmp);
 		if (copy_to_user((unsigned int __user *)arg, tmp, sizeof(unsigned int)))
 			retval = -1;
 		GPS_DBG("IOCTL_ADC_CAPTURE_ADDR_GET,(%d)\n", retval);
