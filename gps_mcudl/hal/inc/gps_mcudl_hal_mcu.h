@@ -30,6 +30,8 @@ bool gps_mcudl_hal_mcu_set_fw_own(void);
 bool gps_mcudl_hal_mcu_clr_fw_own(void);
 void gps_mcudl_hal_mcu_show_status(void);
 void gps_mcudl_hal_mcu_show_pc_log(void);
+bool gps_mcudl_hal_bg_is_readable(bool check_conn_off);
+void gps_mcudl_hal_vndr_dump(void);
 
 void gps_mcudl_hal_mcu_load_fw_all(void);
 void gps_mcudl_hal_mcu_copy_fw_file(void *p_dst, const void *p_src, unsigned int size);

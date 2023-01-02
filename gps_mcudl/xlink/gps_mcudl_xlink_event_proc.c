@@ -316,6 +316,9 @@ _close_or_reset_ack:
 		gps_mcudl_hal_mcu_show_status();
 		gps_mcudl_hal_ccif_show_status();
 		gps_dl_hw_dump_host_csr_gps_info(false);
+		if (gps_mcudl_hal_bg_is_readable(true))
+			gps_mcudl_hal_vndr_dump();
+		gps_dl_hw_dump_host_csr_gps_info(false);
 		break;
 
 	case GPS_MCUDL_EVT_LINK_FW_LOG_ON:
