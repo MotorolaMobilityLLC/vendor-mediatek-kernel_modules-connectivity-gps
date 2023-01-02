@@ -138,6 +138,7 @@ $(MODULE_NAME)-objs += ../../linux/gps_dl_osal.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_bgf.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_gps.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_debug.o
+$(MODULE_NAME)-objs += gps_dl_hw_dep_dma.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_met2_0.o
 
 ifeq ($(GPS_DL_HAS_MOCK),y)
