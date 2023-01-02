@@ -300,7 +300,7 @@ void gps_mcudl_hw_mcu_speed_up_clock(void)
 	for (i = 0; i < 30; i++) {
 		flag_out = GDL_HW_GET_GPS_ENTRY(BG_GPS_CFG_BGSYS_OFF_MONFLAG_RD_MON_FLAG_OUT);
 		GDL_LOGW("flag_out=0x%x, i=%d", flag_out, i);
-		if (flag_out & (1UL << 28)) {
+		if ((flag_out & (1UL << 28)) || (flag_out & (1UL << 12))) {
 			pll_okay = true;
 			break;
 		}
