@@ -56,6 +56,7 @@ void gps_dl_hw_dep_dump_gps_pos_info(enum gps_dl_link_id_enum link_id)
 
 void gps_dl_hw_dep_dump_host_csr_gps_info(void)
 {
+#if 0
 	int i;
 
 	/*2021.5.7 confirm with DE, gps use 0x18023a04, 0x18023a00*/
@@ -83,7 +84,7 @@ void gps_dl_hw_dep_dump_host_csr_gps_info(void)
 			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
 			BMASK_RW_FORCE_PRINT);
 	}
-
+#endif
 }
 
 #if 0
