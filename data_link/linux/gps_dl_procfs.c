@@ -144,7 +144,7 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 		gps_dl_trigger_gps_print_data_status();
 #if GPS_DL_HAS_MCUDL
 	else if (y == 0x10)
-		gps_mcudl_xlink_test_toggle_reset_by_gps_hif();
+		gps_mcudl_xlink_test_toggle_reset_by_gps_hif((unsigned int)z);
 #endif
 	return 0;
 }
@@ -188,6 +188,8 @@ int gps_mcudl_procfs_dbg(int y, int z)
 		gps_mcudl_xlink_test_fw_own_ctrl(z != 0);
 	else if (y == 2)
 		gps_mcudl_xlink_test_toggle_ccif(z);
+	else if (y == 3)
+		gps_mcudl_xlink_fw_log_ctrl(z != 0);
 	return 0;
 }
 #endif

@@ -23,6 +23,7 @@
 #if GPS_DL_HAS_MCUDL_FW
 #include "gps_mcudl_fw_code.h"
 #endif
+#include "gps_mcu_hif_mgmt_cmd_send.h"
 
 
 struct gps_mcudl_ystate {
@@ -267,6 +268,9 @@ int gps_mcudl_stpgps1_open(void)
 	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMA_NORMAL,
 		&gps_mcudl_link_drv_on_recv_normal_data);
 	MDL_LOGI("add listeners, done");
+
+	if (g_gps_fw_log_is_on)
+		gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(true);
 
 	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x01", 1);
 	MDL_LOGW("write cmd1, is_ok=%d", is_okay);
