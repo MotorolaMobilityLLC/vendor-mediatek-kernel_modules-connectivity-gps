@@ -127,13 +127,6 @@ void gps_mcudl_show_emi_layout(void)
 		&p->gps_bin[0], GDL_OFFSET(&p->gps_bin[0], p), sizeof(p->gps_bin));
 	GDL_LOGI("mnl_bin   : 0x%p, offset=0x%06x, sz=0x%x",
 		&p->mnl_bin[0], GDL_OFFSET(&p->mnl_bin[0], p), sizeof(p->mnl_bin));
-
-	GDL_LOGI("mcu_data  : 0x%p, offset=0x%06x, sz=0x%x",
-		&p->mcu_data[0], GDL_OFFSET(&p->mcu_data[0], p), sizeof(p->mcu_data));
-
-	GDL_LOGI("mcu_share : 0x%p, offset=0x%06x, sz=0x%x",
-		&p->mcu_share[0], GDL_OFFSET(&p->mcu_share[0], p), sizeof(p->mcu_share));
-
 	GDL_LOGI("gps_legacy: 0x%p, offset=0x%06x, sz=0x%x",
 		&p->gps_legacy[0], GDL_OFFSET(&p->gps_legacy[0], p), sizeof(p->gps_legacy));
 	GDL_LOGI("gps_nv_emi: 0x%p, offset=0x%06x, sz=0x%x",
