@@ -63,13 +63,13 @@ struct gps_mcudl_data_pkt_context g_data_pkt_ctx = { .trx = {
 			.rbuf_len = RBUF_MAX,
 		}, },
 		.parser = { .cfg = {
-			.p_pkt_proc_fn = &proc_func1,
+			.p_pkt_proc_fn = &gps_mcudl_mcu_ch1_proc_func,
 			.rbuf_ptr = &pars_rbuf[GPS_MDLY_NORMAL][0],
 			.rbuf_len = RBUF_MAX,
 		}, },
 		.slot = { .cfg = {
 			.slot_id = GPS_MDLY_NORMAL,
-			.p_intf_send_fn = &send_func1,
+			.p_intf_send_fn = &gps_mcudl_mcu_ch1_send_func,
 
 			.rbuf_ptr = &slot_rbuf[GPS_MDLY_NORMAL][0],
 			.rbuf_len = RBUF_MAX,
@@ -302,7 +302,7 @@ void gps_mcudl_mcu2ap_ydata_proc(enum gps_mcudl_yid yid)
 	gps_mcudl_flowctrl_may_send_host_sta(yid);
 }
 
-void proc_func1(enum gps_mcudl_pkt_type type,
+void gps_mcudl_mcu_ch1_proc_func(enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len)
 {
 	enum gps_mcudl_yid y_id;
@@ -360,11 +360,11 @@ void proc_func1(enum gps_mcudl_pkt_type type,
 	}
 }
 
-int send_func1(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len)
+int gps_mcudl_mcu_ch1_send_func(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len)
 {
 	int send_len;
 
-	send_len = gps_mcudl_stpgps1_write(p_data, data_len);
+	send_len = gps_mcudl_plat_mcu_ch1_write(p_data, data_len);
 	MDL_LOGYD(GPS_MDLY_NORMAL, "send len=%d, ret=%d", data_len, send_len);
 	return send_len;
 }
