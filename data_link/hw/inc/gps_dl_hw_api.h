@@ -103,6 +103,14 @@ struct gps_dl_hw_link_status_struct {
 	bool tx_dma_done;
 };
 
+struct gps_dl_hw_mvcd_gps_bootup_info {
+	unsigned int code_size;
+	unsigned int start_addr;
+	unsigned int exec_addr;
+	unsigned int cipher_key;
+	unsigned int frag_num;
+};
+
 void gps_dl_hw_get_link_status(
 	enum gps_dl_link_id_enum link_id, struct gps_dl_hw_link_status_struct *p);
 
@@ -151,6 +159,9 @@ void gps_dl_hw_disclaim_pta_used_by_gps(void);
 void gps_dl_hw_set_pta_blanking_parameter(bool use_direct_path);
 
 unsigned int gps_dl_hw_get_mcub_a2d1_cfg(enum gps_dl_link_id_enum link_id, bool is_1byte_mode);
+bool gps_dl_hw_gps_get_bootup_info(enum gps_dl_link_id_enum link_id,
+	bool is_cw_dsp, struct gps_dl_hw_mvcd_gps_bootup_info *bootup_info);
+bool gps_dl_hw_gps_send_dsp_fragement_num(enum gps_dl_link_id_enum link_id, bool is_cw_dsp, unsigned int fragement_num);
 
 #endif /* _GPS_DL_HW_API_H */
 
