@@ -44,20 +44,20 @@ KBUILD_MODPOST_FAIL_ON_WARNINGS := y
 #endif
 #ccflags-y += -D MTK_WCN_WMT_STP_EXP_SYMBOL_ABSTRACT
 
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/include
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include/mach
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/freqhopping
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/freqhopping/$(MTK_PLATFORM)
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/emi/submodule
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/emi/$(MTK_PLATFORM)
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/connectivity/common
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/mach/$(MTK_PLATFORM)/include/mach
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/include
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/include/clkbuf_v1
-#ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/include/clkbuf_v1/$(MTK_PLATFORM)
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include/mach
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/freqhopping
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/freqhopping/$(MTK_PLATFORM)
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/emi/submodule
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/emi/$(MTK_PLATFORM)
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/connectivity/common
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mach/$(MTK_PLATFORM)/include/mach
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/base/power/include
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/base/power/include/clkbuf_v1
+#ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/base/power/include/clkbuf_v1/$(MTK_PLATFORM)
 #ccflags-y += -I$(srctree)/drivers/devfreq
 ###############################################################################
 
