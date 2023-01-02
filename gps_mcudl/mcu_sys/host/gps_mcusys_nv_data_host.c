@@ -142,6 +142,13 @@ void gps_mcusys_nv_data_host_hdr_init(enum gps_mcusys_nv_data_id nv_id,
 	if (block_size == 0)
 		return;
 
+	/*variable in nv data layout  is union.
+	* Size of union is determined by the size of the largest member.
+	* thus, block_size should be less than initial block_size.
+	* block_size = block_size - sizeof(header)
+	*/
+	block_size = block_size - sizeof(struct gps_mcusys_nv_data_header);
+
 	/* it has once been initialised if magic is matching and no need to do init again.*/
 	if (p_host->magic == GPS_MCUSYS_NV_DATA_HEADER_MAGIC &&
 		p_host->block_size == block_size &&
