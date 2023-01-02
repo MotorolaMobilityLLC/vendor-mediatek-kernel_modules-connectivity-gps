@@ -38,8 +38,9 @@ void proc_func1(enum gps_mcudl_pkt_type type,
 
 int send_func1(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len);
 
-bool gps_mcudl_ap2mcu_get_wait_read_flag(enum gps_mcudl_yid y_id);
-void gps_mcudl_ap2mcu_set_wait_read_flag(enum gps_mcudl_yid y_id, bool flag);
+
+bool gps_mcudl_mcu2ap_get_wait_read_flag(enum gps_mcudl_yid y_id);
+void gps_mcudl_mcu2ap_set_wait_read_flag(enum gps_mcudl_yid y_id, bool flag);
 bool gps_mcudl_ap2mcu_get_wait_write_flag(enum gps_mcudl_yid y_id);
 void gps_mcudl_ap2mcu_set_wait_write_flag(enum gps_mcudl_yid y_id, bool flag);
 bool gps_mcudl_ap2mcu_get_wait_flush_flag(enum gps_mcudl_yid y_id);
