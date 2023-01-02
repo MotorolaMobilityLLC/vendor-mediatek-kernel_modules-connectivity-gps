@@ -360,6 +360,9 @@ void gps_dl_isr_conn2ap(void)
 
 void gps_dl_isr_wdt(void)
 {
+#if GPS_DL_HAS_MCUDL_HAL
+	gps_mcudl_hal_wdt_isr();
+#endif
 }
 
 void gps_dl_isr_hif_on(void)
