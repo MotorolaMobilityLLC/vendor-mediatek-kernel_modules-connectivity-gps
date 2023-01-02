@@ -20,8 +20,20 @@ void gps_mcu_hif_lock(void);
 void gps_mcu_hif_unlock(void);
 
 /* return true for okay */
+enum gps_mcu_hif_send_status {
+	GPS_MCU_HIF_SEND_OK,
+	GPS_MCU_HIF_SEND_FAIL_DUE_TO_NOT_FINSIHED,
+	GPS_MCU_HIF_SEND_FAIL_DUE_TO_FW_OWN_FAIL,
+	GPS_MCU_HIF_SEND_FAIL_DUE_TO_CCIF_BUSY,
+	GPS_MCU_HIF_SEND_STATUS_NUM
+};
+
 bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
 	const unsigned char *p_data, unsigned int data_len);
+
+bool gps_mcu_hif_send_v2(enum gps_mcu_hif_ch hif_ch,
+	const unsigned char *p_data, unsigned int data_len,
+	enum gps_mcu_hif_send_status *if_send_ok);
 
 typedef bool (*gps_mcu_hif_ch_on_recv_cb)(const unsigned char *p_data, unsigned int data_len);
 
