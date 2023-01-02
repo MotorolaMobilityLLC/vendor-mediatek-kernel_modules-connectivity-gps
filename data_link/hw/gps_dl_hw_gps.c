@@ -483,15 +483,31 @@ enum GDL_RET_STATUS gps_dl_hw_mcub_dsp_read_request(enum gps_dl_link_id_enum lin
 	return GDL_OKAY;
 }
 
+struct gps_dl_hw_pair_time_struct pair_time;
 void gps_dl_hw_print_ms_counter_status(void)
 {
-	bool show_log;
+	unsigned int record_dsleep_ctl, record_wakeup_ctl, tcxo_low, tcxo_high;
 
-	show_log = gps_dl_set_show_reg_rw_log(true);
-	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_DSLEEP_CTL_ADDR, BMASK_RW_FORCE_PRINT);
-	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_WAKEUP_CTL_ADDR, BMASK_RW_FORCE_PRINT);
-	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_TCXO_MS_H_ADDR, BMASK_RW_FORCE_PRINT);
-	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_TCXO_MS_L_ADDR, BMASK_RW_FORCE_PRINT);
-	gps_dl_set_show_reg_rw_log(show_log);
+	record_dsleep_ctl = gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_DSLEEP_CTL_ADDR, BMASK_RW_NONEED_PRINT);
+	record_wakeup_ctl = gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_WAKEUP_CTL_ADDR, BMASK_RW_NONEED_PRINT);
+	gps_dl_hw_get_dsp_ms_counter(&tcxo_low, &tcxo_high);
+
+	GDL_LOGI("DSLEEP = 0x%08x, WAKEUP = 0x%08x, TCXO_MS_L = 0x%x, TCXO_MS_H = 0x%x, pair: %x/%lu",
+		record_dsleep_ctl, record_wakeup_ctl, tcxo_low, tcxo_high, pair_time.dsp_ms, pair_time.kernel_ms);
+}
+
+struct gps_dl_hw_pair_time_struct *gps_dl_hw_get_dsp_ms_counter(
+	unsigned int *p_tcxo_low, unsigned int *p_tcxo_high)
+{
+	*p_tcxo_low = gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_TCXO_MS_H_ADDR, BMASK_RW_NONEED_PRINT);
+	*p_tcxo_high = gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_TCXO_MS_L_ADDR, BMASK_RW_NONEED_PRINT);
+
+	if ((*p_tcxo_low >= 0x10000) || (*p_tcxo_high >= 0x10000))
+		GDL_LOGE("abnormal, p_tcxo_low = %x, p_tcxo_high = %x", *p_tcxo_low, *p_tcxo_high);
+
+	pair_time.kernel_ms = gps_dl_tick_get_ms();
+	pair_time.dsp_ms = (*p_tcxo_low & 0XFFFF) | ((*p_tcxo_high & 0XFFFF) << 16);
+
+	return &pair_time;
 }
 
