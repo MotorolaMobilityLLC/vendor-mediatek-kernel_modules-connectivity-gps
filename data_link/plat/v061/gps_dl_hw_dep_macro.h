@@ -13,6 +13,7 @@
 #include "conn_infra/conn_rf_spi_mst_reg.h"
 #include "conn_infra/conn_bus_cr.h"
 #include "conn_infra/conn_rgu_on.h"
+#include "conn_infra/conn_dbg_ctl.h"
 #include "gps/conn_mcu_dma.h"
 #include "gps/conn_mcu_config.h"
 #include "gps/bg_gps_rgu_on.h"
@@ -292,6 +293,9 @@
 #define COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS BG_GPS_CFG_GPS_CLKGEN_CTL1_CR_GPS_DIGCK_DIV_EN
 
 #define COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS BG_GPS_CFG_GPS_CLKGEN_CTL1_CR_GPS_DIGCK_DIV_EN
+
+extern const struct gps_dl_hw_host_csr_dump_range * const g_gps_v06x_host_csr_dump_range_ptr;
+extern const int g_gps_v06x_host_csr_dump_range_num;
 
 #endif /* _GPS_DL_HW_DEP_MACRO_H */
 
