@@ -395,7 +395,7 @@ void gps_mcudl_ap2mcu_data_slot_flush_on_xwrite(enum gps_mcudl_xid x_id)
 		gps_mcudl_ap2mcu_try_to_wakeup_xlink_writer(y_id);
 
 	if (flush_status != FLUSH_OK)
-		MDL_LOGYW(y_id, "flush: ret=%d, len=%d, x_id=%d", flush_status, flush_done_len, x_id);
+		MDL_LOGYD(y_id, "flush: ret=%d, len=%d, x_id=%d", flush_status, flush_done_len, x_id);
 	else
 		MDL_LOGYD(y_id, "flush: ret=%d, len=%d, x_id=%d", flush_status, flush_done_len, x_id);
 }
