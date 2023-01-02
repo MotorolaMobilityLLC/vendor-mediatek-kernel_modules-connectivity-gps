@@ -1,31 +1,15 @@
-load("//build/bazel_mgk_rules:mgk_ko.bzl", "define_mgk_ko")
-
 package(
     default_visibility = [
         "//visibility:public",
     ],
 )
 
-define_mgk_ko(
-    name = "gps_drv_dl",
+filegroup(
+    name = "sources",
     srcs = glob([
         "**/*.c",
         "**/*.h",
         "**/Kbuild",
         "**/Makefile",
-    ]) + [
-        "//vendor/mediatek/kernel_modules/connectivity/gps:sources",
-        "//vendor/mediatek/kernel_modules/connectivity/conninfra:headers",
-    ],
-    outs = [
-        "plat/v010/gps_drv_dl_v010.ko",
-        "plat/v030/gps_drv_dl_v030.ko",
-        "plat/v050/gps_drv_dl_v050.ko",
-        "plat/v051/gps_drv_dl_v051.ko",
-        "plat/v060/gps_drv_dl_v060.ko",
-        "plat/v061/gps_drv_dl_v061.ko",
-    ],
-    deps = [
-        "//vendor/mediatek/kernel_modules/connectivity/conninfra:conninfra",
-    ],
+    ]),
 )
