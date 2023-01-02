@@ -15,6 +15,7 @@
 #include "gps_dl_subsys_reset.h"
 #include "gps_dl_hist_rec.h"
 #include "gps_dl_linux_plat_drv.h"
+#include "gps_dl_hw_api.h"
 
 static ssize_t gps_each_device_read(struct file *filp,
 	char __user *buf, size_t count, loff_t *f_pos)
@@ -226,6 +227,10 @@ static int gps_each_device_hw_suspend(enum gps_dl_link_id_enum link_id, bool nee
 #define GPSDL_IOC_GPS_HW_RESUME        19
 #define GPSDL_IOC_GPS_LISTEN_RST_EVT   20
 #define GPSDL_IOC_GPS_GET_MD_STATUS    21
+#define GPSDL_IOC_GPS_GET_DSP_BOOTUP_INFO     23
+#define GPSDL_IOC_GPS_GET_CWDSP_BOOTUP_INFO   24
+#define GPSDL_IOC_GPS_DSP_MVCD_FRAGEMENT_NO   25
+#define GPSDL_IOC_GPS_CWDSP_MVCD_FRAGEMENT_NO 26
 #define GPSDL_IOC_GPS_CTRL_L5_LNA      27
 #define GPSDL_IOC_GPS_GET_BOOT_TIME    28
 static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
@@ -429,6 +434,46 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 		GDL_LOGXI_ONF(dev->index,
 			"GPSDL_IOC_GPS_GET_BOOT_TIME now_time = %d,arch_counter = %d",
 			gps_boot_time.now_time, gps_boot_time.arch_counter);
+		break;
+	case GPSDL_IOC_GPS_GET_DSP_BOOTUP_INFO:
+	{
+		struct gps_dl_hw_mvcd_gps_bootup_info bootup_info;
+
+		if (gps_dl_hw_gps_get_bootup_info((enum gps_dl_link_id_enum)dev->index, 0, &bootup_info)) {
+			if (copy_to_user((int __user *)arg, &bootup_info, sizeof(bootup_info)))
+				retval = -EFAULT;
+			else
+				retval = 0;
+		} else {
+			retval = -EFAULT;
+		}
+		break;
+	}
+	case GPSDL_IOC_GPS_GET_CWDSP_BOOTUP_INFO:
+	{
+		struct gps_dl_hw_mvcd_gps_bootup_info bootup_info;
+
+		if (gps_dl_hw_gps_get_bootup_info((enum gps_dl_link_id_enum)dev->index, 1, &bootup_info)) {
+			if (copy_to_user((int __user *)arg, &bootup_info, sizeof(bootup_info)))
+				retval = -EFAULT;
+			else
+				retval = 0;
+		} else {
+			retval = -EFAULT;
+		}
+		break;
+	}
+	case GPSDL_IOC_GPS_DSP_MVCD_FRAGEMENT_NO:
+		if (gps_dl_hw_gps_send_dsp_fragement_num((enum gps_dl_link_id_enum)dev->index, 0, (unsigned int)arg))
+			retval = 0;
+		else
+			retval = -EFAULT;
+		break;
+	case GPSDL_IOC_GPS_CWDSP_MVCD_FRAGEMENT_NO:
+		if (gps_dl_hw_gps_send_dsp_fragement_num((enum gps_dl_link_id_enum)dev->index, 1, (unsigned int)arg))
+			retval = 0;
+		else
+			retval = -EFAULT;
 		break;
 	default:
 		retval = -EFAULT;
