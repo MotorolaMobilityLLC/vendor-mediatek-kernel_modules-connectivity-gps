@@ -29,7 +29,7 @@ endif
 KBUILD_MODPOST_FAIL_ON_WARNINGS := y
 ###############################################################################
 
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/connectivity/conap_scp
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/conn_scp/conap_scp
 ###############################################################################
 GPS2SCP_TEST_SUPPORT :=n
 MODULE_NAME := gps_scp
