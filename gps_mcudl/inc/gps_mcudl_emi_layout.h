@@ -17,7 +17,7 @@ struct gps_mcudl_emi_layout {
 	unsigned char mcu_gps_rw[0x07EC00];	/*0xF047_0000 ~ 0xF04E_EC00, 507KB*/
 	unsigned char scp_batch[0x04B000];	/*0xF04E_EC00 ~ 0xF053_9C00, 300KB*/
 	unsigned char mcu_rw_rsv[0x016400];	/*0xF053_9C00 ~ 0xF055_0000, 89KB*/
-	unsigned char mcu_share[0x048000];	/*0xF055_0000 ~ 0xF059_0000, 288KB*/
+	unsigned char mcu_share[0x040000];	/*0xF055_0000 ~ 0xF059_0000, 256KB*/
 	unsigned char gps_legacy[0x078000]; /*0xF059_0000 ~ 0xF060_8000, 480KB*/
 	unsigned char gps_nv_emi[0x080000]; /*0xF060_8000 ~ 0xF068_8000, 512KB*/
 	unsigned char gps_ap2mcu[0x004000]; /*0xF068_8000 ~ 0xF068_C000, 16KB*/
