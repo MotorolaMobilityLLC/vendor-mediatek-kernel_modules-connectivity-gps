@@ -101,6 +101,13 @@ bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
 	enum gps_mcu_hif_trans trans_id;
 	int i;
 
+	trans_id = gps_mcu_hif_get_ap2mcu_trans(hif_ch);
+	if (gps_mcu_hif_is_trans_req_sent(trans_id)) {
+		MDL_LOGW("hif_ch=%d, len=%d, send fail due to last one not finished",
+			hif_ch, data_len);
+		/* TODO: Register resend for fail */
+		return false;
+	}
 #if GPS_DL_HAS_MCUDL_HAL
 	if (gps_mcudl_hal_ccif_tx_is_busy(GPS_MCUDL_CCIF_CH4)) {
 		MDL_LOGW("hif_ch=%d, len=%d, send fail due to ccif busy",
@@ -109,7 +116,6 @@ bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
 	}
 	gps_mcudl_hal_ccif_tx_prepare(GPS_MCUDL_CCIF_CH4);
 #endif
-	trans_id = gps_mcu_hif_get_ap2mcu_trans(hif_ch);
 	gps_mcu_hif_host_clr_trans_req_sent(trans_id);
 	p_buf = gps_mcu_hif_get_ap2mcu_emi_buf_addr(hif_ch);
 	for (i = 0; i < data_len; i++)
