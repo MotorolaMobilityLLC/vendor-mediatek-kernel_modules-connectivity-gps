@@ -90,7 +90,22 @@ void gps_mcudl_xlink_test_toggle_reset_by_gps_hif(void)
 {
 	bool is_okay;
 
-	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x03", 1);
-	MDL_LOGW("write cmd3, is_ok=%d", is_okay);
+	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x04", 1);
+	MDL_LOGW("write cmd4, is_ok=%d", is_okay);
+}
+
+void gps_mcudl_xlink_test_read_mcu_reg(unsigned int addr, unsigned int bytes)
+{
+	bool is_okay;
+	unsigned char buf[12];
+
+	memset(&buf[0], 0, sizeof(buf));
+	buf[0] = 5;
+	buf[4] = (addr >>  0) & 0xFF;
+	buf[5] = (addr >>  8) & 0xFF;
+	buf[6] = (addr >> 16) & 0xFF;
+	buf[7] = (addr >> 24) & 0xFF;
+	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, &buf[0], 12);
+	MDL_LOGW("write cmd5, is_ok=%d", is_okay);
 }
 
