@@ -27,10 +27,10 @@ bool gps_mcudl_hal_ccif_tx_is_ack_done(enum gps_mcudl_ccif_ch ch);
 
 void gps_mcudl_hal_ccif_show_status(void);
 
-
+extern bool g_gps_fw_log_is_on;
+extern unsigned int g_gps_fw_log_irq_cnt;
+extern unsigned long g_gps_ccif_irq_cnt;
 void gps_mcudl_hal_ccif_rx_isr(void);
-void gps_mcudl_hal_ccif_rx_ch1_cb(void);
-void gps_mcudl_hal_ccif_rx_ch2_to_ch8_cb(void);
 
 #endif /* _GPS_MCUDL_HAL_CCIF_H */
 
