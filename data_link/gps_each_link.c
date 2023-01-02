@@ -551,7 +551,6 @@ int gps_each_link_hw_resume(enum gps_dl_link_id_enum link_id, bool revert_for_mv
 			gps_dl_link_event_send(GPS_DL_EVT_LINK_LEAVE_DPSTOP2, link_id);
 		else
 			gps_dl_link_event_send(GPS_DL_EVT_LINK_LEAVE_DPSTOP, link_id);
-
 		gps_dl_link_open_wait(link_id, &sigval);
 		if (sigval != 0) {
 			GDL_LOGXW_ONF(link_id, "sigval = %ld", sigval);
