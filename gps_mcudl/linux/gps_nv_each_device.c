@@ -400,7 +400,7 @@ int  gps_nv_cdev_setup(struct gps_nv_each_device *dev, enum gps_mcusys_nv_data_i
 		return result;
 	}
 
-	GDL_LOGI("nv_id=%d, class_create: %s", nv_id, dev->cfg.dev_name);
+	GDL_LOGD("nv_id=%d, class_create: %s", nv_id, dev->cfg.dev_name);
 	dev->cls = class_create(THIS_MODULE, dev->cfg.dev_name);
 	if (IS_ERR(dev->cls)) {
 		GDL_LOGE("nv_id=%d, class_create: %s, failed", nv_id, dev->cfg.dev_name);
