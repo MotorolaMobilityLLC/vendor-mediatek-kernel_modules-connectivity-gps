@@ -7,6 +7,7 @@
 
 #include "gps_dl_config.h"
 #include "gps_dsp_fsm.h"
+#include "gps_dl_hal_api.h"
 
 /*
  * BGF
@@ -20,6 +21,12 @@ void gps_dl_hw_dep_may_disable_bpll(void);
 void gps_dl_hw_dep_may_remap_conn2ap_gps_peri(void);
 bool gps_dl_hw_dep_may_check_conn_infra_restore_done(void);
 void gps_dl_hw_dep_may_set_conn_infra_l1_request(bool request);
+bool gps_dl_hw_dep_may_set_gps_axi_sleep_prot_ctrl(unsigned int val);
+void gps_dl_hw_dep_gps_sw_request_emi_usage(bool request);
+bool gps_dl_hw_gps_common_on_inner(void);
+int gps_dl_hw_gps_sleep_prot_ctrl(int op);
+
+extern unsigned int adie_ver;
 
 /*
  * GPS
@@ -34,6 +41,31 @@ void gps_dl_hw_dep_cfg_dsp_mem(enum dsp_ctrl_enum ctrl);
 void gps_dl_hw_dep_dump_gps_pos_info(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_dep_dump_host_csr_gps_info(void);
 void gps_dl_hw_dep_dump_host_csr_conninfra_info(void);
+
+/*
+ * DMA
+ */
+struct gps_dl_hw_dma_status_struct {
+	unsigned int wrap_count;
+	unsigned int wrap_to_addr;
+	unsigned int total_count;
+	unsigned int config;
+	unsigned int start_flag;
+	unsigned int intr_flag;
+	unsigned int left_count;
+	unsigned int curr_addr;
+	unsigned int state;
+};
+
+void gps_dl_hw_dep_set_dma_start(enum gps_dl_hal_dma_ch_index channel,
+	struct gdl_hw_dma_transfer *p_transfer);
+void gps_dl_hw_dep_set_dma_stop(enum gps_dl_hal_dma_ch_index channel);
+bool gps_dl_hw_dep_get_dma_int_status(enum gps_dl_hal_dma_ch_index channel);
+void gps_dl_hw_dep_save_dma_status_struct(
+	enum gps_dl_hal_dma_ch_index ch, struct gps_dl_hw_dma_status_struct *p);
+void gps_dl_hw_dep_print_dma_status_struct(
+	enum gps_dl_hal_dma_ch_index ch, struct gps_dl_hw_dma_status_struct *p);
+unsigned int gps_dl_hw_dep_get_dma_left_len(enum gps_dl_hal_dma_ch_index channel);
 
 /* Only need when BMASK_RW_DO_CHECK active for debug purpose */
 void gps_dl_hw_dep_may_do_bus_check_and_print(unsigned int host_addr);
