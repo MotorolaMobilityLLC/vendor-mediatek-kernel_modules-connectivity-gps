@@ -21,7 +21,7 @@ enum gps_mcu_hif_trans gps_mcu_hif_get_ap2mcu_trans(enum gps_mcu_hif_ch hif_ch)
 	else if (hif_ch == GPS_MCU_HIF_CH_DMA_URGENT)
 		return GPS_MCU_HIF_TRANS_AP2MCU_DMA_URGENT;
 
-	return GPS_MCU_HIF_CH_NUM;
+	return GPS_MCU_HIF_TRANS_NUM;
 }
 
 enum gps_mcu_hif_trans gps_mcu_hif_get_mcu2ap_trans(enum gps_mcu_hif_ch hif_ch)
@@ -33,7 +33,7 @@ enum gps_mcu_hif_trans gps_mcu_hif_get_mcu2ap_trans(enum gps_mcu_hif_ch hif_ch)
 	else if (hif_ch == GPS_MCU_HIF_CH_DMA_URGENT)
 		return GPS_MCU_HIF_TRANS_MCU2AP_DMA_URGENT;
 
-	return GPS_MCU_HIF_CH_NUM;
+	return GPS_MCU_HIF_TRANS_NUM;
 }
 
 enum gps_mcu_hif_ch gps_mcu_hif_get_trans_hif_ch(enum gps_mcu_hif_trans trans_id)
