@@ -6,6 +6,7 @@
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_ccif.h"
 #include "gps_mcudl_hw_ccif.h"
+#include "gps_mcudl_hw_mcu.h"
 #include "gps_dl_isr.h"
 #include "gps_dl_hw_api.h"
 #include "gps_dl_time_tick.h"
@@ -189,13 +190,15 @@ void gps_mcudl_hal_wdt_isr(void)
 {
 	int readable;
 	int hung_value = 0;
+	bool is_fw_own;
 
 	g_gps_wdt_irq_cnt++;
 	MDL_LOGW("cnt=%ld", g_gps_wdt_irq_cnt);
 
+	is_fw_own = gps_mcudl_hal_is_fw_own();
 	readable = conninfra_reg_readable();
 	hung_value = conninfra_is_bus_hang();
-	MDL_LOGW("check1: readable=%d, hung_value=%d", readable, hung_value);
+	MDL_LOGW("check: readable=%d, hung_value=%d, fw_own=%d", readable, hung_value, is_fw_own);
 	gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_MCU_WDT_DUMP);
 }
 
@@ -204,10 +207,12 @@ void gps_mcudl_hal_wdt_dump(void)
 #if GPS_DL_HAS_CONNINFRA_DRV
 	int readable;
 	int hung_value = 0;
+	bool is_fw_own;
 
+	is_fw_own = gps_mcudl_hal_force_conn_wake_if_fw_own_is_clear();
 	readable = conninfra_reg_readable();
 	hung_value = conninfra_is_bus_hang();
-	MDL_LOGW("check1: readable=%d, hung_value=%d", readable, hung_value);
+	MDL_LOGW("check1: readable=%d, hung_value=%d, fw_own=%d", readable, hung_value, is_fw_own);
 
 #if GPS_DL_HAS_PLAT_DRV
 	gps_dl_tia_gps_ctrl(false);
@@ -221,7 +226,7 @@ void gps_mcudl_hal_wdt_dump(void)
 
 	readable = conninfra_reg_readable();
 	hung_value = conninfra_is_bus_hang();
-	MDL_LOGW("check2: readable=%d, hung_value=%d", readable, hung_value);
+	MDL_LOGW("check2: readable=%d, hung_value=%d, fw_own=%d", readable, hung_value, is_fw_own);
 
 #if GPS_DL_HAS_PLAT_DRV
 	gps_dl_tia_gps_ctrl(false);
@@ -235,7 +240,9 @@ void gps_mcudl_hal_wdt_dump(void)
 
 	readable = conninfra_reg_readable();
 	hung_value = conninfra_is_bus_hang();
-	MDL_LOGW("check3: readable=%d, hung_value=%d", readable, hung_value);
+	MDL_LOGW("check3: readable=%d, hung_value=%d, fw_own=%d", readable, hung_value, is_fw_own);
+	if (is_fw_own)
+		gps_mcudl_hw_conn_force_wake(false);
 #endif
 }
 
