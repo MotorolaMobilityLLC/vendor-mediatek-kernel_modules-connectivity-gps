@@ -6,7 +6,7 @@
 #include "gps_dl_config.h"
 #include "gps_dl_context.h"
 #include "gps_dl_time_tick.h"
-
+#include "gps_dl_hw_dep_macro.h"
 #include "gps_dl_hal.h"
 #if GPS_DL_MOCK_HAL
 #include "gps_mock_hal.h"
@@ -16,7 +16,11 @@
 #include "gps_dl_hw_priv_util.h"
 #include "gps/gps_usrt_apb.h"
 #include "gps/gps_l5_usrt_apb.h"
+#if GPS_DL_CONNAC2
 #include "gps/bgf_gps_dma.h"
+#elif GPS_DL_CONNAC3
+#include "gps/conn_mcu_dma.h"
+#endif
 #include "conn_infra/conn_host_csr_top.h"
 
 /*******************************************************************************
@@ -209,8 +213,8 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_d
 		else
 			gps_dl_hw_print_dma_status_struct(dma_ch, &dma_status);
 
-		if (GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_START_STR, dma_status.intr_flag) &&
-			GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_STATE_STATE, dma_status.state) == 0x01) {
+		if (GDL_HW_GET_GPS_DMA_START_STR_STATUS(dma_status.intr_flag) &&
+				GDL_HW_MAY_GET_DMA_STATE_STATUS(dma_status.state)) {
 			if (gps_dl_only_show_wait_done_log()) {
 				gps_dl_set_show_reg_rw_log(last_rw_log_on);
 				gps_dl_hw_print_dma_status_struct(dma_ch, &dma_status);
@@ -234,8 +238,12 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_d
 		else
 			gps_dl_hw_print_usrt_status_struct(link_id, &usrt_status);
 
+#if GPS_DL_CONNAC2
 		if (GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_REGE, usrt_status.state) ||
 			GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_NODAINTB, usrt_status.state)) {
+#elif GPS_DL_CONNAC3
+		if (GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_NODAINTB, usrt_status.state)) {
+#endif
 			if (gps_dl_only_show_wait_done_log()) {
 				gps_dl_set_show_reg_rw_log(last_rw_log_on);
 				gps_dl_hw_print_usrt_status_struct(link_id, &usrt_status);
