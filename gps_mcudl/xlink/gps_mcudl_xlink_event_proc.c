@@ -186,6 +186,8 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 		gps_mcudl_each_link_set_active(link_id, false);
 #endif
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE && !g_gps_mcudl_ever_do_coredump) {
+			/*dump tia status*/
+			gps_dl_tia_gps_ctrl(false);
 			/* dump ydata status */
 			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
 			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
@@ -254,6 +256,8 @@ _close_or_reset_ack:
 			break;
 		}
 
+		/*dump tia status*/
+		gps_dl_tia_gps_ctrl(false);
 		/* dump ydata status */
 		gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
 		gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
