@@ -12,7 +12,11 @@
 #include "gps_dl_hw_priv_util.h"
 
 #include "conn_infra/conn_host_csr_top.h"
+#if GPS_DL_CONNAC3
+#include "conn_infra/conn_cfg.h"
+#elif GPS_DL_CONNAC2
 #include "conn_infra/conn_infra_cfg.h"
+#endif
 #include "conn_infra/conn_semaphore.h"
 #include "conn_infra/conn_rf_spi_mst_reg.h"
 
@@ -517,17 +521,17 @@ static bool gps_dl_hw_gps_fmspi_read_rfcr(unsigned int addr, unsigned int *p_val
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_FM_CTRL_FM_RD_EXT_CNT, 0);
 
 	tmp = ((addr & 0xFFF) | (1 << 12UL) | (4 << 13UL) | (0 << 16UL));
-	GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_ADDR_ADDR, tmp);
-	GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_WDAT_ADDR, 0);
+	GDL_HW_WR_CONN_RF_SPI_MST_SPI_FM_ADDR(tmp);
+	GDL_HW_WR_CONN_RF_SPI_MST_SPI_FM_WDAT(0);
 
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_SPI_STA_FM_BUSY, 0,
 		GPS_DL_RFSPI_BUSY_POLL_MAX, &poll_okay);
 	if (!poll_okay) {
-		GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_RDAT_ADDR);
+		GDL_HW_RD_CONN_RF_SPI_MST_SPI_FM_RDAT();
 		return false;
 	}
 
-	val = GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_RDAT_ADDR);
+	val = GDL_HW_RD_CONN_RF_SPI_MST_SPI_FM_RDAT();
 	*p_val = val;
 	okay = true;
 	return okay;
@@ -545,13 +549,13 @@ static bool gps_dl_hw_gps_fmspi_write_rfcr(unsigned int addr, unsigned int val)
 		return false;
 
 	tmp = ((addr & 0xFFF) | (0 << 12UL) | (4 << 13UL) | (0 << 16UL));
-	GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_ADDR_ADDR, tmp);
-	GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_WDAT_ADDR, val);
+	GDL_HW_WR_CONN_RF_SPI_MST_SPI_FM_ADDR(tmp);
+	GDL_HW_WR_CONN_RF_SPI_MST_SPI_FM_WDAT(val);
 
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_SPI_STA_FM_BUSY, 0,
 		GPS_DL_RFSPI_BUSY_POLL_MAX, &poll_okay);
 	if (!poll_okay) {
-		GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_RDAT_ADDR);
+		GDL_HW_RD_CONN_RF_SPI_MST_SPI_FM_RDAT();
 		return false;
 	}
 
