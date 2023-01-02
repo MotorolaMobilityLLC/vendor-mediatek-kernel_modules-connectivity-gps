@@ -130,8 +130,11 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	case GPS_MCUDL_EVT_LINK_RESET2:
 		is_okay = gps_mcudl_xlink_test_toggle_reset_by_gps_hif(0);
 		MDL_LOGXE(link_id, "toggle_reset_by_gps_hif, ok=%d", is_okay);
-		if (!is_okay)
-			gps_dl_trigger_connsys_reset();
+		if (!is_okay) {
+			/* gps_dl_trigger_connsys_reset(); */
+			/* use subsys reset here */
+			gps_mcudl_trigger_gps_subsys_reset(false, "GNSS hif trigger fail");
+		}
 		break;
 
 	case GPS_MCUDL_EVT_LINK_CLOSE:
