@@ -101,12 +101,14 @@ void gps_dl_hw_print_usrt_status(enum gps_dl_link_id_enum link_id)
 
 bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id)
 {
+	struct arm_smccc_res res;
 	bool poll_okay = false;
 
-	if (link_id == GPS_DATA_LINK_ID0)
-		GDL_HW_POLL_GPS_ENTRY(GPS_USRT_APB_APB_STA_RX_EMP, 1, 10000 * POLL_US, &poll_okay);
-	else if (link_id == GPS_DATA_LINK_ID1)
-		GDL_HW_POLL_GPS_ENTRY(GPS_L5_USRT_APB_APB_STA_RX_EMP, 1, 10000 * POLL_US, &poll_okay);
+	GDL_LOGE("enter smc gps_dl_hw_poll_usrt_dsp_rx_empty success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_POLL_USRT_DSP_RX_EMPTY_OPID,
+			link_id, 0, 0, 0, 0, 0, &res);
+	poll_okay = (bool)res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_poll_usrt_dsp_rx_empty success");
 
 #if GPS_DL_ON_LINUX
 	if (!poll_okay)
