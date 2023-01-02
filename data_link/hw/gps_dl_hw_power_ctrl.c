@@ -285,15 +285,18 @@ int gps_dl_hw_gps_common_on(void)
 	return 0;
 
 _fail_gps_dl_hw_dep_may_enable_bpll_not_okay:
+#if GPS_DL_HAS_CONNINFRA_DRV
 _fail_open_mt6637_top_clock_buf:
+#endif
 _fail_adie_top_clk_en_not_okay:
 _fail_bgf_bus_or_gps_top_pwr_ack_not_okay:
 _fail_disable_gps_slp_prot_not_okay:
 _fail_bgf_top_pwr_ack_not_okay:
 	GDL_HW_SET_GPS_FUNC_EN(0);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
-
+#if GPS_DL_HAS_CONNINFRA_DRV
 _fail_adie_ver_not_okay:
+#endif
 _fail_check_conn_infra_restore_done:
 _fail_conn_hw_ver_not_okay:
 
