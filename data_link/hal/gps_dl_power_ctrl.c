@@ -10,6 +10,7 @@
 #include "gps_dl_hw_api.h"
 #include "gps_dl_hw_semaphore.h"
 #include "gps_dl_hal.h"
+#include "gps_dl_time_tick.h"
 #if GPS_DL_MOCK_HAL
 #include "gps_mock_hal.h"
 #endif
@@ -713,3 +714,44 @@ void gps_dl_hal_set_deep_stop_mode_revert_for_mvcd(enum gps_dl_link_id_enum link
 	ASSERT_LINK_ID(link_id, GDL_VOIDF());
 	g_gps_need_revert_for_mvcd[link_id] = revert_for_mvcd;
 }
+
+void gps_dl_hal_gps_wait_wakeup_done_or_timeout(enum gps_dl_link_id_enum link_id)
+{
+	enum gps_dsp_state_t dsp_state;
+	unsigned int t0;
+	unsigned int dt_wait;
+	int i = 0;
+
+	t0 = gps_dl_tick_get_ms();
+	while (1) {
+		if (!gps_dl_hal_mcub_flag_handler(link_id))
+			break;
+
+		dsp_state = gps_dsp_state_get(link_id);
+		dt_wait = gps_dl_tick_get_ms() - t0;
+
+		/* 1st one to wait should be longer */
+		if (link_id == GPS_DATA_LINK_ID0) {
+			/* 150ms timeout */
+			if (dt_wait > 150)
+				break;
+		} else {
+			/* 50ms timeout */
+			if (dt_wait > 50)
+				break;
+		}
+
+		if (dsp_state == GPS_DSP_ST_RESET_DONE || dsp_state == GPS_DSP_ST_WORKING)
+			break;
+
+		i++;
+		/*print log  per 30ms*/
+		if ((i % 15) == 0)
+			GDL_LOGXW(link_id, "still wait wakeup done, dsp_st=%d", dsp_state);
+
+		gps_dl_sleep_us(1999, 2001);
+	}
+
+	GDL_LOGXW(link_id, "dsp_st=%d, dt_wait=%d", dsp_state, dt_wait);
+}
+
