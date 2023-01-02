@@ -128,10 +128,11 @@ struct gps_mcudl_slot_entry_t *gps_mcudl_pkt_reserve_entry_and_rbuf(struct gps_m
 	enum gps_mcudl_pkt_type type, gpsmdl_u32 len)
 {
 	struct gps_mcudl_slot_entry_t *p_entr;
-	gpsmdl_u8 slot_id = p_slot->cfg.slot_id;
+	gpsmdl_u8 slot_id;
 
 	if (!p_slot || len <= 0)
 		return NULL;
+	slot_id = p_slot->cfg.slot_id;
 
 	GFNS_CHECK_FREE_CONSISTENCY();
 
