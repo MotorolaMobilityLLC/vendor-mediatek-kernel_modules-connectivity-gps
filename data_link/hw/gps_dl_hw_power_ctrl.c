@@ -181,7 +181,7 @@ void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 int gps_dl_hw_gps_common_on(void)
 {
 	bool poll_okay = false;
-	unsigned int poll_ver;
+	unsigned int poll_ver, adie_ver = 0;
 
 	/* Enable Conninfra BGF */
 	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
@@ -200,7 +200,17 @@ int gps_dl_hw_gps_common_on(void)
 #if GPS_DL_ON_LINUX
 	gps_dl_hal_set_conn_infra_ver(poll_ver);
 #endif
-	GDL_LOGW("%s: poll_ver = 0x%08x is ok", GDL_HW_SUPPORT_LIST, poll_ver);
+
+#if GPS_DL_HAS_CONNINFRA_DRV
+	adie_ver = conninfra_get_ic_info(CONNSYS_ADIE_CHIPID);
+	if (!(adie_ver == 0x6637 || adie_ver == 0x6635)) {
+		GDL_LOGE("_fail_adie_ver_not_okay, adie_ver = 0x%08x", adie_ver);
+		goto _fail_adie_ver_not_okay;
+	}
+	gps_dl_hal_set_adie_ver(adie_ver);
+#endif
+
+	GDL_LOGW("%s: poll_ver = 0x%08x, adie_ver = 0x%08x is ok", GDL_HW_SUPPORT_LIST, poll_ver, adie_ver);
 
 #if GPS_DL_ON_CTP
 	/* Request EMI anyway */
@@ -230,6 +240,16 @@ int gps_dl_hw_gps_common_on(void)
 
 	gps_dl_hw_dep_may_set_bus_debug_flag();
 
+#if GPS_DL_HAS_CONNINFRA_DRV
+	if (0x6637 == gps_dl_hal_get_adie_ver()) {
+		/*open mt6637 top clock buffer : ADIE TOP 0xB18[1] = 1*/
+		if (conninfra_spi_update_bits(SYS_SPI_TOP, 0xB18, 0x2, 0x2) != 0) {
+			GDL_LOGE("conninfra_spi_update_bits_not_okay");
+			goto _fail_open_mt6637_top_clock_buf;
+		}
+	}
+#endif
+
 	/* Power on A-die top clock */
 	GDL_HW_ADIE_TOP_CLK_EN(1, &poll_okay);
 	if (!poll_okay) {
@@ -252,12 +272,14 @@ int gps_dl_hw_gps_common_on(void)
 
 _fail_gps_dl_hw_dep_may_enable_bpll_not_okay:
 _fail_adie_top_clk_en_not_okay:
+_fail_open_mt6637_top_clock_buf:
 _fail_bgf_bus_or_gps_top_pwr_ack_not_okay:
 _fail_disable_gps_slp_prot_not_okay:
 _fail_bgf_top_pwr_ack_not_okay:
 	GDL_HW_SET_GPS_FUNC_EN(0);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
 
+_fail_adie_ver_not_okay:
 _fail_conn_hw_ver_not_okay:
 	return -1;
 }
@@ -275,6 +297,15 @@ int gps_dl_hw_gps_common_off(void)
 		/* Just show log */
 		GDL_LOGE("_fail_adie_top_clk_dis_not_okay");
 	}
+
+#if GPS_DL_HAS_CONNINFRA_DRV
+	if (0x6637 == gps_dl_hal_get_adie_ver()) {
+		/*close mt6637 top clock buffer : ADIE TOP 0xB18[1] = 0*/
+		if (conninfra_spi_update_bits(SYS_SPI_TOP, 0xB18, 0x0, 0x2) != 0) {
+			GDL_LOGE("conninfra_spi_update_bits_not_okay");
+		}
+	}
+#endif
 
 	if (gps_dl_hw_gps_sleep_prot_ctrl(0) != 0) {
 		GDL_LOGE("enable sleep prot fail, trigger connsys reset");
