@@ -89,19 +89,19 @@ endif
 
 ifeq ($(CONFIG_MACH_MT6877),y)
 GPS_DL_SUPPORT := y
-GPS_DL_PLATFORM := mt6877
+GPS_DL_PLATFORM := v030
 endif
 ifeq ($(CONFIG_MACH_MT6885),y)
 GPS_DL_SUPPORT := y
-GPS_DL_PLATFORM := connac2_0
+GPS_DL_PLATFORM := v010
 endif
 ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6893),y)
 GPS_DL_SUPPORT := y
-GPS_DL_PLATFORM := connac2_0
+GPS_DL_PLATFORM := v010
 endif
 ifeq ($(CONFIG_MACH_MT6983),y)
 GPS_DL_SUPPORT := y
-GPS_DL_PLATFORM := mt6983
+GPS_DL_PLATFORM := v050
 endif
 
 ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6877),y)
@@ -118,9 +118,9 @@ GPS_DL_HAS_CONNINFRA_DRV := y
 endif
 
 ifeq ($(GPS_DL_SUPPORT),y) # New GPS driver with L1+L5 support
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/plat/$(GPS_DL_PLATFORM)
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/plat/$(GPS_DL_PLATFORM)/inc
-ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/$(GPS_DL_PLATFORM)
-ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/$(GPS_DL_PLATFORM)/coda_gen
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/plat/$(GPS_DL_PLATFORM)/hw/inc
 ifeq ($(GPS_DL_HAS_CONNINFRA_DRV),y)
 CONNINFRA_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/conninfra
 ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/include
