@@ -305,7 +305,7 @@ int gps_mcudl_devices_init(void)
 		return result;
 	}
 
-	GDL_LOGW_INI("success to get major %d\n", gps_mcudl_devno_major);
+	GDL_LOGD_INI("success to get major %d\n", gps_mcudl_devno_major);
 
 	for (xid = 0; xid < GPS_MDLX_CH_NUM; xid++) {
 		devno = MKDEV(gps_mcudl_devno_major, gps_mcudl_devno_minor + xid);
