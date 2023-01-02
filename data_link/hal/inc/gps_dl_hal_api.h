@@ -41,6 +41,14 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	enum gps_dl_link_id_enum link_id, int sid_on_evt);
 
 /* DMA operations */
+enum gps_dl_hal_dma_ch_bus_id {
+	GPS_DL_DMA_BUS_ID0_A2D,
+	GPS_DL_DMA_BUS_ID0_D2A,
+	GPS_DL_DMA_BUS_ID1_A2D,
+	GPS_DL_DMA_BUS_ID1_D2A,
+	GPS_DL_DMA_BUS_ID_NUM,
+};
+
 enum gps_dl_hal_dma_ch_index {
 	GPS_DL_DMA_LINK0_A2D,
 	GPS_DL_DMA_LINK0_D2A,
