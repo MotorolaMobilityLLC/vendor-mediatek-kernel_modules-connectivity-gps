@@ -367,6 +367,7 @@ int gps_mcudl_plat_mcu_open(void)
 	gps_mcudl_mgmt_cmd_state_init_all();
 	gps_mcu_hif_host_trans_hist_init();
 	gps_mcu_host_trans_hist_init();
+	gps_mcudl_host_sta_hist_init();
 	gps_mcudl_mcu2ap_test_bypass_set(false);
 
 	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMALESS_MGMT,

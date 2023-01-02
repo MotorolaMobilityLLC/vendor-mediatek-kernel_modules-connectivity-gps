@@ -194,6 +194,8 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 			gps_mcu_hif_host_trans_hist_dump();
 			gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_NORMAL, true);
 			gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_NORMAL);
+			gps_mcudl_host_sta_hist_dump(GPS_MDLY_NORMAL);
+			gps_mcudl_host_sta_hist_dump(GPS_MDLY_URGENT);
 			gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
 			gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
 
@@ -262,8 +264,10 @@ _close_or_reset_ack:
 		gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
 		gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
 		gps_mcu_hif_host_trans_hist_dump();
+		gps_mcudl_host_sta_hist_dump(GPS_MDLY_NORMAL);
 		gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_NORMAL, true);
 		gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_NORMAL);
+		gps_mcudl_host_sta_hist_dump(GPS_MDLY_URGENT);
 		gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
 		gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
 

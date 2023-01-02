@@ -18,13 +18,6 @@
 #include "gps_mcusys_data_api.h"
 
 
-struct geofence_pkt_host_sta_s {
-	struct gps_mcudl_data_pkt_mcu_sta pkt_sta;
-	gpsmdl_u64 last_ack_recv_len;
-	bool reset_flag;
-	bool is_enable;
-};
-
 
 #define RBUF_MAX (10*1024)
 #define ENTR_MAX (64)
@@ -522,12 +515,16 @@ gpsmdl_u32 gps_mcudl_flowctrl_cal_window_size(void)
 void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 {
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
+	struct geofence_pkt_host_sta_s rec_items;
 	gpsmdl_u64 not_ack_len;
 	bool to_notify = false;
 	bool old_reset_flag = false;
+	unsigned long curr_tick;
+	static unsigned long last_tick;
 
 	p_trx_ctx = get_txrx_ctx(yid);
 	not_ack_len = p_trx_ctx->host_sta.pkt_sta.total_recv - p_trx_ctx->host_sta.last_ack_recv_len;
+	memset(&rec_items, 0, sizeof(rec_items));
 
 	/* ack the length of host already received for two case:*/
 	/* 1. ack the total length host received every n (KB)*/
@@ -544,19 +541,35 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 		}
 
 		to_notify = !gps_mcudl_ap2mcu_get_wait_flush_flag(yid);
-		MDL_LOGYI(yid,
-			"send_host_ack:recv_isr=%lu,recv=%lu,last=%lu,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d,ntf=%d",
-			gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(yid),
-			p_trx_ctx->host_sta.pkt_sta.total_recv,
-			p_trx_ctx->host_sta.last_ack_recv_len,
-			p_trx_ctx->host_sta.pkt_sta.total_parse_proc,
-			p_trx_ctx->host_sta.pkt_sta.total_pkt_cnt,
-			p_trx_ctx->host_sta.pkt_sta.total_parse_drop,
-			p_trx_ctx->host_sta.pkt_sta.total_route_drop,
-			p_trx_ctx->host_sta.is_enable,
-			old_reset_flag,
-			not_ack_len,
-			to_notify);
+		curr_tick = gps_dl_tick_get_us();
+
+		rec_items.pkt_sta.total_recv = p_trx_ctx->host_sta.pkt_sta.total_recv;
+		rec_items.last_ack_recv_len = p_trx_ctx->host_sta.last_ack_recv_len;
+		rec_items.pkt_sta.total_parse_proc = p_trx_ctx->host_sta.pkt_sta.total_parse_proc;
+		rec_items.pkt_sta.total_pkt_cnt = p_trx_ctx->host_sta.pkt_sta.total_pkt_cnt;
+		rec_items.pkt_sta.total_parse_drop = p_trx_ctx->host_sta.pkt_sta.total_parse_drop;
+		rec_items.pkt_sta.total_route_drop = p_trx_ctx->host_sta.pkt_sta.total_route_drop;
+		rec_items.is_enable = p_trx_ctx->host_sta.is_enable;
+		rec_items.reset_flag = p_trx_ctx->host_sta.reset_flag;
+
+		gps_mcudl_host_sta_hist_rec(yid, &rec_items);
+
+		if ((curr_tick - last_tick) >= 1000000) {
+			MDL_LOGYI(yid,
+				"send_host_ack:recv_isr=%lu,recv=%lu,last=%lu,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d,ntf=%d",
+				gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(yid),
+				p_trx_ctx->host_sta.pkt_sta.total_recv,
+				p_trx_ctx->host_sta.last_ack_recv_len,
+				p_trx_ctx->host_sta.pkt_sta.total_parse_proc,
+				p_trx_ctx->host_sta.pkt_sta.total_pkt_cnt,
+				p_trx_ctx->host_sta.pkt_sta.total_parse_drop,
+				p_trx_ctx->host_sta.pkt_sta.total_route_drop,
+				p_trx_ctx->host_sta.is_enable,
+				old_reset_flag,
+				not_ack_len,
+				to_notify);
+			last_tick = curr_tick;
+		}
 
 		if (p_trx_ctx->host_sta.is_enable && to_notify) {
 			gps_mcudl_ap2mcu_set_wait_flush_flag(yid, true);
@@ -588,6 +601,112 @@ void gps_mcudl_flowctrl_dump_host_sta(enum gps_mcudl_yid yid)
 		p_trx_ctx->host_sta.is_enable,
 		old_reset_flag,
 		not_ack_len);
+}
+
+#define GPS_MCU_HOST_STA_REC_MAX (10)
+struct geofence_pkt_host_sta_s g_gps_mcudl_host_sta_rec_array[GPS_MCU_HOST_STA_REC_MAX][GPS_MDLY_CH_NUM];
+unsigned long g_gps_mcudl_host_sta_rec_cnt[GPS_MDLY_CH_NUM];
+bool g_gps_mcudl_host_sta_rec_in_dump[GPS_MDLY_CH_NUM];
+
+void gps_mcudl_host_sta_hist_init(void)
+{
+	gps_mcudl_slot_protect();
+	memset(&g_gps_mcudl_host_sta_rec_array, 0, sizeof(g_gps_mcudl_host_sta_rec_array));
+	g_gps_mcudl_host_sta_rec_cnt[GPS_MDLY_NORMAL] = 0;
+	g_gps_mcudl_host_sta_rec_cnt[GPS_MDLY_URGENT] = 0;
+	g_gps_mcudl_host_sta_rec_in_dump[GPS_MDLY_NORMAL] = false;
+	g_gps_mcudl_host_sta_rec_in_dump[GPS_MDLY_URGENT] = false;
+	gps_mcudl_slot_unprotect();
+}
+
+void gps_mcudl_host_sta_hist_rec(enum gps_mcudl_yid yid, struct geofence_pkt_host_sta_s *host_sta)
+{
+	bool in_dump;
+	unsigned long index;
+	gpsmdl_u64 not_ack_len;
+	bool old_reset_flag = false;
+
+	gps_mcudl_slot_protect();
+	index = g_gps_mcudl_host_sta_rec_cnt[yid];
+	in_dump = g_gps_mcudl_host_sta_rec_in_dump[yid];
+	not_ack_len = host_sta->pkt_sta.total_recv - host_sta->last_ack_recv_len;
+	old_reset_flag = host_sta->reset_flag;
+
+	/* Skip record and dump immediately if im_dump */
+	if (in_dump) {
+		gps_mcudl_slot_unprotect();
+		MDL_LOGW(
+			"dump_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d",
+			(gpsmdl_u32)(host_sta->pkt_sta.total_recv),
+			(gpsmdl_u32)(host_sta->last_ack_recv_len),
+			host_sta->pkt_sta.total_parse_proc,
+			host_sta->pkt_sta.total_pkt_cnt,
+			host_sta->pkt_sta.total_parse_drop,
+			host_sta->pkt_sta.total_route_drop,
+			host_sta->is_enable,
+			old_reset_flag,
+			not_ack_len);
+		return;
+	}
+
+	/* Add a record */
+	index = (g_gps_mcudl_host_sta_rec_cnt[yid] % GPS_MCU_HOST_STA_REC_MAX);
+	g_gps_mcudl_host_sta_rec_array[index][yid] = *host_sta;
+	g_gps_mcudl_host_sta_rec_cnt[yid]++;
+	gps_mcudl_slot_unprotect();
+}
+
+void gps_mcudl_host_sta_hist_dump_rec(unsigned long index, struct geofence_pkt_host_sta_s *host_sta)
+{
+	gpsmdl_u64 not_ack_len;
+	bool old_reset_flag = false;
+
+	not_ack_len = host_sta->pkt_sta.total_recv - host_sta->last_ack_recv_len;
+	old_reset_flag = host_sta->reset_flag;
+
+	MDL_LOGW(
+		"dump_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d",
+		(gpsmdl_u32)(host_sta->pkt_sta.total_recv),
+		(gpsmdl_u32)(host_sta->last_ack_recv_len),
+		host_sta->pkt_sta.total_parse_proc,
+		host_sta->pkt_sta.total_pkt_cnt,
+		host_sta->pkt_sta.total_parse_drop,
+		host_sta->pkt_sta.total_route_drop,
+		host_sta->is_enable,
+		old_reset_flag,
+		not_ack_len);
+}
+
+void gps_mcudl_host_sta_hist_dump(enum gps_mcudl_yid yid)
+{
+	unsigned long index;
+
+	gps_mcudl_slot_protect();
+	index = g_gps_mcudl_host_sta_rec_cnt[yid];
+	if (g_gps_mcudl_host_sta_rec_in_dump[yid] || index == 0) {
+		gps_mcudl_slot_unprotect();
+		MDL_LOGW("in_dump=1, cnt=%lu, skip", index);
+		return;
+	}
+	g_gps_mcudl_host_sta_rec_in_dump[yid] = true;
+	gps_mcudl_slot_unprotect();
+
+	if (g_gps_mcudl_host_sta_rec_cnt[yid] <= GPS_MCU_HOST_STA_REC_MAX) {
+		for (index = 0; index < g_gps_mcudl_host_sta_rec_cnt[yid]; index++) {
+			gps_mcudl_host_sta_hist_dump_rec(index,
+				&g_gps_mcudl_host_sta_rec_array[index][yid]);
+		}
+	} else {
+		index = g_gps_mcudl_host_sta_rec_cnt[yid] - GPS_MCU_HOST_STA_REC_MAX + 1;
+		for (; index < g_gps_mcudl_host_sta_rec_cnt[yid]; index++) {
+			gps_mcudl_host_sta_hist_dump_rec(index,
+				&g_gps_mcudl_host_sta_rec_array[index % GPS_MCU_HOST_STA_REC_MAX][yid]);
+		}
+	}
+
+	gps_mcudl_slot_protect();
+	g_gps_mcudl_host_sta_rec_in_dump[yid] = false;
+	gps_mcudl_slot_unprotect();
 }
 
 bool gps_mcudl_mcu2ap_get_wait_read_flag(enum gps_mcudl_yid y_id)

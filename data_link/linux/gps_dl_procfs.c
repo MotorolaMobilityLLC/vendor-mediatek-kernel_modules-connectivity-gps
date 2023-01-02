@@ -207,6 +207,9 @@ int gps_mcudl_procfs_dbg(int y, int z)
 		else if (z == 6) {
 			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
 			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
+		} else if (z == 7) {
+			gps_mcudl_host_sta_hist_dump(GPS_MDLY_NORMAL);
+			gps_mcudl_host_sta_hist_dump(GPS_MDLY_URGENT);
 		}
 	}
 	else if (y == 2)
