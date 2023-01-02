@@ -85,7 +85,7 @@ void gps_mcudl_link_open_ack(enum gps_mcudl_xid link_id, bool okay)
 	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
 
 	if (send_msg) {
-		gps_mcudl_xlink_event_send(link_id, GPS_DL_EVT_LINK_CLOSE);
+		gps_mcudl_xlink_event_send(link_id, GPS_MCUDL_EVT_LINK_CLOSE);
 		gps_mcudl_each_link_set_bool_flag(link_id, LINK_TO_BE_CLOSED, true);
 	}
 }

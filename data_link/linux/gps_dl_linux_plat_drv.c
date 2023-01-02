@@ -32,8 +32,13 @@
 #include "gps_dl_linux.h"
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_dl_linux_reserved_mem.h"
+#include "gps_dl_linux_reserved_mem_v2.h"
 #include "gps_dl_isr.h"
 #include "gps_each_device.h"
+#if GPS_DL_HAS_CONNINFRA_DRV
+#include "conninfra.h"
+#endif
+
 
 /* #ifdef CONFIG_OF */
 const struct of_device_id gps_dl_of_ids[] = {
@@ -42,13 +47,11 @@ const struct of_device_id gps_dl_of_ids[] = {
 	{ .compatible = "mediatek,mt6983-gps", },
 	{ .compatible = "mediatek,mt6879-gps", },
 	{ .compatible = "mediatek,mt6895-gps", },
-	{ .compatible = "mediatek,connac2-gps", },
-	{ .compatible = "mediatek,mt6990-gps", },
 	{ .compatible = "mediatek,mt6985-gps", },
 	{},
 };
 /* #endif */
-#define GPS_DL_IOMEM_NUM 2
+#define GPS_DL_IOMEM_NUM 3
 
 struct gps_dl_iomem_addr_map_entry g_gps_dl_iomem_arrary[GPS_DL_IOMEM_NUM];
 struct gps_dl_iomem_addr_map_entry g_gps_dl_status_dummy_cr;
@@ -58,6 +61,60 @@ struct gps_dl_iomem_addr_map_entry g_gps_dl_tia2_gps_rc_sel;
 struct gps_dl_iomem_addr_map_entry g_gps_dl_tia2_gps_debug;
 struct gps_dl_iomem_addr_map_entry g_gps_dl_b13_status_cr;
 
+void gps_dl_show_major_iomem_info(void)
+{
+	int i;
+
+	for (i = 0; i < GPS_DL_IOMEM_NUM; i++) {
+		GDL_LOGW("phys_addr=0x%08x, len=0x%x, iomem[%d]",
+			g_gps_dl_iomem_arrary[i].host_phys_addr,
+			g_gps_dl_iomem_arrary[i].length, i);
+	}
+#if GPS_DL_CONN_EMI_MERGED
+	GDL_LOGW("phys_addr=0x%08x, len=0x%x, conn_emi",
+		g_gps_dl_conn_res_emi.host_phys_addr,
+		g_gps_dl_conn_res_emi.length);
+#endif
+	GDL_LOGW("phys_addr=0x%08x, len=0x%x, gps_legacy_emi",
+		g_gps_dl_res_emi.host_phys_addr,
+		g_gps_dl_res_emi.length);
+}
+
+
+#define GDL_IN_RANGE_LOW_HIGH(addr, low, high) ((addr) >= (low) && ((addr) < (high)))
+#define GDL_IN_RANGE_BASE_SIZE(addr, base, size) ((addr) >= (base) && ((addr) < ((base) + (size))))
+
+const struct gps_dl_iomem_addr_map_entry *gps_dl_match_major_iomem(
+	unsigned int addr, unsigned int *p_offset)
+{
+	const struct gps_dl_iomem_addr_map_entry *p_match;
+	bool matched;
+	int i;
+
+	for (i = 0; i < GPS_DL_IOMEM_NUM; i++) {
+		p_match = &g_gps_dl_iomem_arrary[i];
+		matched = GDL_IN_RANGE_BASE_SIZE(addr,
+			p_match->host_phys_addr,
+			p_match->length);
+
+		if (matched && p_match->length > 0) {
+			*p_offset = addr - p_match->host_phys_addr;
+			return p_match;
+		}
+	}
+#if GPS_DL_CONN_EMI_MERGED
+	if (GDL_IN_RANGE_LOW_HIGH(addr, 0x70000000, 0x74000000)) {
+		*p_offset = addr - 0x70000000;
+		return &g_gps_dl_conn_res_emi;
+	}
+#endif
+	if (GDL_IN_RANGE_LOW_HIGH(addr, 0x74000000, 0x78000000)) {
+		*p_offset = addr - 0x74000000;
+		return &g_gps_dl_res_emi;
+	}
+
+	return NULL;
+}
 
 void __iomem *gps_dl_host_addr_to_virt(unsigned int host_addr)
 {
@@ -349,9 +406,9 @@ bool gps_dl_get_iomem_by_name(struct platform_device *pdev, const char *p_name,
 }
 
 int gps_not_allocate_emi_from_lk2;
-#if (GPS_DL_GET_RSV_MEM_IN_MODULE)
 phys_addr_t gGpsRsvMemPhyBase;
 unsigned long long gGpsRsvMemSize;
+#if (GPS_DL_GET_RSV_MEM_IN_MODULE)
 static int gps_dl_get_reserved_memory(struct device *dev)
 {
 	struct device_node *np = NULL;
@@ -371,6 +428,7 @@ static int gps_dl_get_reserved_memory(struct device *dev)
 	GDL_LOGW_INI("resource base=%pa, size=%pa", &rmem->base, &rmem->size);
 	gGpsRsvMemPhyBase = (phys_addr_t)rmem->base;
 	gGpsRsvMemSize = (unsigned long long)rmem->size;
+
 	return 0;
 }
 
@@ -429,6 +487,13 @@ static int gps_dl_get_b13_status_addr(struct device *dev)
 
 }
 
+#if GPS_DL_HAS_MCUDL
+struct gps_dl_iomem_addr_map_entry  *gps_dl_get_dyn_iomem_info(void)
+{
+	return &g_gps_dl_iomem_arrary[2];
+}
+#endif
+
 static int gps_dl_probe(struct platform_device *pdev)
 {
 	struct resource *irq = NULL;
@@ -439,6 +504,11 @@ static int gps_dl_probe(struct platform_device *pdev)
 
 	GDL_LOGW_INI("compatible = %s", (char *)pdev->dev.of_node->properties->value);
 
+#if (GPS_DL_CONN_EMI_MERGED)
+	/* always from lk2 */
+	gps_not_allocate_emi_from_lk2 = 0;
+	gps_dl_get_reserved_memory_from_conninfra_drv();
+#else
 	gps_not_allocate_emi_from_lk2 = 1;
 
 #if (GPS_DL_GET_RSV_MEM_IN_MODULE)
@@ -447,9 +517,12 @@ static int gps_dl_probe(struct platform_device *pdev)
 	else
 		gps_not_allocate_emi_from_lk2 = 0;
 #endif
+#endif
 	gps_dl_get_iomem_by_name(pdev, "conn_infra_base", &g_gps_dl_iomem_arrary[0]);
 	gps_dl_get_iomem_by_name(pdev, "conn_gps_base", &g_gps_dl_iomem_arrary[1]);
-
+#if GPS_DL_HAS_MCUDL
+	gps_dl_get_iomem_by_name(pdev, "conn_dyn_base", &g_gps_dl_iomem_arrary[2]);
+#endif
 	okay = gps_dl_get_iomem_by_name(pdev, "status_dummy_cr", &g_gps_dl_status_dummy_cr);
 	if (okay)
 		gps_dl_update_status_for_md_blanking(false);
