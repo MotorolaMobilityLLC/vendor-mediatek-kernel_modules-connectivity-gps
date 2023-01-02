@@ -99,7 +99,9 @@ void gps_mcu_hif_host_set_trans_req_sent(enum gps_mcu_hif_trans trans_id)
 		return;
 
 	p_shared = gps_mcu_hif_get_ap2mcu_shared_data_mut_ptr();
+	gps_mcu_hif_lock();
 	p_shared->inf.inf.trans_req_sent_bitmask |= (1UL << trans_id);
+	gps_mcu_hif_unlock();
 }
 
 void gps_mcu_hif_host_clr_trans_req_sent(enum gps_mcu_hif_trans trans_id)
@@ -110,7 +112,9 @@ void gps_mcu_hif_host_clr_trans_req_sent(enum gps_mcu_hif_trans trans_id)
 		return;
 
 	p_shared = gps_mcu_hif_get_ap2mcu_shared_data_mut_ptr();
+	gps_mcu_hif_lock();
 	p_shared->inf.inf.trans_req_sent_bitmask &= ~(1UL << trans_id);
+	gps_mcu_hif_unlock();
 }
 
 void gps_mcu_hif_target_set_trans_req_received(enum gps_mcu_hif_trans trans_id)
@@ -121,7 +125,9 @@ void gps_mcu_hif_target_set_trans_req_received(enum gps_mcu_hif_trans trans_id)
 		return;
 
 	p_shared = gps_mcu_hif_get_mcu2ap_shared_data_mut_ptr();
+	gps_mcu_hif_lock();
 	p_shared->inf.inf.trans_req_received_bitmask |= (1UL << trans_id);
+	gps_mcu_hif_unlock();
 }
 
 void gps_mcu_hif_target_clr_trans_req_received(enum gps_mcu_hif_trans trans_id)
@@ -132,7 +138,9 @@ void gps_mcu_hif_target_clr_trans_req_received(enum gps_mcu_hif_trans trans_id)
 		return;
 
 	p_shared = gps_mcu_hif_get_mcu2ap_shared_data_mut_ptr();
+	gps_mcu_hif_lock();
 	p_shared->inf.inf.trans_req_received_bitmask &= ~(1UL << trans_id);
+	gps_mcu_hif_unlock();
 }
 
 void gps_mcu_hif_target_set_trans_req_finished(enum gps_mcu_hif_trans trans_id)
@@ -143,7 +151,9 @@ void gps_mcu_hif_target_set_trans_req_finished(enum gps_mcu_hif_trans trans_id)
 		return;
 
 	p_shared = gps_mcu_hif_get_mcu2ap_shared_data_mut_ptr();
+	gps_mcu_hif_lock();
 	p_shared->inf.inf.trans_req_finished_bitmask |= (1UL << trans_id);
+	gps_mcu_hif_unlock();
 }
 
 void gps_mcu_hif_target_clr_trans_req_finished(enum gps_mcu_hif_trans trans_id)
@@ -154,7 +164,9 @@ void gps_mcu_hif_target_clr_trans_req_finished(enum gps_mcu_hif_trans trans_id)
 		return;
 
 	p_shared = gps_mcu_hif_get_mcu2ap_shared_data_mut_ptr();
+	gps_mcu_hif_lock();
 	p_shared->inf.inf.trans_req_finished_bitmask &= ~(1UL << trans_id);
+	gps_mcu_hif_unlock();
 }
 
 void gps_mcu_hif_host_inf_init(void)
