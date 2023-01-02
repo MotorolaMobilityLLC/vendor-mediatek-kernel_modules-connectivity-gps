@@ -109,31 +109,51 @@ void gps_mcu_hif_unlock(void)
 	gps_mcudl_slot_unprotect();
 }
 
-bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
-	const unsigned char *p_data, unsigned int data_len)
+bool gps_mcu_hif_send_v2(enum gps_mcu_hif_ch hif_ch,
+	const unsigned char *p_data, unsigned int data_len,
+	enum gps_mcu_hif_send_status *if_send_ok)
 {
 	unsigned char *p_buf;
 	struct gps_mcu_hif_trans_start_desc start_desc;
 	enum gps_mcu_hif_trans trans_id;
+	enum gps_mcu_hif_send_status *send_status = if_send_ok;
 	int i;
 
 	trans_id = gps_mcu_hif_get_ap2mcu_trans(hif_ch);
 	if (gps_mcu_hif_is_trans_req_sent(trans_id)) {
-		MDL_LOGW("hif_ch=%d, len=%d, send fail due to last one not finished",
-			hif_ch, data_len);
-		/* TODO: Register resend for fail */
-		/* TODO: Print ccif status, mcu pc, emi status here */
+		if (NULL == send_status) {
+			MDL_LOGW("hif_ch=%d, len=%d, send fail due to last one not finished",
+				hif_ch, data_len);
+		} else {
+			MDL_LOGD("hif_ch=%d, len=%d, send fail due to last one not finished",
+				hif_ch, data_len);
+			/* TODO: Register resend for fail */
+			/* TODO: Print ccif status, mcu pc, emi status here */
+			*send_status = GPS_MCU_HIF_SEND_FAIL_DUE_TO_NOT_FINSIHED;
+		}
 		return false;
 	}
 #if GPS_DL_HAS_MCUDL_HAL
 	if (!gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_HIF_SEND)) {
-		MDL_LOGW("hif_ch=%d, len=%d, send fail due to clr_fw_own fail",
-			hif_ch, data_len);
+		if (NULL == send_status) {
+			MDL_LOGW("hif_ch=%d, len=%d, send fail due to clr_fw_own fail",
+				hif_ch, data_len);
+		} else {
+			MDL_LOGD("hif_ch=%d, len=%d, send fail due to clr_fw_own fail",
+				hif_ch, data_len);
+			*send_status = GPS_MCU_HIF_SEND_FAIL_DUE_TO_FW_OWN_FAIL;
+		}
 		return false;
 	}
 	if (gps_mcudl_hal_ccif_tx_is_busy(GPS_MCUDL_CCIF_CH4)) {
-		MDL_LOGW("hif_ch=%d, len=%d, send fail due to ccif busy",
-			hif_ch, data_len);
+		if (NULL == send_status) {
+			MDL_LOGW("hif_ch=%d, len=%d, send fail due to ccif busy",
+				hif_ch, data_len);
+		} else {
+			MDL_LOGD("hif_ch=%d, len=%d, send fail due to ccif busy",
+				hif_ch, data_len);
+			*send_status = GPS_MCU_HIF_SEND_FAIL_DUE_TO_CCIF_BUSY;
+		}
 		(void)gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_HIF_SEND);
 		return false;
 	}
@@ -154,6 +174,12 @@ bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
 	(void)gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_HIF_SEND);
 #endif
 	return true;
+}
+
+bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
+	const unsigned char *p_data, unsigned int data_len)
+{
+	return gps_mcu_hif_send_v2(hif_ch, p_data, data_len, NULL);
 }
 
 void gps_mcu_hif_recv_start(enum gps_mcu_hif_ch hif_ch)
