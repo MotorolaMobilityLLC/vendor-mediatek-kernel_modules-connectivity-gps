@@ -50,6 +50,8 @@ void gps_dl_hw_set_dma_start(enum gps_dl_hal_dma_ch_index channel,
 	unsigned int bus_addr_of_data_start;
 	unsigned int bus_addr_of_buf_start;
 	unsigned int bus_len_to_wrap;
+	unsigned int bus_addr_of_data_sub_buf_offset;
+	enum gps_dl_hal_dma_ch_bus_id bus_id = GPS_DL_DMA_BUS_ID_NUM;
 	unsigned int bus_transfer_max_len;
 	bool is_1byte;
 	unsigned int gdl_ret;
@@ -59,59 +61,61 @@ void gps_dl_hw_set_dma_start(enum gps_dl_hal_dma_ch_index channel,
 	gdl_ret = gps_dl_emi_remap_phy_to_bus_addr(p_transfer->transfer_start_addr, &bus_addr_of_data_start);
 	gdl_ret = gps_dl_emi_remap_phy_to_bus_addr(p_transfer->buf_start_addr, &bus_addr_of_buf_start);
 
+	bus_addr_of_data_sub_buf_offset = bus_addr_of_data_start - bus_addr_of_buf_start;
 	bus_len_to_wrap = p_transfer->len_to_wrap;
 	bus_transfer_max_len = p_transfer->transfer_max_len;
 	is_1byte = gps_dl_is_1byte_mode();
 
+	switch (channel) {
+	case GPS_DL_DMA_LINK0_A2D:
+		bus_id = GPS_DL_DMA_BUS_ID0_A2D;
+		break;
+	case GPS_DL_DMA_LINK0_D2A:
+		bus_id = GPS_DL_DMA_BUS_ID0_D2A;
+		break;
+	case GPS_DL_DMA_LINK1_A2D:
+		bus_id = GPS_DL_DMA_BUS_ID1_A2D;
+		break;
+	case GPS_DL_DMA_LINK1_D2A:
+		bus_id = GPS_DL_DMA_BUS_ID1_D2A;
+		break;
+	default:
+		break;
+	}
+
 	GDL_LOGE("enter smc gps_dl_hw_set_dma_start success, data = %x, buf = %x, wrap = %d, len = %d",
 		bus_addr_of_data_start, bus_addr_of_buf_start, bus_len_to_wrap, bus_transfer_max_len);
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_SET_DMA_START_OPID,
-			channel, bus_addr_of_data_start,
-			bus_addr_of_buf_start, bus_len_to_wrap, bus_transfer_max_len, is_1byte, &res);
+			channel, bus_addr_of_data_sub_buf_offset,
+			bus_id, bus_len_to_wrap, bus_transfer_max_len, is_1byte, &res);
 	ret = res.a0;
 	GDL_LOGE("leave smc gps_dl_hw_set_dma_start success");
 }
 
 void gps_dl_hw_set_dma_stop(enum gps_dl_hal_dma_ch_index channel)
 {
-	/* Poll until DMA IDLE */
-	switch (channel) {
-	case GPS_DL_DMA_LINK0_A2D:
-		GDL_HW_SET_GPS_ENTRY(BGF_GPS_DMA_DMA1_START_STR, 0);
-		GDL_HW_SET_GPS_ENTRY(BGF_GPS_DMA_DMA1_ACKINT_ACK, 1);
-		break;
-	case GPS_DL_DMA_LINK0_D2A:
-		GDL_HW_SET_GPS_ENTRY(BGF_GPS_DMA_DMA2_START_STR, 0);
-		GDL_HW_SET_GPS_ENTRY(BGF_GPS_DMA_DMA2_ACKINT_ACK, 1);
-		break;
-	case GPS_DL_DMA_LINK1_A2D:
-		GDL_HW_SET_GPS_ENTRY(BGF_GPS_DMA_DMA3_START_STR, 0);
-		GDL_HW_SET_GPS_ENTRY(BGF_GPS_DMA_DMA3_ACKINT_ACK, 1);
-		break;
-	case GPS_DL_DMA_LINK1_D2A:
-		GDL_HW_SET_GPS_ENTRY(BGF_GPS_DMA_DMA4_START_STR, 0);
-		GDL_HW_SET_GPS_ENTRY(BGF_GPS_DMA_DMA4_ACKINT_ACK, 1);
-		break;
-	default:
-		return;
-	}
+	struct arm_smccc_res res;
+	int ret;
+
+	GDL_LOGE("enter smc gps_dl_hw_set_dma_stop success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_SET_DMA_STOP_OPID,
+			channel, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_set_dma_stop success");
+	return;
 }
 
 bool gps_dl_hw_get_dma_int_status(enum gps_dl_hal_dma_ch_index channel)
 {
-	/* ASSERT(channel >= 0 && channel <= GPS_DL_DMA_CH_NUM); */
-	switch (channel) {
-	case GPS_DL_DMA_LINK0_A2D:
-		return (bool)GDL_HW_GET_GPS_ENTRY(BGF_GPS_DMA_DMA1_INTSTA_INT);
-	case GPS_DL_DMA_LINK0_D2A:
-		return (bool)GDL_HW_GET_GPS_ENTRY(BGF_GPS_DMA_DMA2_INTSTA_INT);
-	case GPS_DL_DMA_LINK1_A2D:
-		return (bool)GDL_HW_GET_GPS_ENTRY(BGF_GPS_DMA_DMA3_INTSTA_INT);
-	case GPS_DL_DMA_LINK1_D2A:
-		return (bool)GDL_HW_GET_GPS_ENTRY(BGF_GPS_DMA_DMA4_INTSTA_INT);
-	default:
-		return false;
-	}
+	struct arm_smccc_res res;
+	int ret;
+
+	GDL_LOGE("enter smc gps_dl_hw_get_dma_int_status success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_GET_DMA_INT_STATUS_OPID,
+			channel, 0, 0, 0, 0, 0, &res);
+	ret = (bool)res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_get_dma_int_status success");
+	return ret;
 }
 
 void gps_dl_hw_save_dma_status_struct(
@@ -260,19 +264,15 @@ _end:
 
 unsigned int gps_dl_hw_get_dma_left_len(enum gps_dl_hal_dma_ch_index channel)
 {
-	/* ASSERT(channel >= 0 && channel <= GPS_DL_DMA_CH_NUM); */
-	switch (channel) {
-	case GPS_DL_DMA_LINK0_A2D:
-		return GDL_HW_GET_GPS_ENTRY(BGF_GPS_DMA_DMA1_RLCT_RLCT);
-	case GPS_DL_DMA_LINK0_D2A:
-		return GDL_HW_GET_GPS_ENTRY(BGF_GPS_DMA_DMA2_RLCT_RLCT);
-	case GPS_DL_DMA_LINK1_A2D:
-		return GDL_HW_GET_GPS_ENTRY(BGF_GPS_DMA_DMA3_RLCT_RLCT);
-	case GPS_DL_DMA_LINK1_D2A:
-		return GDL_HW_GET_GPS_ENTRY(BGF_GPS_DMA_DMA4_RLCT_RLCT);
-	default:
-		return 0;
-	}
+	struct arm_smccc_res res;
+	int ret;
+
+	GDL_LOGE("enter smc gps_dl_hw_get_dma_left_len success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_GET_DMA_LEFT_LEN_OPID,
+			channel, 0, 0, 0, 0, 0, &res);
+	ret = (unsigned int)res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_get_dma_left_len success");
+	return ret;
 }
 
 void gps_dl_hw_get_link_status(
