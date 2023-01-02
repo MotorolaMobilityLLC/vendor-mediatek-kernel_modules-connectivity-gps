@@ -19,6 +19,8 @@
 #include "gps_mcudl_reset.h"
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_ccif.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
+#include "gps_mcudl_hw_mcu.h"
 #endif
 
 
@@ -417,9 +419,16 @@ bool gps_mcudl_conninfra_is_okay_or_handle_it(void)
 	int trigger_ret = 0;
 	bool check_again = false;
 	int check_cnt = 0;
+	bool is_fw_own;
 
+	is_fw_own = gps_mcudl_hal_force_conn_wake_if_fw_own_is_clear();
 	readable = conninfra_reg_readable();
+	if (is_fw_own)
+		GDL_LOGD("is_fw_own=%d, readable=%d", is_fw_own, readable);
+
 	if (readable) {
+		if (is_fw_own)
+			gps_mcudl_hw_conn_force_wake(false);
 		GDL_LOGD("readable = %d, okay", readable);
 		return true;
 	}
