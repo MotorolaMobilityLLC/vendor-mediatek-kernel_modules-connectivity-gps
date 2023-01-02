@@ -9,6 +9,8 @@
 #include "gps_mcudl_hw_dep_macro.h"
 #include "gps_mcudl_hw_priv_util.h"
 #include "gps_dl_time_tick.h"
+#include "gps_dl_subsys_reset.h"
+#include "gps_mcudl_hal_mcu.h"
 
 bool gps_mcudl_hw_conn_ver_and_wake_is_ok(void)
 {
@@ -121,6 +123,8 @@ _fail_disable_gps_slp_prot:
 			CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_EN_MASK |
 			CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_EN_MASK);
 #endif
+		gps_mcudl_hal_mcu_show_pc_log();
+		gps_dl_slp_prot_fail_and_dump();
 		return -1;
 	} else if (0 == op) {
 		ret = 0;
@@ -157,18 +161,18 @@ _fail_disable_gps_slp_prot:
 		}
 
 		/* AXI */
-		GDL_HW_SET_GPS2CONN_AXI_SLP_PROT_RX_VAL(1);
-		GDL_HW_POLL_GPS2CONN_AXI_SLP_PROT_RX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
-		if (!poll_okay) {
-			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn_axi rx");
-			ret = -1;
-			goto _fail_enable_gps_slp_prot;
-		}
-
 		GDL_HW_SET_GPS2CONN_AXI_SLP_PROT_TX_VAL(1);
 		GDL_HW_POLL_GPS2CONN_AXI_SLP_PROT_TX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
 			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn_axi tx");
+			ret = -1;
+			goto _fail_enable_gps_slp_prot;
+		}
+
+		GDL_HW_SET_GPS2CONN_AXI_SLP_PROT_RX_VAL(1);
+		GDL_HW_POLL_GPS2CONN_AXI_SLP_PROT_RX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn_axi rx");
 			ret = -1;
 			goto _fail_enable_gps_slp_prot;
 		}
@@ -180,6 +184,8 @@ _fail_enable_gps_slp_prot:
 #if 0
 		gps_dl_trigger_connsys_reset();
 #endif
+		gps_mcudl_hal_mcu_show_pc_log();
+		gps_dl_slp_prot_fail_and_dump();
 		return -1;
 	}
 	return 0;
@@ -423,6 +429,14 @@ void gps_mcudl_hw_mcu_show_pc_log(void)
 	unsigned int flag;
 
 	for (flag = 0xC0040D01; flag <= 0xC0040D31; flag++) {
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, flag,
+			BMASK_RW_FORCE_PRINT);
+		gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
+			BMASK_RW_FORCE_PRINT);
+	}
+	for (flag = 0xC0040109; flag <= 0xC0040113; flag++) {
 		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
 			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, flag,
 			BMASK_RW_FORCE_PRINT);
