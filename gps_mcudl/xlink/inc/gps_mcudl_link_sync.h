@@ -9,6 +9,9 @@
 #include "gps_dl_base.h"
 #include "gps_each_link.h"
 
+void gps_mcudl_link_waitable_reset(enum gps_mcudl_xid x_id,
+	enum gps_each_link_waitable_type type);
+
 enum GDL_RET_STATUS gps_mcudl_link_try_wait_on(enum gps_mcudl_xid x_id,
 	enum gps_each_link_waitable_type type);
 

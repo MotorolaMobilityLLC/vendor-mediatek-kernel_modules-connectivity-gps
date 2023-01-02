@@ -12,6 +12,15 @@
 #include "gps_dl_hal.h"
 
 
+void gps_mcudl_link_waitable_reset(enum gps_mcudl_xid x_id,
+	enum gps_each_link_waitable_type type)
+{
+	struct gps_mcudl_each_link *p_link;
+
+	p_link = gps_mcudl_link_get(x_id);
+	p_link->waitables[type].fired = false;
+}
+
 enum GDL_RET_STATUS gps_mcudl_link_try_wait_on(enum gps_mcudl_xid x_id,
 	enum gps_each_link_waitable_type type)
 {
