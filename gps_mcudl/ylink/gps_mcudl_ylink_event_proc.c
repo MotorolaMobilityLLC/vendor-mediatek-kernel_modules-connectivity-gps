@@ -101,6 +101,13 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 	case GPS_MCUDL_YLINK_EVT_ID_TEST_CLR_FW_OWN:
 		(void)gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_TEST);
 		break;
+	case GPS_MCUDL_YLINK_EVT_ID_MCU_WDT_DUMP:
+		if (gps_mcusys_gpsbin_state_is(GPS_MCUSYS_GPSBIN_POST_ON)) {
+			MDL_LOGW("do gps_mcudl_hal_wdt_dump");
+			gps_mcudl_hal_wdt_dump();
+		} else
+			MDL_LOGW("bypass gps_mcudl_hal_wdt_dump");
+		break;
 	default:
 		break;
 	}
