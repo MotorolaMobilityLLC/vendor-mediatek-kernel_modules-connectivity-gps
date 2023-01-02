@@ -67,6 +67,9 @@ void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum g
 void gps_mcudl_mcu2ap_test_bypass_set(bool bypass);
 bool gps_mcudl_mcu2ap_test_bypass_get(void);
 
+void gps_mcudl_mcu2ap_rec_init(void);
+void gps_mcudl_mcu2ap_rec_dump(void);
+
 void gps_mcu_host_trans_hist_init(void);
 void gps_mcu_host_trans_hist_rec(struct gps_mcudl_data_pkt_rec_item *p_rec, enum gps_mcudl_rec_type rec_point);
 void gps_mcu_host_trans_hist_dump(enum gps_mcudl_rec_type rec_point);
