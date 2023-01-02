@@ -35,7 +35,7 @@ GPS_PWR_TEST_SUPPORT :=n
 MODULE_NAME := gps_pwr
 obj-m += $(MODULE_NAME).o
 
-$(MODULE_NAME)-objs += gps_pwr.o
+$(MODULE_NAME)-objs += gpspwr.o
 ifeq ($(GPS_PWR_TEST_SUPPORT),y)
 ccflags-y += -DGPS_PWR_TEST_ENABLE
 endif
