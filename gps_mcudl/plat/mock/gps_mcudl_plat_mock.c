@@ -166,6 +166,13 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		stp_ctrl_ret = gps_mcudl_mock_do_stp_ctrl(yid, true);
 		if (stp_ctrl_ret == 0)
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_ON);
+		else {
+			MDL_LOGYI(yid, "fail to turn on");
+			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_PRE_OFF);
+			(void)gps_mcudl_mock_do_stp_ctrl(yid, false);
+			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
+			gps_mcudl_clear_fw_loading_done_flag();
+		}
 	} else if (!op && new_xbitmask == 0) {
 		/* turn off */
 		do_stp_ctrl = true;
