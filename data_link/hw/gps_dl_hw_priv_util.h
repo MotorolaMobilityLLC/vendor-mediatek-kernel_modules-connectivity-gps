@@ -28,6 +28,7 @@ enum gps_dl_bus_rw_opt_enum {
 #define BMASK_RW_DO_CHECK     (1UL << RW_DO_CHECK)
 #define BMASK_RW_FORCE_PRINT  (1UL << RW_FORCE_PRINT)
 #define BMASK_RW_FULL_PRINT   (1UL << RW_FULL_PRINT)
+#define BMASK_RW_NONEED_PRINT (0) /*do not print*/
 
 void gps_dl_bus_wr_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsigned int val,
 	unsigned int opt_bitmask);
