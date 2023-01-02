@@ -50,3 +50,15 @@ void gps_mcusys_data_sync2target_host_status_cmd_post_on(void)
 	gps_mcusys_data_send_frame(&frame);
 }
 
+void gps_mcusys_data_sync2target_lpp_mode_status_cmd(int op)
+{
+	struct gps_mcusys_data_sync_frame frame;
+
+	frame.type = GPS_MCU_DST_HOST_LPPMODE_STATUS_CMD;
+	if (op == 1)
+		frame.data.lpp_mode_status_cmd = true;
+	else
+		frame.data.lpp_mode_status_cmd = false;
+	frame.data_size = sizeof(frame.data.lpp_mode_status_cmd);
+	gps_mcusys_data_send_frame(&frame);
+}
