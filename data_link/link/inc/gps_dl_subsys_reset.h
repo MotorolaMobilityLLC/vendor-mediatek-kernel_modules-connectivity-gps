@@ -44,7 +44,7 @@ bool gps_dl_conninfra_is_okay_or_handle_it(int *p_hung_value, bool dump_on_hung_
 bool gps_mcudl_conninfra_is_okay_or_handle_it(void);
 int gps_mcudl_coredump_is_readable(void);
 #endif
-
+void gps_dl_slp_prot_fail_and_dump(void);
 void gps_dl_test_mask_mcub_irq_on_open_set(enum gps_dl_link_id_enum link_id, bool mask);
 bool gps_dl_test_mask_mcub_irq_on_open_get(enum gps_dl_link_id_enum link_id);
 
