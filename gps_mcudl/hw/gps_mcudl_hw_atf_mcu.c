@@ -580,13 +580,19 @@ void gps_mcudl_hw_mcu_show_status(void)
 bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
 {
 	struct arm_smccc_res res;
-	int ret;
+	bool is_okay = false;
 
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_MCUDL_HW_MCU_SET_OR_CLR_FW_OWN_OPID,
 			to_set, 0, 0, 0, 0, 0, &res);
-	ret = (bool)res.a0;
+	is_okay = (bool)res.a0;
 
-	return ret;
+	if (is_okay != true) {
+		GDL_HW_POLL_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_BGF_LPCTL_BGF_AP_HOST_OWNER_STATE_SYNC, to_set,
+			POLL_DEFAULT, &is_okay);
+		GDL_LOGW("to_set=%d, is_okay=%d", to_set, is_okay);
+	}
+	return is_okay;
 }
 
 /* tmp*/
