@@ -3,6 +3,10 @@
  * Copyright (c) 2021 MediaTek Inc.
  */
 
+#include "gps_dl_config.h"
+#if GPS_DL_ON_LINUX
+#include <asm/io.h>
+#endif
 #include "gps_mcu_hif_api.h"
 
 const struct gps_mcu_hif_ap2mcu_shared_data *gps_mcu_hif_get_ap2mcu_shared_data_ptr(void)
@@ -50,50 +54,94 @@ unsigned char *gps_mcu_hif_get_mcu2ap_emi_buf_addr(enum gps_mcu_hif_ch ch)
 void gps_mcu_hif_get_ap2mcu_trans_start_desc(enum gps_mcu_hif_ch ch,
 	struct gps_mcu_hif_trans_start_desc *p_start_desc)
 {
+#if GPS_DL_ON_LINUX
+	memcpy_fromio(p_start_desc,
+		&p_gps_mcu_hif_ap2mcu_region->data.inf.inf.ap2mcu_trans_start_desc[ch],
+		sizeof(*p_start_desc));
+#else
 	*p_start_desc = p_gps_mcu_hif_ap2mcu_region->data.inf.inf.ap2mcu_trans_start_desc[ch];
+#endif
 }
 
 void gps_mcu_hif_get_ap2mcu_trans_end_desc(enum gps_mcu_hif_ch ch,
 	struct gps_mcu_hif_trans_end_desc *p_end_desc)
 {
+#if GPS_DL_ON_LINUX
+	memcpy_fromio(p_end_desc,
+		&p_gps_mcu_hif_mcu2ap_region->data.inf.inf.ap2mcu_trans_end_desc[ch],
+		sizeof(*p_end_desc));
+#else
 	*p_end_desc = p_gps_mcu_hif_mcu2ap_region->data.inf.inf.ap2mcu_trans_end_desc[ch];
+#endif
 }
 
 void gps_mcu_hif_set_ap2mcu_trans_start_desc(enum gps_mcu_hif_ch ch,
 	struct gps_mcu_hif_trans_start_desc *p_start_desc)
 {
+#if GPS_DL_ON_LINUX
+	memcpy_toio(&p_gps_mcu_hif_ap2mcu_region->data.inf.inf.ap2mcu_trans_start_desc[ch],
+		p_start_desc, sizeof(*p_start_desc));
+#else
 	p_gps_mcu_hif_ap2mcu_region->data.inf.inf.ap2mcu_trans_start_desc[ch] = *p_start_desc;
+#endif
 }
 
 void gps_mcu_hif_set_ap2mcu_trans_end_desc(enum gps_mcu_hif_ch ch,
 	struct gps_mcu_hif_trans_end_desc *p_end_desc)
 {
+#if GPS_DL_ON_LINUX
+	memcpy_toio(&p_gps_mcu_hif_mcu2ap_region->data.inf.inf.ap2mcu_trans_end_desc[ch],
+		p_end_desc, sizeof(*p_end_desc));
+#else
 	p_gps_mcu_hif_mcu2ap_region->data.inf.inf.ap2mcu_trans_end_desc[ch] = *p_end_desc;
+#endif
 }
 
 /* MCU to AP desc */
 void gps_mcu_hif_get_mcu2ap_trans_start_desc(enum gps_mcu_hif_ch ch,
 	struct gps_mcu_hif_trans_start_desc *p_start_desc)
 {
+#if GPS_DL_ON_LINUX
+	memcpy_fromio(p_start_desc,
+		&p_gps_mcu_hif_ap2mcu_region->data.inf.inf.mcu2ap_trans_start_desc[ch],
+		sizeof(*p_start_desc));
+#else
 	*p_start_desc = p_gps_mcu_hif_ap2mcu_region->data.inf.inf.mcu2ap_trans_start_desc[ch];
+#endif
 }
 
 void gps_mcu_hif_get_mcu2ap_trans_end_desc(enum gps_mcu_hif_ch ch,
 	struct gps_mcu_hif_trans_end_desc *p_end_desc)
 {
+#if GPS_DL_ON_LINUX
+	memcpy_fromio(p_end_desc,
+		&p_gps_mcu_hif_mcu2ap_region->data.inf.inf.mcu2ap_trans_end_desc[ch],
+		sizeof(*p_end_desc));
+#else
 	*p_end_desc = p_gps_mcu_hif_mcu2ap_region->data.inf.inf.mcu2ap_trans_end_desc[ch];
+#endif
 }
 
 void gps_mcu_hif_set_mcu2ap_trans_start_desc(enum gps_mcu_hif_ch ch,
 	struct gps_mcu_hif_trans_start_desc *p_start_desc)
 {
+#if GPS_DL_ON_LINUX
+	memcpy_toio(&p_gps_mcu_hif_ap2mcu_region->data.inf.inf.mcu2ap_trans_start_desc[ch],
+		p_start_desc, sizeof(*p_start_desc));
+#else
 	p_gps_mcu_hif_ap2mcu_region->data.inf.inf.mcu2ap_trans_start_desc[ch] = *p_start_desc;
+#endif
 }
 
 void gps_mcu_hif_set_mcu2ap_trans_end_desc(enum gps_mcu_hif_ch ch,
 	struct gps_mcu_hif_trans_end_desc *p_end_desc)
 {
+#if GPS_DL_ON_LINUX
+	memcpy_toio(&p_gps_mcu_hif_mcu2ap_region->data.inf.inf.mcu2ap_trans_end_desc[ch],
+		p_end_desc, sizeof(*p_end_desc));
+#else
 	p_gps_mcu_hif_mcu2ap_region->data.inf.inf.mcu2ap_trans_end_desc[ch] = *p_end_desc;
+#endif
 }
 
 void gps_mcu_hif_get_trans_start_desc(enum gps_mcu_hif_trans trans_id,
