@@ -42,8 +42,6 @@ void gps_mcudl_load_single_firmware(unsigned char *p_src_file, void __iomem *p_d
 	if (p_dst_addr == NULL || dst_len == 0)
 		return;
 
-	memset_io(p_dst_addr, 0, dst_len);
-
 	if (p_src_file == NULL)
 		return;
 
@@ -62,6 +60,7 @@ void gps_mcudl_load_single_firmware(unsigned char *p_src_file, void __iomem *p_d
 	if ((pPatch)->size <= dst_len) {
 		MDL_LOGW("Prepare to copy FW to (0x%p)\n", p_dst_addr);
 #if GPS_DL_ON_LINUX
+		memset_io(p_dst_addr, 0, dst_len);
 		memcpy_toio(p_dst_addr,
 #else
 		memcpy(p_dst_addr,
