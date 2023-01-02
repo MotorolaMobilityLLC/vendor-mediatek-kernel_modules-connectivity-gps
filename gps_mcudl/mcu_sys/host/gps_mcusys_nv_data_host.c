@@ -231,7 +231,7 @@ void gps_mcusys_nvdata_on_remote_event(enum gps_mcusys_nv_data_id nv_id,
 #if GPS_DL_ON_LINUX
 		p = gps_nv_each_link_get_read_waitable_ptr(nv_id);
 		if (!p) {
-			GPS_OFL_TRC("nv_id=%d, bypass do_wake");
+			GPS_OFL_TRC("nv_id=%d, bypass do_wake", nv_id);
 			break;
 		}
 		do_wake_really = gps_dl_link_wake_up2(p);
