@@ -722,9 +722,9 @@ void gps_dl_hal_set_deep_stop_mode_revert_for_mvcd(enum gps_dl_link_id_enum link
 
 void gps_dl_hal_gps_wait_wakeup_done_or_timeout(enum gps_dl_link_id_enum link_id)
 {
-	enum gps_dsp_state_t dsp_state;
+	enum gps_dsp_state_t dsp_state = GPS_DSP_ST_MAX;
 	unsigned int t0;
-	unsigned int dt_wait;
+	unsigned int dt_wait = 0;
 	int i = 0;
 
 	t0 = gps_dl_tick_get_ms();
