@@ -38,6 +38,11 @@ bool gps_mcusys_nv_common_shared_mem_take(
 	struct gps_mcusys_nv_data_sub_header *p_local, *p_remote;
 
 	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+	if (!p_hdr) {
+		GPS_OFL_TRC("nv_id=%d, p_hdr get failed", nv_id);
+		return false;
+	}
+
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, is_on_mcu);
 	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, is_on_mcu);
 
@@ -67,6 +72,11 @@ void gps_mcusys_nv_common_shared_mem_give(
 	struct gps_mcusys_nv_data_sub_header *p_local;
 
 	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+	if (!p_hdr) {
+		GPS_OFL_TRC("nv_id=%d, p_hdr get failed", nv_id);
+		return;
+	}
+
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, is_on_mcu);
 	p_local->occupied = 0;
 }
@@ -87,6 +97,11 @@ int gps_mcusys_nv_common_shared_mem_invalidate2(enum gps_mcusys_nv_data_id nv_id
 
 	tick0 = GPSMDL_PLAT_TICK_GET();
 	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+	if (!p_hdr) {
+		GPS_OFL_TRC("nv_id=%d, p_hdr get failed", nv_id);
+		return -1;
+	}
+
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, NV_IS_ON_MCU);
 	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, NV_IS_ON_MCU);
 	p_dst = (gpsmdl_u8 *)&p_hdr->data_start[0];
@@ -153,6 +168,11 @@ int gps_mcusys_nv_common_shared_mem_write2(enum gps_mcusys_nv_data_id nv_id,
 
 	tick0 = GPSMDL_PLAT_TICK_GET();
 	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+	if (!p_hdr) {
+		GPS_OFL_TRC("nv_id=%d, p_hdr get failed", nv_id);
+		return 0;
+	}
+
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, NV_IS_ON_MCU);
 	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, NV_IS_ON_MCU);
 
@@ -240,6 +260,11 @@ int gps_mcusys_nv_common_shared_mem_read2(enum gps_mcusys_nv_data_id nv_id,
 
 	tick0 = GPSMDL_PLAT_TICK_GET();
 	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+	if (!p_hdr) {
+		GPS_OFL_TRC("nv_id=%d, p_hdr get failed", nv_id);
+		return -1;
+	}
+
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, NV_IS_ON_MCU);
 	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, NV_IS_ON_MCU);
 
@@ -318,6 +343,11 @@ int gps_mcusys_nv_common_shared_mem_get_info(enum gps_mcusys_nv_data_id nv_id,
 
 	tick0 = GPSMDL_PLAT_TICK_GET();
 	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+	if (!p_hdr) {
+		GPS_OFL_TRC("nv_id=%d, p_hdr get failed", nv_id);
+		return -1;
+	}
+
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, NV_IS_ON_MCU);
 	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, NV_IS_ON_MCU);
 
@@ -367,6 +397,11 @@ void gps_mcusys_nv_common_shared_mem_set_local_open(enum gps_mcusys_nv_data_id n
 	gpsmdl_u32 old_local_flags, new_local_flags, remote_flags;
 
 	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+	if (!p_hdr) {
+		GPS_OFL_TRC("nv_id=%d, p_hdr get failed", nv_id);
+		return;
+	}
+
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, NV_IS_ON_MCU);
 	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, NV_IS_ON_MCU);
 
@@ -388,6 +423,11 @@ bool gps_mcusys_nv_common_shared_mem_get_remote_open(enum gps_mcusys_nv_data_id 
 	gpsmdl_u32 local_flags, remote_flags;
 
 	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+	if (!p_hdr) {
+		GPS_OFL_TRC("nv_id=%d, p_hdr get failed", nv_id);
+		return false;
+	}
+
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, NV_IS_ON_MCU);
 	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, NV_IS_ON_MCU);
 	local_flags = p_local->flags;
