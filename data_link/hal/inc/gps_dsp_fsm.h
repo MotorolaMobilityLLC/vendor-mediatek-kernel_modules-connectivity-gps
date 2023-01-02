@@ -90,6 +90,22 @@ enum dsp_ctrl_enum {
 	GPS_DSP_CTRL_MAX
 };
 
+#define GPS_DSP_STATE_HISTORY_ITEM_MAX (16)
+
+struct gps_dsp_state_history_item_t {
+	unsigned long tick;
+	enum gps_dsp_state_t state;
+};
+
+struct gps_dsp_state_history_struct_t {
+	struct gps_dsp_state_history_item_t items[GPS_DSP_STATE_HISTORY_ITEM_MAX];
+	/* index may larger than GPS_DSP_STATE_HISTORY_ITEM_MAX, only index % GPS_DSP_STATE_HISTORY_ITEM_MAX*/
+	/*can be used for indexing of items*/
+	unsigned int index;
+};
+
+bool gps_dsp_state_is_dump_needed_for_reset_done(enum gps_dl_link_id_enum link_id);
+enum gps_dsp_state_t gps_dsp_history_state_get(enum gps_dl_link_id_enum link_id, unsigned int item_index);
 enum gps_dsp_state_t gps_dsp_state_get(enum gps_dl_link_id_enum link_id);
 void gps_dsp_state_change_to(enum gps_dsp_state_t state, enum gps_dl_link_id_enum link_id);
 bool gps_dsp_state_is(enum gps_dsp_state_t state, enum gps_dl_link_id_enum link_id);
