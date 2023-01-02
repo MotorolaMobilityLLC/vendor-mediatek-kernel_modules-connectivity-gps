@@ -27,6 +27,7 @@ bool gps_mcudl_ap2mcu_ydata_send(enum gps_mcudl_yid yid, enum gps_mcudl_pkt_type
 
 void gps_mcudl_mcu2ap_ydata_sta_init(void);
 void gps_mcudl_mcu2ap_ydata_sta_may_do_dump(enum gps_mcudl_yid yid, bool force);
+unsigned long gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(enum gps_mcudl_yid yid);
 
 void gps_mcudl_mcu2ap_ydata_recv(enum gps_mcudl_yid yid,
 	const gpsmdl_u8 *p_data, gpsmdl_u32 data_len);
