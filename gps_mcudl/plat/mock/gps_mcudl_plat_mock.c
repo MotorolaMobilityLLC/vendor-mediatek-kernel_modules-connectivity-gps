@@ -124,6 +124,7 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 
 		MDL_LOGYI(yid, "gps_mcu_hif_init");
 		gps_mcu_hif_init();
+		gps_mcudl_mcu2ap_ydata_sta_init();
 		MDL_LOGYI(yid, "gps_mcudl_ap2mcu_context_init");
 		gps_mcudl_ap2mcu_context_init(yid);
 		gps_mcusys_mnlbin_fsm(GPS_MCUSYS_MNLBIN_SYS_ON);
