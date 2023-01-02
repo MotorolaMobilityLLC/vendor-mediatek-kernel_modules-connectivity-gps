@@ -7,6 +7,7 @@
 #include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcudl_plat_api.h"
 #include "gps_dl_dma_buf.h"
+#include "gps_dl_time_tick.h"
 #include "gps_each_link.h"
 #include "gps_mcudl_context.h"
 #include "gps_mcudl_each_link.h"
@@ -169,33 +170,102 @@ bool gps_mcudl_ap2mcu_ydata_send(enum gps_mcudl_yid yid,
 	return gps_mcudl_pkt_send(&p_trx_ctx->slot, type, p_data, data_len);
 }
 
+struct gps_mcudl_mcu2ap_ydata_sta {
+	unsigned long curr_byte_cnt;
+	unsigned long last_ntf_byte_cnt;
+	unsigned long last_ntf_tick;
+	unsigned int bypass_ntf_cnt;
+};
+
+struct gps_mcudl_mcu2ap_ydata_sta g_gps_mcudl_mcu2ap_ydata_sta[GPS_MDLY_CH_NUM];
+
+void gps_mcudl_mcu2ap_ydata_sta_init(void)
+{
+	memset(&g_gps_mcudl_mcu2ap_ydata_sta, 0, sizeof(g_gps_mcudl_mcu2ap_ydata_sta));
+}
+
+struct gps_mcudl_mcu2ap_ydata_sta *gps_mcudl_mcu2ap_ydata_sta_get(enum gps_mcudl_yid yid)
+{
+	return &g_gps_mcudl_mcu2ap_ydata_sta[yid];
+}
+
+unsigned long gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(enum gps_mcudl_yid yid)
+{
+	struct gps_mcudl_mcu2ap_ydata_sta *p_ysta;
+	unsigned long recv_byte_cnt;
+
+	p_ysta = gps_mcudl_mcu2ap_ydata_sta_get(yid);
+	gps_mcudl_slot_protect();
+	recv_byte_cnt = p_ysta->curr_byte_cnt;
+	gps_mcudl_slot_unprotect();
+	return recv_byte_cnt;
+}
+
+void gps_mcudl_mcu2ap_ydata_sta_may_do_dump(enum gps_mcudl_yid yid, bool force)
+{
+	unsigned long ticks_since_last_notify;
+	unsigned long bytes_since_last_notify;
+	struct gps_mcudl_mcu2ap_ydata_sta *p_ysta;
+	struct gps_mcudl_mcu2ap_ydata_sta ysta_bak;
+
+	p_ysta = gps_mcudl_mcu2ap_ydata_sta_get(yid);
+	gps_mcudl_slot_protect();
+	ysta_bak = *p_ysta;
+	gps_mcudl_slot_unprotect();
+
+	if (ysta_bak.last_ntf_tick == 0)
+		ticks_since_last_notify = 0;
+	else
+		ticks_since_last_notify = gps_dl_tick_get_us() - ysta_bak.last_ntf_tick;
+	bytes_since_last_notify = ysta_bak.curr_byte_cnt - ysta_bak.last_ntf_byte_cnt;
+	if (!force &&
+		ticks_since_last_notify < 1000*1000 &&
+		bytes_since_last_notify < 3*1024 &&
+		ysta_bak.bypass_ntf_cnt < 5) {
+		/* no need to show warning log if none of thresholds meet */
+		return;
+	}
+
+	MDL_LOGYW(yid, "since last ntf: f=%d, dt=%lu, cnt=%u, bytes=%lu, %lu",
+		force, ticks_since_last_notify, ysta_bak.bypass_ntf_cnt,
+		ysta_bak.curr_byte_cnt, bytes_since_last_notify);
+}
+
 void gps_mcudl_mcu2ap_ydata_recv(enum gps_mcudl_yid yid,
 	const gpsmdl_u8 *p_data, gpsmdl_u32 data_len)
 {
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
 	struct gps_mcudl_data_rbuf_plus_t *p_rbuf;
+	struct gps_mcudl_mcu2ap_ydata_sta *p_ysta;
+	bool to_notify = true;
 
 	p_trx_ctx = get_txrx_ctx(yid);
 	p_rbuf = &p_trx_ctx->rx_rbuf;
+	p_ysta = gps_mcudl_mcu2ap_ydata_sta_get(yid);
 
 	/* writer */
 	gps_mcudl_data_rbuf_put(p_rbuf, p_data, data_len);
-	p_trx_ctx->host_sta.pkt_sta.total_recv += (gpsmdl_u64)data_len;
+
+	to_notify = !gps_mcudl_mcu2ap_get_wait_read_flag(yid);
+	gps_mcudl_slot_protect();
+	p_ysta->curr_byte_cnt += (unsigned long)data_len;
+	if (to_notify) {
+		p_ysta->last_ntf_tick = gps_dl_tick_get_us();
+		p_ysta->last_ntf_byte_cnt = p_ysta->curr_byte_cnt;
+		p_ysta->bypass_ntf_cnt = 0;
+	} else
+		p_ysta->bypass_ntf_cnt++;
+	gps_mcudl_slot_unprotect();
 
 	/* send msg to call gps_mcudl_ap2mcu_ydata_proc */
-	gps_mcudl_mcu2ap_ydata_notify(yid);
-}
-
-void gps_mcudl_mcu2ap_ydata_notify(enum gps_mcudl_yid y_id)
-{
-	bool to_notify = true;
-
-	to_notify = !gps_mcudl_mcu2ap_get_wait_read_flag(y_id);
 	if (to_notify) {
-		gps_mcudl_mcu2ap_set_wait_read_flag(y_id, true);
-		gps_mcudl_ylink_event_send(y_id, GPS_MCUDL_YLINK_EVT_ID_RX_DATA_READY);
+		gps_mcudl_mcu2ap_set_wait_read_flag(yid, true);
+		gps_mcudl_ylink_event_send(yid, GPS_MCUDL_YLINK_EVT_ID_RX_DATA_READY);
+		return;
 	}
-	MDL_LOGYD(y_id, "ntf=%d", to_notify);
+
+	/* force=fasle means to dump warning log only if condtion meets threshold */
+	gps_mcudl_mcu2ap_ydata_sta_may_do_dump(yid, false);
 }
 
 void gps_mcudl_mcu2ap_ydata_proc(enum gps_mcudl_yid yid)
@@ -222,6 +292,8 @@ void gps_mcudl_mcu2ap_ydata_proc(enum gps_mcudl_yid yid)
 
 	MDL_LOGYD(yid, "reader: w=%d, r=%d", reader_write_idx, reader_read_idx);
 
+	p_trx_ctx->host_sta.pkt_sta.total_recv =
+		(gpsmdl_u64)gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(yid);
 	p_trx_ctx->host_sta.pkt_sta.total_parse_proc = (gpsmdl_u32)(p_parser->proc_byte_cnt);
 	p_trx_ctx->host_sta.pkt_sta.total_parse_drop = (gpsmdl_u32)(p_parser->drop_byte_cnt);
 	p_trx_ctx->host_sta.pkt_sta.total_route_drop = 0;
@@ -426,7 +498,7 @@ gpsmdl_u32 gps_mcudl_flowctrl_cal_window_size(void)
 	return win_size;
 }
 
-#define GEOFENCE_PKT_HOST_ACK_LEN (2*1024)
+#define GPS_MCUDL_PKT_HOST_ACK_LEN (2*1024)
 void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 {
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
@@ -441,7 +513,7 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 	/* 1. ack the total length host received every n (KB)*/
 	/* 2. ack if connsys need to reset host statistic, all of the sta value should be set to zero.*/
 	/*	  connsys will block sending until host ack of this reset cmd back.*/
-	if ((not_ack_len >= GEOFENCE_PKT_HOST_ACK_LEN) ||
+	if ((not_ack_len >= GPS_MCUDL_PKT_HOST_ACK_LEN) ||
 		(p_trx_ctx->host_sta.reset_flag)) {
 		old_reset_flag = p_trx_ctx->host_sta.reset_flag;
 		if (p_trx_ctx->host_sta.is_enable) {
@@ -453,7 +525,7 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 
 		to_notify = !gps_mcudl_ap2mcu_get_wait_flush_flag(yid);
 		MDL_LOGYI(yid,
-			"send_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d,ntf=%d",
+			"send_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d,ntf=%d",
 			(gpsmdl_u32)(p_trx_ctx->host_sta.pkt_sta.total_recv),
 			(gpsmdl_u32)(p_trx_ctx->host_sta.last_ack_recv_len),
 			p_trx_ctx->host_sta.pkt_sta.total_parse_proc,
@@ -473,6 +545,28 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 
 		p_trx_ctx->host_sta.last_ack_recv_len = p_trx_ctx->host_sta.pkt_sta.total_recv;
 	}
+}
+
+void gps_mcudl_flowctrl_dump_host_sta(enum gps_mcudl_yid yid)
+{
+	struct gps_mcudl_data_trx_context *p_trx_ctx;
+	gpsmdl_u64 not_ack_len;
+	bool old_reset_flag = false;
+
+	p_trx_ctx = get_txrx_ctx(yid);
+	not_ack_len = p_trx_ctx->host_sta.pkt_sta.total_recv - p_trx_ctx->host_sta.last_ack_recv_len;
+	old_reset_flag = p_trx_ctx->host_sta.reset_flag;
+	MDL_LOGYW(yid,
+		"dump_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d",
+		(gpsmdl_u32)(p_trx_ctx->host_sta.pkt_sta.total_recv),
+		(gpsmdl_u32)(p_trx_ctx->host_sta.last_ack_recv_len),
+		p_trx_ctx->host_sta.pkt_sta.total_parse_proc,
+		p_trx_ctx->host_sta.pkt_sta.total_pkt_cnt,
+		p_trx_ctx->host_sta.pkt_sta.total_parse_drop,
+		p_trx_ctx->host_sta.pkt_sta.total_route_drop,
+		p_trx_ctx->host_sta.is_enable,
+		old_reset_flag,
+		not_ack_len);
 }
 
 bool gps_mcudl_mcu2ap_get_wait_read_flag(enum gps_mcudl_yid y_id)

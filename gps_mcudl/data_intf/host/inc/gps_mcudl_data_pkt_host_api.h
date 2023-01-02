@@ -25,9 +25,11 @@ bool gps_mcudl_ap2mcu_xdata_send_v2(enum gps_mcudl_xid x_id,
 bool gps_mcudl_ap2mcu_ydata_send(enum gps_mcudl_yid yid, enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *p_data, gpsmdl_u32 data_len);
 
+void gps_mcudl_mcu2ap_ydata_sta_init(void);
+void gps_mcudl_mcu2ap_ydata_sta_may_do_dump(enum gps_mcudl_yid yid, bool force);
+
 void gps_mcudl_mcu2ap_ydata_recv(enum gps_mcudl_yid yid,
 	const gpsmdl_u8 *p_data, gpsmdl_u32 data_len);
-void gps_mcudl_mcu2ap_ydata_notify(enum gps_mcudl_yid y_id);
 void gps_mcudl_mcu2ap_ydata_proc(enum gps_mcudl_yid yid);
 
 void gps_mcudl_ap2mcu_data_slot_flush_on_xwrite(enum gps_mcudl_xid x_id);
