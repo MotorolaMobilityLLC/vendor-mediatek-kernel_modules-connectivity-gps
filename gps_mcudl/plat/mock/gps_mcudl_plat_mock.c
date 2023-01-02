@@ -24,6 +24,7 @@
 #include "gps_mcudl_fw_code.h"
 #endif
 #include "gps_mcu_hif_mgmt_cmd_send.h"
+#include "gps_mcudl_hal_ccif.h"
 
 
 struct gps_mcudl_ystate {
@@ -88,7 +89,7 @@ bool gps_mcudl_link_drv_on_recv_mgmt_data(const unsigned char *p_data, unsigned 
 
 bool gps_mcudl_link_drv_on_recv_normal_data(const unsigned char *p_data, unsigned int data_len)
 {
-	MDL_LOGW("data_len=%d, data0=0x%x", data_len, p_data[0]);
+	MDL_LOGD("data_len=%d, data0=0x%x", data_len, p_data[0]);
 #if 1
 	gps_mcudl_mcu2ap_ydata_recv(GPS_MDLY_NORMAL, p_data, data_len);
 #else
@@ -212,7 +213,7 @@ void gps_mcudl_stpgps1_read_proc(void)
 	y_id = GPS_MDLY_NORMAL;
 	MDL_LOGYD(y_id, "");
 
-	gps_mcudl_ap2mcu_set_wait_read_flag(y_id, false);
+	gps_mcudl_mcu2ap_set_wait_read_flag(y_id, false);
 	do {
 		ret_len = gps_mcudl_stpgps1_read_nonblock(&tmp_buf[0], 2048);
 		MDL_LOGYD(y_id, "read: len=%d", ret_len);
@@ -269,6 +270,7 @@ int gps_mcudl_stpgps1_open(void)
 		&gps_mcudl_link_drv_on_recv_normal_data);
 	MDL_LOGI("add listeners, done");
 
+	g_gps_ccif_irq_cnt = 0;
 	g_gps_fw_log_irq_cnt = 0;
 	if (g_gps_fw_log_is_on)
 		gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(true);
