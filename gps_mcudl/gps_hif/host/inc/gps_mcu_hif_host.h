@@ -17,6 +17,5 @@ void gps_mcu_hif_host_on_tx_finished(enum gps_mcu_hif_ch hif_ch);
 void gps_mcu_hif_host_on_rx_finished(enum gps_mcu_hif_ch hif_ch, unsigned int data_len);
 void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id);
 void gps_mcu_hif_host_ccif_irq_handler_in_isr(void);
-void gps_mcu_hif_host_ccif_isr(void);
 
 #endif /* _GPS_MCU_HIF_HOST_H */
