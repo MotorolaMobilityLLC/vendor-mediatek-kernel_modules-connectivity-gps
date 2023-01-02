@@ -67,6 +67,14 @@ void gps_mcudl_xlink_trigger_print_hw_status(void)
 	gps_mcudl_xlink_event_send(GPS_MDLX_MCUSYS, GPS_MCUDL_EVT_LINK_PRINT_HW_STATUS);
 }
 
+void gps_mcudl_xlink_fw_log_ctrl(bool on)
+{
+	if (on)
+		gps_mcudl_xlink_event_send(GPS_MDLX_MCUSYS, GPS_MCUDL_EVT_LINK_FW_LOG_ON);
+	else
+		gps_mcudl_xlink_event_send(GPS_MDLX_MCUSYS, GPS_MCUDL_EVT_LINK_FW_LOG_OFF);
+}
+
 void gps_mcudl_xlink_test_fw_own_ctrl(bool to_set)
 {
 	bool is_okay;
@@ -86,12 +94,15 @@ void gps_mcudl_xlink_test_toggle_ccif(unsigned int ch)
 	gps_mcudl_hal_ccif_tx_trigger(ch);
 }
 
-void gps_mcudl_xlink_test_toggle_reset_by_gps_hif(void)
+void gps_mcudl_xlink_test_toggle_reset_by_gps_hif(unsigned int type)
 {
 	bool is_okay;
+	unsigned char buf[2];
 
-	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x04", 1);
-	MDL_LOGW("write cmd4, is_ok=%d", is_okay);
+	buf[0] = '\x04';
+	buf[1] = (unsigned char)(type & 0xFF);
+	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, &buf[0], 2);
+	MDL_LOGW("write cmd4, type=%u, is_ok=%d", type, is_okay);
 }
 
 void gps_mcudl_xlink_test_read_mcu_reg(unsigned int addr, unsigned int bytes)
