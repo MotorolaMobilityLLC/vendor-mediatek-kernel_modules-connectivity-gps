@@ -10,6 +10,7 @@
 #if GPS_DL_HAS_MCUDL_HAL
 #include "gps_mcudl_hal_ccif.h"
 #endif
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #if GPS_DL_ON_LINUX
 #include <asm/io.h>
 #include "gps_dl_linux_reserved_mem_v2.h"
@@ -122,9 +123,11 @@ bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
 		return false;
 	}
 #if GPS_DL_HAS_MCUDL_HAL
+	gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_HIF_SEND);
 	if (gps_mcudl_hal_ccif_tx_is_busy(GPS_MCUDL_CCIF_CH4)) {
 		MDL_LOGW("hif_ch=%d, len=%d, send fail due to ccif busy",
 			hif_ch, data_len);
+		(void)gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_HIF_SEND);
 		return false;
 	}
 	gps_mcudl_hal_ccif_tx_prepare(GPS_MCUDL_CCIF_CH4);
@@ -141,6 +144,7 @@ bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
 	gps_mcu_hif_host_set_trans_req_sent(trans_id);
 #if GPS_DL_HAS_MCUDL_HAL
 	gps_mcudl_hal_ccif_tx_trigger(GPS_MCUDL_CCIF_CH4);
+	(void)gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_HIF_SEND);
 #endif
 	return true;
 }

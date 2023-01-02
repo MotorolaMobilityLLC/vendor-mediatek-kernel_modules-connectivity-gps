@@ -8,6 +8,7 @@
 #include "gps_mcudl_hw_mcu.h"
 #include "gps_mcudl_hw_dep_macro.h"
 #include "gps_mcudl_hw_priv_util.h"
+#include "gps_dl_time_tick.h"
 
 bool gps_mcudl_hw_conn_ver_and_wake_is_ok(void)
 {
@@ -409,14 +410,18 @@ void gps_mcudl_hw_mcu_show_status(void)
 bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
 {
 	bool is_okay = false;
-	unsigned int own;
+	unsigned int fw_own;
+	unsigned long d_us;
+	unsigned long us0;
 
-	own = GDL_HW_GET_CONN_INFRA_ENTRY(
+	fw_own = GDL_HW_GET_CONN_INFRA_ENTRY(
 		CONN_HOST_CSR_TOP_BGF_LPCTL_BGF_AP_HOST_OWNER_STATE_SYNC);
 
-	GDL_LOGW("to_set=%d, own=%d", to_set, own);
-	if (!!own == to_set)
-		return true;
+	if (!!fw_own == to_set) {
+		is_okay = true;
+		GDL_LOGW("fw_own=%d, to_set=%d, is_okay=%d, bypass", fw_own, to_set, is_okay);
+		return is_okay;
+	}
 
 	if (to_set)
 		GDL_HW_SET_CONN_INFRA_ENTRY(
@@ -425,10 +430,18 @@ bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
 		GDL_HW_SET_CONN_INFRA_ENTRY(
 			CONN_HOST_CSR_TOP_BGF_LPCTL_BGF_AP_HOST_CLR_FW_OWN_HS_PULSE, 1);
 
+	us0 = gps_dl_tick_get_us();
 	GDL_HW_POLL_CONN_INFRA_ENTRY(
 		CONN_HOST_CSR_TOP_BGF_LPCTL_BGF_AP_HOST_OWNER_STATE_SYNC, to_set,
 		POLL_DEFAULT, &is_okay);
-	GDL_LOGW("to_set=%d, is_okay=%d", to_set, is_okay);
+	d_us = gps_dl_tick_get_us() - us0;
+
+	if (!is_okay)
+		GDL_LOGE("fw_own=%d, to_set=%d, is_okay=%d, d_us=%lu", fw_own, to_set, is_okay, d_us);
+	else if (d_us > 2000)
+		GDL_LOGW("fw_own=%d, to_set=%d, is_okay=%d, d_us=%lu", fw_own, to_set, is_okay, d_us);
+	else
+		GDL_LOGD("fw_own=%d, to_set=%d, is_okay=%d, d_us=%lu", fw_own, to_set, is_okay, d_us);
 	return is_okay;
 }
 
