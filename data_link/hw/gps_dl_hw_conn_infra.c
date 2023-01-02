@@ -26,7 +26,7 @@ unsigned int gps_dl_hw_get_gps_emi_remapping(void)
 	return GDL_HW_GET_CONN_INFRA_ENTRY(GDL_HW_SET_EMI_REMAP_FIELD);
 }
 
-#if GPS_DL_ON_CTP
+#if (GPS_DL_ON_CTP || defined(GDL_HW_SET_PERI_REMAP_FIELD))
 void gps_dl_hw_set_gps_peri_remapping(unsigned int _20msb_of_36bit_phy_addr)
 {
 	GDL_HW_SET_CONN_INFRA_ENTRY(GDL_HW_SET_PERI_REMAP_FIELD, _20msb_of_36bit_phy_addr);

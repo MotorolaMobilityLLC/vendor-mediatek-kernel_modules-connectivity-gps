@@ -9,6 +9,7 @@
 #include "gps_dl_hw_dep_macro.h"
 
 #include "../gps_dl_hw_priv_util.h"
+#include "conn_infra/conn_infra_bus_cr.h"
 
 void gps_dl_hw_dep_gps_sw_request_peri_usage(bool request)
 {
@@ -123,5 +124,11 @@ void gps_dl_hw_dep_may_disable_bpll(void)
 void gps_dl_hw_dep_may_set_bus_debug_flag(void)
 {
 	/* Do nothing for MT6983 */
+}
+
+void gps_dl_hw_dep_may_remap_conn2ap_gps_peri(void)
+{
+	/* MT6983 CONN-GPS need to access 0x1c00_xxxx and 0x1c01_xxxx */
+	gps_dl_hw_set_gps_peri_remapping(0x01c00);
 }
 
