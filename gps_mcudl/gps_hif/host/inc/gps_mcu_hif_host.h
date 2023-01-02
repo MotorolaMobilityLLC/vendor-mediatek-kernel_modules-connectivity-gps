@@ -21,4 +21,8 @@ void gps_mcu_hif_host_ccif_irq_handler_in_isr(void);
 void gps_mcu_hif_host_dump_ch(enum gps_mcu_hif_ch hif_ch);
 void gps_mcu_hif_host_dump_trans(enum gps_mcu_hif_trans trans_id);
 
+void gps_mcu_hif_host_trans_hist_init(void);
+void gps_mcu_hif_host_trans_hist_rec(struct gps_mcu_hif_trans_rec *p_rec);
+void gps_mcu_hif_host_trans_hist_dump(void);
+
 #endif /* _GPS_MCU_HIF_HOST_H */
