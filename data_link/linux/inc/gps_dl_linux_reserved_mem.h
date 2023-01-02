@@ -14,6 +14,7 @@
 
 extern phys_addr_t gGpsRsvMemPhyBase;
 extern unsigned long long gGpsRsvMemSize;
+extern int gps_not_allocate_emi_from_lk2;
 
 void gps_dl_reserved_mem_init(void);
 void gps_dl_reserved_mem_deinit(void);
