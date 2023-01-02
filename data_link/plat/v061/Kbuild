@@ -60,7 +60,7 @@ KBUILD_MODPOST_FAIL_ON_WARNINGS := y
 #ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/include/clkbuf_v1/$(MTK_PLATFORM)
 #ccflags-y += -I$(srctree)/drivers/devfreq
 ###############################################################################
-export GPS_PLATFORM := v051
+export GPS_PLATFORM := v061
 MODULE_NAME := gps_drv_dl_$(GPS_PLATFORM)
 obj-m += $(MODULE_NAME).o
 
@@ -68,6 +68,14 @@ GPS_DRV_CONTROL_LNA := n
 GPS_DL_HAS_MOCK := n
 GPS_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps/data_link
 ccflags-y += -DMTK_GENERIC_HAL
+
+ifeq ($(GPS_PLATFORM),v061)
+GPSMDL := y
+else
+GPSMDL := n
+endif
+
+$(info CONFIG_MTK_COMBO_CHIP=$(CONFIG_MTK_COMBO_CHIP), GPS_PLATFORM=$(GPS_PLATFORM), GPSMDL=$(GPSMDL))
 
 ccflags-y += -I$(GPS_SRC_FOLDER)/plat/$(GPS_PLATFORM)
 ccflags-y += -I$(GPS_SRC_FOLDER)/plat/$(GPS_PLATFORM)/inc
@@ -91,6 +99,96 @@ ccflags-y += -I$(GPS_SRC_FOLDER)/lib/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/hal/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/hw/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link_mock/mock/inc
+
+ifeq ($(GPSMDL),y)
+ccflags-y += -DGPS_DL_HAS_MCUDL=1
+
+GPSMDL_HAL := y
+GPSMDL_HW := y
+GPSMDL_FW := y
+
+GPS_MDL_INC_ROOT := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps/gps_mcudl
+GPS_MDL_SRC_ROOT := ../../../gps_mcudl
+
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/inc
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/../data_link/plat/v060/hw/inc
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/plat/v060/hw/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/gps_mcudl_context.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/gps_mcudl_name_list.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/plat/gps_mcudl_plat_dedicated_mcu.o
+
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/linux/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/linux/gps_mcudl_devices.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/linux/gps_mcudl_each_device.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/linux/gps_nv_each_device.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/linux/gps_mcudl_linux_fw_loading.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/linux/gps_mcudl_linux_xlink_buf.o
+
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/xlink/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/xlink/gps_mcudl_link_sync.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/xlink/gps_mcudl_link_util.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/xlink/gps_mcudl_link_state.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/xlink/gps_mcudl_each_link.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/xlink/gps_mcudl_xlink.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/xlink/gps_mcudl_xlink_event_proc.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/xlink/gps_mcudl_reset.o
+
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/ylink/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/ylink/gps_mcudl_ylink_event_proc.o
+
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/mcu_sys/common/inc
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/mcu_sys/host/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/mcu_sys/common/gps_mcusys_nv_common_impl.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/mcu_sys/host/gps_mcusys_data_dispatcher_host.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/mcu_sys/host/gps_mcusys_data_sync2target.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/mcu_sys/host/gps_mcusys_fsm_host.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/mcu_sys/host/gps_mcusys_nv_data_host.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/mcu_sys/host/gps_mcusys_nv_lock_host.o
+
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/data_intf/common/inc
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/data_intf/host/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/data_intf/common/gps_mcudl_data_pkt_parser.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/data_intf/common/gps_mcudl_data_pkt_rbuf.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/data_intf/common/gps_mcudl_data_pkt_slot.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/data_intf/host/gps_mcudl_data_pkt_host_impl.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/data_intf/host/gps_mcudl_data_pkt_host_impl.o
+
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/gps_hif/common/inc
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/gps_hif/host/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/gps_hif/common/gps_mcu_hif_common.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/gps_hif/common/gps_mcu_hif_core.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/gps_hif/host/gps_mcu_hif_host.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/gps_hif/host/gps_mcu_hif_mgmt_cmd_send.o
+
+ifeq ($(GPSMDL_HAL),y)
+ccflags-y += -DGPS_DL_HAS_MCUDL_HAL=1
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/hal/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_ccif.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_conn.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_mcu.o
+else
+ccflags-y += -DGPS_DL_HAS_MCUDL_HAL=0
+endif
+
+ifeq ($(GPSMDL_HW),y)
+ccflags-y += -DGPS_DL_HAS_MCUDL_HW=1
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/hw/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hw/gps_mcudl_hw_ccif.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hw/gps_mcudl_hw_mcu.o
+else
+ccflags-y += -DGPS_DL_HAS_MCUDL_HW=0
+endif
+
+ifeq ($(GPSMDL_FW),y)
+ccflags-y += -DGPS_DL_HAS_MCUDL_FW=1
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/fw/inc
+ccflags-y += -I$(GPS_MDL_INC_ROOT)/plat/v060/fw/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/fw/gps_mcudl_fw_code.o
+else
+ccflags-y += -DGPS_DL_HAS_MCUDL_FW=0
+endif
+
+endif
 
 $(MODULE_NAME)-objs += ../../gps_dl_context.o
 $(MODULE_NAME)-objs += ../../gps_dl_module.o
@@ -145,8 +243,8 @@ $(MODULE_NAME)-objs += ../../linux/gps_dl_osal.o
 
 $(MODULE_NAME)-objs += gps_dl_hw_dep_bgf.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_gps.o
-$(MODULE_NAME)-objs += gps_dl_hw_dep_dma.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_debug.o
+$(MODULE_NAME)-objs += gps_dl_hw_dep_dma.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_met2_0.o
 
 ifeq ($(GPS_DL_HAS_MOCK),y)
