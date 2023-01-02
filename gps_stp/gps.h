@@ -14,7 +14,7 @@
 
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761) || defined(CONFIG_MACH_MT6779) \
 || defined(CONFIG_MACH_MT6768) || defined(CONFIG_MACH_MT6785) || defined(CONFIG_MACH_MT6873) \
-|| defined(CONFIG_MACH_MT6853) || defined(CONFIG_MACH_MT6833)
+|| defined(CONFIG_MACH_MT6853) || defined(CONFIG_MACH_MT6833) || defined(CONFIG_MACH_MT6781)
 #define GPS_FWCTL_SUPPORT
 #endif
 
