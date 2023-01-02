@@ -226,8 +226,8 @@ static int gps_each_device_hw_suspend(enum gps_dl_link_id_enum link_id, bool nee
 #define GPSDL_IOC_GPS_HW_RESUME        19
 #define GPSDL_IOC_GPS_LISTEN_RST_EVT   20
 #define GPSDL_IOC_GPS_GET_MD_STATUS    21
-#define GPSDL_IOC_GPS_CTRL_L5_LNA      22
-#define GPSDL_IOC_GPS_GET_BOOT_TIME    23
+#define GPSDL_IOC_GPS_CTRL_L5_LNA      27
+#define GPSDL_IOC_GPS_GET_BOOT_TIME    28
 static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
 {
 	struct gps_each_device *dev; /* device information */
