@@ -16,7 +16,8 @@ void gps_dl_iomem_dump(unsigned int dummy_addr, unsigned int dump_len)
 
 	p_iomem = gps_dl_match_major_iomem(dummy_addr, &offset);
 	if (p_iomem == NULL) {
-		GDL_LOGE("dummy_addr=0x%x, dump_len=0x%x, invalid dump range");
+		GDL_LOGE("dummy_addr=0x%x, dump_len=0x%x, invalid dump range",
+			dummy_addr, dump_len);
 		return;
 	}
 
