@@ -14,6 +14,7 @@
 #include "gps_each_link.h"
 #include "gps_dl_subsys_reset.h"
 #include "gps_dl_hal_met2_0.h"
+#include "gps_dl_hist_rec2.h"
 
 int gps_dl_procfs_dummy_op(int y, int z)
 {
@@ -120,6 +121,15 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 	return 0;
 }
 
+int gps_dl_procfs_set_data_routing_status(int y, int z)
+{
+	if (y == 0)
+		gps_dl_hist_rec2_disable_data_routing();
+	else if (y == 1)
+		gps_dl_hist_rec2_enable_data_routing();
+	return 0;
+}
+
 gps_dl_procfs_test_func_type g_gps_dl_proc_test_func_list[] = {
 	[0x00] = gps_dl_procfs_dummy_op,
 	/* [0x01] = TODO: reg read */
@@ -137,6 +147,7 @@ gps_dl_procfs_test_func_type g_gps_dl_proc_test_func_list[] = {
 	#else
 	[0x07] = NULL,
 	#endif
+	[0x08] = gps_dl_procfs_set_data_routing_status,
 };
 
 #define UNLOCK_MAGIC 0xDB9DB9
