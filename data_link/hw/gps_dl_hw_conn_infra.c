@@ -275,6 +275,7 @@ bool gps_dl_hw_is_pta_uart_init_done(void)
 #define CONN_UART_PTA_FCR_RFTL_HIGH_BIT_MASK 0x00000080
 #define CONN_UART_PTA_FCR_RFTL_HIGH_BIT_SHFT 7
 
+#if GPS_DL_BLANKING_KEEP_IDC_MODE
 bool gps_dl_hw_init_pta_uart(void)
 {
 #if 0
@@ -357,6 +358,7 @@ bool gps_dl_hw_init_pta_uart(void)
 
 	return true;
 }
+#endif
 
 void gps_dl_hw_deinit_pta_uart(void)
 {
@@ -384,6 +386,7 @@ bool gps_dl_hw_is_pta_init_done(void)
 	return done;
 }
 
+#if GPS_DL_BLANKING_KEEP_IDC_MODE
 void gps_dl_hw_init_pta(void)
 {
 	unsigned int pta_en;
@@ -405,6 +408,7 @@ void gps_dl_hw_init_pta(void)
 	} else
 		GDL_LOGI("pta_en = %d, pta_arb_en = %d, okay", pta_en, pta_arb_en);
 }
+#endif
 
 void gps_dl_hw_deinit_pta(void)
 {
