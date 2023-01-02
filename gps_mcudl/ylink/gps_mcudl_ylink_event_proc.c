@@ -12,6 +12,7 @@
 #include "gps_mcudl_plat_api.h"
 #include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcudl_hal_ccif.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcusys_fsm.h"
 #include "gps_dl_time_tick.h"
 #include "gps_dl_subsys_reset.h"
@@ -49,6 +50,7 @@ void gps_mcudl_ylink_event_send(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_event_id evt)
 {
 	unsigned long tick_us0, tick_us1, dt_us;
+	bool is_okay = false;
 
 	tick_us0 = gps_dl_tick_get_us();
 	MDL_LOGYD_EVT(y_id, "evt=%d", evt);
@@ -84,6 +86,21 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 		}
 		break;
 	}
+	case GPS_MCUDL_YLINK_EVT_ID_MCU_SET_FW_OWN:
+		gps_mcudl_hal_user_set_fw_own_if_no_recent_clr();
+		break;
+	case GPS_MCUDL_YLINK_EVT_ID_CCIF_CLR_FW_OWN:
+		is_okay = gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_CCIF);
+		if (!is_okay) {
+			MDL_LOGE("ccif msg clr_fw_own fail");
+			break;
+		}
+		gps_mcudl_hal_set_ccif_irq_en_flag(true);
+		gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_HAL);
+		break;
+	case GPS_MCUDL_YLINK_EVT_ID_TEST_CLR_FW_OWN:
+		(void)gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_TEST);
+		break;
 	default:
 		break;
 	}
