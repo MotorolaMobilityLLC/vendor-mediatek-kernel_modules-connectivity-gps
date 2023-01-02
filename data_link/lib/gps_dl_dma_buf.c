@@ -67,12 +67,20 @@ void gps_dma_buf_align_as_byte_mode(struct gps_dl_dma_buf *p_dma)
 {
 	unsigned int ri, wi;
 	unsigned int ri_new, wi_new;
+	bool padding_to_4byte_alignment;
 
 	gps_dl_dma_buf_lock_take(p_dma, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 	ri = p_dma->read_index;
 	wi = p_dma->write_index;
 
-	if (!gps_dl_is_1byte_mode()) {
+	if (p_dma->is_for_mcudl) {
+		/* MCUDL reuse this function and we expect it's always using 1byte mode */
+		padding_to_4byte_alignment = false;
+	} else {
+		/* DSPDL is following cfg */
+		padding_to_4byte_alignment = !gps_dl_is_1byte_mode();
+	}
+	if (padding_to_4byte_alignment) {
 		p_dma->read_index = ((p_dma->read_index + 3) / 4) * 4;
 		if (p_dma->read_index >= p_dma->len)
 			p_dma->read_index -= p_dma->len;
@@ -128,6 +136,7 @@ enum GDL_RET_STATUS gdl_dma_buf_put(struct gps_dl_dma_buf *p_dma,
 	/* unsigned int free_len; */
 	/* unsigned int wrap_len; */
 	enum GDL_RET_STATUS gdl_ret;
+	bool padding_to_4byte_alignment;
 
 	ASSERT_NOT_NULL(p_dma, GDL_FAIL_ASSERT);
 	ASSERT_NOT_NULL(p_buf, GDL_FAIL_ASSERT);
@@ -173,10 +182,18 @@ enum GDL_RET_STATUS gdl_dma_buf_put(struct gps_dl_dma_buf *p_dma,
 	}
 #endif
 	memcpy(&free_entry_changed, &free_entry_original, sizeof(free_entry_changed));
+	if (p_dma->is_for_mcudl) {
+		/* MCUDL reuse this function and we expect it's always using 1byte mode */
+		padding_to_4byte_alignment = false;
+	} else {
+		/* DSPDL is following cfg */
+		padding_to_4byte_alignment = !gps_dl_is_1byte_mode();
+	}
 	gdl_ret = gdl_dma_buf_buf_to_entry(
 		(const struct gdl_dma_buf_entry *)&free_entry_original,
 		p_buf, buf_len,
-		&free_entry_changed.write_index);
+		&free_entry_changed.write_index,
+		padding_to_4byte_alignment);
 
 	if (GDL_OKAY != gdl_ret) {
 		/* If it failed (such as GDL_FAIL_NOSPACE),
@@ -596,7 +613,8 @@ enum GDL_RET_STATUS gdl_dma_buf_entry_to_buf(const struct gdl_dma_buf_entry *p_e
 }
 
 enum GDL_RET_STATUS gdl_dma_buf_buf_to_entry(const struct gdl_dma_buf_entry *p_entry,
-	const unsigned char *p_buf, unsigned int data_len, unsigned int *p_write_index)
+	const unsigned char *p_buf, unsigned int data_len, unsigned int *p_write_index,
+	bool padding_to_4byte_alignment)
 {
 	unsigned int free_len;
 	unsigned int wrap_len;
@@ -605,7 +623,7 @@ enum GDL_RET_STATUS gdl_dma_buf_buf_to_entry(const struct gdl_dma_buf_entry *p_e
 	unsigned int fill_zero_len;
 	unsigned char *p_dst = NULL;
 
-	if (gps_dl_is_1byte_mode()) {
+	if (!padding_to_4byte_alignment) {
 		alligned_data_len = data_len;
 		fill_zero_len = 0;
 	} else {
