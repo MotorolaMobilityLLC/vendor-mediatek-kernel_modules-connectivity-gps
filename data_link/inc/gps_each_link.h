@@ -251,6 +251,8 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 
 void gps_dl_link_irq_set(enum gps_dl_link_id_enum link_id, bool enable);
 void gps_dl_link_pre_off_setting(enum gps_dl_link_id_enum link_id);
+void gps_dl_link_post_enter_dpstop_setting(enum gps_dl_link_id_enum link_id);
+void gps_dl_link_pre_leave_dpstop_setting(enum gps_dl_link_id_enum link_id);
 
 void gps_dl_link_open_wait(enum gps_dl_link_id_enum link_id, long *p_sigval);
 void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay, bool hw_resume);
