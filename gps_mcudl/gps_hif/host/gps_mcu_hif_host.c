@@ -5,6 +5,7 @@
 
 #include "gps_dl_config.h"
 #include "gps_mcudl_log.h"
+#include "gps_mcudl_data_pkt_slot.h"
 #include "gps_mcu_hif_host.h"
 #if GPS_DL_HAS_MCUDL_HAL
 #include "gps_mcudl_hal_ccif.h"
@@ -91,6 +92,16 @@ void gps_mcu_hif_init(void)
 	gps_mcu_hif_host_init_ch(GPS_MCU_HIF_CH_DMALESS_MGMT);
 	gps_mcu_hif_host_init_ch(GPS_MCU_HIF_CH_DMA_NORMAL);
 	gps_mcu_hif_host_init_ch(GPS_MCU_HIF_CH_DMA_URGENT);
+}
+
+void gps_mcu_hif_lock(void)
+{
+	gps_mcudl_slot_protect();
+}
+
+void gps_mcu_hif_unlock(void)
+{
+	gps_mcudl_slot_unprotect();
 }
 
 bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
