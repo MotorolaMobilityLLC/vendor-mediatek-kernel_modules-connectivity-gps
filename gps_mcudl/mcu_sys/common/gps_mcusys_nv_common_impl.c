@@ -377,7 +377,7 @@ int gps_mcusys_nv_common_shared_mem_get_info(enum gps_mcusys_nv_data_id nv_id,
 	gps_mcusys_nv_common_shared_mem_give(nv_id, NV_IS_ON_MCU);
 	tick1 = GPSMDL_PLAT_TICK_GET();
 
-	GPS_OFL_TRC(
+	GPS_OFL_DBG(
 		"nv_id=%d, block_size=%d, data_size=%d, rd_times=%d, ver=%d,%d, dtick=%d%s",
 		nv_id, block_size, data_size, read_times, local_ver, remote_ver,
 		tick1 - tick0, GPSMDL_PLAT_TICK_UNIT_STR);
@@ -413,8 +413,11 @@ void gps_mcusys_nv_common_shared_mem_set_local_open(enum gps_mcusys_nv_data_id n
 		p_local->flags = old_local_flags & ~(1UL<<0);
 	new_local_flags = p_local->flags;
 	remote_flags = p_remote->flags;
-	GPS_OFL_TRC("nv_id=%d, flags: local=0x%x->0x%x, remote=0x%x",
-		nv_id, old_local_flags, new_local_flags, remote_flags);
+	if ((remote_flags != 0) ||
+		(is_open && (old_local_flags != 0)) ||
+		(!is_open && (old_local_flags == 0)))
+		GPS_OFL_TRC("nv_id=%d, flags: local=0x%x->0x%x, remote=0x%x",
+			nv_id, old_local_flags, new_local_flags, remote_flags);
 }
 
 bool gps_mcusys_nv_common_shared_mem_get_remote_open(enum gps_mcusys_nv_data_id nv_id)
