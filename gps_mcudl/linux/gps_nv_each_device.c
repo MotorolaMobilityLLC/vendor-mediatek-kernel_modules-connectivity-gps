@@ -35,7 +35,7 @@ static int gps_nv_each_device_open(struct inode *inode, struct file *filp)
 	old_is_open = p_dev->is_open;
 
 	file_flags = filp->f_flags;
-	GDL_LOGW("pid=%d, nv_id=%d, major=%d, minor=%d, old_is_open=%d, flgas=0x%x",
+	GDL_LOGD("pid=%d, nv_id=%d, major=%d, minor=%d, old_is_open=%d, flgas=0x%x",
 		pid, nv_id, imajor(inode), iminor(inode), old_is_open, file_flags);
 
 	retval = -EBUSY;
@@ -62,8 +62,17 @@ static int gps_nv_each_device_open(struct inode *inode, struct file *filp)
 		gps_mcusys_nv_common_shared_mem_set_local_open(nv_id, true);
 	}
 
-	GDL_LOGI("pid=%d, nv_id=%d, retval=%d, trim=%d,%d",
-		pid, nv_id, retval, do_trim, trim_result);
+	if (nv_id == GPS_MCUSYS_NV_DATA_ID_NVFILE ||
+		nv_id == GPS_MCUSYS_NV_DATA_ID_AP_MPE ||
+		old_is_open)
+		GDL_LOGW("pid=%d, nv_id=%d, retval=%d, trim=%d,%d, old_is_open=%d, flgas=0x%x",
+			pid, nv_id, retval, do_trim, trim_result,
+			old_is_open, file_flags);
+	else
+		GDL_LOGD("pid=%d, nv_id=%d, retval=%d, trim=%d,%d, old_is_open=%d, flgas=0x%x",
+			pid, nv_id, retval, do_trim, trim_result,
+			old_is_open, file_flags);
+
 	return retval;
 }
 
@@ -81,8 +90,14 @@ static int gps_nv_each_device_release(struct inode *inode, struct file *filp)
 	nv_id = p_dev->nv_id;
 	gps_mcusys_nv_common_shared_mem_set_local_open(nv_id, false);
 
-	GDL_LOGW("pid=%d, nv_id=%d, major=%d, minor=%d, old_is_open=%d",
-		pid, nv_id, imajor(inode), iminor(inode), old_is_open);
+	if (nv_id == GPS_MCUSYS_NV_DATA_ID_NVFILE ||
+		nv_id == GPS_MCUSYS_NV_DATA_ID_AP_MPE ||
+		!old_is_open)
+		GDL_LOGW("pid=%d, nv_id=%d, major=%d, minor=%d, old_is_open=%d",
+			pid, nv_id, imajor(inode), iminor(inode), old_is_open);
+	else
+		GDL_LOGD("pid=%d, nv_id=%d, major=%d, minor=%d, old_is_open=%d",
+			pid, nv_id, imajor(inode), iminor(inode), old_is_open);
 	return 0;
 }
 
@@ -352,8 +367,11 @@ static int gps_nv_each_device_ioctl_inner(struct file *filp, unsigned int cmd, u
 		break;
 	}
 
-	GDL_LOGI("pid=%d, nv_id=%d, cmd=%d, arg=%ld, is_compat=%d, retval=%d",
-		pid, nv_id, cmd, arg, is_compat, retval);
+	if (cmd == GPS_NV_IOC_QUERY_BLOCK_SIZE ||
+		cmd == GPS_NV_IOC_QUERY_DATA_SIZE ||
+		(cmd == GPS_NV_IOC_CLEAR_DATA && trim_result < 0))
+		GDL_LOGI("pid=%d, nv_id=%d, cmd=%d, arg=%ld, is_compat=%d, retval=%d",
+			pid, nv_id, cmd, arg, is_compat, retval);
 	return retval;
 }
 
