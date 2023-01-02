@@ -111,12 +111,12 @@ void gps_mcusys_nv_data_host_hdr_init(enum gps_mcusys_nv_data_id nv_id,
 	p_host->write_times = 0;
 }
 
-
 void gps_mcusys_nv_data_host_init(void)
 {
 	enum gps_mcusys_nv_data_id nv_id;
 	struct gps_mcusys_nv_data_header *p_hdr;
 
+	gps_nv_emi_clear();
 	for (nv_id = 0; nv_id < GPS_MCUSYS_NV_DATA_NUM; nv_id++) {
 		p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
 		if (p_hdr != NULL)
@@ -139,7 +139,10 @@ void gps_mcusys_nv_data_on_gpsbin_state(enum gps_mcusys_gpsbin_state gpsbin_stat
 		break;
 	case GPS_MCUSYS_GPSBIN_POST_ON:
 #if 1
-		gps_mcusys_nv_data_host_init();
+		/* Toggle gps_mcusys_nv_data_host_init()
+		 * by gps_mcusys_nv_data_get_hdr if not ever init.
+		 */
+		(void)gps_mcusys_nv_data_get_hdr(GPS_MCUSYS_NV_DATA_ID_EPO);
 #endif
 		evt_id = GPS_MCUSYS_NVLOCK_MCU_POST_ON;
 		break;
