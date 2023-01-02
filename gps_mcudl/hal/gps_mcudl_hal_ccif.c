@@ -7,8 +7,11 @@
 #include "gps_mcudl_hw_ccif.h"
 #include "gps_dl_isr.h"
 #include "gps_dl_time_tick.h"
+#include "gps_dl_subsys_reset.h"
 #include "gps_mcu_hif_host.h"
 #include "gps_mcudl_log.h"
+#include "gps_mcudl_ylink.h"
+#include "gps_mcudl_data_pkt_slot.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
 #include "connsyslog.h"
@@ -69,13 +72,26 @@ void gps_mcudl_hal_ccif_rx_isr(void)
 	tick_us0 = gps_dl_tick_get_us();
 
 recheck_rch:
+	if (!gps_dl_conninfra_is_readable()) {
+		GDL_LOGE("readable check fail, ccif_irq_cnt=%d", g_gps_ccif_irq_cnt);
+		gps_mcudl_hal_set_ccif_irq_en_flag(false);
+		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_CCIF_ISR_ABNORMAL);
+		return;
+	}
 	rch_mask = gps_mcudl_hw_ccif_get_rch_bitmask();
+
+	/* handling read 0xdeadfeed case */
+	if ((rch_mask & 0xFFFFFF00) != 0) {
+		GDL_LOGW("cnt=%lu, rch_mask=0x%x, abnormal", g_gps_ccif_irq_cnt, rch_mask);
+		gps_mcudl_hal_set_ccif_irq_en_flag(false);
+		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_CCIF_ISR_ABNORMAL);
+		return;
+	}
+
 	if (rch_mask == 0) {
 		gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_ISR);
 		return;
 	}
-
-	/* TODO: handling read 0xdeadfeed case */
 
 	for (ch = 0; ch < GPS_MCUDL_CCIF_CH_NUM; ch++) {
 		if (rch_mask & (1UL << ch)) {
@@ -116,10 +132,22 @@ recheck_rch:
 	goto recheck_rch;
 }
 
-void gps_mcudl_hal_ccif_rx_ch1_cb(void)
+bool g_gps_ccif_irq_en;
+
+bool gps_mcudl_hal_get_ccif_irq_en_flag(void)
 {
+	bool enable;
+
+	gps_mcudl_slot_protect();
+	enable = g_gps_ccif_irq_en;
+	gps_mcudl_slot_unprotect();
+	return enable;
 }
 
-void gps_mcudl_hal_ccif_rx_ch2_to_ch8_cb(void)
+void gps_mcudl_hal_set_ccif_irq_en_flag(bool enable)
 {
+	gps_mcudl_slot_protect();
+	g_gps_ccif_irq_en = enable;
+	gps_mcudl_slot_unprotect();
 }
+
