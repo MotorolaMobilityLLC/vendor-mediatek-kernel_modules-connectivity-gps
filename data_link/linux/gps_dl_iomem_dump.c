@@ -23,13 +23,13 @@ void gps_dl_iomem_dump(unsigned int dummy_addr, unsigned int dump_len)
 	/* force 4 bytes alignment */
 	dummy_addr = (dummy_addr / 4) * 4;
 
-	if (offset + real_dump_len > p_iomem->length)
-		real_dump_len = p_iomem->length - offset;
-
 	if (dump_len == 0)
 		real_dump_len = 4;
 	else
 		real_dump_len = ((dump_len + 3) / 4) * 4;
+
+	if (offset + real_dump_len > p_iomem->length)
+		real_dump_len = p_iomem->length - offset;
 
 	GDL_LOGW("dummy_addr=0x%x, dump_len=0x%x(0x%x), offset=0x%x, iomem:phys=0x%08x, len=0x%x, virt=0x%p",
 		dummy_addr, dump_len, real_dump_len, offset,
