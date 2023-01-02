@@ -127,6 +127,17 @@ bool gps_dma_buf_is_empty(struct gps_dl_dma_buf *p_dma)
 	return is_empty;
 }
 
+unsigned int gps_dma_buf_count_data_entry(struct gps_dl_dma_buf *p_dma)
+{
+	unsigned int count;
+
+	gps_dl_dma_buf_lock_take(p_dma, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+	count = GDL_COUNT_DATA(p_dma->entry_r, p_dma->entry_w, p_dma->entry_l);
+	gps_dl_dma_buf_lock_give(p_dma, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+	return count;
+}
+
 enum GDL_RET_STATUS gdl_dma_buf_put(struct gps_dl_dma_buf *p_dma,
 	const unsigned char *p_buf, unsigned int buf_len)
 {
