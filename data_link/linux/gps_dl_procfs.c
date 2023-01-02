@@ -20,6 +20,7 @@
 #if GPS_DL_HAS_MCUDL
 #include "gps_mcudl_xlink.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
+#include "gps_mcu_hif_host.h"
 #endif
 #include "gps_dl_iomem_dump.h"
 
@@ -195,6 +196,8 @@ int gps_mcudl_procfs_dbg(int y, int z)
 			gps_mcudl_hal_set_non_lppm_sleep_flag(true);
 		else if (z == 4)
 			gps_mcudl_hal_set_non_lppm_sleep_flag(false);
+		else if (z == 5)
+			gps_mcu_hif_host_trans_hist_dump();
 	}
 	else if (y == 2)
 		gps_mcudl_xlink_test_toggle_ccif(z);
