@@ -27,7 +27,9 @@
 #include "gps_mcudl_link_state.h"
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_ccif.h"
+#include "gps_mcu_hif_mgmt_cmd_send.h"
 
+bool g_gps_fw_log_is_on;
 
 void gps_mcudl_xlink_event_send(enum gps_mcudl_xid link_id,
 	enum gps_mcudl_xlink_event_id evt)
@@ -241,6 +243,36 @@ _close_or_reset_ack:
 		gps_mcudl_hal_mcu_show_status();
 		gps_mcudl_hal_ccif_show_status();
 		gps_dl_set_show_reg_rw_log(show_log);
+		break;
+
+	case GPS_MCUDL_EVT_LINK_FW_LOG_ON:
+		if (g_gps_fw_log_is_on) {
+			MDL_LOGW("fw log ready on");
+			break;
+		}
+
+		g_gps_fw_log_is_on = true;
+		if (!gps_mcusys_gpsbin_state_is(GPS_MCUSYS_GPSBIN_POST_ON)) {
+			MDL_LOGW("fw log just keep on flag");
+			break;
+		}
+
+		gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(true);
+		break;
+
+	case GPS_MCUDL_EVT_LINK_FW_LOG_OFF:
+		if (!g_gps_fw_log_is_on) {
+			MDL_LOGW("fw log ready off");
+			break;
+		}
+
+		g_gps_fw_log_is_on = false;
+		if (!gps_mcusys_gpsbin_state_is(GPS_MCUSYS_GPSBIN_POST_ON)) {
+			MDL_LOGW("fw log just keep off flag");
+			break;
+		}
+
+		gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(false);
 		break;
 
 	default:
