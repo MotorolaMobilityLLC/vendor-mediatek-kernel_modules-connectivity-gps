@@ -104,6 +104,28 @@ static struct gps_mcudl_ctx s_gps_mcudl_ctx = {
 			.cfg = {.dev_name = "gpsstrg-dsp0",  .nv_id = GPS_MCUSYS_NV_DATA_ID_DSPL1} },
 		[GPS_MCUSYS_NV_DATA_ID_DSPL5] = {
 			.cfg = {.dev_name = "gpsstrg-dsp1",  .nv_id = GPS_MCUSYS_NV_DATA_ID_DSPL5} },
+		[GPS_MCUSYS_NV_DATA_ID_XEPO] = {
+			.cfg = {.dev_name = "gpsstrg-xepo",  .nv_id = GPS_MCUSYS_NV_DATA_ID_XEPO} },
+		[GPS_MCUSYS_NV_DATA_ID_QZ_QEPO] = {
+			.cfg = {.dev_name = "gpsstrg-qzepo",  .nv_id = GPS_MCUSYS_NV_DATA_ID_QZ_QEPO} },
+		[GPS_MCUSYS_NV_DATA_ID_IR_QEPO] = {
+			.cfg = {.dev_name = "gpsstrg-irepo",  .nv_id = GPS_MCUSYS_NV_DATA_ID_IR_QEPO} },
+		[GPS_MCUSYS_NV_DATA_ID_KR_QEPO] = {
+			.cfg = {.dev_name = "gpsstrg-krepo",  .nv_id = GPS_MCUSYS_NV_DATA_ID_KR_QEPO} },
+		[GPS_MCUSYS_NV_DATA_ID_DSPL1_CW] = {
+			.cfg = {.dev_name = "gpsstrg-dsp0cw",  .nv_id = GPS_MCUSYS_NV_DATA_ID_DSPL1_CW} },
+		[GPS_MCUSYS_NV_DATA_ID_DSPL5_CW] = {
+			.cfg = {.dev_name = "gpsstrg-dsp1cw",  .nv_id = GPS_MCUSYS_NV_DATA_ID_DSPL5_CW} },
+		[GPS_MCUSYS_NV_DATA_ID_MPENV] = {
+			.cfg = {.dev_name = "gpsstrg-mpedat",  .nv_id = GPS_MCUSYS_NV_DATA_ID_MPENV} },
+		[GPS_MCUSYS_NV_DATA_ID_MPE_CFG] = {
+			.cfg = {.dev_name = "gpsstrg-mpecfg",  .nv_id = GPS_MCUSYS_NV_DATA_ID_MPE_CFG} },
+		[GPS_MCUSYS_NV_DATA_ID_AP_MPE] = {
+			.cfg = {.dev_name = "gpsstrg-apmpe",  .nv_id = GPS_MCUSYS_NV_DATA_ID_AP_MPE} },
+		[GPS_MCUSYS_NV_DATA_ID_RAW_MEAS] = {
+			.cfg = {.dev_name = "gpsstrg-rawmeas",  .nv_id = GPS_MCUSYS_NV_DATA_ID_RAW_MEAS} },
+		[GPS_MCUSYS_NV_DATA_ID_RAW_HIGEO] = {
+			.cfg = {.dev_name = "gpsstrg-higeo",  .nv_id = GPS_MCUSYS_NV_DATA_ID_RAW_HIGEO} },
 	},
 #endif /* GPS_DL_ON_LINUX */
 };
