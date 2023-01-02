@@ -15,10 +15,26 @@
 #include "gps_dl_subsys_reset.h"
 #include "gps_dl_hal_met2_0.h"
 #include "gps_dl_hist_rec2.h"
+#include "gps_dl_linux_plat_drv.h"
+#include "gps_each_device.h"
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_xlink.h"
+#endif
+#include "gps_dl_iomem_dump.h"
 
 int gps_dl_procfs_dummy_op(int y, int z)
 {
+	if (y == 1) {
+		gps_dl_show_major_iomem_info();
+		return 0;
+	}
 	GDL_LOGW("do nothing: y = %d, z = %d", y, z);
+	return 0;
+}
+
+int gps_dl_procfs_read_iomem(int y, int z)
+{
+	gps_dl_iomem_dump((unsigned int)y, (unsigned int)z);
 	return 0;
 }
 
@@ -118,6 +134,10 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 		gps_dl_test_mask_mcub_irq_on_open_set(z, true);
 	else if (y == 7)
 		gps_dl_trigger_gps_print_data_status();
+#if GPS_DL_HAS_MCUDL
+	else if (y == 0x10)
+		gps_mcudl_xlink_test_toggle_reset_by_gps_hif();
+#endif
 	return 0;
 }
 
@@ -151,11 +171,22 @@ int gps_dl_procfs_set_opid_duration(int y, int z)
 	}
 	return 0;
 }
+#if GPS_DL_HAS_MCUDL
+int gps_mcudl_procfs_dbg(int y, int z)
+{
+	if (y == 0)
+		gps_mcudl_xlink_trigger_print_hw_status();
+	else if (y == 1)
+		gps_mcudl_xlink_test_fw_own_ctrl(z != 0);
+	else if (y == 2)
+		gps_mcudl_xlink_test_toggle_ccif(z);
+	return 0;
+}
+#endif
 
 gps_dl_procfs_test_func_type g_gps_dl_proc_test_func_list[] = {
 	[0x00] = gps_dl_procfs_dummy_op,
-	/* [0x01] = TODO: reg read */
-	[0x01] = NULL,
+	[0x01] = gps_dl_procfs_read_iomem,
 	/* [0x02] = TODO: reg write */
 	[0x02] = NULL,
 	[0x03] = gps_dl_procfs_set_opt,
@@ -171,6 +202,9 @@ gps_dl_procfs_test_func_type g_gps_dl_proc_test_func_list[] = {
 	#endif
 	[0x08] = gps_dl_procfs_set_data_routing_status,
 	[0x09] = gps_dl_procfs_set_opid_duration,
+#if GPS_DL_HAS_MCUDL
+	[0x10] = gps_mcudl_procfs_dbg,
+#endif
 };
 
 #define UNLOCK_MAGIC 0xDB9DB9

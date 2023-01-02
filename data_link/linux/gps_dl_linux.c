@@ -132,6 +132,20 @@ irqreturn_t gps_dl_linux_irq_dispatcher(int irq, void *data)
 		gps_dl_isr_dma_done();
 		break;
 
+#if GPS_DL_HAS_MCUDL
+	case GPS_DL_IRQ_CCIF:
+		gps_dl_isr_ccif();
+		break;
+	case GPS_DL_IRQ_CONN2AP:
+		gps_dl_isr_conn2ap();
+		break;
+	case GPS_DL_IRQ_WDT:
+		gps_dl_isr_wdt();
+		break;
+	case GPS_DL_IRQ_HIF_ON:
+		gps_dl_isr_hif_on();
+		break;
+#endif
 	default:
 		break;
 	}

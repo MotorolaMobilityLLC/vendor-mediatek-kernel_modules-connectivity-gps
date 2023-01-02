@@ -22,7 +22,10 @@
 #endif
 
 struct gps_dl_remap_ctx {
-	unsigned int gps_emi_phy_high20;
+	unsigned int gps_emi_phy_remap_base;
+#if GPS_DL_CONN_EMI_MERGED
+	unsigned int mcu_emi_phy_remap_base;
+#endif
 };
 
 struct gps_dl_ctx {
