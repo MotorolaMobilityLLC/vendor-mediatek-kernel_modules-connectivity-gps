@@ -76,7 +76,7 @@ enum gps_dl_link_id_enum {
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
 #define GPS_DL_USE_MTK_SYNC_WRITE    (0)
-#define GPS_DL_GET_RSV_MEM_IN_MODULE (1)
+#define GPS_DL_GET_RSV_MEM_IN_MODULE (0)
 #else
 #define GPS_DL_USE_MTK_SYNC_WRITE    (0)
 #define GPS_DL_GET_RSV_MEM_IN_MODULE (1)
