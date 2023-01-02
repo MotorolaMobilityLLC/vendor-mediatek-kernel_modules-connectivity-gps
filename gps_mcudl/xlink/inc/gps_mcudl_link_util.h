@@ -16,6 +16,8 @@ void gps_mcudl_each_link_spin_locks_deinit(struct gps_mcudl_each_link *p);
 
 void gps_mcudl_each_link_mutex_take(enum gps_mcudl_xid x_id,
 	enum gps_each_link_mutex mtx_id);
+bool gps_mcudl_each_link_mutex_take2(enum gps_mcudl_xid x_id,
+	enum gps_each_link_mutex mtx_id);
 void gps_mcudl_each_link_mutex_give(enum gps_mcudl_xid x_id,
 	enum gps_each_link_mutex mtx_id);
 void gps_mcudl_each_link_spin_lock_take(enum gps_mcudl_xid x_id,
