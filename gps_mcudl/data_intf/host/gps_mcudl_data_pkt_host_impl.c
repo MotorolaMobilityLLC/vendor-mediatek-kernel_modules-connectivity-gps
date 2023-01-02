@@ -293,7 +293,7 @@ int send_func1(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len)
 	int send_len;
 
 	send_len = gps_mcudl_stpgps1_write(p_data, data_len);
-	MDL_LOGYW(GPS_MDLY_NORMAL, "send len=%d, ret=%d", data_len, send_len);
+	MDL_LOGYD(GPS_MDLY_NORMAL, "send len=%d, ret=%d", data_len, send_len);
 	return send_len;
 }
 
@@ -732,12 +732,14 @@ _loop_start:
 	}
 
 	do_wake = gps_dl_link_wake_up2(&p_xlink->waitables[GPS_DL_WAIT_READ]);
-	if (do_wake)
+	if (do_wake && (x_id != GPS_MDLX_GDLOG) && (x_id != GPS_MDLX_GDLOG2) &&
+		(x_id != GPS_MDLX_MPELOG) && (x_id != GPS_MDLX_MPELOG2)) {
 		MDL_LOGXI(x_id, "do_wake=%d, type=%d, len=%d, y_id=%d",
 			do_wake, type, payload_len, y_id);
-	else
+	} else {
 		MDL_LOGXD(x_id, "do_wake=%d, type=%d, len=%d, y_id=%d",
 			do_wake, type, payload_len, y_id);
+	}
 
 _loop_end:
 	if ((unsigned int)x_id_next < (unsigned int)GPS_MDLX_CH_NUM) {

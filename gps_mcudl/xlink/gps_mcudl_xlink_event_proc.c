@@ -67,12 +67,11 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 {
 	struct gps_mcudl_each_link *p_link = gps_mcudl_link_get(link_id);
 	bool show_log = false;
-	/*bool show_log2 = false;*/
-	unsigned long j0, j1;
+	unsigned long tick_us0, tick_us1;
 	int ret;
 
-	j0 = gps_dl_tick_get();
-	MDL_LOGXW_EVT(link_id, "evt = %s", gps_mcudl_xlink_event_name(evt));
+	tick_us0 = gps_dl_tick_get_us();
+	MDL_LOGXD_EVT(link_id, "evt=%s", gps_mcudl_xlink_event_name(evt));
 
 	switch (evt) {
 	case GPS_MCUDL_EVT_LINK_OPEN:
@@ -279,8 +278,9 @@ _close_or_reset_ack:
 		break;
 	}
 
-	j1 =  gps_dl_tick_get();
-	MDL_LOGXW_EVT(link_id, "evt = %s, dj = %lu", gps_mcudl_xlink_event_name(evt), j1 - j0);
+	tick_us1 =  gps_dl_tick_get_us();
+	MDL_LOGXI_EVT(link_id, "evt=%s, dt_us=%lu",
+		gps_mcudl_xlink_event_name(evt), tick_us1 - tick_us0);
 }
 
 #if 0
