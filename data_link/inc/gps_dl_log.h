@@ -79,6 +79,8 @@ enum gps_dl_log_reg_rw_ctrl_enum {
 		(0UL << GPS_DL_REG_RW_MCUB_IRQ_HANDLER)  |\
 	0)
 
+#define OPID_DURATION_MAX_MS 500
+
 enum gps_dl_log_level_enum gps_dl_log_level_get(void);
 void gps_dl_log_level_set(enum gps_dl_log_level_enum level);
 
@@ -91,6 +93,12 @@ void gps_dl_log_mod_off(enum gps_dl_log_module_enum mod);
 bool gps_dl_log_reg_rw_is_on(enum gps_dl_log_reg_rw_ctrl_enum log_reg_rw);
 
 void gps_dl_log_info_show(void);
+
+unsigned long gps_dl_opid_enque_timeout_get(void);
+void gps_dl_opid_enque_timeout_set(unsigned long timeout);
+unsigned long gps_dl_opid_opfunc_timeout_get(void);
+void gps_dl_opid_opfunc_timeout_set(unsigned long timeout);
+void gps_dl_opid_timeout_info_show(void);
 
 
 #define _GDL_LOGE(...) \
