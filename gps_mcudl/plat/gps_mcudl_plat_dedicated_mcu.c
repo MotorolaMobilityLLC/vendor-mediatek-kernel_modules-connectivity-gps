@@ -30,8 +30,11 @@
 #include "gps_mcusys_data_sync2target.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 
+#include "gps_dl_hw_api.h"
 #include "gps_dl_hw_dep_api.h"
+#include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_data_pkt_payload_struct.h"
+#include "gps_mcudl_link_state.h"
 
 struct gps_mcudl_ystate {
 	bool open;
@@ -144,6 +147,34 @@ bool gps_mcudl_link_drv_on_recv_normal_data(const unsigned char *p_data, unsigne
 	return true;
 }
 
+void gps_mcudl_hal_link_power_on_fail_handler(enum gps_mcudl_xid xid)
+{
+	int reset_check_cnt;
+
+	gps_mcudl_hal_mcu_show_pc_log();
+	gps_mcudl_hal_mcu_show_status();
+	gps_mcudl_hal_ccif_show_status();
+	gps_dl_hw_dump_host_csr_gps_info(false);
+	reset_check_cnt = 0;
+	while (!g_gps_mcudl_ever_do_coredump) {
+		if (gps_mcudl_each_link_get_state(xid) == LINK_RESETTING) {
+			MDL_LOGXE(xid, "fail to turn on - coredump");
+			gps_mcudl_connsys_coredump_start_wrapper();
+			g_gps_mcudl_ever_do_coredump = true;
+			break;
+		}
+
+		/* ~15ms */
+		if (reset_check_cnt >= 6)
+			break;
+
+		gps_dl_sleep_us(2200, 3200);
+		gps_mcudl_hal_mcu_show_status();
+		gps_mcudl_hal_ccif_show_status();
+		reset_check_cnt++;
+	}
+}
+
 int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 {
 	enum gps_mcudl_yid yid;
@@ -203,7 +234,8 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 				MDL_LOGYI(yid, "allow set_fw_own for non_lppm_slp=%d", non_lppm_sleep);
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_ON);
 		} else {
-			MDL_LOGYE(yid, "fail to turn on");
+			MDL_LOGXE(xid, "fail to turn on");
+			gps_mcudl_hal_link_power_on_fail_handler(xid);
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_PRE_OFF);
 			(void)gps_mcudl_plat_do_mcu_ctrl(yid, false);
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
