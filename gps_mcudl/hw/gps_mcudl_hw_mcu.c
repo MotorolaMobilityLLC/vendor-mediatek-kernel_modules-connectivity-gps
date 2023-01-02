@@ -280,6 +280,48 @@ _fail_bgf_on_status_not_okay:
 	return false;
 }
 
+void gps_mcudl_hw_mcu_speed_up_clock(void)
+{
+	int i;
+	unsigned int flag_out;
+	bool pll_okay = false;
+
+	/* Enable PLL */
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_MON_CTL_CR_GPS_MON_FLAG_EN_OFF, 0x1);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_SYS_SEL0_CR_GPS_MON_SYS_SEL0_OFF, 0x0000);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_MON_SEL0_CR_GPS_MON_FLAG_SEL0_OFF, 0x000C);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_GPS_CLKGEN_CTL1_CR_GPS_MCU_WBG_EN_PLL, 0x1); /* Enable */
+
+	/* Wait PLL ready */
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_MON_SEL0_CR_GPS_MON_FLAG_SEL0_OFF, 0x03020100);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_MON_SEL1_CR_GPS_MON_FLAG_SEL1_OFF, 0x07060504);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_MON_SEL2_CR_GPS_MON_FLAG_SEL2_OFF, 0x0b0a0908);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_MON_SEL3_CR_GPS_MON_FLAG_SEL3_OFF, 0x0f0e0d0c);
+	for (i = 0; i < 30; i++) {
+		flag_out = GDL_HW_GET_GPS_ENTRY(BG_GPS_CFG_BGSYS_OFF_MONFLAG_RD_MON_FLAG_OUT);
+		GDL_LOGW("flag_out=0x%x, i=%d", flag_out, i);
+		if (flag_out & (1UL << 28)) {
+			pll_okay = true;
+			break;
+		}
+		gps_dl_sleep_us(100, 300);
+	}
+
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_MON_CTL_CR_GPS_MON_FLAG_EN_OFF, 0x0);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_SYS_SEL0_CR_GPS_MON_SYS_SEL0_OFF, 0x0000);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_BG_GPS_OFF_MON_SEL0_CR_GPS_MON_FLAG_SEL0_OFF, 0x0000);
+
+	if (!pll_okay) {
+		GDL_LOGW("flag_out=0x%x, i=%d, pll not okay!", flag_out, i);
+		return;
+	}
+
+	/* Set pll div switch to pll */
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_GPS_CLKGEN_CTL1_CR_GPS_BUS_PLL_DIV_EN, 0x1);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_GPS_CLKGEN_CTL1_CR_GPS_BUS_PLL_DIV_SEL, 0x5);
+	GDL_HW_SET_GPS_ENTRY(BG_GPS_CFG_GPS_CLKGEN_CTL0_GPS_HCLK_CK_SEL_CR, 0x2);
+}
+
 void gps_mcudl_hw_mcu_release_rst(void)
 {
 	/* Set it's 1st time power on */
@@ -305,11 +347,15 @@ bool gps_mcudl_hw_mcu_wait_idle_loop_or_timeout_us(unsigned int timeout_us)
 		GDL_HW_WR_CONN_INFRA_REG(
 			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, 0xC0040103);
 		pc1 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
-		GDL_LOGW("idle_val=0x%08X, 0x%08X, pc=0x%08X", val1, val2, pc1);
-		if (val1 == 0x1D1E || val2 == 0x1D1E)
+		if (val1 == 0x1D1E || val2 == 0x1D1E) {
+			GDL_LOGW("idle_val=0x%08X, 0x%08X, pc=0x%08X", val1, val2, pc1);
 			return true;
-		gps_dl_sleep_us(9000, 12000);
-		wait_us += 10000;
+		}
+		if (wait_us % 20000 == 0)
+			GDL_LOGW("idle_val=0x%08X, 0x%08X, pc=0x%08X", val1, val2, pc1);
+
+		gps_dl_sleep_us(900, 1100);
+		wait_us += 1000;
 	} while (wait_us <= timeout_us);
 
 	return false;
