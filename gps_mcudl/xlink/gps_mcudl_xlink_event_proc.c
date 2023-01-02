@@ -86,6 +86,8 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	switch (evt) {
 	case GPS_MCUDL_EVT_LINK_OPEN:
 		/* show_log = gps_dl_set_show_reg_rw_log(true); */
+		/* set flag to atf */
+		gps_mcudl_hal_may_set_link_power_flag(link_id, true);
 		gps_mcudl_each_link_inc_session_id(link_id);
 		gps_mcudl_each_link_set_active(link_id, true);
 
@@ -204,6 +206,9 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 			gps_mcudl_each_link_set_active(link_id, false);
 			gps_mcudl_hal_link_power_ctrl(link_id, 0);
 			gps_mcudl_hal_conn_power_ctrl(link_id, 0);
+
+			/* set flag to atf */
+			gps_mcudl_hal_may_set_link_power_flag(link_id, false);
 			goto _close_or_reset_ack;
 		}
 #if 0
@@ -247,6 +252,9 @@ _close_non_mcu_link:
 		gps_dma_buf_reset(&p_link->rx_dma_buf);
 		p_link->epoll_flag = false;
 #endif
+
+		/* set flag to atf */
+		gps_mcudl_hal_may_set_link_power_flag(link_id, false);
 
 _close_or_reset_ack:
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE)

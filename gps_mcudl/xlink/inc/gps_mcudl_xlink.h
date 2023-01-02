@@ -86,6 +86,8 @@ void gps_mcudl_xlink_test_bypass_mcu2ap_data(bool bypass);
 void gps_mcudl_xlink_fw_log_ctrl(bool on);
 
 extern int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op);
+void gps_mcudl_hal_may_set_link_power_flag(enum gps_mcudl_xid xid,
+	bool power_ctrl);
 extern int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op);
 extern bool g_gps_mcudl_ever_do_coredump;
 
