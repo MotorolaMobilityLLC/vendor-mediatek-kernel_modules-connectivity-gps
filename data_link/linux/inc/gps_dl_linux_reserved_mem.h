@@ -1,16 +1,19 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2019 MediaTek Inc.
+ * Copyright (c) 2019 - 2022 MediaTek Inc.
  */
 #ifndef _GPS_DL_LINUX_RESERVED_MEM_H
 #define _GPS_DL_LINUX_RESERVED_MEM_H
 
 #include "gps_dl_config.h"
 
-#ifdef GPS_DL_HAS_PLAT_DRV
+#if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_dma_buf.h"
 #include "gps_dl_emi.h"
 #include "gps_dl_context.h"
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_emi_layout.h"
+#endif
 
 extern phys_addr_t gGpsRsvMemPhyBase;
 extern unsigned long long gGpsRsvMemSize;
@@ -19,7 +22,7 @@ extern int gps_not_allocate_emi_from_lk2;
 void gps_dl_reserved_mem_init(void);
 void gps_dl_reserved_mem_deinit(void);
 bool gps_dl_reserved_mem_is_ready(void);
-void gps_dl_reserved_mem_get_range(unsigned int *p_min, unsigned int *p_max);
+void gps_dl_reserved_mem_get_gps_legacy_range(unsigned int *p_min, unsigned int *p_max);
 void gps_dl_reserved_mem_show_info(void);
 
 void gps_dl_reserved_mem_dma_buf_init(struct gps_dl_dma_buf *p_dma_buf,
