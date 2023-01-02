@@ -43,6 +43,24 @@
 */
 #include "gps_dl_hw_atf.h"
 
+void gps_dl_hw_may_set_link_power_flag(enum gps_dl_link_id_enum link_id, bool power_ctrl)
+{
+	static unsigned int gps_ap_common_on_flag;
+	struct arm_smccc_res res;
+
+	if (power_ctrl) {
+		if (gps_ap_common_on_flag == 0)
+			arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_SET_FLAG_OPID,
+					0xdb9db9, power_ctrl, 0, 0, 0, 0, &res);
+		gps_ap_common_on_flag |= (1UL << link_id);
+	} else {
+		gps_ap_common_on_flag &= ~(1UL << link_id);
+		if (gps_ap_common_on_flag == 0)
+			arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_SET_FLAG_OPID,
+					0xdb9db9, power_ctrl, 0, 0, 0, 0, &res);
+	}
+}
+
 bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 {
 	struct arm_smccc_res res;
