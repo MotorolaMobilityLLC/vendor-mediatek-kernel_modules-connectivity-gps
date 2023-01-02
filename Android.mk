@@ -17,6 +17,10 @@ ifneq ($(wildcard $(LOCAL_PATH_INCLUDE)/gps_scp),)
 include $(LOCAL_PATH_INCLUDE)/gps_scp/Android.mk
 endif
 
+ifneq ($(wildcard $(LOCAL_PATH_INCLUDE)/gps_pwr),)
+include $(LOCAL_PATH_INCLUDE)/gps_pwr/Android.mk
+endif
+
 $(warning GPS_CHIP_ID = common)
 else
 
