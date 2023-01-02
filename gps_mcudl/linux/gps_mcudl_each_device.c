@@ -59,6 +59,7 @@ static unsigned int gps_mcudl_each_device_poll(struct file *filp, poll_table *p_
 	if (gps_mcudl_each_link_poll_is_in_data_ready(link_id))
 		mask = (POLLIN | POLLRDNORM);
 
+	gps_mcudl_each_link_rec_poll(link_id, pid, mask);
 	if (gps_mcudl_xdevice_should_be_less_log(link_id)) {
 		/* do not print for gps debug log poll to reduce kernel log */
 		return mask;
@@ -88,7 +89,7 @@ static ssize_t gps_mcudl_each_device_read(struct file *filp,
 		print_log = true;
 	} else
 		MDL_LOGXD_DRW(link_id, "buf_len = %ld, pid = %d", count, pid);
-	/*gps_each_link_rec_read(link_id, pid, count, DRW_ENTER);*/
+	gps_mcudl_each_link_rec_read_start(link_id, pid, count);
 
 	retlen = gps_mcudl_each_link_read(link_id, &dev->i_buf[0], count);
 	if (retlen > 0) {
@@ -103,7 +104,7 @@ static ssize_t gps_mcudl_each_device_read(struct file *filp,
 		MDL_LOGXI_DRW(link_id, "buf_len = %ld, pid = %d, ret_len = %d", count, pid, retlen);
 	else
 		MDL_LOGXD_DRW(link_id, "buf_len = %ld, pid = %d, ret_len = %d", count, pid, retlen);
-	/*gps_each_link_rec_read(link_id, pid, retlen, DRW_RETURN);*/
+	gps_mcudl_each_link_rec_read_end(link_id, pid, retlen);
 	return retlen;
 }
 
@@ -123,7 +124,7 @@ static ssize_t gps_mcudl_each_device_write(struct file *filp,
 	link_id = (enum gps_mcudl_xid)dev->index;
 
 	MDL_LOGXD_DRW(link_id, "len = %ld, pid = %d", count, pid);
-	/*gps_each_link_rec_write(link_id, pid, count, DRW_ENTER);*/
+	gps_mcudl_each_link_rec_write_start(link_id, pid, count);
 	if (count > 0) {
 		if (count > GPS_DATA_PATH_BUF_MAX) {
 			MDL_LOGXW_DRW(link_id, "len = %ld is too long", count);
@@ -149,7 +150,7 @@ static ssize_t gps_mcudl_each_device_write(struct file *filp,
 		MDL_LOGXI_DRW(link_id, "len = %ld, pid = %d, ret_len = %d", count, pid, retlen);
 	else
 		MDL_LOGXD_DRW(link_id, "len = %ld, pid = %d, ret_len = %d", count, pid, retlen);
-	/*gps_each_link_rec_write(link_id, pid, retlen, DRW_RETURN);*/
+	gps_mcudl_each_link_rec_write_end(link_id, pid, retlen);
 	return retlen;
 }
 

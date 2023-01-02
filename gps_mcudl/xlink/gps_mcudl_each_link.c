@@ -738,3 +738,85 @@ int gps_mcudl_each_link_read_with_timeout(enum gps_mcudl_xid link_id,
 }
 
 
+void gps_mcudl_each_link_rec_poll(enum gps_mcudl_xid x_id, int pid, unsigned int mask)
+{
+	struct gps_mcudl_each_link *p = gps_mcudl_link_get(x_id);
+
+	gps_mcudl_each_link_mutex_take(x_id, GPS_DL_MTX_BIG_LOCK);
+	if (mask == 0)
+		p->rec.poll_zero_us = gps_dl_tick_get_us();
+	else
+		p->rec.poll_non_zero_us = gps_dl_tick_get_us();
+	gps_mcudl_each_link_mutex_give(x_id, GPS_DL_MTX_BIG_LOCK);
+}
+
+void gps_mcudl_each_link_rec_read_start(enum gps_mcudl_xid x_id, int pid, int len)
+{
+	struct gps_mcudl_each_link *p = gps_mcudl_link_get(x_id);
+
+	gps_mcudl_each_link_mutex_take(x_id, GPS_DL_MTX_BIG_LOCK);
+	p->rec.is_reading = true;
+	p->rec.reading_us = gps_dl_tick_get_us();
+	gps_mcudl_each_link_mutex_give(x_id, GPS_DL_MTX_BIG_LOCK);
+}
+
+void gps_mcudl_each_link_rec_read_end(enum gps_mcudl_xid x_id, int pid, int len)
+{
+	struct gps_mcudl_each_link *p = gps_mcudl_link_get(x_id);
+
+	gps_mcudl_each_link_mutex_take(x_id, GPS_DL_MTX_BIG_LOCK);
+	p->rec.is_reading = false;
+	p->rec.last_read_retlen = len;
+	gps_mcudl_each_link_mutex_give(x_id, GPS_DL_MTX_BIG_LOCK);
+}
+
+void gps_mcudl_each_link_rec_write_start(enum gps_mcudl_xid x_id, int pid, int len)
+{
+	struct gps_mcudl_each_link *p = gps_mcudl_link_get(x_id);
+
+	gps_mcudl_each_link_mutex_take(x_id, GPS_DL_MTX_BIG_LOCK);
+	p->rec.is_writing = true;
+	p->rec.writing_us = gps_dl_tick_get_us();
+	gps_mcudl_each_link_mutex_give(x_id, GPS_DL_MTX_BIG_LOCK);
+}
+
+void gps_mcudl_each_link_rec_write_end(enum gps_mcudl_xid x_id, int pid, int len)
+{
+	struct gps_mcudl_each_link *p = gps_mcudl_link_get(x_id);
+
+	gps_mcudl_each_link_mutex_take(x_id, GPS_DL_MTX_BIG_LOCK);
+	p->rec.is_writing = false;
+	p->rec.last_write_retlen = len;
+	gps_mcudl_each_link_mutex_give(x_id, GPS_DL_MTX_BIG_LOCK);
+}
+
+void gps_mcudl_each_link_rec_dump(enum gps_mcudl_xid x_id)
+{
+	struct gps_mcudl_each_link *p = gps_mcudl_link_get(x_id);
+	enum gps_each_link_state_enum state;
+	unsigned int pending_r_count, pending_w_count;
+
+	state = gps_mcudl_each_link_get_state(x_id);
+	if (state == LINK_CLOSED || state == LINK_DISABLED || state == LINK_UNINIT)
+		return;
+
+	pending_r_count = gps_dma_buf_count_data_entry(&p->rx_dma_buf);
+	pending_w_count = gps_dma_buf_count_data_entry(&p->tx_dma_buf);
+
+	gps_mcudl_each_link_mutex_take(x_id, GPS_DL_MTX_BIG_LOCK);
+	MDL_LOGXW(x_id, "p0/1_us=%lu,%lu, r=%d,%lu,%d, w=%d,%lu,%d, pkt_r/w=%u,%u",
+		p->rec.poll_zero_us, p->rec.poll_non_zero_us,
+		p->rec.is_reading, p->rec.reading_us, p->rec.last_read_retlen,
+		p->rec.is_writing, p->rec.writing_us, p->rec.last_write_retlen,
+		pending_r_count, pending_w_count);
+	gps_mcudl_each_link_mutex_give(x_id, GPS_DL_MTX_BIG_LOCK);
+}
+
+void gps_mcudl_xlink_dump_all_rec(void)
+{
+	enum gps_mcudl_xid x_id;
+
+	for (x_id = 0; x_id < GPS_MDLX_CH_NUM; x_id++)
+		gps_mcudl_each_link_rec_dump(x_id);
+}
+
