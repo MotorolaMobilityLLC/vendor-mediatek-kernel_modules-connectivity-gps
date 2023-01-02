@@ -15,6 +15,7 @@ void gps_mcudl_hw_mcu_speed_up_clock(void);
 void gps_mcudl_hw_mcu_release_rst(void);
 bool gps_mcudl_hw_mcu_wait_idle_loop_or_timeout_us(unsigned int timeout_us);
 void gps_mcudl_hw_mcu_show_status(void);
+void gps_mcudl_hw_mcu_show_pc_log(void);
 
 bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set);
 void gps_mcudl_hw_mcu_do_off(void);
@@ -24,6 +25,7 @@ void gps_mcudl_hw_mcu_do_off(void);
 void gps_dl_hw_set_mcu_emi_remapping_tmp(unsigned int _20msb_of_36bit_phy_addr);
 unsigned int gps_dl_hw_get_mcu_emi_remapping_tmp(void);
 void gps_dl_hw_set_gps_dyn_remapping_tmp(unsigned int val);
+extern void gps_dl_hw_dep_dump_host_csr_range(unsigned int flag_start, unsigned int len);
 #endif
 /*tmp*/
 
