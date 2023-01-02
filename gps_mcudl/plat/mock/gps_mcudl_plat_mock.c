@@ -57,14 +57,32 @@ unsigned int gps_dl_util_get_u32(const unsigned char *p_buffer)
 		((unsigned int)(*(p_buffer + 3)) << 24));
 }
 
+#define GPS_MCU_FW_VER_STR_MAX_LEN (100)
 bool gps_mcudl_link_drv_on_recv_mgmt_data(const unsigned char *p_data, unsigned int data_len)
 {
 	unsigned char cmd;
 	unsigned char status = 0xFF;
 	unsigned int addr, bytes, value;
+	unsigned char fw_ver_str[GPS_MCU_FW_VER_STR_MAX_LEN] = {'\x00'};
+	int i, j;
 
 	/*TODO:*/
-	MDL_LOGW("data_len=%d, data0=0x%x", data_len, p_data[0]);
+	if (data_len >= 4) {
+		MDL_LOGW("data_len=%d, data[0~3]=0x%x 0x%x 0x%x 0x%x",
+			data_len, p_data[0], p_data[1], p_data[2], p_data[3]);
+	} else if (data_len == 3) {
+		MDL_LOGW("data_len=%d, data[0~2]=0x%x 0x%x 0x%x",
+			data_len, p_data[0], p_data[1], p_data[2]);
+	} else if (data_len == 2) {
+		MDL_LOGW("data_len=%d, data[0~1]=0x%x 0x%x",
+			data_len, p_data[0], p_data[1]);
+	} else if (data_len == 1) {
+		MDL_LOGW("data_len=%d, data[0]=0x%x",
+			data_len, p_data[0]);
+	} else {
+		MDL_LOGW("data_len=%d", data_len);
+		return true;
+	}
 
 	cmd = p_data[0];
 	if (data_len >= 2)
@@ -79,6 +97,19 @@ bool gps_mcudl_link_drv_on_recv_mgmt_data(const unsigned char *p_data, unsigned 
 			MDL_LOGW("mcu reg read: stat=%d, addr=0x%08x, bytes=%d, value[0]=0x%08x",
 				status, addr, bytes, value);
 		}
+		break;
+	case 6:
+		if (status != 0)
+			break;
+		for (i = 0, j = 2; i < GPS_MCU_FW_VER_STR_MAX_LEN - 1; i++, j++) {
+			if (j >= data_len)
+				break;
+			if (p_data[j] == '\x00')
+				break;
+			fw_ver_str[i] = p_data[j];
+		}
+		fw_ver_str[i] = '\x00';
+		MDL_LOGW("fw_ver=%s", &fw_ver_str[0]);
 		break;
 	default:
 		break;
