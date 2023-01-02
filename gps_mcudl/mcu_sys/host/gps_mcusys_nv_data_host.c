@@ -181,15 +181,15 @@ void gps_mcusys_nv_data_on_gpsbin_state(enum gps_mcusys_gpsbin_state gpsbin_stat
 
 	switch (gpsbin_state) {
 	case GPS_MCUSYS_GPSBIN_PRE_ON:
-		evt_id = GPS_MCUSYS_NVLOCK_MCU_PRE_ON;
-		break;
-	case GPS_MCUSYS_GPSBIN_POST_ON:
 #if 1
 		/* Toggle gps_mcusys_nv_data_host_init()
 		 * by gps_mcusys_nv_data_get_hdr if not ever init.
 		 */
 		(void)gps_mcusys_nv_data_get_hdr(GPS_MCUSYS_NV_DATA_ID_EPO);
 #endif
+		evt_id = GPS_MCUSYS_NVLOCK_MCU_PRE_ON;
+		break;
+	case GPS_MCUSYS_GPSBIN_POST_ON:
 		evt_id = GPS_MCUSYS_NVLOCK_MCU_POST_ON;
 		break;
 	case GPS_MCUSYS_GPSBIN_PRE_OFF:
