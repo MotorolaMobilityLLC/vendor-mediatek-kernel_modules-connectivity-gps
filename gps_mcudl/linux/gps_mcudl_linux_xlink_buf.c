@@ -30,7 +30,7 @@ void gps_mcudl_dma_buf_free(struct gps_dl_dma_buf *p_dma_buf, enum gps_mcudl_xid
 		dma_free_coherent(p_dev->dev,
 			p_dma_buf->len, p_dma_buf->vir_addr, p_dma_buf->phy_addr);
 #else
-		kzfree(p_dma_buf->vir_addr);
+		kfree(p_dma_buf->vir_addr);
 #endif
 	}
 
