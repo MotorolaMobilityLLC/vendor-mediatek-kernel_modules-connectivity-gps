@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2022 MediaTek Inc.
  */
-
+#include <asm/arch_timer.h>
 #include "gps_each_device.h"
 #include "gps_each_link.h"
 #if GPS_DL_MOCK_HAL
@@ -13,6 +13,7 @@
 #include "gps_data_link_devices.h"
 #include "gps_dl_subsys_reset.h"
 #include "gps_dl_hist_rec.h"
+#include "gps_dl_linux_plat_drv.h"
 #include "gps_mcudl_each_device.h"
 #include "gps_mcudl_each_link.h"
 #include "gps_mcudl_link_state.h"
@@ -273,11 +274,17 @@ static int gps_mcudl_each_device_hw_suspend(enum gps_mcudl_xid link_id, bool nee
 #define GPSDL_IOC_GPS_HW_SUSPEND       18
 #define GPSDL_IOC_GPS_HW_RESUME        19
 #define GPSDL_IOC_GPS_LISTEN_RST_EVT   20
+#define GPSDL_IOC_GPS_GET_MD_STATUS    21
+#define GPSDL_IOC_GPS_CTRL_L5_LNA      22
+#define GPSDL_IOC_GPS_GET_BOOT_TIME    23
 
 static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
 {
 	struct gps_mcudl_each_device *dev; /* device information */
+	struct boot_time_info gps_boot_time;
+	unsigned long flags;
 	int retval;
+	unsigned int md2gps_status = 0;
 
 #if 0
 	dev = container_of(inode->i_cdev, struct gps_mcudl_each_device, cdev);
@@ -430,6 +437,47 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 		/* known unsupported cmd */
 		retval = -EFAULT;
 		MDL_LOGXD_DRW(dev->index, "cmd = %d, not support", cmd);
+		break;
+	case GPSDL_IOC_GPS_GET_MD_STATUS:
+			retval = 0;
+			if (b13_gps_status_addr != 0) {
+				do {
+					char *addr = ioremap((phys_addr_t)b13_gps_status_addr, 0x4);
+
+					md2gps_status = *(unsigned int *)addr;
+					GDL_LOGXI_ONF(dev->index, "MD2GPS_REG (0x%x), md2gps_status=0x%x\n",
+						b13_gps_status_addr, md2gps_status);
+					if (copy_to_user((int __user *)arg, &md2gps_status, sizeof(md2gps_status)))
+						retval = -EFAULT;
+					iounmap(addr);
+				} while (0);
+			} else {
+				retval = -EFAULT;
+				GDL_LOGXE_ONF(dev->index, "Can't get MD2GPS_REG in this platform\n");
+			}
+			break;
+	case GPSDL_IOC_GPS_GET_BOOT_TIME:
+		if (arg == 0)
+			retval = -EINVAL;
+		else
+			retval = 0;
+		local_irq_save(flags);
+		#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+		gps_boot_time.now_time = ktime_get_boottime_ns();
+		gps_boot_time.arch_counter = __arch_counter_get_cntvct();
+		#else
+		gps_boot_time.now_time = ktime_get_boot_ns();
+		gps_boot_time.arch_counter = arch_counter_get_cntvct();
+		#endif
+		local_irq_restore(flags);
+		if (copy_to_user((char __user *)arg, &gps_boot_time, sizeof(struct boot_time_info))) {
+			GDL_LOGXI_ONF(dev->index,
+			"GPSDL_IOC_GPS_GET_BOOT_TIME: copy_to_user error");
+			retval = -EFAULT;
+		}
+		GDL_LOGXI_ONF(dev->index,
+			"GPSDL_IOC_GPS_GET_BOOT_TIME now_time = %d,arch_counter = %d",
+			gps_boot_time.now_time, gps_boot_time.arch_counter);
 		break;
 	default:
 		retval = -EFAULT;
