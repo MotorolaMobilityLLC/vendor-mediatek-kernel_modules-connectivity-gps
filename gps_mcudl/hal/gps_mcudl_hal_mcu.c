@@ -125,6 +125,7 @@ bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list)
 	MDL_LOGW("is_okay=%d, p_fw_list=0x%p", is_okay, p_fw_list);
 	if (is_okay && p_fw_list) {
 		gps_mcudl_hal_load_fw(p_fw_list);
+		gps_mcudl_hw_mcu_speed_up_clock();
 		gps_mcudl_hw_mcu_release_rst();
 		is_okay = gps_mcudl_hw_mcu_wait_idle_loop_or_timeout_us(500 * 1000);
 	}
