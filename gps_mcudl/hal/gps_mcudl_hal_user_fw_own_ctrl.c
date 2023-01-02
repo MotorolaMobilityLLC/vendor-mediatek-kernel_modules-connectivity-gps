@@ -30,6 +30,8 @@ struct gps_mcudl_fw_own_user_context {
 	unsigned int real_set_cnt;
 	unsigned long us_on_clr;
 	unsigned long us_on_set;
+	unsigned long us_on_last_clr;
+	unsigned long us_on_last_set;
 	long us_clr_minus_set;
 };
 
@@ -67,6 +69,8 @@ void gps_mcudl_hal_user_fw_own_init(enum gps_mcudl_fw_own_ctrl_user user)
 	g_gps_mcudl_fw_own_ctx.real_set_cnt = 0;
 	g_gps_mcudl_fw_own_ctx.us_on_clr = gps_dl_tick_get_us();
 	g_gps_mcudl_fw_own_ctx.us_on_set = gps_dl_tick_get_us();
+	g_gps_mcudl_fw_own_ctx.us_on_last_clr = 0;
+	g_gps_mcudl_fw_own_ctx.us_on_last_set = 0;
 	g_gps_mcudl_fw_own_ctx.us_clr_minus_set =
 		(long)(g_gps_mcudl_fw_own_ctx.us_on_clr - g_gps_mcudl_fw_own_ctx.us_on_set);
 	gps_mcul_hal_user_fw_own_unlock();
@@ -104,8 +108,10 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 	} else if (do_clear) {
 		/* TODO: Add mutex due to possibe for multi-task */
 		clear_okay = gps_mcudl_hal_mcu_clr_fw_own();
-		if (!clear_okay)
+		if (!clear_okay) {
+			gps_mcudl_hal_user_fw_own_status_dump();
 			gps_mcudl_hal_clr_fw_own_fail_handler();
+		}
 	}
 
 	gps_mcul_hal_user_fw_own_lock();
@@ -116,6 +122,7 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 	if (do_clear && clear_okay) {
 		g_gps_mcudl_fw_own_ctx.real_clr_cnt++;
 		g_gps_mcudl_fw_own_ctx.is_fw_own = false;
+		g_gps_mcudl_fw_own_ctx.us_on_last_clr = g_gps_mcudl_fw_own_ctx.us_on_clr;
 		g_gps_mcudl_fw_own_ctx.us_on_clr = gps_dl_tick_get_us();
 		g_gps_mcudl_fw_own_ctx.us_clr_minus_set =
 			(long)(g_gps_mcudl_fw_own_ctx.us_on_clr - g_gps_mcudl_fw_own_ctx.us_on_set);
@@ -238,6 +245,7 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 		if (do_set) {
 			g_gps_mcudl_fw_own_ctx.real_set_cnt++;
 			g_gps_mcudl_fw_own_ctx.is_fw_own = true;
+			g_gps_mcudl_fw_own_ctx.us_on_last_set = g_gps_mcudl_fw_own_ctx.us_on_set;
 			g_gps_mcudl_fw_own_ctx.us_on_set = gps_dl_tick_get_us();
 			g_gps_mcudl_fw_own_ctx.us_clr_minus_set =
 				(long)(g_gps_mcudl_fw_own_ctx.us_on_clr - g_gps_mcudl_fw_own_ctx.us_on_set);
@@ -267,9 +275,11 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 
 	/* TODO: Add mutex due to possibe for multi-task */
 	set_okay = gps_mcudl_hal_mcu_set_fw_own();
-	if (!set_okay)
+	if (!set_okay) {
 		MDL_LOGW("set_okay = %d", set_okay);
-	else
+		gps_mcudl_hal_user_fw_own_status_dump();
+		gps_mcudl_hal_mcu_show_status();
+	} else
 		MDL_LOGD("set_okay = %d", set_okay);
 }
 
@@ -288,10 +298,11 @@ void gps_mcudl_hal_user_fw_own_status_dump(void)
 	ctx_bak = g_gps_mcudl_fw_own_ctx;
 	gps_mcul_hal_user_fw_own_unlock();
 
-	MDL_LOGW("s_id=%d, fw_own=%d, user=0x%x, cnt=%d,%d, clr=%lu,set=%lu,dt_us=%ld",
+	MDL_LOGW("s_id=%d, fw_own=%d, user=0x%x, cnt=%d,%d, clr=%lu,set=%lu,dt_us=%ld,last_clr_set=%lu,%lu",
 		ctx_bak.sess_id, ctx_bak.is_fw_own, ctx_bak.user_clr_bitmask,
 		ctx_bak.real_clr_cnt, ctx_bak.real_set_cnt,
-		ctx_bak.us_on_clr, ctx_bak.us_on_set, ctx_bak.us_clr_minus_set);
+		ctx_bak.us_on_clr, ctx_bak.us_on_set, ctx_bak.us_clr_minus_set,
+		ctx_bak.us_on_last_clr, ctx_bak.us_on_last_set);
 }
 
 void gps_mcudl_hal_set_non_lppm_sleep_flag(bool enable)
