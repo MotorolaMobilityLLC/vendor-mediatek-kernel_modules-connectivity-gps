@@ -30,11 +30,9 @@ void gps_dl_hw_usrt_rx_irq_enable(enum gps_dl_link_id_enum link_id, bool enable)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_usrt_rx_irq_enable success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_USRT_IRQ_ENABLE_OPID,
 			link_id, enable, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_usrt_rx_irq_enable success");
 	return;
 }
 
@@ -70,11 +68,9 @@ void gps_dl_hw_usrt_ctrl(enum gps_dl_link_id_enum link_id,
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_usrt_ctrl success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_USRT_CTRL_OPID,
 			link_id, is_on, is_dma_mode, is_1byte_mode, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_usrt_ctrl success");
 }
 
 bool gps_dl_hw_usrt_has_set_nodata_flag(enum gps_dl_link_id_enum link_id)
@@ -82,11 +78,9 @@ bool gps_dl_hw_usrt_has_set_nodata_flag(enum gps_dl_link_id_enum link_id)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_usrt_has_set_nodata_flag success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_USRT_HAS_SET_NODATA_FLAG_OPID,
 			link_id, 0, 0, 0, 0, 0, &res);
 	ret = (bool)res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_usrt_has_set_nodata_flag success");
 	return ret;
 }
 
@@ -95,11 +89,9 @@ void gps_dl_hw_usrt_clear_nodata_irq(enum gps_dl_link_id_enum link_id)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_usrt_clear_nodata_irq success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_USRT_CLEAR_NODATA_IRQ_OPID,
 			link_id, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_usrt_clear_nodata_irq success");
 	return;
 }
 
@@ -124,11 +116,9 @@ bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id)
 	struct arm_smccc_res res;
 	bool poll_okay = false;
 
-	GDL_LOGE("enter smc gps_dl_hw_poll_usrt_dsp_rx_empty success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_POLL_USRT_DSP_RX_EMPTY_OPID,
 			link_id, 0, 0, 0, 0, 0, &res);
 	poll_okay = (bool)res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_poll_usrt_dsp_rx_empty success");
 
 #if GPS_DL_ON_LINUX
 	if (!poll_okay)
