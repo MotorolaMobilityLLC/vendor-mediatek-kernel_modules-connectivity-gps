@@ -16,6 +16,7 @@
 struct gps_mcudl_fw_own_user_context {
 	bool init_done;
 	bool notified_to_set;
+	bool is_fw_own;
 	unsigned int sess_id;
 	unsigned int user_clr_bitmask;
 	unsigned int user_clr_cnt;
@@ -45,6 +46,7 @@ void gps_mcudl_hal_user_fw_own_init(enum gps_mcudl_fw_own_ctrl_user user)
 	g_gps_mcudl_fw_own_ctx.sess_id++;
 
 	/* fw_own is cleared when MCU is just on */
+	g_gps_mcudl_fw_own_ctx.is_fw_own = false;
 	g_gps_mcudl_fw_own_ctx.user_clr_bitmask = (1UL << user);
 	g_gps_mcudl_fw_own_ctx.user_clr_cnt = 1;
 	g_gps_mcudl_fw_own_ctx.user_clr_cnt_on_ntf_set = 1;
@@ -57,8 +59,9 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 {
 	bool do_clear = false;
 	bool clear_okay = true;
+	bool is_fw_own = false;
 	unsigned int real_clear_cnt;
-	unsigned int user_clr_bitmask;
+	unsigned int user_clr_bitmask, user_clr_bitmask_new;
 
 	gps_mcul_hal_user_fw_own_lock();
 	if (!g_gps_mcudl_fw_own_ctx.init_done) {
@@ -67,23 +70,15 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 		return false;
 	}
 	user_clr_bitmask = g_gps_mcudl_fw_own_ctx.user_clr_bitmask;
-	do_clear = (g_gps_mcudl_fw_own_ctx.user_clr_bitmask == 0);
+	is_fw_own = g_gps_mcudl_fw_own_ctx.is_fw_own;
+	do_clear = ((user_clr_bitmask == 0) && is_fw_own);
 	real_clear_cnt = g_gps_mcudl_fw_own_ctx.real_clr_cnt + 1;
 	gps_mcul_hal_user_fw_own_unlock();
 
 	if (do_clear) {
 		/* TODO: Add mutex due to possibe for multi-task */
 		clear_okay = gps_mcudl_hal_mcu_clr_fw_own();
-		if (!clear_okay) {
-			MDL_LOGE("user=%d, real_clr_cnt=%d, clear_okay=%d",
-				user, real_clear_cnt, clear_okay);
-		} else {
-			MDL_LOGD("user=%d, real_clr_cnt=%d, clear_okay=%d",
-				user, real_clear_cnt, clear_okay);
-		}
 	}
-	MDL_LOGD("old_clr_bitmask=0x%x, user=%d, do_clear=%d, okay=%d",
-		user_clr_bitmask, user, do_clear, clear_okay);
 
 	if (do_clear && !clear_okay) {
 #if GPS_DL_HAS_CONNINFRA_DRV
@@ -95,34 +90,67 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 	gps_mcul_hal_user_fw_own_lock();
 	g_gps_mcudl_fw_own_ctx.user_clr_cnt++;
 	g_gps_mcudl_fw_own_ctx.user_clr_bitmask |= (1UL << user);
-	if (do_clear)
+	if (do_clear) {
+		g_gps_mcudl_fw_own_ctx.is_fw_own = false;
 		g_gps_mcudl_fw_own_ctx.real_clr_cnt++;
+	}
+	user_clr_bitmask_new = g_gps_mcudl_fw_own_ctx.user_clr_bitmask;
 	gps_mcul_hal_user_fw_own_unlock();
+
+	if ((do_clear && !clear_okay) || (!do_clear && (user_clr_bitmask == 0))) {
+		MDL_LOGW("clr_bitmask=0x%x,0x%x, fw_own=%d, user=%d, do_clear=%d, okay=%d, cnt=%d",
+			user_clr_bitmask, user_clr_bitmask_new,
+			is_fw_own, user, do_clear, clear_okay, real_clear_cnt);
+	} else {
+		MDL_LOGD("clr_bitmask=0x%x,0x%x, fw_own=%d, user=%d, do_clear=%d, okay=%d, cnt=%d",
+			user_clr_bitmask, user_clr_bitmask_new,
+			is_fw_own, user, do_clear, clear_okay, real_clear_cnt);
+	}
 	return clear_okay;
 }
 
 bool gps_mcudl_hal_user_add_if_fw_own_is_clear(enum gps_mcudl_fw_own_ctrl_user user)
 {
-	bool init_done;
-	bool already_cleared;
+	bool init_done = false;
+	bool already_cleared = false;
+	bool is_fw_own = false;
+	unsigned int user_clr_bitmask, user_clr_bitmask_new;
 
 	gps_mcul_hal_user_fw_own_lock();
 	init_done = g_gps_mcudl_fw_own_ctx.init_done;
-	already_cleared = (g_gps_mcudl_fw_own_ctx.user_clr_bitmask != 0);
+	is_fw_own = g_gps_mcudl_fw_own_ctx.is_fw_own;
+	user_clr_bitmask = g_gps_mcudl_fw_own_ctx.user_clr_bitmask;
+	already_cleared = !is_fw_own;
 	if (init_done && already_cleared) {
 		g_gps_mcudl_fw_own_ctx.user_clr_bitmask |= (1UL << user);
 		g_gps_mcudl_fw_own_ctx.user_clr_cnt++;
 	}
+	user_clr_bitmask_new = g_gps_mcudl_fw_own_ctx.user_clr_bitmask;
 	gps_mcul_hal_user_fw_own_unlock();
 
-	if (!init_done)
+	if (!init_done) {
 		MDL_LOGW("[init_done=0] bypass user=%d", user);
-	return init_done && already_cleared;
+		return false;
+	}
+
+	if ((user_clr_bitmask == 0 && !is_fw_own) ||
+		(user_clr_bitmask != 0 && is_fw_own)) {
+		MDL_LOGW("clr_bitmask=0x%x,0x%x, fw_own=%d, user=%d, okay=%d",
+			user_clr_bitmask, user_clr_bitmask_new,
+			is_fw_own, user, already_cleared);
+	} else {
+		MDL_LOGD("clr_bitmask=0x%x,0x%x, fw_own=%d, user=%d, okay=%d",
+			user_clr_bitmask, user_clr_bitmask_new,
+			is_fw_own, user, already_cleared);
+	}
+	return already_cleared;
 }
 
 bool gps_mcudl_hal_user_set_fw_own_may_notify(enum gps_mcudl_fw_own_ctrl_user user)
 {
-	bool to_notify;
+	bool to_notify = false;
+	bool notified_to_set = false;
+	unsigned int user_clr_bitmask, user_clr_bitmask_new;
 
 	gps_mcul_hal_user_fw_own_lock();
 	if (!g_gps_mcudl_fw_own_ctx.init_done) {
@@ -130,15 +158,20 @@ bool gps_mcudl_hal_user_set_fw_own_may_notify(enum gps_mcudl_fw_own_ctrl_user us
 		MDL_LOGW("[init_done=0] bypass user=%d", user);
 		return false;
 	}
+
+	user_clr_bitmask = g_gps_mcudl_fw_own_ctx.user_clr_bitmask;
+	notified_to_set = g_gps_mcudl_fw_own_ctx.notified_to_set;
 	g_gps_mcudl_fw_own_ctx.user_clr_bitmask &= ~(1UL << user);
-	to_notify = ((!g_gps_mcudl_fw_own_ctx.notified_to_set) &&
-		(g_gps_mcudl_fw_own_ctx.user_clr_bitmask == 0));
+	to_notify = (!notified_to_set && (g_gps_mcudl_fw_own_ctx.user_clr_bitmask == 0));
 	if (to_notify) {
 		g_gps_mcudl_fw_own_ctx.user_clr_cnt_on_ntf_set = g_gps_mcudl_fw_own_ctx.user_clr_cnt;
 		g_gps_mcudl_fw_own_ctx.notified_to_set = true;
 	}
+	user_clr_bitmask_new = g_gps_mcudl_fw_own_ctx.user_clr_bitmask;
 	gps_mcul_hal_user_fw_own_unlock();
 
+	MDL_LOGD("clr_bitmask=0x%x,0x%x, user=%d, ntf=%d,%d",
+		user_clr_bitmask, user_clr_bitmask_new, user, notified_to_set, to_notify);
 	if (to_notify)
 		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_MCU_SET_FW_OWN);
 	return to_notify;
@@ -148,10 +181,12 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 {
 	bool has_recent_clr = false;
 	bool notified_to_set = false;
-	bool user_clr_bitmask = false;
+	bool is_fw_own = false;
+	bool do_set = false;
 	bool set_okay = false;
 	unsigned user_clr_cnt;
 	unsigned user_clr_cnt_on_ntf_set;
+	unsigned int user_clr_bitmask;
 
 	gps_mcul_hal_user_fw_own_lock();
 	if (!g_gps_mcudl_fw_own_ctx.init_done) {
@@ -159,6 +194,8 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 		MDL_LOGW("[init_done=0] bypass");
 		return;
 	}
+
+	is_fw_own = g_gps_mcudl_fw_own_ctx.is_fw_own;
 	user_clr_bitmask = g_gps_mcudl_fw_own_ctx.user_clr_bitmask;
 	notified_to_set = g_gps_mcudl_fw_own_ctx.notified_to_set;
 	user_clr_cnt = g_gps_mcudl_fw_own_ctx.user_clr_cnt;
@@ -168,12 +205,15 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 	if (has_recent_clr) {
 		g_gps_mcudl_fw_own_ctx.user_clr_cnt_on_ntf_set = g_gps_mcudl_fw_own_ctx.user_clr_cnt;
 		g_gps_mcudl_fw_own_ctx.notified_to_set = true;
-	} else
+		do_set = false;
+	} else {
+		do_set = (!is_fw_own && user_clr_bitmask == 0);
+		if (do_set) {
+			g_gps_mcudl_fw_own_ctx.real_set_cnt++;
+			g_gps_mcudl_fw_own_ctx.is_fw_own = true;
+		}
 		g_gps_mcudl_fw_own_ctx.notified_to_set = false;
-
-	if (user_clr_bitmask == 0)
-		g_gps_mcudl_fw_own_ctx.real_set_cnt++;
-
+	}
 	gps_mcul_hal_user_fw_own_unlock();
 
 	if (has_recent_clr) {
@@ -184,8 +224,14 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 		return;
 	}
 
-	if (user_clr_bitmask != 0) {
-		MDL_LOGI("clr_bitmask=0x%x, bypass set", user_clr_bitmask);
+	if (!do_set) {
+		if (user_clr_bitmask == 0) {
+			MDL_LOGW("clr_bitmask=0x%x, fw_own=%d, bypass set",
+				user_clr_bitmask, is_fw_own);
+		} else {
+			MDL_LOGD("clr_bitmask=0x%x, fw_own=%d, bypass set",
+				user_clr_bitmask, is_fw_own);
+		}
 		return;
 	}
 
