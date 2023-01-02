@@ -87,7 +87,7 @@ int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, enum gps_dl_link_id_e
 
 	GDL_LOGI_INI(
 #if GPS_DL_ON_LINUX
-		"alloc gps dl dma buf(%d,%d), addr: vir=0x%p, phy=0x%pad, len=%u",
+		"alloc gps dl dma buf(%d,%d), addr: vir=0x%p, phy=0x%llx, len=%u",
 #else
 		"alloc gps dl dma buf(%d,%d), addr: vir=0x%p, phy=0x%08x, len=%u",
 #endif

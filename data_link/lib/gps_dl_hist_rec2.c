@@ -70,6 +70,10 @@ void gps_dl_hist_rec2_data_routing(enum gps_dl_link_id_enum link_id,
 	unsigned int transmit_len = 0;
 
 	p_list = gps_dl_hist_rec2_log_list_get(link_id);
+
+	if (p_list == NULL)
+		return;
+
 	if (DATA_TRANS_START == rec2_status) {
 		p_list->tick_items[p_list->tick_item_idx].time_us = gps_dl_tick_get_us();
 	} else if (DATA_TRANS_CONTINUE == rec2_status) {
