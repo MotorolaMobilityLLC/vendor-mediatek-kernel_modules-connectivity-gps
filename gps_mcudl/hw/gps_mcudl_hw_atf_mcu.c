@@ -701,3 +701,23 @@ void gps_dl_hw_set_gps_dyn_remapping_tmp(unsigned int val)
 #endif
 /* tmp*/
 
+void gps_mcudl_hw_may_set_link_power_flag(enum gps_mcudl_xid xid, bool power_ctrl)
+{
+	struct arm_smccc_res res;
+	static unsigned int gps_mcu_common_on_flag;
+	int ret;
+
+	if (power_ctrl) {
+		if (gps_mcu_common_on_flag == 0)
+			arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_SET_FLAG_OPID,
+					0xdb9db9, power_ctrl, 0, 0, 0, 0, &res);
+		gps_mcu_common_on_flag |= (1UL << xid);
+	} else {
+		gps_mcu_common_on_flag &= ~(1UL << xid);
+		if (gps_mcu_common_on_flag == 0)
+			arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_SET_FLAG_OPID,
+					0xdb9db9, power_ctrl, 0, 0, 0, 0, &res);
+	}
+	ret = res.a0;
+}
+

@@ -7,6 +7,7 @@
 #define _GPS_MCUDL_HW_MCU_H
 
 #include "gps_mcudl_hw_type.h"
+#include "gps_mcudl_xlink.h"
 
 bool gps_mcudl_hw_conn_force_wake(bool enable);
 
@@ -28,6 +29,8 @@ void gps_dl_hw_set_gps_dyn_remapping_tmp(unsigned int val);
 extern void gps_dl_hw_dep_dump_host_csr_range(unsigned int flag_start, unsigned int len);
 #endif
 /*tmp*/
+
+void gps_mcudl_hw_may_set_link_power_flag(enum gps_mcudl_xid xid, bool power_ctrl);
 
 #endif /* _GPS_MCUDL_HW_MCU_H */
 
