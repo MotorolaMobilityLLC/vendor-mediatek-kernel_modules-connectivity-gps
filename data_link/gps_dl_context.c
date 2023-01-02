@@ -76,6 +76,8 @@ static struct gps_dl_runtime_cfg s_gps_rt_cfg = {
 	.log_level = GPS_DL_LOG_DEF_SETTING_LEVEL,
 	.log_mod_bitmask = GPS_DL_LOG_DEF_SETTING_MODULES,
 	.log_reg_rw_bitmask = GPS_DL_LOG_REG_RW_BITMASK,
+	.opid_enque_timeout = OPID_DURATION_MAX_MS,
+	.opid_opfunc_timeout = OPID_DURATION_MAX_MS,
 };
 
 struct gps_each_link *gps_dl_link_get(enum gps_dl_link_id_enum link_id)
@@ -241,5 +243,33 @@ void gps_dl_log_info_show(void)
 
 	GDL_LOGE("level = %d, bitmask = 0x%08x, rrw = %d",
 		s_gps_rt_cfg.log_level, s_gps_rt_cfg.log_mod_bitmask, show_reg_rw_log);
+}
+
+unsigned long gps_dl_opid_enque_timeout_get(void)
+{
+	return s_gps_rt_cfg.opid_enque_timeout;
+
+}
+
+void gps_dl_opid_enque_timeout_set(unsigned long timeout)
+{
+	s_gps_rt_cfg.opid_enque_timeout = timeout;
+}
+
+unsigned long gps_dl_opid_opfunc_timeout_get(void)
+{
+	return s_gps_rt_cfg.opid_opfunc_timeout;
+
+}
+
+void gps_dl_opid_opfunc_timeout_set(unsigned long timeout)
+{
+	s_gps_rt_cfg.opid_opfunc_timeout = timeout;
+}
+
+void gps_dl_opid_timeout_info_show(void)
+{
+	GDL_LOGE("opid enque timeout = %lu, opfunc timeout = %lu",
+		s_gps_rt_cfg.opid_enque_timeout, s_gps_rt_cfg.opid_opfunc_timeout);
 }
 
