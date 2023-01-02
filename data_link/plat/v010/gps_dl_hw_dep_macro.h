@@ -10,11 +10,13 @@
 #include "conn_infra/conn_host_csr_top.h"
 #include "conn_infra/conn_infra_rgu.h"
 #include "conn_infra/conn_semaphore.h"
+#include "conn_infra/conn_rf_spi_mst_reg.h"
 
 #include "gps/bgf_gps_cfg.h"
 #include "gps/gps_rgu_on.h"
 #include "gps/gps_cfg_on.h"
 #include "gps/gps_aon_top.h"
+#include "gps/bgf_gps_dma.h"
 
 #if GPS_DL_HAS_PTA
 #include "conn_infra/conn_uart_pta.h"
@@ -102,6 +104,30 @@
 #define GDL_HW_GET_GPS2CONN_SLP_PROT_TX_UNTIL_VAL() \
 	GDL_HW_GET_CONN_INFRA_ENTRY( \
 		CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_RDY)
+
+/* For MT6893, related register of SPI*/
+#define GDL_HW_WR_CONN_RF_SPI_MST_SPI_FM_ADDR(val) \
+		GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_ADDR_ADDR, val)
+
+#define GDL_HW_WR_CONN_RF_SPI_MST_SPI_FM_WDAT(val) \
+		GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_WDAT_ADDR, val)
+
+#define GDL_HW_RD_CONN_RF_SPI_MST_SPI_FM_RDAT() \
+		GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_RDAT_ADDR)
+
+/* For MT6893, DMA related CR*/
+#define GDL_HW_GET_GPS_DMA_START_STR_STATUS(val) \
+	GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_START_STR, val)
+
+#define GDL_HW_GET_GPS_DMA_INTSTA_STATUS(val) \
+	GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_INTSTA_INT, val)
+
+#define GDL_HW_MAY_GET_DMA_STATE_STATUS(val)  \
+	(GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_STATE_STATE, val) == 0x01)
+
+/* For MT6893, gps common on */
+#define GDL_HW_SET_GPS_EMI_REQ(val) \
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, val)
 
 /* For Connac2.0, wait until sleep prot disable done, or after polling 10 x 1ms */
 #define GDL_HW_MAY_WAIT_CONN_INFRA_SLP_PROT_DISABLE_ACK(p_poll_okay) \

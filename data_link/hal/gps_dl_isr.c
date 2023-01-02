@@ -18,7 +18,11 @@
 /* On Linux: hwirq != irq_id */
 #if GPS_DL_ON_CTP
 /* x_define_irq.h 198 -> 415 */
-#define GPS_DL_IRQ_BASE_ID			(GPS_L1_IRQ_BUS_BIT0_ID)
+#if GPS_DL_CONNAC3
+#define GPS_DL_IRQ_BASE_ID          (GPS_L1_IRQ_BIT0_ID)
+#elif GPS_DL_CONNAC2
+#define GPS_DL_IRQ_BASE_ID          (GPS_L1_IRQ_BUS_BIT0_ID)
+#endif
 #else
 #define GPS_DL_IRQ_BASE_ID          (383) /* (415 - 32) */
 #endif
