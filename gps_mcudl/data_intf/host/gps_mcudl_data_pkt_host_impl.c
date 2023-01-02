@@ -212,8 +212,8 @@ void gps_mcudl_mcu2ap_ydata_sta_may_do_dump(enum gps_mcudl_yid yid, bool force)
 		ticks_since_last_notify = gps_dl_tick_get_us() - ysta_bak.last_ntf_tick;
 	bytes_since_last_notify = ysta_bak.curr_byte_cnt - ysta_bak.last_ntf_byte_cnt;
 	if (!force &&
-		ticks_since_last_notify < 1000*1000 &&
-		bytes_since_last_notify < 3*1024 &&
+		ticks_since_last_notify < 4*1000*1000 &&
+		bytes_since_last_notify < (4*1024 + 512) &&
 		ysta_bak.bypass_ntf_cnt < 5) {
 		/* no need to show warning log if none of thresholds meet */
 		return;
