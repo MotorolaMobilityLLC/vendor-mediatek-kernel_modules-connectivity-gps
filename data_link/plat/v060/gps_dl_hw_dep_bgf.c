@@ -21,6 +21,7 @@
 #include "../gps_dl_hw_priv_util.h"
 #include "conn_infra/conn_cfg_on.h"
 #include "conn_infra/conn_cfg.h"
+#include "gps_dl_subsys_reset.h"
 
 void gps_dl_hw_dep_gps_sw_request_peri_usage(bool request)
 {
@@ -293,6 +294,7 @@ int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 		return 0;
 
 _fail_disable_gps_slp_prot:
+		gps_dl_slp_prot_fail_and_dump();
 		return -1;
 	} else if (0 == op) {
 		/* enable when off */
@@ -326,13 +328,6 @@ _fail_disable_gps_slp_prot:
 			goto _fail_enable_gps_slp_prot;
 		}
 
-		GDL_HW_SET_GPS2CONN_AXi_SLP_PROT_RX_VAL(1);
-		GDL_HW_POLL_GPS2CONN_AXi_SLP_PROT_RX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
-		if (!poll_okay) {
-			GDL_LOGE("_fail_disable_gps_slp_prot - gps2conn rx");
-			goto _fail_enable_gps_slp_prot;
-		}
-
 		GDL_HW_SET_GPS2CONN_AXi_SLP_PROT_TX_VAL(1);
 		GDL_HW_POLL_GPS2CONN_AXi_SLP_PROT_TX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
@@ -340,10 +335,18 @@ _fail_disable_gps_slp_prot:
 			goto _fail_enable_gps_slp_prot;
 		}
 
+		GDL_HW_SET_GPS2CONN_AXi_SLP_PROT_RX_VAL(1);
+		GDL_HW_POLL_GPS2CONN_AXi_SLP_PROT_RX_UNTIL_VAL(1, POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_disable_gps_slp_prot - gps2conn rx");
+			goto _fail_enable_gps_slp_prot;
+		}
+
 		return 0;
 
 _fail_enable_gps_slp_prot:
 		/* trigger reset on outer function */
+		gps_dl_slp_prot_fail_and_dump();
 		return -1;
 	}
 
