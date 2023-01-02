@@ -965,7 +965,7 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			GPS_ERR_FUNC("COMBO_IOC_GPS_GET_BOOT_TIME: copy_to_user error");
 			retval = -EFAULT;
 		}
-		GPS_ERR_FUNC("COMBO_IOC_GPS_GET_BOOT_TIME now_time = %d,arch_counter = %d",
+		GPS_ERR_FUNC("COMBO_IOC_GPS_GET_BOOT_TIME now_time = %lld,arch_counter = %lld",
 			gps_boot_time.now_time, gps_boot_time.arch_counter);
 		break;
 	default:
