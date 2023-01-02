@@ -374,7 +374,7 @@ static int gps_dl_get_reserved_memory(struct device *dev)
 static int gps_dl_get_reserved_memory_lk(struct device *dev)
 {
 	struct device_node *node;
-	unsigned int phy_addr = 0;
+	unsigned long long phy_addr = 0;
 	unsigned int phy_size = 0;
 
 	node = dev->of_node;
@@ -383,7 +383,7 @@ static int gps_dl_get_reserved_memory_lk(struct device *dev)
 		return -1;
 	}
 
-	if (of_property_read_u32(node, "emi-addr", &phy_addr)) {
+	if (of_property_read_u64(node, "emi-addr", &phy_addr)) {
 		pr_info("gps_dl_get_reserved_memory_lk: unable to get emi_addr\n");
 		return -1;
 	}
@@ -394,7 +394,7 @@ static int gps_dl_get_reserved_memory_lk(struct device *dev)
 	}
 
 	pr_info("gps_dl_get_reserved_memory_lk emi_addr %x, emi_size %x\n", phy_addr, phy_size);
-	gGpsRsvMemPhyBase = phy_addr;
+	gGpsRsvMemPhyBase = (phys_addr_t)phy_addr;
 	gGpsRsvMemSize = phy_size;
 
 	return 0;
