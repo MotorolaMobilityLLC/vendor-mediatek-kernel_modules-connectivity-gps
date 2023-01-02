@@ -26,6 +26,7 @@
 #include "gps_dl_log.h"
 #include "gps_dl_linux_reserved_mem.h"
 #include "gps_dl_emi.h"
+#include "gps_dl_config.h"
 
 /******************************************************************************
  * Definition
@@ -58,6 +59,11 @@ char gps_icap_local_buf[GPS_ICAP_BUF_SIZE];
 long gps_icap_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int retval = 0;
+#if GPS_DL_CONNAC3
+	unsigned int offset = 0;
+	unsigned int tmp_add = 0;
+#endif
+
 #if 0
 	unsigned int *tmp;
 #endif
@@ -85,7 +91,18 @@ long gps_icap_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long 
 		if (copy_to_user((unsigned int __user *)arg, tmp, sizeof(unsigned int)))
 			retval = -1;
 #endif
+
+#if GPS_DL_CONNAC3
+		offset = (unsigned int)(unsigned long)&(((struct gps_mcudl_emi_layout *)0)->gps_legacy[0]);
+		tmp_add = 0xF0000000 + offset - 0x78000000;/*for address trans*/
+		GDL_LOGW("gps_emi:offset (%x)\n", offset);
+		GDL_LOGW("gps_emi:tmp_add  (%x)\n", tmp_add);
+		if (copy_to_user((unsigned int __user *)arg, &tmp_add, sizeof(unsigned int)))
+			retval = -1;
 		GDL_LOGW("IOCTL_ADC_CAPTURE_ADDR_GET,(%d)", retval);
+#else
+		GDL_LOGW("NO NEED GET ADC_CAPTURE_ADDR");
+#endif
 		break;
 
 	default:
