@@ -163,10 +163,11 @@ void gps_mcusys_nv_data_host_init(void)
 	gps_nv_emi_clear();
 	for (nv_id = 0; nv_id < GPS_MCUSYS_NV_DATA_NUM; nv_id++) {
 		p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
-		if (p_hdr != NULL)
+		if (p_hdr != NULL) {
 			GPS_OFL_TRC("nv_id=%d, p_hdr=0x%p, offset=0x%x",
 				nv_id, p_hdr, gps_mcudl_get_offset_from_conn_base(p_hdr));
 			gps_mcusys_nv_data_host_hdr_init(nv_id, &p_hdr->hdr_host);
+		}
 	}
 	GPS_OFL_TRC("");
 }
