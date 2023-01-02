@@ -55,9 +55,10 @@ void gps_mcudl_hal_user_fw_own_init(enum gps_mcudl_fw_own_ctrl_user user)
 
 bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 {
-	bool already_cleared = false;
-	bool clear_okay = false;
+	bool do_clear = false;
+	bool clear_okay = true;
 	unsigned int real_clear_cnt;
+	unsigned int user_clr_bitmask;
 
 	gps_mcul_hal_user_fw_own_lock();
 	if (!g_gps_mcudl_fw_own_ctx.init_done) {
@@ -65,12 +66,12 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 		MDL_LOGW("[init_done=0] bypass user=%d", user);
 		return false;
 	}
-	already_cleared = (g_gps_mcudl_fw_own_ctx.user_clr_bitmask != 0);
+	user_clr_bitmask = g_gps_mcudl_fw_own_ctx.user_clr_bitmask;
+	do_clear = (g_gps_mcudl_fw_own_ctx.user_clr_bitmask == 0);
 	real_clear_cnt = g_gps_mcudl_fw_own_ctx.real_clr_cnt + 1;
 	gps_mcul_hal_user_fw_own_unlock();
 
-	clear_okay = true;
-	if (!already_cleared) {
+	if (do_clear) {
 		/* TODO: Add mutex due to possibe for multi-task */
 		clear_okay = gps_mcudl_hal_mcu_clr_fw_own();
 		if (!clear_okay) {
@@ -81,8 +82,10 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 				user, real_clear_cnt, clear_okay);
 		}
 	}
+	MDL_LOGD("old_clr_bitmask=0x%x, user=%d, do_clear=%d, okay=%d",
+		user_clr_bitmask, user, do_clear, clear_okay);
 
-	if (!clear_okay) {
+	if (do_clear && !clear_okay) {
 #if GPS_DL_HAS_CONNINFRA_DRV
 		conninfra_trigger_whole_chip_rst(
 			CONNDRV_TYPE_GPS, "GNSS clear fw own fail");
@@ -92,7 +95,7 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 	gps_mcul_hal_user_fw_own_lock();
 	g_gps_mcudl_fw_own_ctx.user_clr_cnt++;
 	g_gps_mcudl_fw_own_ctx.user_clr_bitmask |= (1UL << user);
-	if (!already_cleared)
+	if (do_clear)
 		g_gps_mcudl_fw_own_ctx.real_clr_cnt++;
 	gps_mcul_hal_user_fw_own_unlock();
 	return clear_okay;
@@ -128,7 +131,8 @@ bool gps_mcudl_hal_user_set_fw_own_may_notify(enum gps_mcudl_fw_own_ctrl_user us
 		return false;
 	}
 	g_gps_mcudl_fw_own_ctx.user_clr_bitmask &= ~(1UL << user);
-	to_notify = !g_gps_mcudl_fw_own_ctx.notified_to_set;
+	to_notify = ((!g_gps_mcudl_fw_own_ctx.notified_to_set) &&
+		(g_gps_mcudl_fw_own_ctx.user_clr_bitmask == 0));
 	if (to_notify) {
 		g_gps_mcudl_fw_own_ctx.user_clr_cnt_on_ntf_set = g_gps_mcudl_fw_own_ctx.user_clr_cnt;
 		g_gps_mcudl_fw_own_ctx.notified_to_set = true;
@@ -164,10 +168,12 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 	if (has_recent_clr) {
 		g_gps_mcudl_fw_own_ctx.user_clr_cnt_on_ntf_set = g_gps_mcudl_fw_own_ctx.user_clr_cnt;
 		g_gps_mcudl_fw_own_ctx.notified_to_set = true;
-	} else {
-		g_gps_mcudl_fw_own_ctx.real_set_cnt++;
+	} else
 		g_gps_mcudl_fw_own_ctx.notified_to_set = false;
-	}
+
+	if (user_clr_bitmask == 0)
+		g_gps_mcudl_fw_own_ctx.real_set_cnt++;
+
 	gps_mcul_hal_user_fw_own_unlock();
 
 	if (has_recent_clr) {
@@ -175,6 +181,11 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 			has_recent_clr, user_clr_bitmask, notified_to_set,
 			user_clr_cnt_on_ntf_set, user_clr_cnt);
 		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_MCU_SET_FW_OWN);
+		return;
+	}
+
+	if (user_clr_bitmask != 0) {
+		MDL_LOGI("clr_bitmask=0x%x, bypass set", user_clr_bitmask);
 		return;
 	}
 
