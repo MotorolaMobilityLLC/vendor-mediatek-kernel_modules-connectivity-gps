@@ -32,6 +32,9 @@
 #include "fw_log_gps_lib.h"
 #include "gps_data_link_devices.h"
 #include "gps_dl_config.h"
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_xlink.h"
+#endif
 #ifdef pr_fmt
 #undef pr_fmt
 #endif
@@ -85,6 +88,9 @@ long fw_log_gps_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned lon
 	case GPS_FW_LOG_IOCTL_ON_OFF:
 		pr_info("gps PS_FW_LOG_IOCTL_ON_OFF(%lu)\n", arg);
 		/*GPS_fwlog_ctrl((bool)arg);*/
+#if GPS_DL_HAS_MCUDL
+		gps_mcudl_xlink_fw_log_ctrl((bool)arg);
+#endif
 		break;
 
 	case GPS_FW_LOG_IOCTL_SET_LEVEL:
