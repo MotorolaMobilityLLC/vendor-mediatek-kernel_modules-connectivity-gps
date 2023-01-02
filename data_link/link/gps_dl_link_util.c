@@ -53,13 +53,24 @@ void gps_each_link_spin_locks_deinit(struct gps_each_link *p)
 #endif
 }
 
-void gps_each_link_mutex_take(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id)
+bool gps_each_link_mutex_take2(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id)
 {
 	/* TODO: check range */
 	struct gps_each_link *p = gps_dl_link_get(link_id);
+	int mutex_take_retval;
 
 	/* TODO: handle killed */
-	gps_dl_osal_lock_sleepable_lock(&p->mutexes[mtx_id]);
+	mutex_take_retval = gps_dl_osal_lock_sleepable_lock(&p->mutexes[mtx_id]);
+	if (mutex_take_retval) {
+		GDL_LOGXW_DRW(link_id, "mtx_id=%d, mutex_take_retval=%d", mtx_id, mutex_take_retval);
+		return false;
+	}
+	return true;
+}
+
+void gps_each_link_mutex_take(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id)
+{
+	(void)gps_each_link_mutex_take2(link_id, mtx_id);
 }
 
 void gps_each_link_mutex_give(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id)
