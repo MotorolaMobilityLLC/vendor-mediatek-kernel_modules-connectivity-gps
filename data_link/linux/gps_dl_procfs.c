@@ -38,6 +38,14 @@ int gps_dl_procfs_read_iomem(int y, int z)
 	return 0;
 }
 
+#if GPS_DL_HAS_MCUDL
+int gps_dl_procfs_read_mcu_reg(int y, int z)
+{
+	gps_mcudl_xlink_test_read_mcu_reg((unsigned int)y, (unsigned int)z);
+	return 0;
+}
+#endif
+
 #ifdef GPS_DL_ENABLE_MET
 int gps_dl_procfs_set_met(int y, int z)
 {
@@ -204,6 +212,7 @@ gps_dl_procfs_test_func_type g_gps_dl_proc_test_func_list[] = {
 	[0x09] = gps_dl_procfs_set_opid_duration,
 #if GPS_DL_HAS_MCUDL
 	[0x10] = gps_mcudl_procfs_dbg,
+	[0x11] = gps_dl_procfs_read_mcu_reg,
 #endif
 };
 
