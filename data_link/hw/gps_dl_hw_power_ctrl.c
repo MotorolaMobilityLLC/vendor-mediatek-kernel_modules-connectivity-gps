@@ -184,6 +184,9 @@ int gps_dl_hw_gps_common_on(void)
 	bool poll_okay = false;
 	unsigned int poll_ver, adie_ver = 0;
 
+	/*wake up 3T 32k clock to ready*/
+	GDL_WAIT_US(200);
+
 	/* Poll conninfra hw version */
 	GDL_HW_CHECK_CONN_INFRA_VER(&poll_okay, &poll_ver);
 	if (!poll_okay) {
