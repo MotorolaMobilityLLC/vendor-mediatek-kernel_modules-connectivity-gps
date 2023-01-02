@@ -31,6 +31,7 @@
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 
 #include "gps_dl_hw_dep_api.h"
+#include "gps_mcudl_data_pkt_payload_struct.h"
 
 struct gps_mcudl_ystate {
 	bool open;
@@ -365,6 +366,7 @@ int gps_mcudl_plat_mcu_open(void)
 	gps_mcudl_mcu2ap_set_wait_read_flag(GPS_MDLY_URGENT, false);
 	gps_mcudl_mgmt_cmd_state_init_all();
 	gps_mcu_hif_host_trans_hist_init();
+	gps_mcu_host_trans_hist_init();
 	gps_mcudl_mcu2ap_test_bypass_set(false);
 
 	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMALESS_MGMT,
@@ -446,11 +448,21 @@ int gps_mcudl_plat_mcu_close(void)
 int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 {
 	bool is_okay;
+	struct gps_mcudl_data_pkt_rec_item rec_item;
 
 	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMA_NORMAL, kbuf, count);
-	MDL_LOGW("write count=%d, is_ok=%d", count, is_okay);
-	if (!is_okay)
+
+	rec_item.host_wr.len = count;
+	rec_item.host_wr.is_okay = is_okay;
+	rec_item.host_wr.host_us = gps_dl_tick_get_us();
+	gps_mcu_host_trans_hist_rec(&rec_item, GPS_MCUDL_HIST_REC_HOST_WR);
+
+	if (gps_mcu_host_trans_get_if_need_dump())
+		MDL_LOGW("write count=%d, is_ok=%d", count, is_okay);
+	if (!is_okay) {
+		MDL_LOGW("write count=%d, is_ok=%d", count, is_okay);
 		return 0;
+	}
 	return count;
 }
 
