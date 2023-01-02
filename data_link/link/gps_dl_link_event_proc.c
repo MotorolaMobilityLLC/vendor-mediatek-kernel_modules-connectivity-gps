@@ -135,7 +135,18 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		break;
 	case GPS_DL_EVT_LINK_ENTER_DPSTOP:
 		dsp_state = gps_dsp_state_get(link_id);
-		if ((GPS_DSP_ST_WORKING != dsp_state) && (GPS_DSP_ST_RESET_DONE != dsp_state)) {
+		/*Fix corner case: enter dpstop mode when dsp is wakeup, wait until reset_done or timeout*/
+		if (GPS_DSP_ST_WAKEN_UP == dsp_state) {
+			GDL_LOGXW(link_id, "enter dpstop with dsp state = %s",
+				gps_dl_dsp_state_name(dsp_state));
+			gps_dl_hal_gps_wait_wakeup_done_or_timeout(link_id);
+			dsp_state = gps_dsp_state_get(link_id);
+			GDL_LOGXW(link_id, "enter dpstop with dsp state = %s",
+				gps_dl_dsp_state_name(dsp_state));
+		}
+
+		if ((GPS_DSP_ST_WORKING != dsp_state) && (GPS_DSP_ST_RESET_DONE != dsp_state) &&
+			(GPS_DSP_ST_WAKEN_UP != dsp_state)) {
 			/* TODO: ever working check */
 			GDL_LOGXE(link_id, "not enter dpstop due to dsp state = %s",
 				gps_dl_dsp_state_name(dsp_state));
