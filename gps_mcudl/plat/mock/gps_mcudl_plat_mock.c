@@ -47,10 +47,41 @@ int gps_mcudl_mock_do_stp_ctrl(enum gps_mcudl_yid yid, bool open)
 	return retval;
 }
 
+unsigned int gps_dl_util_get_u32(const unsigned char *p_buffer)
+{
+	return ((unsigned int)(*p_buffer) +
+		((unsigned int)(*(p_buffer + 1)) << 8) +
+		((unsigned int)(*(p_buffer + 2)) << 16) +
+		((unsigned int)(*(p_buffer + 3)) << 24));
+}
+
 bool gps_mcudl_link_drv_on_recv_mgmt_data(const unsigned char *p_data, unsigned int data_len)
 {
+	unsigned char cmd;
+	unsigned char status = 0xFF;
+	unsigned int addr, bytes, value;
+
 	/*TODO:*/
 	MDL_LOGW("data_len=%d, data0=0x%x", data_len, p_data[0]);
+
+	cmd = p_data[0];
+	if (data_len >= 2)
+		status = p_data[1];
+
+	switch (cmd) {
+	case 5:
+		if (data_len >= 16) {
+			addr = gps_dl_util_get_u32(&p_data[4]);
+			bytes = gps_dl_util_get_u32(&p_data[8]);
+			value = gps_dl_util_get_u32(&p_data[12]);
+			MDL_LOGW("mcu reg read: stat=%d, addr=0x%08x, bytes=%d, value[0]=0x%08x",
+				status, addr, bytes, value);
+		}
+		break;
+	default:
+		break;
+	}
+
 	return true;
 }
 
