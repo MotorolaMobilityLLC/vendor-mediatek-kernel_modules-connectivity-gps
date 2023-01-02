@@ -39,6 +39,7 @@ bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable);
 void gps_dl_hw_gps_sw_request_emi_usage(bool request);
 void gps_dl_hw_gps_sw_request_peri_usage(bool request);
 
+extern unsigned int poll_ver;
 enum GDL_HW_RET gps_dl_hw_get_mcub_info(
 	enum gps_dl_link_id_enum link_id, struct gps_dl_hal_mcub_info *p);
 
@@ -64,18 +65,6 @@ void gps_dl_hw_set_dma_stop(enum gps_dl_hal_dma_ch_index channel);
 bool gps_dl_hw_get_dma_int_status(enum gps_dl_hal_dma_ch_index channel);
 
 unsigned int gps_dl_hw_get_dma_left_len(enum gps_dl_hal_dma_ch_index channel);
-
-struct gps_dl_hw_dma_status_struct {
-	unsigned int wrap_count;
-	unsigned int wrap_to_addr;
-	unsigned int total_count;
-	unsigned int config;
-	unsigned int start_flag;
-	unsigned int intr_flag;
-	unsigned int left_count;
-	unsigned int curr_addr;
-	unsigned int state;
-};
 
 void gps_dl_hw_save_dma_status_struct(
 	enum gps_dl_hal_dma_ch_index ch, struct gps_dl_hw_dma_status_struct *p);
