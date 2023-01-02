@@ -19,6 +19,7 @@
 #include "gps_each_device.h"
 #if GPS_DL_HAS_MCUDL
 #include "gps_mcudl_xlink.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #endif
 #include "gps_dl_iomem_dump.h"
 
@@ -185,8 +186,12 @@ int gps_mcudl_procfs_dbg(int y, int z)
 {
 	if (y == 0)
 		gps_mcudl_xlink_trigger_print_hw_status();
-	else if (y == 1)
-		gps_mcudl_xlink_test_fw_own_ctrl(z != 0);
+	else if (y == 1) {
+		if (z == 0 || z == 1)
+			gps_mcudl_xlink_test_fw_own_ctrl(z != 0);
+		else if (z == 2)
+			gps_mcudl_hal_user_fw_own_status_dump();
+	}
 	else if (y == 2)
 		gps_mcudl_xlink_test_toggle_ccif(z);
 	else if (y == 3)

@@ -23,7 +23,6 @@ struct gps_mcudl_fw_list {
 	unsigned int n_desc;
 };
 
-
 /* true is okay */
 bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list);
 void gps_mcudl_hal_mcu_do_off(void);
