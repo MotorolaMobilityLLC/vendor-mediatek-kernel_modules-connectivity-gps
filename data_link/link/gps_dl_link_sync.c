@@ -151,10 +151,6 @@ void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay, bool hw_r
 
 	GDL_LOGXD_ONF(link_id, "hw_resume = %d", hw_resume);
 
-	/* TODO: open fail case */
-	gps_each_link_set_bool_flag(link_id, LINK_OPEN_RESULT_OKAY, okay);
-	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
-
 	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_OPEN_DONE);
 	if (gps_each_link_get_bool_flag(link_id, LINK_USER_OPEN) && okay) {
 		GDL_LOGXW_ONF(link_id,
@@ -183,6 +179,9 @@ void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay, bool hw_r
 	}
 	gps_each_link_give_big_lock(link_id);
 
+	gps_each_link_set_bool_flag(link_id, LINK_OPEN_RESULT_OKAY, okay);
+	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
+
 	if (send_msg) {
 		gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
 		gps_each_link_set_bool_flag(link_id, LINK_TO_BE_CLOSED, true);
@@ -210,19 +209,16 @@ void gps_dl_link_close_ack(enum gps_dl_link_id_enum link_id, bool hw_suspend)
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 
 	GDL_LOGXD_ONF(link_id, "hw_suspend = %d", hw_suspend);
-	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
 
 	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_CLOSE_DONE);
-
-	/* gps_each_link_set_state(link_id, LINK_CLOSED); */
-	/* For case of reset_done */
-	if (hw_suspend) {
+	if (hw_suspend)
 		gps_each_link_change_state_from(link_id, LINK_SUSPENDING, LINK_SUSPENDED);
-		/* TODO */
-	} else
+	else
 		gps_each_link_change_state_from(link_id, LINK_CLOSING, LINK_CLOSED);
-
 	gps_each_link_give_big_lock(link_id);
+
+	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
+
 }
 
 static bool gps_dl_link_try_to_clear_both_resetting_status(void)
