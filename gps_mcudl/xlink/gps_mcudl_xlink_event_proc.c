@@ -51,6 +51,7 @@ void gps_mcudl_xlink_event_send(enum gps_mcudl_xid link_id,
 		pOp->op.opId = GPS_DL_OPID_MCUDL_XLINK_EVENT_PROC;
 		pOp->op.au4OpData[0] = link_id;
 		pOp->op.au4OpData[1] = evt;
+		pOp->op.op_enq = gps_dl_tick_get_ms();
 		iRet = gps_dl_put_act_op(pOp);
 		MDL_LOGXD(link_id, "iRet=%d", iRet);
 	} else {
