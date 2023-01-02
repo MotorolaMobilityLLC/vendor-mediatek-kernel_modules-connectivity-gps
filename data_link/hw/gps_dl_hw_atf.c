@@ -39,6 +39,7 @@
 */
 #include "gps_dl_hw_atf.h"
 
+#if 0
 static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 {
 	bool poll_okay = false;
@@ -127,6 +128,7 @@ _fail_enable_gps_slp_prot:
 
 	return 0;
 }
+#endif
 
 bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 {
@@ -148,37 +150,20 @@ void gps_dl_hw_gps_sw_request_peri_usage(bool request)
 
 void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 {
-	bool show_log = false;
 	bool reg_rw_log = false;
+	struct arm_smccc_res res;
+	int ret;
 
 #if GPS_DL_ON_LINUX
 	reg_rw_log = gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_EMI_SW_REQ_CTRL);
 #endif
-	if (reg_rw_log) {
-		show_log = gps_dl_set_show_reg_rw_log(true);
-		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_TOP_ADDR);
-		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_WF_ADDR);
-		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_BT_ADDR);
-		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_GPS_ADDR);
-	}
-#if (GPS_DL_USE_TIA && GPS_DL_USE_TOP_EMI_REQ_FOR_TIA)
-	/* If use TIA, CONN_INFRA_CFG_EMI_CTL_GPS used by DSP, driver use TOP's. */
-	if (request)
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_TOP_EMI_REQ_TOP, 1);
-	else {
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_TOP_EMI_REQ_TOP, 1);
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_TOP_EMI_REQ_TOP, 0);
-	}
-#else
-	if (request)
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 1);
-	else {
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 1);
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
-	}
-#endif
-	if (reg_rw_log)
-		gps_dl_set_show_reg_rw_log(show_log);
+
+	GDL_LOGE("enter smc gps_dl_hw_gps_sw_request_emi_usage success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_SW_REQUEST_EMI_USAGE_OPID,
+			request, reg_rw_log, 0, 0, 0, 0, &res);
+	ret = res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_gps_sw_request_emi_usage success");
+	return;
 }
 
 int gps_dl_hw_gps_common_on_part1(unsigned int *poll_ver)
@@ -335,12 +320,49 @@ _fail_gps_hw_common_on_part1_not_okay:
 
 }
 
+int gps_dl_hw_gps_common_off_part1(void)
+{
+	struct arm_smccc_res res;
+	int ret;
+
+	GDL_LOGE("enter smc gps_dl_hw_gps_common_off_part1 success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_OFF_PART1_OPID,
+			0, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_gps_common_off_part1 success");
+	return ret;
+}
+
+int gps_dl_hw_gps_common_off_part2(void)
+{
+	struct arm_smccc_res res;
+	int ret;
+
+	GDL_LOGE("enter smc gps_dl_hw_gps_common_off_part2 success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_OFF_PART2_OPID,
+			0, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_gps_common_off_part2 success");
+	return ret;
+}
+
+int gps_dl_hw_gps_common_off_part3(void)
+{
+	struct arm_smccc_res res;
+	int ret;
+
+	GDL_LOGE("enter smc gps_dl_hw_gps_common_off_part3 success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_OFF_PART3_OPID,
+			0, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_gps_common_off_part3 success");
+	return ret;
+}
+
 int gps_dl_hw_gps_common_off(void)
 {
-	bool poll_okay;
-
 	/*Disable BPLL driver*/
-	gps_dl_hw_dep_may_disable_bpll();
+	gps_dl_hw_gps_common_off_part1();
 
 #if GPS_DL_HAS_CONNINFRA_DRV
 	if (0x6637 == gps_dl_hal_get_adie_ver()) {
@@ -350,14 +372,7 @@ int gps_dl_hw_gps_common_off(void)
 	}
 #endif
 
-	/* Power off A-die top clock */
-	GDL_HW_ADIE_TOP_CLK_EN(0, &poll_okay);
-	if (!poll_okay) {
-		/* Just show log */
-		GDL_LOGE("_fail_adie_top_clk_dis_not_okay");
-	}
-
-	if (gps_dl_hw_gps_sleep_prot_ctrl(0) != 0) {
+	if (gps_dl_hw_gps_common_off_part2() != 0) {
 		GDL_LOGE("enable sleep prot fail, trigger connsys reset");
 #if GPS_DL_ON_LINUX
 		gps_dl_trigger_connsys_reset();
@@ -375,18 +390,10 @@ int gps_dl_hw_gps_common_off(void)
 #endif
 
 	/* L1 infra request, only for mt6983\6879\... */
-	gps_dl_hw_dep_may_set_conn_infra_l1_request(false);
-
-	gps_dl_hw_gps_sw_request_peri_usage(false);
+	gps_dl_hw_gps_common_off_part3();
 
 	if (gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_HOST_CSR_GPS_OFF))
 		gps_dl_hw_dump_host_csr_conninfra_info(true);
-
-	/* Disable GPS function */
-	GDL_HW_SET_GPS_FUNC_EN(0);
-
-	/* Disable Conninfra BGF */
-	GDL_HW_SET_CONN_INFRA_BGF_EN(0);
 
 	return 0;
 }
