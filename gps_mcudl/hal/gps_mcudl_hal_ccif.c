@@ -6,6 +6,7 @@
 #include "gps_mcudl_hal_ccif.h"
 #include "gps_mcudl_hw_ccif.h"
 #include "gps_dl_isr.h"
+#include "gps_dl_time_tick.h"
 #include "gps_mcu_hif_host.h"
 #include "gps_mcudl_log.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
@@ -54,20 +55,33 @@ void gps_mcudl_hal_ccif_show_status(void)
 	}
 }
 
+unsigned long g_gps_ccif_irq_cnt;
 unsigned int g_gps_fw_log_irq_cnt;
 void gps_mcudl_hal_ccif_rx_isr(void)
 {
-	unsigned int rch_mask;
+	unsigned int rch_mask, last_rch_mask = 0;
 	enum gps_mcudl_ccif_ch ch;
+	unsigned long tick_us0, tick_us1, dt_us;
+	unsigned int recheck_cnt = 0;
 
 	gps_dl_irq_mask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_ISR);
+	g_gps_ccif_irq_cnt++;
+	tick_us0 = gps_dl_tick_get_us();
+
+recheck_rch:
 	rch_mask = gps_mcudl_hw_ccif_get_rch_bitmask();
-	GDL_LOGW("rch_mask=0x%x", rch_mask);
+	if (rch_mask == 0) {
+		gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_ISR);
+		return;
+	}
+
+	/* TODO: handling read 0xdeadfeed case */
+
 	for (ch = 0; ch < GPS_MCUDL_CCIF_CH_NUM; ch++) {
 		if (rch_mask & (1UL << ch)) {
 			gps_mcudl_hw_ccif_set_rch_ack(ch);
 			if (ch == GPS_MCUDL_CCIF_CH4)
-				gps_mcu_hif_host_ccif_isr();
+				gps_mcu_hif_host_ccif_irq_handler_in_isr();
 #if GPS_DL_HAS_CONNINFRA_DRV
 			else if (ch == GPS_MCUDL_CCIF_CH1) {
 				connsys_log_irq_handler(CONN_DEBUG_TYPE_GPS);
@@ -87,7 +101,19 @@ void gps_mcudl_hal_ccif_rx_isr(void)
 #endif
 		}
 	}
-	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_ISR);
+
+	tick_us1 = gps_dl_tick_get_us();
+	dt_us = tick_us1 - tick_us0;
+	if ((rch_mask != (1UL << GPS_MCUDL_CCIF_CH4)) || (dt_us >= 10000)) {
+		GDL_LOGW("cnt=%lu, rch_mask=0x%x, dt_us=%lu, recheck=%u, last_mask=0x%x",
+			g_gps_ccif_irq_cnt, rch_mask, dt_us, recheck_cnt, last_rch_mask);
+	} else {
+		GDL_LOGD("cnt=%lu, rch_mask=0x%x, dt_us=%lu, recheck=%u, last_mask=0x%x",
+			g_gps_ccif_irq_cnt, rch_mask, dt_us, recheck_cnt, last_rch_mask);
+	}
+	recheck_cnt++;
+	last_rch_mask = rch_mask;
+	goto recheck_rch;
 }
 
 void gps_mcudl_hal_ccif_rx_ch1_cb(void)
