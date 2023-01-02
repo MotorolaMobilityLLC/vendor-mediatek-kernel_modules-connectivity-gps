@@ -1,0 +1,188 @@
+/* SPDX-License-Identifier: GPL-2.0 */
+/*
+ * Copyright (c) 2021 MediaTek Inc.
+ */
+#include "gps_mcusys_fsm.h"
+#include "gps_mcusys_nv_data.h"
+#include "gps_mcusys_nv_data_api.h"
+#include "gps_mcusys_nv_data_layout.h"
+#include "gps_mcusys_nv_common_impl.h"
+#include "gps_mcusys_nv_per_side_macro.h"
+#include "gps_nv_each_device.h"
+#include "gps_each_link.h"
+#include "gps_mcudl_emi_layout.h"
+
+
+struct gps_mcusys_nv_data_layout *g_host_nv_layout_ptr;
+
+struct gps_mcusys_nv_data_header *gps_mcusys_nv_data_get_hdr(enum gps_mcusys_nv_data_id nv_id)
+{
+	if (g_host_nv_layout_ptr == NULL) {
+		g_host_nv_layout_ptr = (struct gps_mcusys_nv_data_layout *)gps_emi_get_nv_mem_ptr();
+		GPS_OFL_TRC("g_host_nv_layout_ptr = 0x%p, offset=0x%x, sz=0x%x",
+			g_host_nv_layout_ptr,
+			gps_mcudl_get_offset_from_conn_base(g_host_nv_layout_ptr),
+			sizeof(*g_host_nv_layout_ptr));
+		if (g_host_nv_layout_ptr == NULL)
+			return (struct gps_mcusys_nv_data_header *)NULL;
+		gps_mcusys_nv_data_host_init();
+	}
+
+	switch (nv_id) {
+	case GPS_MCUSYS_NV_DATA_ID_EPO:
+		return &g_host_nv_layout_ptr->epo.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_GG_QEPO:
+		return &g_host_nv_layout_ptr->qepo_gg.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_BD_QEPO:
+		return &g_host_nv_layout_ptr->qepo_bd.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_GA_QEPO:
+		return &g_host_nv_layout_ptr->qepo_ga.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_NVFILE:
+		return &g_host_nv_layout_ptr->nvfile.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_CACHE:
+		return &g_host_nv_layout_ptr->cache.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_CONFIG:
+		return &g_host_nv_layout_ptr->config.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_CONFIG_WRITE:
+		return &g_host_nv_layout_ptr->config_wr.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_DSPL1:
+		return &g_host_nv_layout_ptr->dsp0.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_DSPL5:
+		return &g_host_nv_layout_ptr->dsp1.hdr;
+	default:
+		break;
+	}
+	return NULL;
+}
+
+gpsmdl_u32 gps_mcusys_nv_data_get_block_size(enum gps_mcusys_nv_data_id nv_id)
+{
+	switch (nv_id) {
+	case GPS_MCUSYS_NV_DATA_ID_EPO:
+		return GPS_MCUSYS_NV_DATA_EPO_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_GG_QEPO:
+		return GPS_MCUSYS_NV_DATA_GG_QEPO_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_BD_QEPO:
+		return GPS_MCUSYS_NV_DATA_BD_QEPO_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_GA_QEPO:
+		return GPS_MCUSYS_NV_DATA_GA_QEPO_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_NVFILE:
+		return GPS_MCUSYS_NV_DATA_NVFILE_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_CACHE:
+		return GPS_MCUSYS_NV_DATA_CACHE_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_CONFIG:
+		return GPS_MCUSYS_NV_DATA_CONFIG_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_CONFIG_WRITE:
+		return GPS_MCUSYS_NV_DATA_CONFIG_WRITE_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_DSPL1:
+		return GPS_MCUSYS_NV_DATA_DSPL1_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_DSPL5:
+		return GPS_MCUSYS_NV_DATA_DSPL5_MAX_SIZE;
+	default:
+		break;
+	}
+	return 0;
+}
+
+void gps_mcussy_nv_data_host_hdr_init(enum gps_mcusys_nv_data_id nv_id,
+	struct gps_mcusys_nv_data_sub_header *p_host)
+{
+	gpsmdl_u32 block_size = gps_mcusys_nv_data_get_block_size(nv_id);
+
+	GPS_OFL_TRC("block_size=%d, p_host=0x%p", block_size, p_host);
+
+	if (block_size == 0)
+		return;
+
+	/* it has once been initialised if magic is matching and no need to do init again.*/
+	if (p_host->magic == GPS_MCUSYS_NV_DATA_HEADER_MAGIC &&
+		p_host->block_size == block_size &&
+		p_host->id == nv_id)
+		return;
+
+	p_host->block_size = block_size;
+	p_host->id = nv_id;
+	p_host->attribute = 0;
+	p_host->magic = GPS_MCUSYS_NV_DATA_HEADER_MAGIC;
+	p_host->occupied = 0;
+	p_host->version = 0;
+	p_host->data_size = 0;
+	p_host->read_times = 0;
+	p_host->write_times = 0;
+}
+
+
+void gps_mcusys_nv_data_host_init(void)
+{
+	enum gps_mcusys_nv_data_id nv_id;
+	struct gps_mcusys_nv_data_header *p_hdr;
+
+	for (nv_id = 0; nv_id < GPS_MCUSYS_NV_DATA_NUM; nv_id++) {
+		p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+		if (p_hdr != NULL)
+			GPS_OFL_TRC("nv_id=%d, p_hdr=0x%p, offset=0x%x",
+				nv_id, p_hdr, gps_mcudl_get_offset_from_conn_base(p_hdr));
+			gps_mcussy_nv_data_host_hdr_init(nv_id, &p_hdr->hdr_host);
+	}
+	GPS_OFL_TRC("");
+}
+
+
+void gps_mcusys_nv_data_on_gpsbin_state(enum gps_mcusys_gpsbin_state gpsbin_state)
+{
+	enum gps_mcusys_nv_data_id nv_id;
+	enum gps_mcusys_nvlock_event_id evt_id;
+
+	switch (gpsbin_state) {
+	case GPS_MCUSYS_GPSBIN_PRE_ON:
+		evt_id = GPS_MCUSYS_NVLOCK_MCU_PRE_ON;
+		break;
+	case GPS_MCUSYS_GPSBIN_POST_ON:
+#if 1
+		gps_mcusys_nv_data_host_init();
+#endif
+		evt_id = GPS_MCUSYS_NVLOCK_MCU_POST_ON;
+		break;
+	case GPS_MCUSYS_GPSBIN_PRE_OFF:
+		evt_id = GPS_MCUSYS_NVLOCK_MCU_PRE_OFF;
+		break;
+	case GPS_MCUSYS_GPSBIN_POST_OFF:
+		evt_id = GPS_MCUSYS_NVLOCK_MCU_POST_OFF;
+		break;
+	default:
+		return;
+	}
+
+	for (nv_id = 0; nv_id < GPS_MCUSYS_NV_DATA_NUM; nv_id++) {
+		/*gps_mcusys_nvlock_fsm(nv_id, evt_id);*/
+		/*gps_mcusys_nvlock_fsm(nv_id, GPS_MCUSYS_NVLOCK_MCU_POST_ON);*/
+	}
+
+	GPS_OFL_TRC("evt_id=%d", evt_id);
+}
+
+void gps_mcusys_nvdata_on_remote_event(enum gps_mcusys_nv_data_id nv_id,
+	enum gps_mcusys_nvdata_event_id data_evt)
+{
+	struct gps_each_link_waitable *p;
+	bool do_wake_really;
+
+	GPS_OFL_TRC("nv_id=%d, data_evt=%d", nv_id, data_evt);
+	switch (data_evt) {
+	case GPS_MCUSYS_NVDATA_MCU_WRITE:
+	case GPS_MCUSYS_NVDATA_MCU_DELETE:
+#if GPS_DL_ON_LINUX
+		p = gps_nv_each_link_get_read_waitable_ptr(nv_id);
+		if (!p) {
+			GPS_OFL_TRC("nv_id=%d, bypass do_wake");
+			break;
+		}
+		do_wake_really = gps_dl_link_wake_up2(p);
+		GPS_OFL_TRC("nv_id=%d, do_wake_really=%d", nv_id, do_wake_really);
+#endif
+		break;
+	default:
+		break;
+	}
+}
+
