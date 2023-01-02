@@ -10,6 +10,11 @@
 
 #include "../gps_dl_hw_priv_util.h"
 
+void gps_dl_hw_dep_gps_sw_request_peri_usage(bool request)
+{
+	/* Do nothing for MT6983 */
+}
+
 bool gps_dl_hw_dep_en_gps_func_and_poll_bgf_ack(void)
 {
 	bool poll_okay = false;
@@ -102,8 +107,21 @@ _fail_bgf_ip_cfg_not_okay:
 	return false;
 }
 
+bool gps_dl_hw_dep_may_enable_bpll(void)
+{
+	/*MT6983 do nothing*/
+	/*avoid return check, return true*/
+	return true;
+}
+
+
+void gps_dl_hw_dep_may_disable_bpll(void)
+{
+	/*MT6983 do nothing*/
+}
+
 void gps_dl_hw_dep_may_set_bus_debug_flag(void)
 {
-	/* Do nothing for MT6893 */
+	/* Do nothing for MT6983 */
 }
 
