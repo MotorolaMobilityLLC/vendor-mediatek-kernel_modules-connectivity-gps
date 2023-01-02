@@ -30,6 +30,7 @@
 #include "gps_mcudl_hal_ccif.h"
 #include "gps_mcu_hif_mgmt_cmd_send.h"
 #include "gps_mcu_hif_host.h"
+#include "gps_mcudl_data_pkt_payload_struct.h"
 
 bool g_gps_fw_log_is_on;
 
@@ -183,6 +184,8 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 #endif
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE && !g_gps_mcudl_ever_do_coredump) {
 			/* dump ydata status */
+			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
+			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
 			gps_mcu_hif_host_trans_hist_dump();
 			gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_NORMAL, true);
 			gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_NORMAL);
@@ -249,6 +252,8 @@ _close_or_reset_ack:
 		}
 
 		/* dump ydata status */
+		gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
+		gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
 		gps_mcu_hif_host_trans_hist_dump();
 		gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_NORMAL, true);
 		gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_NORMAL);
