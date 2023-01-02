@@ -11,20 +11,20 @@ void gps_mcudl_may_do_fw_loading(void);
 void gps_mcudl_clear_fw_loading_done_flag(void);
 
 
-/* impl@stpgps */
-int gps_mcudl_stpgps1_open(void);
-int gps_mcudl_stpgps1_close(void);
-int gps_mcudl_stpgps1_write(const unsigned char *kbuf, unsigned int count);
-int gps_mcudl_stpgps1_read_nonblock(unsigned char *kbuf, unsigned int count);
+/* impl@stpgps or dedicated_mcu.c */
+int gps_mcudl_plat_mcu_open(void);
+int gps_mcudl_plat_mcu_close(void);
+int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count);
+int gps_mcudl_plat_mcu_ch1_read_nonblock(unsigned char *kbuf, unsigned int count);
 
 
 /* impl@gps_mcudl */
-void gps_mcudl_stpgps1_event_cb(void);
-void gps_mcudl_stpgps1_read_proc(void);
-void gps_mcudl_stpgps1_read_proc2(const unsigned char *p_data, unsigned int data_len);
+void gps_mcudl_plat_mcu_ch1_event_cb(void);
+void gps_mcudl_plat_mcu_ch1_read_proc(void);
+void gps_mcudl_plat_mcu_ch1_read_proc2(const unsigned char *p_data, unsigned int data_len);
 
-void gps_mcudl_stpgps1_reset_start_cb(void);
-void gps_mcudl_stpgps1_reset_end_cb(void);
+void gps_mcudl_plat_mcu_ch1_reset_start_cb(void);
+void gps_mcudl_plat_mcu_ch1_reset_end_cb(void);
 
 extern bool g_gps_conninfa_on;
 extern bool g_gps_tia_on;
