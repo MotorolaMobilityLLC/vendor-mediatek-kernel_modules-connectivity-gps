@@ -28,7 +28,7 @@ struct gps_mcudl_data_rbuf_sta {
 struct gps_mcudl_data_rbuf_cursor {
 	gpsmdl_u32 wwi_bak; /* can be accessed any time, atomic operation */
 	gpsmdl_u32 rri_bak; /* can be accessed any time, atomic operation */
-	bool wff_bak;		/* read to empty flag */
+	bool wff_bak; /* read to empty flag */
 
 	/* wwi --> wwi_bak --> rwi */
 	gpsmdl_u32 wwi; /* writer's write index */
