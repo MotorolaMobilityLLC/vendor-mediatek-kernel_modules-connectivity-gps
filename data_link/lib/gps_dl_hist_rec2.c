@@ -10,7 +10,12 @@
 #include "gps_dl_hist_rec2.h"
 #include "gps_dl_time_tick.h"
 #include "../gps_dl_hw_priv_util.h"
+#if GPS_DL_CONNAC2
 #include "gps/bgf_gps_dma.h"
+#elif GPS_DL_CONNAC3
+#include "gps/conn_mcu_dma.h"
+#include "gps/conn_mcu_config.h"
+#endif
 #include "gps_dsp_fsm.h"
 
 #define GDL_COUNT_REC_DATA(w_new, w_old, l)\
