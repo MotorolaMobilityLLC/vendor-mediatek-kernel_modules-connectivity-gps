@@ -126,6 +126,7 @@ struct gps_dl_osal_op_dat {
 	unsigned int opId;	/* Event ID */
 	unsigned int u4InfoBit;	/* Reserved */
 	unsigned long au4OpData[OSAL_OP_DATA_SIZE];	/* OP Data */
+	unsigned long op_enq;
 };
 
 struct gps_dl_osal_lxop {
