@@ -144,6 +144,7 @@ void gps_dl_isr_hif_on(void);
 #if GPS_DL_HAS_MCUDL_HAL
 /*TODO: Put it into header file*/
 void gps_mcudl_hal_ccif_rx_isr(void);
+void gps_mcudl_hal_wdt_isr(void);
 #endif
 
 #endif /* _GPS_DL_ISR_H */
