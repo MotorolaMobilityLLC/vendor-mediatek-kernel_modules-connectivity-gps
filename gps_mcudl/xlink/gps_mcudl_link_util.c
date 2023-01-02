@@ -21,6 +21,7 @@
 #include "gps_mcudl_each_link.h"
 #include "gps_mcudl_link_util.h"
 #include "gps_mcudl_context.h"
+#include "gps_mcudl_log.h"
 
 
 void gps_mcudl_each_link_mutexes_init(struct gps_mcudl_each_link *p)
@@ -57,14 +58,25 @@ void gps_mcudl_each_link_spin_locks_deinit(struct gps_mcudl_each_link *p)
 #endif
 }
 
-void gps_mcudl_each_link_mutex_take(enum gps_mcudl_xid x_id,
-	enum gps_each_link_mutex mtx_id)
+bool gps_mcudl_each_link_mutex_take2(enum gps_mcudl_xid x_id, enum gps_each_link_mutex mtx_id)
 {
 	/* TODO: check range */
 	struct gps_mcudl_each_link *p = gps_mcudl_link_get(x_id);
+	int mutex_take_retval;
 
-	/* TODO: handle killed */
-	gps_dl_osal_lock_sleepable_lock(&p->mutexes[mtx_id]);
+	/* handle killed */
+	mutex_take_retval = gps_dl_osal_lock_sleepable_lock(&p->mutexes[mtx_id]);
+	if (mutex_take_retval) {
+		MDL_LOGXW_DRW(x_id, "mtx_id=%d, mutex_take_retval=%d", mtx_id, mutex_take_retval);
+		return false;
+	}
+	return true;
+}
+
+void gps_mcudl_each_link_mutex_take(enum gps_mcudl_xid x_id,
+	enum gps_each_link_mutex mtx_id)
+{
+	(void)gps_mcudl_each_link_mutex_take2(x_id, mtx_id);
 }
 
 void gps_mcudl_each_link_mutex_give(enum gps_mcudl_xid x_id,
