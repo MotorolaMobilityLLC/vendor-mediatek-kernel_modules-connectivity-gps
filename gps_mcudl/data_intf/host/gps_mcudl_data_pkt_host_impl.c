@@ -407,7 +407,8 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 {
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
 	gpsmdl_u64 not_ack_len;
-	bool to_notify;
+	bool to_notify = false;
+	bool old_reset_flag = false;
 
 	p_trx_ctx = get_txrx_ctx(yid);
 	not_ack_len = p_trx_ctx->host_sta.pkt_sta.total_recv - p_trx_ctx->host_sta.last_ack_recv_len;
@@ -418,6 +419,14 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 	/*	  connsys will block sending until host ack of this reset cmd back.*/
 	if ((not_ack_len >= GEOFENCE_PKT_HOST_ACK_LEN) ||
 		(p_trx_ctx->host_sta.reset_flag)) {
+		old_reset_flag = p_trx_ctx->host_sta.reset_flag;
+		if (p_trx_ctx->host_sta.is_enable) {
+			gps_mcudl_ap2mcu_ydata_send(yid, GFNS_REQ_MCU_ACK_UP_PKT_STA,
+				(gpsmdl_u8 *)&(p_trx_ctx->host_sta.pkt_sta),
+				sizeof(p_trx_ctx->host_sta.pkt_sta));
+			p_trx_ctx->host_sta.reset_flag = 0;
+		}
+
 		to_notify = !gps_mcudl_ap2mcu_get_wait_flush_flag(yid);
 		MDL_LOGYI(yid,
 			"send_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d,ntf=%d",
@@ -428,16 +437,9 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 			p_trx_ctx->host_sta.pkt_sta.total_parse_drop,
 			p_trx_ctx->host_sta.pkt_sta.total_route_drop,
 			p_trx_ctx->host_sta.is_enable,
-			p_trx_ctx->host_sta.reset_flag,
+			old_reset_flag,
 			not_ack_len,
 			to_notify);
-
-		if (p_trx_ctx->host_sta.is_enable) {
-			gps_mcudl_ap2mcu_ydata_send(yid, GFNS_REQ_MCU_ACK_UP_PKT_STA,
-				(gpsmdl_u8 *)&(p_trx_ctx->host_sta.pkt_sta),
-				sizeof(p_trx_ctx->host_sta.pkt_sta));
-			p_trx_ctx->host_sta.reset_flag = 0;
-		}
 
 		if (p_trx_ctx->host_sta.is_enable && to_notify) {
 			gps_mcudl_ap2mcu_set_wait_flush_flag(yid, true);
