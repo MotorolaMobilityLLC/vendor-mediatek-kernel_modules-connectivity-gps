@@ -166,6 +166,7 @@ int gps_mcusys_nv_common_shared_mem_write2(enum gps_mcusys_nv_data_id nv_id,
 	gpsmdl_u32 old_size, new_size;
 	GPSMDL_PLAT_TICK_TYPE tick0, tick1;
 
+	new_size = 0;
 	tick0 = GPSMDL_PLAT_TICK_GET();
 	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
 	if (!p_hdr) {
