@@ -80,11 +80,11 @@ void gps_mcu_hif_init(void)
 
 	p_gps_mcu_hif_ap2mcu_region = (union gps_mcu_hif_ap2mcu_shared_data_union *)&p_layout->gps_ap2mcu[0];
 	p_gps_mcu_hif_mcu2ap_region = (union gps_mcu_hif_mcu2ap_shared_data_union *)&p_layout->gps_mcu2ap[0];
-	MDL_LOGI("ap2mcu: p=0x%p, offset=0x%x, size=0x%x",
+	MDL_LOGI("ap2mcu: p=0x%p, offset=0x%x, size=0x%lx",
 		p_gps_mcu_hif_ap2mcu_region,
 		gps_mcudl_get_offset_from_conn_base(p_gps_mcu_hif_ap2mcu_region),
 		sizeof(*p_gps_mcu_hif_ap2mcu_region));
-	MDL_LOGI("mcu2ap: p=0x%p, offset=0x%x, size=0x%x",
+	MDL_LOGI("mcu2ap: p=0x%p, offset=0x%x, size=0x%lx",
 		p_gps_mcu_hif_mcu2ap_region,
 		gps_mcudl_get_offset_from_conn_base(p_gps_mcu_hif_mcu2ap_region),
 		sizeof(*p_gps_mcu_hif_mcu2ap_region));

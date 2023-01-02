@@ -266,7 +266,7 @@ void log_event_cb2(void)
 	log_ret = log_ret + retval;
 
 	if ((curr_tick - last_tick) >= 1000000) {
-		pr_info("gps_fw_log_event: read retval=%d", log_ret);
+		pr_info("gps_fw_log_event: read retval=%lu", log_ret);
 		last_tick = curr_tick;
 		log_ret = 0;
 	}

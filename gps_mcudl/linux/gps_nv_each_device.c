@@ -191,7 +191,7 @@ static ssize_t gps_nv_each_device_read(struct file *filp,
 			&gps_nv_each_device_copy_to_user);
 		*f_pos += copy_len;
 	}
-	GDL_LOGI("pid=%d, nv_id=%d, buf_len=%d, copy_len=%d, offset=%ld, flag=%d,%d",
+	GDL_LOGI("pid=%d, nv_id=%d, buf_len=%zu, copy_len=%d, offset=%ld, flag=%d,%d",
 		pid, nv_id, count, copy_len, l_offset, epoll_in_flag, data_ready_flag);
 
 	/* TODO: retlen might be negtive value in future if we need to handle signals in read */
@@ -263,7 +263,7 @@ static ssize_t gps_nv_each_device_write(struct file *filp,
 
 	/* TODO: retlen might be negtive value in future if we need to handle signals in write */
 	retlen = (int)copy_len;
-	GDL_LOGI("pid=%d, nv_id=%d, wr_len=%d, offset=%ld, ret_len=%d",
+	GDL_LOGI("pid=%d, nv_id=%d, wr_len=%zu, offset=%ld, ret_len=%d",
 		pid, nv_id, count, l_offset, retlen);
 	return retlen;
 }
