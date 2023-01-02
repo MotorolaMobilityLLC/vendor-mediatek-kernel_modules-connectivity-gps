@@ -124,6 +124,10 @@
 #define GDL_HW_MAY_GET_DMA_STATE_STATUS(val)  \
 	(GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_STATE_STATE, val) == 0x01)
 
+/* For MT6983, gps common on */
+#define GDL_HW_SET_GPS_EMI_REQ(val) \
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, val)
+
 /* For MT6893, no need to wait */
 #define GDL_HW_MAY_WAIT_CONN_INFRA_SLP_PROT_DISABLE_ACK(p_poll_okay) { \
 	*p_poll_okay = true; \
