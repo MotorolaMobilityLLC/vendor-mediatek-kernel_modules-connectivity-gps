@@ -311,6 +311,13 @@ int gps_mcudl_stpgps1_read_nonblock(unsigned char *kbuf, unsigned int count)
 	return 0;
 }
 
+void gps_nv_emi_clear(void)
+{
+	struct gps_mcudl_emi_layout *p_layout;
+
+	p_layout = gps_dl_get_conn_emi_layout_ptr();
+	memset_io(&p_layout->gps_nv_emi[0], 0, sizeof(p_layout->gps_nv_emi));
+}
 
 void *gps_emi_get_nv_mem_ptr(void)
 {
