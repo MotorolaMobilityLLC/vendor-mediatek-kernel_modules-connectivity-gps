@@ -11,6 +11,8 @@
 
 #include "../gps_dl_hw_priv_util.h"
 #include "conn_infra/conn_infra_bus_cr.h"
+#include "conn_infra/conn_infra_cfg_on.h"
+#include "conn_infra/conn_infra_cfg.h"
 
 void gps_dl_hw_dep_gps_sw_request_peri_usage(bool request)
 {
@@ -131,5 +133,34 @@ void gps_dl_hw_dep_may_remap_conn2ap_gps_peri(void)
 {
 	/* MT6983 CONN-GPS need to access 0x1c00_xxxx and 0x1c01_xxxx */
 	gps_dl_hw_set_gps_peri_remapping(0x01c00);
+}
+
+bool gps_dl_hw_dep_may_check_conn_infra_restore_done(void)
+{
+	bool poll_okay = false;
+	int i;
+
+	/* 0x18001210[16] == 1b'1 conn_infra cmdbt restore done, polling 10 times at most, interval = 0.5ms */
+	for (i = 0; i < 10; i++) {
+		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_ON_CONN_INFRA_CFG_PWRCTRL1_CONN_INFRA_RDY, 1,
+			POLL_DEFAULT2, &poll_okay);
+		if (poll_okay)
+			return true;
+
+		if (i > 0)
+			GDL_LOGW("_poll_poll_conn_infra_cmdbt_restore_done, cnt = %d", i + 1);
+	}
+	if (!poll_okay)
+		GDL_LOGE("_poll_poll_conn_infra_cmdbt_restore_not_done");
+
+	return false;
+}
+
+void gps_dl_hw_dep_may_set_conn_infra_l1_request(bool request)
+{
+	if (request)
+		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_L1_INFRA_REQ_GPS_L1, 1);
+	else
+		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_L1_INFRA_REQ_GPS_L1, 0);
 }
 
