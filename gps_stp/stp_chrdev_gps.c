@@ -1244,11 +1244,13 @@ static int GPS_init(void)
 #endif
 #endif
 	int alloc_ret = 0;
-
+#ifdef MTK_GENERIC_HAL
+	gps_lna_linux_plat_drv_register();
+#else
 #ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
 	gps_lna_linux_plat_drv_register();
 #endif
-
+#endif
 	/*static allocate chrdev */
 	alloc_ret = register_chrdev_region(dev, 1, GPS_DRIVER_NAME);
 	if (alloc_ret) {
@@ -1480,8 +1482,12 @@ static void GPS_exit(void)
 	pr_info("%s driver removed.\n", GPS2_DRIVER_NAME);
 #endif
 #endif
+#ifdef MTK_GENERIC_HAL
+	gps_lna_linux_plat_drv_unregister();
+#else
 #ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
 	gps_lna_linux_plat_drv_unregister();
+#endif
 #endif
 	wakeup_source_unregister(gps_wake_lock_ptr);
 #ifdef MTK_GENERIC_HAL
