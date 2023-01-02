@@ -115,7 +115,7 @@ ccflags-y += -I$(GPS_MDL_INC_ROOT)/../data_link/plat/v060/hw/inc
 ccflags-y += -I$(GPS_MDL_INC_ROOT)/plat/v060/hw/inc
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/gps_mcudl_context.o
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/gps_mcudl_name_list.o
-$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/plat/mock/gps_mcudl_plat_mock.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/plat/gps_mcudl_plat_dedicated_mcu.o
 
 ccflags-y += -I$(GPS_MDL_INC_ROOT)/linux/inc
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/linux/gps_mcudl_devices.o
