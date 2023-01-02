@@ -173,6 +173,12 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 		gps_mcudl_each_link_set_active(link_id, false);
 #endif
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE && !g_gps_mcudl_ever_do_coredump) {
+			/* dump ydata status */
+			gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_NORMAL, true);
+			gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_NORMAL);
+			gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
+			gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
+
 			/* try to dump host csr info if not normal close operation */
 			/*if (gps_dl_conninfra_is_okay_or_handle_it(NULL, true))*/
 			/*	gps_dl_hw_dump_host_csr_gps_info(true);*/
@@ -231,6 +237,12 @@ _close_or_reset_ack:
 			MDL_LOGXW(link_id, "inactive, do not dump hw status");
 			break;
 		}
+
+		/* dump ydata status */
+		gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_NORMAL, true);
+		gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_NORMAL);
+		gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
+		gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
 
 		/*gps_dma_buf_show(&p_link->rx_dma_buf, true);*/
 		/*gps_dma_buf_show(&p_link->tx_dma_buf, true);*/
