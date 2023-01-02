@@ -65,7 +65,8 @@ void gps_mcudl_hal_ccif_rx_isr(void)
 {
 	unsigned int rch_mask, last_rch_mask = 0;
 	enum gps_mcudl_ccif_ch ch;
-	unsigned long tick_us0, tick_us1, dt_us;
+	unsigned long tick_us0, tick_us1, dt_us, curr_tick;
+	static unsigned long last_tick;
 	unsigned int recheck_cnt = 0;
 	bool already_wakeup = false;
 
@@ -112,8 +113,12 @@ recheck_rch:
 #if GPS_DL_HAS_CONNINFRA_DRV
 			else if (ch == GPS_MCUDL_CCIF_CH1) {
 				connsys_log_irq_handler(CONN_DEBUG_TYPE_GPS);
+				curr_tick = gps_dl_tick_get_us();
 				g_gps_fw_log_irq_cnt++;
-				MDL_LOGW("gps_fw_log_irq_cnt=%d", g_gps_fw_log_irq_cnt);
+				if ((curr_tick - last_tick) >= 1000000) {
+					MDL_LOGW("gps_fw_log_irq_cnt=%d", g_gps_fw_log_irq_cnt);
+					last_tick = curr_tick;
+				}
 			} else if (ch == GPS_MCUDL_CCIF_CH2) {
 #if 0
 				/* SUBSYS reset
@@ -144,7 +149,10 @@ recheck_rch:
 
 	tick_us1 = gps_dl_tick_get_us();
 	dt_us = tick_us1 - tick_us0;
-	if ((rch_mask != (1UL << GPS_MCUDL_CCIF_CH4)) || (dt_us >= 10000)) {
+	if (((rch_mask != (1UL << GPS_MCUDL_CCIF_CH4)) &&
+		(rch_mask != (1UL << GPS_MCUDL_CCIF_CH1)) &&
+		(rch_mask != ((1UL << GPS_MCUDL_CCIF_CH1) | (1UL << GPS_MCUDL_CCIF_CH4))))
+		|| (dt_us >= 10000)) {
 		GDL_LOGW("cnt=%lu, rch_mask=0x%x, dt_us=%lu, recheck=%u, last_mask=0x%x",
 			g_gps_ccif_irq_cnt, rch_mask, dt_us, recheck_cnt, last_rch_mask);
 	} else {
