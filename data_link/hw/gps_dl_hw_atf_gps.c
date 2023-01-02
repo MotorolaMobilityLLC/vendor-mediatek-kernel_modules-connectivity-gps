@@ -83,13 +83,10 @@ void gps_dl_hw_set_dma_start(enum gps_dl_hal_dma_ch_index channel,
 		break;
 	}
 
-	GDL_LOGE("enter smc gps_dl_hw_set_dma_start success, data = %x, buf = %x, wrap = %d, len = %d",
-		bus_addr_of_data_start, bus_addr_of_buf_start, bus_len_to_wrap, bus_transfer_max_len);
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_SET_DMA_START_OPID,
 			channel, bus_addr_of_data_sub_buf_offset,
 			bus_id, bus_len_to_wrap, bus_transfer_max_len, is_1byte, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_set_dma_start success");
 }
 
 void gps_dl_hw_set_dma_stop(enum gps_dl_hal_dma_ch_index channel)
@@ -97,11 +94,9 @@ void gps_dl_hw_set_dma_stop(enum gps_dl_hal_dma_ch_index channel)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_set_dma_stop success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_SET_DMA_STOP_OPID,
 			channel, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_set_dma_stop success");
 	return;
 }
 
@@ -110,11 +105,9 @@ bool gps_dl_hw_get_dma_int_status(enum gps_dl_hal_dma_ch_index channel)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_get_dma_int_status success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_GET_DMA_INT_STATUS_OPID,
 			channel, 0, 0, 0, 0, 0, &res);
 	ret = (bool)res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_get_dma_int_status success");
 	return ret;
 }
 
@@ -267,11 +260,9 @@ unsigned int gps_dl_hw_get_dma_left_len(enum gps_dl_hal_dma_ch_index channel)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_get_dma_left_len success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_GET_DMA_LEFT_LEN_OPID,
 			channel, 0, 0, 0, 0, 0, &res);
 	ret = (unsigned int)res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_get_dma_left_len success");
 	return ret;
 }
 
@@ -378,11 +369,9 @@ enum GDL_HW_RET gps_dl_hw_get_mcub_info(enum gps_dl_link_id_enum link_id, struct
 	if (p == NULL)
 		return E_INV_PARAMS;
 
-	GDL_LOGE("enter smc gps_dl_hw_get_mcub_info success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_GET_MCUB_INFO_OPID,
 			link_id, 0, 0, 0, 0, 0, &res);
 	ret = (enum GDL_HW_RET)res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_get_mcub_info success");
 
 	if (ret == HW_OKAY) {
 		p->flag = res.a1;
@@ -398,11 +387,9 @@ void gps_dl_hw_clear_mcub_d2a_flag(enum gps_dl_link_id_enum link_id, unsigned in
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_clear_mcub_d2a_flag success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_CLEAR_MCUB_D2A_FLAG_OPID,
 			link_id, d2a_flag, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_clear_mcub_d2a_flag success");
 }
 
 unsigned int gps_dl_hw_get_mcub_a2d_flag(enum gps_dl_link_id_enum link_id)
@@ -410,11 +397,9 @@ unsigned int gps_dl_hw_get_mcub_a2d_flag(enum gps_dl_link_id_enum link_id)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_get_mcub_a2d_flag success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_GET_MCUB_A2D_FLAG_OPID,
 			link_id, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_get_mcub_a2d_flag success");
 	return ret;
 }
 
@@ -423,11 +408,9 @@ enum GDL_RET_STATUS gps_dl_hw_mcub_dsp_read_request(enum gps_dl_link_id_enum lin
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_mcub_dsp_read_request success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_MCUB_DSP_READ_REQUEST_OPID,
 			link_id, dsp_addr, 0, 0, 0, 0, &res);
 	ret = (enum GDL_RET_STATUS)res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_mcub_dsp_read_request success");
 	return ret;
 }
 

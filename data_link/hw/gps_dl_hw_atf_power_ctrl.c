@@ -135,11 +135,9 @@ bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_force_wakeup_conninfra_top_off success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_WAKEUP_CONNINFRA_TOP_OFF_OPID,
 			enable, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_force_wakeup_conninfra_top_off success");
 	return ret;
 }
 
@@ -158,11 +156,9 @@ void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 	reg_rw_log = gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_EMI_SW_REQ_CTRL);
 #endif
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_sw_request_emi_usage success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_SW_REQUEST_EMI_USAGE_OPID,
 			request, reg_rw_log, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_sw_request_emi_usage success");
 }
 
 int gps_dl_hw_gps_common_on_part1(unsigned int *poll_ver)
@@ -171,12 +167,10 @@ int gps_dl_hw_gps_common_on_part1(unsigned int *poll_ver)
 	int ret;
 
 	if (poll_ver != NULL) {
-		GDL_LOGE("enter smc gps_dl_hw_gps_common_on_part1 success");
 		arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_PART1_OPID,
 				0, 0, 0, 0, 0, 0, &res);
 		ret = res.a0;
 		*poll_ver = res.a1;
-		GDL_LOGE("leave smc gps_dl_hw_gps_common_on_part1 success");
 		return ret;
 	}
 	return -1;
@@ -187,11 +181,9 @@ int gps_dl_hw_gps_common_on_part3(int i)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_common_on_part3 success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_PART3_OPID,
 			i, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_common_on_part3 success");
 	return ret;
 }
 
@@ -200,11 +192,9 @@ int gps_dl_hw_gps_common_on_part4(void)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_common_on_part4 success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_PART4_OPID,
 			0, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_common_on_part4 success");
 	return ret;
 }
 
@@ -213,11 +203,9 @@ int gps_dl_hw_gps_common_on_part5(void)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_common_on_part5 success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_PART5_OPID,
 			0, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_common_on_part5 success");
 	return ret;
 }
 
@@ -226,11 +214,9 @@ int gps_dl_hw_gps_common_on_fail_handle(void)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_common_on_fail success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_FAIL_HANDLER_OPID,
 			0, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_common_on_fail success");
 	return ret;
 }
 
@@ -324,11 +310,9 @@ int gps_dl_hw_gps_common_off_part1(void)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_common_off_part1 success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_OFF_PART1_OPID,
 			0, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_common_off_part1 success");
 	return ret;
 }
 
@@ -337,11 +321,9 @@ int gps_dl_hw_gps_common_off_part2(void)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_common_off_part2 success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_OFF_PART2_OPID,
 			0, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_common_off_part2 success");
 	return ret;
 }
 
@@ -350,11 +332,9 @@ int gps_dl_hw_gps_common_off_part3(void)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_common_off_part3 success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_OFF_PART3_OPID,
 			0, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_common_off_part3 success");
 	return ret;
 }
 
@@ -418,11 +398,9 @@ int gps_dl_hw_gps_pwr_stat_ctrl(enum dsp_ctrl_enum ctrl)
 	dpstop_revert_mvcd1 = gps_dl_hal_get_deep_stop_mode_revert_for_mvcd(GPS_DATA_LINK_ID1);
 #endif
 
-	GDL_LOGE("enter smc gps_dl_hw_gps_pwr_stat_ctrl success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_GPS_PWR_STAT_CTRL_OPID,
 			ctrl, clk_ext, dpstop_revert_mvcd0, dpstop_revert_mvcd1, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_gps_pwr_stat_ctrl success");
 	return ret;
 }
 
@@ -431,11 +409,9 @@ int gps_dl_hw_set_dsp_on_and_poll_ack(enum gps_dl_link_id_enum link_id)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_set_dsp_on_and_poll_ack success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_SET_DSP_ON_AND_POLL_ACK_OPID,
 			link_id, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_set_dsp_on_and_poll_ack success");
 	return ret;
 }
 
@@ -445,11 +421,9 @@ int gps_dl_hw_set_cfg_dsp_mem_and_dsp_off(enum dsp_ctrl_enum ctrl,
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_set_cfg_dsp_mem_and_dsp_off success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_SET_CFG_DSP_MEM_AND_DSP_OFF_OPID,
 			ctrl, link_id, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_set_cfg_dsp_mem_and_dsp_off success");
 	return ret;
 }
 
