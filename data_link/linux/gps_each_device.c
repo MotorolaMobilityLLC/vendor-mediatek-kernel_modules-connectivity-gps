@@ -432,7 +432,7 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 			retval = -EFAULT;
 		}
 		GDL_LOGXI_ONF(dev->index,
-			"GPSDL_IOC_GPS_GET_BOOT_TIME now_time = %d,arch_counter = %d",
+			"GPSDL_IOC_GPS_GET_BOOT_TIME now_time = %lld,arch_counter = %lld",
 			gps_boot_time.now_time, gps_boot_time.arch_counter);
 		break;
 	case GPSDL_IOC_GPS_GET_DSP_BOOTUP_INFO:

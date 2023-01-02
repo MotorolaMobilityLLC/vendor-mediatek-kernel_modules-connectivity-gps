@@ -455,7 +455,7 @@ static int gps_dl_get_reserved_memory_lk(struct device *dev)
 		return -1;
 	}
 
-	pr_info("gps_dl_get_reserved_memory_lk emi_addr %x, emi_size %x\n", phy_addr, phy_size);
+	pr_info("gps_dl_get_reserved_memory_lk emi_addr %llx, emi_size %x\n", phy_addr, phy_size);
 	gGpsRsvMemPhyBase = (phys_addr_t)phy_addr;
 	gGpsRsvMemSize = phy_size;
 

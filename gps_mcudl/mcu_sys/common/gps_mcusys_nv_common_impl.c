@@ -139,7 +139,7 @@ int gps_mcusys_nv_common_shared_mem_invalidate2(enum gps_mcusys_nv_data_id nv_id
 	gps_mcusys_nv_common_shared_mem_give(nv_id, NV_IS_ON_MCU);
 	tick1 = GPSMDL_PLAT_TICK_GET();
 
-	GPS_OFL_TRC("nv_id=%d, block_size=%d, wr_times=%d, ver=%d,%d->%d, old_size=%d,%d, dtick=%d%s",
+	GPS_OFL_TRC("nv_id=%d, block_size=%d, wr_times=%d, ver=%d,%d->%d, old_size=%d,%d, dtick=%lu%s",
 		nv_id, block_size, write_times,
 		local_ver, remote_ver, new_ver, old_size, old_local_size,
 		tick1 - tick0, GPSMDL_PLAT_TICK_UNIT_STR);
@@ -229,7 +229,7 @@ int gps_mcusys_nv_common_shared_mem_write2(enum gps_mcusys_nv_data_id nv_id,
 	tick1 = GPSMDL_PLAT_TICK_GET();
 
 	GPS_OFL_TRC(
-		"nv_id=%d, offset=%d, block_size=%d, wr_times=%d, ver=%d,%d->%d, size=%d,%d->%d, dtick=%d%s",
+		"nv_id=%d, offset=%d, block_size=%d, wr_times=%d, ver=%d,%d->%d, size=%d,%d->%d, dtick=%lu%s",
 		nv_id, offset, block_size, write_times,
 		local_ver, remote_ver, new_ver, old_size, _max, new_size,
 		tick1 - tick0, GPSMDL_PLAT_TICK_UNIT_STR);
@@ -316,7 +316,7 @@ int gps_mcusys_nv_common_shared_mem_read2(enum gps_mcusys_nv_data_id nv_id,
 	tick1 = GPSMDL_PLAT_TICK_GET();
 
 	GPS_OFL_TRC(
-		"nv_id=%d, offset=%d, buf_len=%d, rd_times=%d, ver=%d,%d, size=%d,%d, dtick=%d%s",
+		"nv_id=%d, offset=%d, buf_len=%d, rd_times=%d, ver=%d,%d, size=%d,%d, dtick=%lu%s",
 		nv_id, offset, buf_len, read_times,
 		local_ver, remote_ver, data_size, read_len,
 		tick1 - tick0, GPSMDL_PLAT_TICK_UNIT_STR);
@@ -378,7 +378,7 @@ int gps_mcusys_nv_common_shared_mem_get_info(enum gps_mcusys_nv_data_id nv_id,
 	tick1 = GPSMDL_PLAT_TICK_GET();
 
 	GPS_OFL_DBG(
-		"nv_id=%d, block_size=%d, data_size=%d, rd_times=%d, ver=%d,%d, dtick=%d%s",
+		"nv_id=%d, block_size=%d, data_size=%d, rd_times=%d, ver=%d,%d, dtick=%lu%s",
 		nv_id, block_size, data_size, read_times, local_ver, remote_ver,
 		tick1 - tick0, GPSMDL_PLAT_TICK_UNIT_STR);
 
