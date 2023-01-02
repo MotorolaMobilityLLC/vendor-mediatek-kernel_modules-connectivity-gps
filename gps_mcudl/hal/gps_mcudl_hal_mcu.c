@@ -75,7 +75,7 @@ void gps_mcudl_hal_load_fw(const struct gps_mcudl_fw_list *p_fw_list)
 			phys_addr = 0x18D00000;
 #endif
 			/* set dynamic mapping*/
-			gps_dl_hw_set_gps_dyn_remapping_tmp(0x800000);
+			gps_dl_hw_set_gps_dyn_remapping_tmp(0x2200000);
 			break;
 		case MCU_FW_EMI:
 #if GPS_DL_ON_LINUX
