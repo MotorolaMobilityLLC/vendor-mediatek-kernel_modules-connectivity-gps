@@ -355,6 +355,7 @@ void gps_dl_hw_save_usrt_status_struct(
 	p->mcub_a2d_d1 = GDL_HW_RD_GPS_REG(GPS_USRT_APB_MCU_A2D1_ADDR + offset);
 	p->mcub_d2a_d0 = GDL_HW_RD_GPS_REG(GPS_USRT_APB_MCU_D2A0_ADDR + offset);
 	p->mcub_d2a_d1 = GDL_HW_RD_GPS_REG(GPS_USRT_APB_MCU_D2A1_ADDR + offset);
+	p->monf = GDL_HW_RD_GPS_REG(GPS_USRT_APB_MONF_ADDR + offset);
 }
 
 void gps_dl_hw_print_usrt_status_struct(
@@ -363,12 +364,12 @@ void gps_dl_hw_print_usrt_status_struct(
 	if (!gps_dl_show_reg_wait_log())
 		return;
 
-	GDL_LOGXW(link_id, "usrt ctrl = 0x%08x[DMA_EN RX=%d,TX=%d; 1BYTE=%d], intr_en = 0x%08x",
+	GDL_LOGXW(link_id, "usrt ctrl = 0x%08x[DMA_EN RX=%d,TX=%d; 1BYTE=%d], intr_en = 0x%08x, monf = 0x%08x",
 		p->ctrl_setting,
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_CTRL_RX_EN, p->ctrl_setting),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_CTRL_TX_EN, p->ctrl_setting),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_CTRL_BYTEN, p->ctrl_setting),
-		p->intr_enable);
+		p->intr_enable, p->monf);
 
 	GDL_LOGXW(link_id, "usrt state = 0x%08x, [UOEFS]RX=%d%d%d%d(%d),TX=%d%d%d%d(%d)",
 		p->state,
