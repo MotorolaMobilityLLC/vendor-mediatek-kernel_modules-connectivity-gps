@@ -10,6 +10,14 @@
 # published by the Free Software Foundation.
 
 ###############################################################################
+# Support GKI mixed build
+ifeq ($(DEVICE_MODULES_PATH),)
+DEVICE_MODULES_PATH = $(srctree)
+else
+LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
+TOP := $(srctree)/../..
+endif
+
 $(warning GPS_CHIP_ID != common)
 # Necessary Check
 ifeq ($(CONFIG_MTK_GPS_SUPPORT), y)
@@ -29,7 +37,7 @@ endif
 KBUILD_MODPOST_FAIL_ON_WARNINGS := y
 ###############################################################################
 
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/conn_scp/conap_scp
+ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/conn_scp/conap_scp
 ###############################################################################
 GPS2SCP_TEST_SUPPORT :=n
 MODULE_NAME := gps_scp
