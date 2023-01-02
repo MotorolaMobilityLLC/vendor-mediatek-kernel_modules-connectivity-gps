@@ -12,6 +12,9 @@
 #include "gps_each_link.h"
 #include "gps/gps_usrt_apb.h"
 #include "gps/gps_l5_usrt_apb.h"
+#if GPS_DL_HAS_MCUDL_HAL
+#include "gps_mcudl_hal_ccif.h"
+#endif
 
 /* TODO: IRQ hwirq, irq_id, gdl_irq_index */
 /* On CTP: hwirq == irq_id */
