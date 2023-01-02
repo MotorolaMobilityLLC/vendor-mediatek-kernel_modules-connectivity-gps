@@ -461,6 +461,7 @@ int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 	if (gps_mcu_host_trans_get_if_need_dump())
 		MDL_LOGW("write count=%d, is_ok=%d", count, is_okay);
 	if (!is_okay) {
+		(void)gps_mcudl_conninfra_is_okay_or_handle_it();
 		MDL_LOGW("write count=%d, is_ok=%d", count, is_okay);
 		return 0;
 	}

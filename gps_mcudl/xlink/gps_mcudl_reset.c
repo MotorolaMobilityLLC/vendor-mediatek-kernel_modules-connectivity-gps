@@ -24,6 +24,7 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 	enum gps_each_link_state_enum old_state, new_state;
 	enum gps_each_link_reset_level old_level, new_level;
 	bool need_wait[GPS_MDLX_CH_NUM] = {false};
+	bool send_reset[GPS_MDLX_CH_NUM] = {false};
 	bool to_send_reset_event = false;
 	long sigval;
 	enum GDL_RET_STATUS wait_status;
@@ -94,6 +95,16 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 		new_level = p->reset_level;
 		gps_mcudl_each_link_spin_lock_give(x_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
+		send_reset[x_id] = to_send_reset_event;
+		MDL_LOGXE_STA(x_id,
+			"state change: %s -> %s, level = %d (%d -> %d), is_sent = %d, to_wait = %d",
+			gps_dl_link_state_name(old_state), gps_dl_link_state_name(new_state),
+			level, old_level, new_level,
+			to_send_reset_event, need_wait[x_id]);
+	}
+
+	for (x_id = 0; x_id < GPS_MDLX_CH_NUM; x_id++) {
+		to_send_reset_event = send_reset[x_id];
 		if (to_send_reset_event) {
 			gps_mcudl_each_link_waitable_reset(x_id, GPS_DL_WAIT_RESET);
 			if (level == GPS_DL_RESET_LEVEL_CONNSYS)
@@ -101,12 +112,6 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 			else
 				gps_mcudl_xlink_event_send(x_id, GPS_MCUDL_EVT_LINK_RESET);
 		}
-
-		MDL_LOGXE_STA(x_id,
-			"state change: %s -> %s, level = %d (%d -> %d), is_sent = %d, to_wait = %d",
-			gps_dl_link_state_name(old_state), gps_dl_link_state_name(new_state),
-			level, old_level, new_level,
-			to_send_reset_event, need_wait[x_id]);
 	}
 
 	if (!wait_reset_done) {
@@ -196,17 +201,28 @@ void gps_mcudl_handle_connsys_reset_done(void)
 #if 1 /* coredump*/
 int gps_mcudl_coredump_is_readable(void)
 {
-	int ret = 1;
-
 #if GPS_DL_HAS_CONNINFRA_DRV
-	if (conninfra_reg_readable() == 0) {
-		GDL_LOGI("conninfra_reg_readable: 0\n");
-		ret = 0;
-	}
-#endif
-	GDL_LOGI("gps_mcudl_coredump_is_readable: %d\n", ret);
+	int readable1, readable2;
+	int hung_value;
 
-	return ret;
+	readable1 = conninfra_reg_readable();
+	hung_value = conninfra_is_bus_hang();
+
+	/* Try our best to do DLM/ILM/SRAM coredump by return readable2=1 even readable1 == 0.
+	 * It returns readable2=0 only if SLP_PROT_ERR.
+	 * Similar api is gps_dl_conninfra_is_readable_by_hung_value
+	 */
+	if (((hung_value & CONNINFRA_AP2CONN_RX_SLP_PROT_ERR) ||
+		(hung_value & CONNINFRA_AP2CONN_TX_SLP_PROT_ERR)) || (hung_value < 0))
+		readable2 = 0;
+	else
+		readable2 = 1;
+
+	MDL_LOGW("readable1=%d, hung_value=0x%x, readable2=%d", readable1, hung_value, readable2);
+	return readable2;
+#else
+	return 1;
+#endif
 }
 
 struct coredump_event_cb g_gps_coredump_cb = {

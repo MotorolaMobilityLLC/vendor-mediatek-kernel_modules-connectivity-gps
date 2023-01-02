@@ -215,3 +215,16 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 	return gps_dl_bus_rd_opt(bus_id, bus_addr, 0);
 }
 
+
+const struct gps_dl_hw_host_csr_dump_range g_gps_v06x_host_csr_dump_ranges[] = {
+	{0xC0040103,  3}, /* MCU PC, LR, SP */
+	{0xC0041F00, 11}, /* BGF bus status */
+	{0xC0040B02,  6}, /* AHB, AXI dbg */
+	{0xC0041940,  7}, /* AHB vdnr */
+	{0xC0041980,  8}, /* AXI vdnr */
+	{0xC0041B01, 13}, /* conn, gps, mcu */
+};
+const struct gps_dl_hw_host_csr_dump_range * const g_gps_v06x_host_csr_dump_range_ptr =
+	&g_gps_v06x_host_csr_dump_ranges[0];
+const int g_gps_v06x_host_csr_dump_range_num = ARRAY_SIZE(g_gps_v06x_host_csr_dump_ranges);
+

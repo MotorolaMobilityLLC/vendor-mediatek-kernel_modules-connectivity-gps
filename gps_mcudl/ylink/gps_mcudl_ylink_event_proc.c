@@ -76,7 +76,7 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 	case GPS_MCUDL_YLINK_EVT_ID_CCIF_ISR_ABNORMAL: {
 		bool conninfra_okay, ccif_irq_en;
 
-		conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+		conninfra_okay = gps_mcudl_conninfra_is_okay_or_handle_it();
 		ccif_irq_en = gps_mcudl_hal_get_ccif_irq_en_flag();
 
 		MDL_LOGE("conninfra_okay = %d, ccif_irq_en = %d", conninfra_okay, ccif_irq_en);

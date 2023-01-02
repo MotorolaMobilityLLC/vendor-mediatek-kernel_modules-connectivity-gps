@@ -33,7 +33,7 @@ bool gps_mcudl_xlink_on(const struct gps_mcudl_fw_list *p_fw_list)
 	if (!is_okay)
 		return false;
 
-	is_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+	is_okay = gps_mcudl_conninfra_is_okay_or_handle_it();
 	if (!is_okay)
 		return false;
 
@@ -53,7 +53,7 @@ bool gps_mcudl_xlink_off(void)
 
 	(void)gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_POS);
 	(void)gps_mcudl_hw_conn_force_wake(true);
-	(void)gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+	(void)gps_mcudl_conninfra_is_okay_or_handle_it();
 
 	gps_mcudl_hal_mcu_do_off();
 	gps_mcudl_hal_user_fw_own_deinit(GMDL_FW_OWN_CTRL_BY_POS);
@@ -138,7 +138,8 @@ bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list)
 		is_okay = gps_mcudl_hw_mcu_wait_idle_loop_or_timeout_us(500 * 1000);
 	}
 	if (!is_okay) {
-		gps_mcudl_hw_mcu_show_status();
+		gps_mcudl_hal_mcu_show_pc_log();
+		gps_mcudl_hal_mcu_show_status();
 		return false;
 	}
 	/* gps_mcudl_hal_mcu_clr_fw_own();*/
@@ -184,5 +185,10 @@ bool gps_mcudl_hal_mcu_clr_fw_own(void)
 void gps_mcudl_hal_mcu_show_status(void)
 {
 	gps_mcudl_hw_mcu_show_status();
+}
+
+void gps_mcudl_hal_mcu_show_pc_log(void)
+{
+	gps_mcudl_hw_mcu_show_pc_log();
 }
 
