@@ -144,7 +144,8 @@ enum GDL_RET_STATUS gdl_dma_buf_entry_to_buf(const struct gdl_dma_buf_entry *p_e
 	unsigned char *p_buf, unsigned int buf_len, unsigned int *p_data_len);
 
 enum GDL_RET_STATUS gdl_dma_buf_buf_to_entry(const struct gdl_dma_buf_entry *p_entry,
-	const unsigned char *p_buf, unsigned int data_len, unsigned int *p_write_index);
+	const unsigned char *p_buf, unsigned int data_len, unsigned int *p_write_index,
+	bool padding_to_4byte_alignment);
 
 enum GDL_RET_STATUS gdl_dma_buf_entry_to_transfer(
 	const struct gdl_dma_buf_entry *p_entry,
