@@ -27,6 +27,7 @@
 #include "gps_mcudl_hal_ccif.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_dl_hw_dep_api.h"
+#include "gps_mcudl_hw_mcu.h"
 #include "gps_mcusys_data_sync2target.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 
@@ -269,6 +270,12 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 	MDL_LOGYI(yid, "xid=%d, op=%d, xbitmask: 0x%08x -> 0x%08x, mcu_ctrl: do=%d, ret=%d",
 		xid, op, old_xbitmask, new_xbitmask, do_mcu_ctrl, mcu_ctrl_ret);
 	return mcu_ctrl_ret;
+}
+
+void gps_mcudl_hal_may_set_link_power_flag(enum gps_mcudl_xid xid,
+	bool power_ctrl)
+{
+	gps_mcudl_hw_may_set_link_power_flag(xid, power_ctrl);
 }
 
 unsigned int g_conn_xuser;

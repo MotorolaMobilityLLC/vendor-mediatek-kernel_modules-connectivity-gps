@@ -9,6 +9,7 @@
 
 enum conn_smc_opid {
 	/* gps_hw_ops */
+	SMC_GPS_COMMON_ON_SET_FLAG_OPID = 0,
 	SMC_GPS_WAKEUP_CONNINFRA_TOP_OFF_OPID = 1,
 	SMC_GPS_COMMON_ON_PART1_OPID,
 	SMC_GPS_COMMON_ON_PART2_OPID,
@@ -101,5 +102,6 @@ enum gps_dl_hw_mvcd_dsp_type {
 	GPS_DL_MVCD_DSP_RESERVED2,
 };
 
+void gps_dl_hw_may_set_link_power_flag(enum gps_dl_link_id_enum link_id, bool power_ctrl);
 bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable);
 
