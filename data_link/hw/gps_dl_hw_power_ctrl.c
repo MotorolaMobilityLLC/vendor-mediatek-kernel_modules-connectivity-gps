@@ -79,6 +79,15 @@ int gps_dl_hw_gps_common_on(void)
 		goto _fail_conn_hw_ver_not_okay;
 	}
 
+	/* GDL_HW_CHECK_CONN_INFRA_VER may check a list and return ok if poll_ver is in the list,*/
+	/* record the poll_ver here and we can know which one it is,*/
+	/* and it may help for debug purpose.*/
+#if GPS_DL_ON_LINUX
+	gps_dl_hal_set_conn_infra_ver(poll_ver);
+#endif
+
+	GDL_LOGW("%s: poll_ver = 0x%08x is ok", GDL_HW_SUPPORT_LIST, poll_ver);
+
 	/* Poll conninfra hw cmdbt restore done */
 	poll_okay = gps_dl_hw_dep_may_check_conn_infra_restore_done();
 	if (!poll_okay)
@@ -90,6 +99,7 @@ int gps_dl_hw_gps_common_on(void)
 
 	gps_dl_hw_dep_may_set_bus_debug_flag();
 
+#if GPS_DL_CONNAC2
 	/* Power on A-die top clock */
 	GDL_HW_ADIE_TOP_CLK_EN(1, &poll_okay);
 	if (!poll_okay) {
@@ -105,6 +115,7 @@ int gps_dl_hw_gps_common_on(void)
 			goto _fail_open_mt6637_top_clock_buf;
 		}
 	}
+#endif
 #endif
 
 	/* Enable PLL driver */
@@ -124,7 +135,9 @@ _fail_gps_dl_hw_dep_may_enable_bpll_not_okay:
 #if GPS_DL_HAS_CONNINFRA_DRV
 _fail_open_mt6637_top_clock_buf:
 #endif
+#if GPS_DL_CONNAC2
 _fail_adie_top_clk_en_not_okay:
+#endif
 	GDL_HW_SET_GPS_FUNC_EN(0);
 	GDL_HW_SET_GPS_EMI_REQ(0);
 
@@ -137,11 +150,14 @@ _fail_conn_hw_ver_not_okay:
 
 int gps_dl_hw_gps_common_off(void)
 {
+#if GPS_DL_CONNAC2
 	bool poll_okay;
+#endif
 
 	/*Disable BPLL driver*/
 	gps_dl_hw_dep_may_disable_bpll();
 
+#if GPS_DL_CONNAC2
 #if GPS_DL_HAS_CONNINFRA_DRV
 	if (0x6637 == gps_dl_hal_get_adie_ver()) {
 		/*close mt6637 top clock buffer : ADIE TOP 0xB18[1] = 0*/
@@ -157,6 +173,10 @@ int gps_dl_hw_gps_common_off(void)
 		/* Just show log */
 		GDL_LOGE("_fail_adie_top_clk_dis_not_okay");
 	}
+
+#elif GPS_DL_CONNAC3
+	gps_dl_hw_dep_gps_control_adie_off();
+#endif
 
 	if (gps_dl_hw_gps_sleep_prot_ctrl(0) != 0) {
 		GDL_LOGE("enable sleep prot fail, trigger connsys reset");
@@ -204,6 +224,7 @@ int gps_dl_hw_gps_pwr_stat_ctrl(enum dsp_ctrl_enum ctrl)
 {
 	bool clk_ext = false;
 	unsigned int if_clk_ext = 0;
+
 #if GPS_DL_ON_LINUX
 	clk_ext = gps_dl_hal_get_need_clk_ext_flag(GPS_DATA_LINK_ID0);
 	if_clk_ext = (clk_ext == true) ? 1 : 0;
@@ -434,6 +455,7 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 				gps_dl_hw_get_gps_peri_remapping();
 
 #endif
+
 				/* it means a2z dump is already done */
 				if (gps_each_link_get_bool_flag(link_id, LINK_NEED_A2Z_DUMP))
 					break;
