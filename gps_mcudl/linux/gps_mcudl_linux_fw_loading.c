@@ -61,7 +61,11 @@ void gps_mcudl_load_single_firmware(unsigned char *p_src_file, void __iomem *p_d
 
 	if ((pPatch)->size <= dst_len) {
 		MDL_LOGW("Prepare to copy FW to (0x%p)\n", p_dst_addr);
+#if GPS_DL_ON_LINUX
+		memcpy_toio(p_dst_addr,
+#else
 		memcpy(p_dst_addr,
+#endif
 			(unsigned char *)((pPatch)->data) + FW_HDR_SIZE,
 			(pPatch)->size - FW_HDR_SIZE);
 		MDL_LOGW("pGpsEmibaseaddr_1:0x%08x 0x%08x 0x%08x 0x%08x\n",

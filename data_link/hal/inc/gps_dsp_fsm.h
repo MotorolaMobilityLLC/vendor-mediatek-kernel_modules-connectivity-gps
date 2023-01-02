@@ -46,14 +46,12 @@ enum gps_dsp_state_t {
 /* #define GPS_MCUB_D2AF_MASK_DSP_MBIST_READY          0b1000 */
 #define GPS_MCUB_D2AF_MASK_DSP_RESET_DONE           0x8  /* bit3 */
 
-
 /* MCU to DSP MCUB flag bit usage definition */
 #define GPS_MCUB_A2DF_MASK_DSP_DCLK_79MHZ_REQ       0x1  /* bit0 */
 #define GPS_MCUB_A2DF_MASK_DSP_DCLK_88MHZ_REQ       0x2  /* bit1 */
 #define GPS_MCUB_A2DF_MASK_DSP_REG_READ_REQ         0x4  /* bit2 */
 /* Will be available on MT6779. The previous chips don't use it */
 #define GPS_MCUB_A2DF_MASK_DSP_SET_CFG_REQ          0x8  /* bit3 */
-
 
 enum gps_dsp_event_t {
 	GPS_DSP_EVT_FUNC_OFF,                   /* 0 From host */
