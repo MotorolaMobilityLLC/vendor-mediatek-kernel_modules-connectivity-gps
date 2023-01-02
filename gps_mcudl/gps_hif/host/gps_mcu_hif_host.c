@@ -103,7 +103,7 @@ bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
 
 #if GPS_DL_HAS_MCUDL_HAL
 	if (gps_mcudl_hal_ccif_tx_is_busy(GPS_MCUDL_CCIF_CH4)) {
-		MDL_LOGW("hif_ch=%d, len=%d, send fail due to ch busy",
+		MDL_LOGW("hif_ch=%d, len=%d, send fail due to ccif busy",
 			hif_ch, data_len);
 		return false;
 	}
@@ -140,6 +140,10 @@ void gps_mcu_hif_recv_start(enum gps_mcu_hif_ch hif_ch)
 	p_buf = gps_mcu_hif_get_mcu2ap_emi_buf_addr(hif_ch);
 
 #if GPS_DL_HAS_MCUDL_HAL
+	if (gps_mcudl_hal_ccif_tx_is_busy(GPS_MCUDL_CCIF_CH4)) {
+		MDL_LOGW("hif_ch=%d, recv fail due to ccif busy", hif_ch);
+		return;
+	}
 	gps_mcudl_hal_ccif_tx_prepare(GPS_MCUDL_CCIF_CH4);
 #endif
 	gps_mcu_hif_get_mcu2ap_trans_start_desc(hif_ch, &start_desc);
