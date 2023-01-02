@@ -310,8 +310,9 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 		if (dev->index == GPS_DATA_LINK_ID0)
 			retval = gps_dl_trigger_gps_subsys_reset(false);
 		else
-#endif
 			retval = gps_mcudl_each_link_reset(dev->index);
+#endif
+		retval = gps_mcudl_each_link_send_reset_evt(dev->index);
 		break;
 	case GPSDL_IOC_QUERY_STATUS:
 		retval = gps_mcudl_each_link_check(dev->index, arg);

@@ -53,4 +53,7 @@ void gps_mcudl_ap2mcu_try_to_wakeup_xlink_writer(enum gps_mcudl_yid y_id);
 void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len);
 
+void gps_mcudl_mcu2ap_test_bypass_set(bool bypass);
+bool gps_mcudl_mcu2ap_test_bypass_get(void);
+
 #endif /* _GPS_MCUDL_DATA_PKT_HOST_API_H */
