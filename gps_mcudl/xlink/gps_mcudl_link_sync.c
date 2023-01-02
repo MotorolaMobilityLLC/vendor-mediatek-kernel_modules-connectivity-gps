@@ -67,7 +67,7 @@ void gps_mcudl_link_open_ack(enum gps_mcudl_xid link_id, bool okay)
 
 	gps_mcudl_each_link_take_big_lock(link_id, GDL_LOCK_FOR_OPEN_DONE);
 	if (gps_mcudl_each_link_get_bool_flag(link_id, LINK_USER_OPEN) && okay) {
-		MDL_LOGXW_ONF(link_id,
+		MDL_LOGXD_ONF(link_id,
 			"user still online, try to change to opened");
 
 		/* Note: if pre_status not OPENING, it might be RESETTING, not handle it here */
