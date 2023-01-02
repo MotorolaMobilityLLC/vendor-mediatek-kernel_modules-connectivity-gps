@@ -136,6 +136,7 @@ void gps_each_dsp_reg_gourp_read_start(enum gps_dl_link_id_enum link_id,
 	struct gps_dl_hal_mcub_info d2a;
 
 	ASSERT_LINK_ID(link_id, GDL_VOIDF());
+	memset((void *)&d2a, 0x0, sizeof(d2a));
 
 	if (g_gps_each_dsp_reg_read_context[link_id].poll_ongoing) {
 		GDL_LOGXW(link_id, "n = %d/%d, addr = 0x%04x, seem busy, check it",
