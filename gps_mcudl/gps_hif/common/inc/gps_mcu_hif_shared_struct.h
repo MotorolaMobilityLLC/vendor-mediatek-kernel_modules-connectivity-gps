@@ -44,6 +44,15 @@ struct gps_mcu_hif_trans_end_desc {
 	unsigned int zero; /*reserved*/
 };
 
+struct gps_mcu_hif_trans_rec {
+	enum gps_mcu_hif_trans trans_id;
+	unsigned int id;
+	unsigned int len;
+	unsigned int dticks;
+	unsigned long total_trans_last;
+	unsigned long host_us;
+};
+
 #define GPS_MCU_HIF_EMI_SHARED_STRUCT_VER 0x00000010 /* v0.10 */
 #define GPS_MCU_HIF_EMI_BUF_SIZE (4*1024)
 /**
