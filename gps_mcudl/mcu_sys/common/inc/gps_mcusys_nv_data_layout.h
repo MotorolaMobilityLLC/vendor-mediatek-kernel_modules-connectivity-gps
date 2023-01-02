@@ -18,6 +18,17 @@
 #define GPS_MCUSYS_NV_DATA_CONFIG_WRITE_MAX_SIZE  (4 * 1024)
 #define GPS_MCUSYS_NV_DATA_DSPL1_MAX_SIZE         (1 * 1024)
 #define GPS_MCUSYS_NV_DATA_DSPL5_MAX_SIZE         (1 * 1024)
+#define GPS_MCUSYS_NV_DATA_XEPO_MAX_SIZE          (20 * 1024)
+#define GPS_MCUSYS_NV_DATA_QZ_QEPO_MAX_SIZE       (1 * 1024)
+#define GPS_MCUSYS_NV_DATA_IR_QEPO_MAX_SIZE       (1 * 1024)
+#define GPS_MCUSYS_NV_DATA_KR_QEPO_MAX_SIZE       (1 * 1024)
+#define GPS_MCUSYS_NV_DATA_DSPL1_CW_MAX_SIZE      (1 * 1024)
+#define GPS_MCUSYS_NV_DATA_DSPL5_CW_MAX_SIZE      (1 * 1024)
+#define GPS_MCUSYS_NV_DATA_MPENV_MAX_SIZE         (1 * 1024)
+#define GPS_MCUSYS_NV_DATA_MPE_CFG_MAX_SIZE       (1 * 1024)
+#define GPS_MCUSYS_NV_DATA_AP_MPE_MAX_SIZE        (32 * 1024)
+#define GPS_MCUSYS_NV_DATA_RAW_MEAS_MAX_SIZE      (80 * 1024)
+#define GPS_MCUSYS_NV_DATA_RAW_HIGEO_MAX_SIZE     (24 * 1024)
 
 #define GPS_MCUSYS_NV_DATA_HEADER_MAGIC 0x12345678
 struct gps_mcusys_nv_data_sub_header {
@@ -93,6 +104,60 @@ union gps_mcusys_nv_data_dspl5 {
 	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_DSPL5_MAX_SIZE/4];
 };
 
+union gps_mcusys_nv_data_xepo {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_XEPO_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_qz_qepo {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_QZ_QEPO_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_ir_qepo {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_IR_QEPO_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_kr_qepo {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_KR_QEPO_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_dspl1_cw {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_DSPL1_CW_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_dspl5_cw {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_DSPL5_CW_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_mpenv {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_MPENV_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_mpe_cfg {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_MPE_CFG_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_ap_mpe {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_AP_MPE_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_raw_meas {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_RAW_MEAS_MAX_SIZE/4];
+};
+
+union gps_mcusys_nv_data_raw_higeo {
+	struct gps_mcusys_nv_data_header hdr;
+	gpsmdl_u32 hdr_and_data[GPS_MCUSYS_NV_DATA_RAW_HIGEO_MAX_SIZE/4];
+};
 
 #define GPS_MCU_NV_DATA_EMI_OFFSET      (0xD00000) /* 0xD0_0000 == 13MB */
 #define GPS_MCU_NV_DATA_MCU_START_ADDR  (0x70D00000)
@@ -108,6 +173,17 @@ struct gps_mcusys_nv_data_layout {
 	union gps_mcusys_nv_data_config_write config_wr;
 	union gps_mcusys_nv_data_dspl1        dsp0;
 	union gps_mcusys_nv_data_dspl5        dsp1;
+	union gps_mcusys_nv_data_xepo         xepo;
+	union gps_mcusys_nv_data_qz_qepo      qz_qepo;
+	union gps_mcusys_nv_data_ir_qepo      ir_qepo;
+	union gps_mcusys_nv_data_kr_qepo      kr_qepo;
+	union gps_mcusys_nv_data_dspl1_cw     dsp0_cw;
+	union gps_mcusys_nv_data_dspl5_cw     dsp1_cw;
+	union gps_mcusys_nv_data_mpenv        mpenv;
+	union gps_mcusys_nv_data_mpe_cfg      mpe_cfg;
+	union gps_mcusys_nv_data_ap_mpe       ap_mpe;
+	union gps_mcusys_nv_data_raw_meas     raw_meas;
+	union gps_mcusys_nv_data_raw_higeo    raw_higeo;
 };
 
 #endif /* _GPS_MCUSYS_NV_DATA_LAYOUT_H */
