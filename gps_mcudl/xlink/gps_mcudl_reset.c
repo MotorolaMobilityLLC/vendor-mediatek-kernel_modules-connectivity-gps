@@ -12,6 +12,7 @@
 #include "gps_mcudl_link_util.h"
 #include "gps_mcudl_log.h"
 #include "gps_dl_name_list.h"
+#include "gps_dl_hw_api.h"
 #include "conninfra.h"
 #include "connsys_coredump.h"
 #include "gps_mcu_hif_host.h"
@@ -212,7 +213,7 @@ void gps_mcudl_handle_connsys_reset_done(void)
 
 
 #if 1 /* coredump*/
-int gps_mcudl_coredump_is_readable(void)
+int gps_mcudl_coredump_conninfra_is_readable_by_mask(unsigned int mask)
 {
 #if GPS_DL_HAS_CONNINFRA_DRV
 	int readable1, readable2;
@@ -225,17 +226,49 @@ int gps_mcudl_coredump_is_readable(void)
 	 * It returns readable2=0 only if SLP_PROT_ERR.
 	 * Similar api is gps_dl_conninfra_is_readable_by_hung_value
 	 */
-	if (((hung_value & CONNINFRA_AP2CONN_RX_SLP_PROT_ERR) ||
-		(hung_value & CONNINFRA_AP2CONN_TX_SLP_PROT_ERR)) || (hung_value < 0))
+	if ((hung_value < 0) || (hung_value & mask))
 		readable2 = 0;
 	else
 		readable2 = 1;
 
-	MDL_LOGW("readable1=%d, hung_value=0x%x, readable2=%d", readable1, hung_value, readable2);
+	MDL_LOGW("readable1=%d, hung_value=0x%x(0x%x), readable2=%d",
+		readable1, hung_value, mask, readable2);
 	return readable2;
 #else
 	return 1;
 #endif
+}
+
+int gps_mcudl_coredump_conninfra_on_is_readable(void)
+{
+	return gps_mcudl_coredump_conninfra_is_readable_by_mask(
+		CONNINFRA_AP2CONN_RX_SLP_PROT_ERR |
+		CONNINFRA_AP2CONN_TX_SLP_PROT_ERR);
+}
+
+int gps_mcudl_coredump_conninfra_off_is_readable(void)
+{
+	return gps_mcudl_coredump_conninfra_is_readable_by_mask(
+		CONNINFRA_AP2CONN_RX_SLP_PROT_ERR |
+		CONNINFRA_AP2CONN_TX_SLP_PROT_ERR |
+		CONNINFRA_AP2CONN_CLK_ERR);
+}
+
+int gps_mcudl_coredump_is_readable(void)
+{
+	int conn_readable, readable;
+	bool bg_readable = false;
+
+	conn_readable = gps_mcudl_coredump_conninfra_off_is_readable();
+	if (conn_readable) {
+		bg_readable = gps_mcudl_hal_bg_is_readable(false);
+		readable = bg_readable ? 1 : 0;
+	} else
+		readable = 0;
+
+	MDL_LOGW("readable=%d, conn=%d, bg=%d",
+		readable, conn_readable, bg_readable);
+	return readable;
 }
 
 struct coredump_event_cb g_gps_coredump_cb = {
@@ -293,9 +326,13 @@ void gps_mcudl_connsys_coredump_start_wrapper(void)
 	gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
 	gps_mcudl_hal_user_fw_own_status_dump();
 
-	if (gps_mcudl_coredump_is_readable()) {
+	if (gps_mcudl_coredump_conninfra_on_is_readable()) {
 		gps_mcudl_hal_mcu_show_status();
 		gps_mcudl_hal_ccif_show_status();
+		gps_dl_hw_dump_host_csr_gps_info(false);
+		if (gps_mcudl_hal_bg_is_readable(true))
+			gps_mcudl_hal_vndr_dump();
+		gps_dl_hw_dump_host_csr_gps_info(false);
 	} else
 		MDL_LOGE("readable=0");
 
