@@ -3,6 +3,7 @@
  * Copyright (c) 2021 MediaTek Inc.
  */
 
+#include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_ccif.h"
 #include "gps_mcudl_hw_ccif.h"
 #include "gps_dl_isr.h"
@@ -181,5 +182,45 @@ void gps_mcudl_hal_set_ccif_irq_en_flag(bool enable)
 	gps_mcudl_slot_protect();
 	g_gps_ccif_irq_en = enable;
 	gps_mcudl_slot_unprotect();
+}
+
+unsigned long g_gps_wdt_irq_cnt;
+void gps_mcudl_hal_wdt_isr(void)
+{
+	g_gps_wdt_irq_cnt++;
+	MDL_LOGW("cnt=%ld", g_gps_wdt_irq_cnt);
+	gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_MCU_WDT_DUMP);
+}
+
+void gps_mcudl_hal_wdt_dump(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	int readable;
+	int hung_value = 0;
+
+	readable = conninfra_reg_readable();
+	hung_value = conninfra_is_bus_hang();
+	MDL_LOGW("check1: readable=%d, hung_value=%d", readable, hung_value);
+
+	if (readable && hung_value == 0) {
+		gps_mcudl_hal_ccif_show_status();
+		gps_mcudl_hal_mcu_show_status();
+	}
+	gps_dl_sleep_us(2200, 3200);
+
+	readable = conninfra_reg_readable();
+	hung_value = conninfra_is_bus_hang();
+	MDL_LOGW("check2: readable=%d, hung_value=%d", readable, hung_value);
+
+	if (readable && hung_value == 0) {
+		gps_mcudl_hal_ccif_show_status();
+		gps_mcudl_hal_mcu_show_status();
+	}
+	gps_dl_sleep_us(2200, 3200);
+
+	readable = conninfra_reg_readable();
+	hung_value = conninfra_is_bus_hang();
+	MDL_LOGW("check3: readable=%d, hung_value=%d", readable, hung_value);
+#endif
 }
 
