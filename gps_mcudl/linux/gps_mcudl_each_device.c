@@ -479,7 +479,7 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 			retval = -EFAULT;
 		}
 		GDL_LOGXI_ONF(dev->index,
-			"GPSDL_IOC_GPS_GET_BOOT_TIME now_time = %d,arch_counter = %d",
+			"GPSDL_IOC_GPS_GET_BOOT_TIME now_time = %lld,arch_counter = %lld",
 			gps_boot_time.now_time, gps_boot_time.arch_counter);
 		break;
 	default:
