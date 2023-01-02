@@ -46,6 +46,7 @@ enum gps_mcudl_xlink_event_id {
 	GPS_MCUDL_EVT_LINK_PRINT_DATA_STATUS,
 	GPS_MCUDL_EVT_LINK_FW_LOG_ON,
 	GPS_MCUDL_EVT_LINK_FW_LOG_OFF,
+	GPS_MCUDL_EVT_LINK_RESET2,
 	GPS_MCUDL_LINK_EVT_NUM,
 };
 
@@ -75,11 +76,12 @@ extern unsigned int g_gps_fw_log_irq_cnt;
 void gps_mcudl_xlink_trigger_print_hw_status(void);
 void gps_mcudl_xlink_test_fw_own_ctrl(bool to_set);
 void gps_mcudl_xlink_test_toggle_ccif(unsigned int ch);
-void gps_mcudl_xlink_test_toggle_reset_by_gps_hif(unsigned int type);
+bool gps_mcudl_xlink_test_toggle_reset_by_gps_hif(unsigned int type);
 void gps_mcudl_xlink_test_read_mcu_reg(unsigned int addr, unsigned int bytes);
 void gps_mcudl_xlink_test_query_ver(void);
 void gps_mcudl_xlink_test_wakeup_ap_later(unsigned int data);
 void gps_mcudl_xlink_test_send_4byte_mgmt_data(unsigned int data_4byte);
+void gps_mcudl_xlink_test_bypass_mcu2ap_data(bool bypass);
 
 void gps_mcudl_xlink_fw_log_ctrl(bool on);
 
