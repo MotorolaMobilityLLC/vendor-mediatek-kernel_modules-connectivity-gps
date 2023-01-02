@@ -575,6 +575,7 @@ void gps_mcudl_hw_mcu_show_status(void)
 	unsigned int pc1, pc2, pc3, pc4, not_rst;
 	unsigned int val1, val2;
 	unsigned int lp_status;
+	unsigned int fw_own[7];
 
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_MCUDL_HW_MCU_SHOW_STATUS_OPID,
 			0, 0, 0, 0, 0, 0, &res);
@@ -596,6 +597,16 @@ void gps_mcudl_hw_mcu_show_status(void)
 	pc4 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
 	GDL_LOGW("not_rst=%d, pc=0x%08X, 0x%08X, 0x%08X, 0x%08X",
 		not_rst, pc1, pc2, pc3, pc4);
+
+	fw_own[0] = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_LPCTL_ADDR);
+	fw_own[1] = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_IRQ_STAT_ADDR);
+	fw_own[2] = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_IRQ_ENA_ADDR);
+	fw_own[3] = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_FW_OWN_IRQ_ADDR);
+	fw_own[4] = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_CSR_BGF_ON_IRQ_STATUS_ADDR);
+	fw_own[5] = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_CSR_BGF_ON_HOST_CSR_MISC_ADDR);
+	fw_own[6] = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_CSR_BGF_ON_FW_OWN_IRQ_ADDR);
+	GDL_LOGW("fw_own_sta=0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X",
+		fw_own[0], fw_own[1], fw_own[2], fw_own[3], fw_own[4], fw_own[5], fw_own[6]);
 
 	val1 = GDL_HW_RD_GPS_REG(BG_GPS_MCU_CONFG_SW_DBG_CTL_ADDR);
 	val2 = GDL_HW_RD_GPS_REG(BG_GPS_MCU_CONFG_SW_DBG_CTL_ADDR);
