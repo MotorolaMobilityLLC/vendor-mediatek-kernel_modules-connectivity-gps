@@ -22,6 +22,7 @@
 #include "gps_dl_name_list.h"
 #include "gps_dl_hal.h"
 #include "gps_dl_hw_api.h"
+#include "gps_dl_time_tick.h"
 
 
 /* extern kal_uint32 g_mcu_real_clock_rate; */
@@ -30,7 +31,49 @@
 /* #define GPS_REQ_CLOCK_FREQ_MHZ_NORMAL   (1) 1MHz */
 
 enum gps_dsp_state_t g_gps_dsp_state[GPS_DATA_LINK_NUM];
+struct gps_dsp_state_history_struct_t g_gps_dsp_state_history[GPS_DATA_LINK_NUM];
+unsigned int g_gps_dsp_state_change_tick[GPS_DATA_LINK_NUM];
 
+bool gps_dsp_state_is_dump_needed_for_reset_done(enum gps_dl_link_id_enum link_id)
+{
+	struct gps_each_link *p_link = gps_dl_link_get(link_id);
+	unsigned int prev_prev_index, tx_times_in_curr_session;
+	enum gps_dsp_state_t prev_state;
+
+	/*using unsigned int type and mod to avoid minus, index is 1 larger than current status*/
+	prev_prev_index = (g_gps_dsp_state_history[link_id].index - 2) % GPS_DSP_STATE_HISTORY_ITEM_MAX;
+
+	/*geting prev_state to confirm case*/
+	/*index is for future state(not assigned yet)*/
+	/*index - 1 is pointing to current state*/
+	/*index - 2 is pointing to previous state*/
+	prev_state = gps_dsp_history_state_get(link_id, prev_prev_index);
+	tx_times_in_curr_session = p_link->tx_dma_buf.dma_working_counter;
+
+	/*abnormal case wtih turned_on 1st, reset_done 2nd, close 3rd*/
+	/*fillter the example that dma has been opened*/
+	if (GPS_DSP_ST_TURNED_ON != prev_state)
+		return false;
+	if (tx_times_in_curr_session == 0)
+		return false;
+
+	GDL_LOGXW_STA(link_id, "may_need_dump: prev_state=%s, prev_prev_index=%d, tx_times=%d",
+		gps_dl_dsp_state_name(prev_state), prev_prev_index, tx_times_in_curr_session);
+
+	return true;
+}
+
+enum gps_dsp_state_t gps_dsp_history_state_get(enum gps_dl_link_id_enum link_id, unsigned int item_index)
+{
+	struct gps_dsp_state_history_item_t *p_item;
+
+	if (item_index >= GPS_DSP_STATE_HISTORY_ITEM_MAX)
+		return GPS_DSP_ST_MAX;
+
+	p_item = &g_gps_dsp_state_history[link_id].items[item_index];
+
+	return p_item->state;
+}
 
 enum gps_dsp_state_t gps_dsp_state_get(enum gps_dl_link_id_enum link_id)
 {
@@ -45,6 +88,9 @@ bool gps_dsp_state_is(enum gps_dsp_state_t state, enum gps_dl_link_id_enum link_
 
 void gps_dsp_state_change_to(enum gps_dsp_state_t next_state, enum gps_dl_link_id_enum link_id)
 {
+	struct gps_dsp_state_history_item_t *p_item;
+	unsigned int item_index;
+
 	ASSERT_LINK_ID(link_id, GDL_VOIDF());
 
 	if (next_state == GPS_DSP_ST_TURNED_ON) {
@@ -89,6 +135,14 @@ void gps_dsp_state_change_to(enum gps_dsp_state_t next_state, enum gps_dl_link_i
 	}
 
 	g_gps_dsp_state[link_id] = next_state;
+	g_gps_dsp_state_change_tick[link_id] = gps_dl_tick_get();
+
+	/* record history for checking */
+	item_index = g_gps_dsp_state_history[link_id].index % GPS_DSP_STATE_HISTORY_ITEM_MAX;
+	p_item = &g_gps_dsp_state_history[link_id].items[item_index];
+	p_item->tick = g_gps_dsp_state_change_tick[link_id];
+	p_item->state = next_state;
+	g_gps_dsp_state_history[link_id].index++;
 }
 
 void gps_dsp_fsm(enum gps_dsp_event_t evt, enum gps_dl_link_id_enum link_id)
