@@ -505,3 +505,9 @@ void gps_dl_hw_set_gps_dyn_remapping_tmp(unsigned int val)
 }
 #endif
 /* tmp*/
+
+void gps_mcudl_hw_may_set_link_power_flag(enum gps_mcudl_xid xid, bool power_ctrl)
+{
+/*No Need in Non-ATF*/
+}
+
