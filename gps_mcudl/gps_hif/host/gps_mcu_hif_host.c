@@ -223,7 +223,11 @@ void gps_mcu_hif_host_on_rx_finished(enum gps_mcu_hif_ch hif_ch, unsigned int da
 	if (!p_ctx->is_listening)
 		return;
 
+#if GPS_DL_ON_LINUX
+	memcpy_fromio(&gps_mcu_hif_on_recv_dispatcher_buf[hif_ch], p_data, data_len);
+#else
 	memcpy(&gps_mcu_hif_on_recv_dispatcher_buf[hif_ch], p_data, data_len);
+#endif
 	gps_mcu_hif_recv_start(hif_ch);
 	if (!p_ctx->custom_cb)
 		return;
