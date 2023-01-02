@@ -571,10 +571,38 @@ void gps_mcudl_hw_mcu_show_status(void)
 {
 	struct arm_smccc_res res;
 	int ret;
+	unsigned int conn_ver, bg_ver;
+	unsigned int pc1, pc2, pc3, pc4, not_rst;
+	unsigned int val1, val2;
+	unsigned int lp_status;
 
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_MCUDL_HW_MCU_SHOW_STATUS_OPID,
 			0, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
+
+	conn_ver = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_IP_VERSION_ADDR);
+	bg_ver = GDL_HW_RD_GPS_REG(BG_GPS_CFG_BGF_IP_VERSION_ADDR);
+	GDL_LOGW("conn_ver=0x%08X, bg_ver=0x%08X", conn_ver, bg_ver);
+
+	not_rst = GDL_HW_GET_CONN_INFRA_ENTRY(
+		CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_GPSSYS_CPU_SW_RST_B);
+	/*
+	 * GDL_HW_WR_CONN_INFRA_REG(
+	 *	CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, 0xC0040103);
+	 */
+	pc1 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
+	pc2 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
+	pc3 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
+	pc4 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
+	GDL_LOGW("not_rst=%d, pc=0x%08X, 0x%08X, 0x%08X, 0x%08X",
+		not_rst, pc1, pc2, pc3, pc4);
+
+	val1 = GDL_HW_RD_GPS_REG(BG_GPS_MCU_CONFG_SW_DBG_CTL_ADDR);
+	val2 = GDL_HW_RD_GPS_REG(BG_GPS_MCU_CONFG_SW_DBG_CTL_ADDR);
+	GDL_LOGW("idle_val=0x%08X, 0x%08X", val1, val2);
+
+	lp_status = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
+	GDL_LOGW("lp_status=0x%08X", lp_status);
 }
 
 bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
