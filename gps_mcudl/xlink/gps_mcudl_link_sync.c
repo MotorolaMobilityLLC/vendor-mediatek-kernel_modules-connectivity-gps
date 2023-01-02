@@ -79,10 +79,11 @@ void gps_mcudl_link_open_ack(enum gps_mcudl_xid link_id, bool okay)
 		if (gps_mcudl_each_link_change_state_from(link_id, LINK_OPENING, LINK_CLOSING))
 			send_msg = true;
 	}
-	gps_mcudl_each_link_give_big_lock(link_id);
 
 	gps_mcudl_each_link_set_bool_flag(link_id, LINK_OPEN_RESULT_OKAY, okay);
 	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
+
+	gps_mcudl_each_link_give_big_lock(link_id);
 
 	if (send_msg) {
 		gps_mcudl_xlink_event_send(link_id, GPS_MCUDL_EVT_LINK_CLOSE);
@@ -114,9 +115,9 @@ void gps_mcudl_link_close_ack(enum gps_mcudl_xid link_id)
 
 	gps_mcudl_each_link_take_big_lock(link_id, GDL_LOCK_FOR_CLOSE_DONE);
 	gps_mcudl_each_link_change_state_from(link_id, LINK_CLOSING, LINK_CLOSED);
-	gps_mcudl_each_link_give_big_lock(link_id);
 
 	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
+	gps_mcudl_each_link_give_big_lock(link_id);
 }
 
 
