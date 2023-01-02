@@ -189,6 +189,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 			/* no handle it again */
 			break;
 		}
+		fallthrough;
 		/* TODO: go and do close */
 	case GPS_DL_EVT_LINK_CLOSE:
 	case GPS_DL_EVT_LINK_RESET_DSP:
