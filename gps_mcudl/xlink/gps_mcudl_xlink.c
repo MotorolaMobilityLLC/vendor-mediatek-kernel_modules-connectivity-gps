@@ -5,8 +5,10 @@
 
 #include "gps_mcudl_log.h"
 #include "gps_mcudl_xlink.h"
+#include "gps_mcudl_ylink.h"
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_ccif.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcu_hif_api.h"
 
 
@@ -77,13 +79,18 @@ void gps_mcudl_xlink_fw_log_ctrl(bool on)
 
 void gps_mcudl_xlink_test_fw_own_ctrl(bool to_set)
 {
-	bool is_okay;
+	bool ntf = false;
 
-	if (to_set)
-		is_okay = gps_mcudl_hal_mcu_set_fw_own();
-	else
-		is_okay = gps_mcudl_hal_mcu_clr_fw_own();
-	MDL_LOGW("to_set=%d, ok=%d", to_set, is_okay);
+	if (to_set) {
+		ntf = gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_TEST);
+		MDL_LOGW("to_set=%d, ntf=%d", to_set, ntf);
+		return;
+	}
+
+	ntf = !gps_mcudl_hal_user_add_if_fw_own_is_clear(GMDL_FW_OWN_CTRL_BY_TEST);
+	if (ntf)
+		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_TEST_CLR_FW_OWN);
+	MDL_LOGW("to_set=%d, ntf=%d", to_set, ntf);
 }
 
 void gps_mcudl_xlink_test_toggle_ccif(unsigned int ch)
