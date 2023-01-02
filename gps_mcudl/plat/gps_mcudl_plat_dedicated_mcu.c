@@ -34,15 +34,15 @@ struct gps_mcudl_ystate {
 
 struct gps_mcudl_ystate g_gps_mcudl_ystate_list[GPS_MDLY_CH_NUM];
 
-int gps_mcudl_mock_do_stp_ctrl(enum gps_mcudl_yid yid, bool open)
+int gps_mcudl_plat_do_mcu_ctrl(enum gps_mcudl_yid yid, bool open)
 {
 	int retval = 0;
 
 	if (yid == GPS_MDLY_NORMAL) {
 		if (open)
-			retval = gps_mcudl_stpgps1_open();
+			retval = gps_mcudl_plat_mcu_open();
 		else
-			retval = gps_mcudl_stpgps1_close();
+			retval = gps_mcudl_plat_mcu_close();
 	}
 
 	MDL_LOGYI(yid, "open=%d, ret=%d", open, retval);
@@ -124,7 +124,7 @@ bool gps_mcudl_link_drv_on_recv_normal_data(const unsigned char *p_data, unsigne
 #if 1
 	gps_mcudl_mcu2ap_ydata_recv(GPS_MDLY_NORMAL, p_data, data_len);
 #else
-	gps_mcudl_stpgps1_read_proc2(p_data, data_len);
+	gps_mcudl_plat_mcu_ch1_read_proc2(p_data, data_len);
 #endif
 	return true;
 }
@@ -134,8 +134,8 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 	enum gps_mcudl_yid yid;
 	struct gps_mcudl_ystate *p_ystate;
 	gpsmdl_u32 old_xbitmask, new_xbitmask;
-	bool do_stp_ctrl = false;
-	int stp_ctrl_ret = 0;
+	bool do_mcu_ctrl = false;
+	int mcu_ctrl_ret = 0;
 
 	yid = GPS_MDL_X2Y(xid);
 	p_ystate = &g_gps_mcudl_ystate_list[yid];
@@ -151,7 +151,7 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		;
 	} else if (op && old_xbitmask == 0) {
 		/* turn on */
-		do_stp_ctrl = true;
+		do_mcu_ctrl = true;
 
 		MDL_LOGYI(yid, "gps_mcu_hif_init");
 		gps_mcu_hif_init();
@@ -163,38 +163,37 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		MDL_LOGYI(yid, "gps_mcudl_may_do_fw_loading, before");
 		gps_mcudl_may_do_fw_loading();
 		MDL_LOGYI(yid, "gps_mcudl_may_do_fw_loading, after");
-		stp_ctrl_ret = gps_mcudl_mock_do_stp_ctrl(yid, true);
-		if (stp_ctrl_ret == 0)
+		mcu_ctrl_ret = gps_mcudl_plat_do_mcu_ctrl(yid, true);
+		if (mcu_ctrl_ret == 0)
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_ON);
 		else {
-			MDL_LOGYI(yid, "fail to turn on");
+			MDL_LOGYE(yid, "fail to turn on");
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_PRE_OFF);
-			(void)gps_mcudl_mock_do_stp_ctrl(yid, false);
+			(void)gps_mcudl_plat_do_mcu_ctrl(yid, false);
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
 			gps_mcudl_clear_fw_loading_done_flag();
 		}
 	} else if (!op && new_xbitmask == 0) {
 		/* turn off */
-		do_stp_ctrl = true;
+		do_mcu_ctrl = true;
 		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_PRE_OFF);
-		stp_ctrl_ret = gps_mcudl_mock_do_stp_ctrl(yid, false);
-		MDL_LOGYI(yid, "gps_mcudl_clear_fw_loading_done_flag");
+		mcu_ctrl_ret = gps_mcudl_plat_do_mcu_ctrl(yid, false);
+		MDL_LOGYD(yid, "gps_mcudl_clear_fw_loading_done_flag");
 		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
 		gps_mcudl_clear_fw_loading_done_flag();
 	}
 
-	if (stp_ctrl_ret == 0 || !op)
+	if (mcu_ctrl_ret == 0 || !op)
 		p_ystate->xstate_bitmask = new_xbitmask;
 
-	MDL_LOGYI(yid, "xid=%d, op=%d, xbitmask: 0x%08x -> 0x%08x, stp_ctrl: do=%d, ret=%d",
-		xid, op, old_xbitmask, new_xbitmask, do_stp_ctrl, stp_ctrl_ret);
-	return stp_ctrl_ret;
+	MDL_LOGYI(yid, "xid=%d, op=%d, xbitmask: 0x%08x -> 0x%08x, mcu_ctrl: do=%d, ret=%d",
+		xid, op, old_xbitmask, new_xbitmask, do_mcu_ctrl, mcu_ctrl_ret);
+	return mcu_ctrl_ret;
 }
 
 unsigned int g_conn_xuser;
 bool g_gps_mcudl_ever_do_coredump;
 
-/*TODO:*/
 int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op)
 {
 	MDL_LOGXI_ONF(xid,
@@ -239,12 +238,12 @@ int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op)
 }
 
 #if 0
-void gps_mcudl_stpgps1_event_cb(void)
+void gps_mcudl_plat_mcu_ch1_event_cb(void)
 {
 	gps_mcudl_mcu2ap_ydata_notify(GPS_MDLY_NORMAL);
 }
 
-void gps_mcudl_stpgps1_read_proc(void)
+void gps_mcudl_plat_mcu_ch1_read_proc(void)
 {
 	enum gps_mcudl_yid y_id;
 	gpsmdl_u8 tmp_buf[2048];
@@ -255,14 +254,14 @@ void gps_mcudl_stpgps1_read_proc(void)
 
 	gps_mcudl_mcu2ap_set_wait_read_flag(y_id, false);
 	do {
-		ret_len = gps_mcudl_stpgps1_read_nonblock(&tmp_buf[0], 2048);
+		ret_len = gps_mcudl_plat_mcu_ch1_read_nonblock(&tmp_buf[0], 2048);
 		MDL_LOGYD(y_id, "read: len=%d", ret_len);
 		if (ret_len > 0)
 			gps_mcudl_mcu2ap_ydata_recv(y_id, &tmp_buf[0], ret_len);
 	} while (ret_len > 0);
 }
 
-void gps_mcudl_stpgps1_read_proc2(const unsigned char *p_data, unsigned int data_len)
+void gps_mcudl_plat_mcu_ch1_read_proc2(const unsigned char *p_data, unsigned int data_len)
 {
 	enum gps_mcudl_yid y_id;
 
@@ -274,7 +273,7 @@ void gps_mcudl_stpgps1_read_proc2(const unsigned char *p_data, unsigned int data
 }
 #endif
 
-void gps_mcudl_stpgps1_reset_start_cb(void)
+void gps_mcudl_plat_mcu_ch1_reset_start_cb(void)
 {
 	enum gps_mcudl_yid y_id = GPS_MDLY_NORMAL;
 
@@ -284,7 +283,7 @@ void gps_mcudl_stpgps1_reset_start_cb(void)
 	gps_mcudl_ylink_event_send(y_id, GPS_MCUDL_YLINK_EVT_ID_MCU_RESET_START);
 }
 
-void gps_mcudl_stpgps1_reset_end_cb(void)
+void gps_mcudl_plat_mcu_ch1_reset_end_cb(void)
 {
 	enum gps_mcudl_yid y_id = GPS_MDLY_NORMAL;
 
@@ -293,7 +292,7 @@ void gps_mcudl_stpgps1_reset_end_cb(void)
 	gps_mcudl_ylink_event_send(y_id, GPS_MCUDL_YLINK_EVT_ID_MCU_RESET_END);
 }
 
-int gps_mcudl_stpgps1_open(void)
+int gps_mcudl_plat_mcu_open(void)
 {
 	bool is_okay;
 #if (GPS_DL_HAS_MCUDL_FW && GPS_DL_HAS_MCUDL_HAL)
@@ -327,7 +326,7 @@ int gps_mcudl_stpgps1_open(void)
 	return 0;
 }
 
-int gps_mcudl_stpgps1_close(void)
+int gps_mcudl_plat_mcu_close(void)
 {
 	bool is_okay;
 
@@ -346,7 +345,7 @@ int gps_mcudl_stpgps1_close(void)
 	return 0;
 }
 
-int gps_mcudl_stpgps1_write(const unsigned char *kbuf, unsigned int count)
+int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 {
 	bool is_okay;
 
@@ -357,12 +356,12 @@ int gps_mcudl_stpgps1_write(const unsigned char *kbuf, unsigned int count)
 	return count;
 }
 
-int gps_mcudl_stpgps1_read_nonblock(unsigned char *kbuf, unsigned int count)
+int gps_mcudl_plat_mcu_ch1_read_nonblock(unsigned char *kbuf, unsigned int count)
 {
 	return 0;
 }
 
-void gps_nv_emi_clear(void)
+void gps_mcudl_plat_nv_emi_clear(void)
 {
 	struct gps_mcudl_emi_layout *p_layout;
 
@@ -370,7 +369,7 @@ void gps_nv_emi_clear(void)
 	memset_io(&p_layout->gps_nv_emi[0], 0, sizeof(p_layout->gps_nv_emi));
 }
 
-void *gps_emi_get_nv_mem_ptr(void)
+void *gps_mcudl_plat_nv_emi_get_start_ptr(void)
 {
 	struct gps_mcudl_emi_layout *p_layout;
 

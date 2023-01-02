@@ -33,7 +33,7 @@
 	x_id, mod, gpsmdl_xid_name(x_id), __func__, __LINE__, ##__VA_ARGS__)
 
 #define __MDL_LOGYE(mod, link_id, fmt, ...) pr_notice("GDLY-%d[E:%d] [%s:%d]: "fmt, \
-	link_id, gpsmdl_xid_name(x_id), mod, __func__, __LINE__, ##__VA_ARGS__)
+	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
 
 #define __MDL_LOGYW(mod, link_id, fmt, ...) pr_notice("GDLY-%d[W:%d] [%s:%d]: "fmt, \
 	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)

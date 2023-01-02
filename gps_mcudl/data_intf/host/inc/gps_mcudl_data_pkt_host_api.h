@@ -35,10 +35,10 @@ void gps_mcudl_mcu2ap_ydata_proc(enum gps_mcudl_yid yid);
 void gps_mcudl_ap2mcu_data_slot_flush_on_xwrite(enum gps_mcudl_xid x_id);
 void gps_mcudl_ap2mcu_data_slot_flush_on_recv_sta(enum gps_mcudl_yid y_id);
 
-void proc_func1(enum gps_mcudl_pkt_type type,
+void gps_mcudl_mcu_ch1_proc_func(enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len);
 
-int send_func1(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len);
+int gps_mcudl_mcu_ch1_send_func(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len);
 
 
 bool gps_mcudl_mcu2ap_get_wait_read_flag(enum gps_mcudl_yid y_id);
