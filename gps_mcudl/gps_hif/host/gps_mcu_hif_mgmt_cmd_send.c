@@ -7,6 +7,7 @@
 #include "gps_mcudl_log.h"
 #include "gps_mcu_hif_mgmt_cmd_send.h"
 #include "gps_mcudl_data_pkt_slot.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcu_hif_host.h"
 #if GPS_DL_ON_LINUX
 #include <linux/jiffies.h>
@@ -164,6 +165,7 @@ bool gps_mcudl_mgmt_cmd_wait_ack(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_
 		return false;
 	}
 
+	gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_MGMT_CMD);
 	is_timeout = false;
 #if GPS_DL_ON_LINUX
 	remaining_jiffies = wait_for_completion_timeout(
@@ -173,6 +175,8 @@ bool gps_mcudl_mgmt_cmd_wait_ack(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_
 #else
 	/* may do busy polling until ack_done or timeout */
 #endif
+	gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_MGMT_CMD);
+
 	gps_mcudl_slot_protect();
 	old_state = p_wrapper->state;
 	if (p_wrapper->state == GMDL_CMD_ACK_AFTER_WAIT)
