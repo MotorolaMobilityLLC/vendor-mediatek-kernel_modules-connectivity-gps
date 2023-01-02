@@ -90,7 +90,7 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr
 
 	if (dump_rf_cr) {
 		gps_dl_hw_gps_dump_top_rf_cr();
-		gps_dl_hw_gps_dump_gps_rf_cr();
+		/*gps_dl_hw_gps_dump_gps_rf_cr();*/
 	}
 
 #if GPS_DL_ON_LINUX
