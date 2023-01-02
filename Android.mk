@@ -2,10 +2,20 @@ ifeq ($(GPS_CHIP_ID), common)
 LOCAL_PATH_INCLUDE := $(call my-dir)
 
 include $(LOCAL_PATH_INCLUDE)/gps_stp/Android.mk
+
+ifneq ($(wildcard $(LOCAL_PATH_INCLUDE)/data_link/plat/connac2_0/inc),)
+ifneq ($(wildcard $(LOCAL_PATH_INCLUDE)/data_link/hw/inc/connac2_0),)
 GPS_PLATFORM := mt6885
 include $(LOCAL_PATH_INCLUDE)/data_link/Android.mk
+endif
+endif
+
+ifneq ($(wildcard $(LOCAL_PATH_INCLUDE)/data_link/plat/mt6877/inc),)
+ifneq ($(wildcard $(LOCAL_PATH_INCLUDE)/data_link/hw/inc/mt6877),)
 GPS_PLATFORM := mt6877
 include $(LOCAL_PATH_INCLUDE)/data_link/Android.mk
+endif
+endif
 
 $(warning GPS_CHIP_ID = common)
 
