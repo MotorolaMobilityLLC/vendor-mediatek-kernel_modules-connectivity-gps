@@ -736,6 +736,8 @@ void gps_mcudl_hw_may_set_link_power_flag(enum gps_mcudl_xid xid, bool power_ctr
 	static unsigned int gps_mcu_common_on_flag;
 	int ret;
 
+	memset(&res, 0, sizeof(res));
+
 	if (power_ctrl) {
 		if (gps_mcu_common_on_flag == 0)
 			arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_SET_FLAG_OPID,
