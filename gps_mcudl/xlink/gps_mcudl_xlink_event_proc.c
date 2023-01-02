@@ -202,10 +202,20 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 			/* try to dump host csr info if not normal close operation */
 			/*if (gps_dl_conninfra_is_okay_or_handle_it(NULL, true))*/
 			/*	gps_dl_hw_dump_host_csr_gps_info(true);*/
+			if (gps_dl_conninfra_is_readable())
+				gps_mcudl_hal_mcu_show_status();
+			else
+				MDL_LOGE("readable=0");
+			gps_mcudl_hal_ccif_show_status();
 
 			/*TODO: replace with PAD EINT*/
 			gps_mcudl_hal_ccif_tx_prepare(GPS_MCUDL_CCIF_CH3);
 			gps_mcudl_hal_ccif_tx_trigger(GPS_MCUDL_CCIF_CH3);
+			if (gps_dl_conninfra_is_readable())
+				gps_mcudl_hal_mcu_show_status();
+			else
+				MDL_LOGE("readable=0");
+			gps_mcudl_hal_ccif_show_status();
 			gps_mcudl_connsys_coredump_start();
 			g_gps_mcudl_ever_do_coredump = true;
 		}
