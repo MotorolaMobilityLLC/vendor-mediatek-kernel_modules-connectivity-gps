@@ -276,13 +276,14 @@ bool g_gps_mcudl_ever_do_coredump;
 
 int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op)
 {
-	MDL_LOGXI_ONF(xid,
-		"sid = %d, op = %d, user = 0x%x,%d, tia_on = %d",
-		gps_mcudl_each_link_get_session_id(xid),
-		op, g_conn_xuser, g_gps_conninfa_on, g_gps_tia_on);
 
 	if (1 == op) {
 		if (g_conn_xuser == 0) {
+			MDL_LOGXI_ONF(xid,
+				"sid = %d, op = %d, user = 0x%x,%d, tia_on = %d",
+				gps_mcudl_each_link_get_session_id(xid),
+				op, g_conn_xuser, g_gps_conninfa_on, g_gps_tia_on);
+
 			g_gps_mcudl_ever_do_coredump = false;
 			gps_dl_log_info_show();
 			if (!gps_dl_hal_conn_infra_driver_on())
@@ -301,6 +302,10 @@ int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op)
 	} else if (0 == op) {
 		g_conn_xuser &= ~(1UL << xid);
 		if (g_conn_xuser == 0) {
+			MDL_LOGXI_ONF(xid,
+				"sid = %d, op = %d, user = 0x%x,%d, tia_on = %d",
+				gps_mcudl_each_link_get_session_id(xid),
+				op, g_conn_xuser, g_gps_conninfa_on, g_gps_tia_on);
 #if GPS_DL_HAS_PLAT_DRV
 #if GPS_DL_USE_TIA
 			/*if (g_gps_tia_on) {*/
