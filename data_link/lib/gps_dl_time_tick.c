@@ -58,6 +58,20 @@ unsigned long gps_dl_tick_get_us(void)
 	return tmp;
 }
 
+#define GPS_NSEC_IN_MSEC (1000000)
+unsigned long gps_dl_tick_get_ms(void)
+{
+	unsigned long tmp;
+
+	/* tmp is ns */
+	tmp = local_clock();
+
+	/* tmp is changed to ms after */
+	do_div(tmp, GPS_NSEC_IN_MSEC);
+
+	return tmp;
+}
+
 int gps_dl_tick_delta_to_usec(unsigned int tick0, unsigned int tick1)
 {
 #if GPS_DL_ON_LINUX
