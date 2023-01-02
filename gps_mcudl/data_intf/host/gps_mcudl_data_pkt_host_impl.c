@@ -293,7 +293,7 @@ void gps_mcudl_mcu2ap_ydata_proc(enum gps_mcudl_yid yid)
 	MDL_LOGYD(yid, "reader: w=%d, r=%d", reader_write_idx, reader_read_idx);
 
 	p_trx_ctx->host_sta.pkt_sta.total_recv =
-		(gpsmdl_u64)gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(yid);
+		p_parser->proc_byte_cnt + p_parser->drop_byte_cnt;
 	p_trx_ctx->host_sta.pkt_sta.total_parse_proc = (gpsmdl_u32)(p_parser->proc_byte_cnt);
 	p_trx_ctx->host_sta.pkt_sta.total_parse_drop = (gpsmdl_u32)(p_parser->drop_byte_cnt);
 	p_trx_ctx->host_sta.pkt_sta.total_route_drop = 0;
@@ -525,9 +525,10 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 
 		to_notify = !gps_mcudl_ap2mcu_get_wait_flush_flag(yid);
 		MDL_LOGYI(yid,
-			"send_host_ack:recv=%u,last=%u,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d,ntf=%d",
-			(gpsmdl_u32)(p_trx_ctx->host_sta.pkt_sta.total_recv),
-			(gpsmdl_u32)(p_trx_ctx->host_sta.last_ack_recv_len),
+			"send_host_ack:recv_isr=%lu,recv=%lu,last=%lu,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%d,ntf=%d",
+			gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(yid),
+			p_trx_ctx->host_sta.pkt_sta.total_recv,
+			p_trx_ctx->host_sta.last_ack_recv_len,
 			p_trx_ctx->host_sta.pkt_sta.total_parse_proc,
 			p_trx_ctx->host_sta.pkt_sta.total_pkt_cnt,
 			p_trx_ctx->host_sta.pkt_sta.total_parse_drop,
