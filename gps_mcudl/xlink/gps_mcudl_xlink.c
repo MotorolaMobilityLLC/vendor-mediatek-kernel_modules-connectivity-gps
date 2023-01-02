@@ -9,6 +9,7 @@
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_ccif.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
+#include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcu_hif_api.h"
 
 
@@ -101,7 +102,7 @@ void gps_mcudl_xlink_test_toggle_ccif(unsigned int ch)
 	gps_mcudl_hal_ccif_tx_trigger(ch);
 }
 
-void gps_mcudl_xlink_test_toggle_reset_by_gps_hif(unsigned int type)
+bool gps_mcudl_xlink_test_toggle_reset_by_gps_hif(unsigned int type)
 {
 	bool is_okay;
 	unsigned char buf[2];
@@ -110,6 +111,7 @@ void gps_mcudl_xlink_test_toggle_reset_by_gps_hif(unsigned int type)
 	buf[1] = (unsigned char)(type & 0xFF);
 	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, &buf[0], 2);
 	MDL_LOGW("write cmd4, type=%u, is_ok=%d", type, is_okay);
+	return is_okay;
 }
 
 void gps_mcudl_xlink_test_read_mcu_reg(unsigned int addr, unsigned int bytes)
@@ -155,5 +157,11 @@ void gps_mcudl_xlink_test_send_4byte_mgmt_data(unsigned int data_4byte)
 	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT,
 		(const unsigned char *)&data_4byte, 4);
 	MDL_LOGW("write 0x%08x, is_ok=%d", data_4byte, is_okay);
+}
+
+void gps_mcudl_xlink_test_bypass_mcu2ap_data(bool bypass)
+{
+	MDL_LOGW("bypass=%d", bypass);
+	gps_mcudl_mcu2ap_test_bypass_set(bypass);
 }
 
