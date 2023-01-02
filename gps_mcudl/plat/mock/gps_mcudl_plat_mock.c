@@ -227,7 +227,7 @@ void gps_mcudl_stpgps1_read_proc2(const unsigned char *p_data, unsigned int data
 	enum gps_mcudl_yid y_id;
 
 	y_id = GPS_MDLY_NORMAL;
-	gps_mcudl_ap2mcu_set_wait_read_flag(y_id, false);
+	gps_mcudl_mcu2ap_set_wait_read_flag(y_id, false);
 	MDL_LOGYD(y_id, "read: len=%u", data_len);
 	if (data_len > 0)
 		gps_mcudl_mcu2ap_ydata_recv(y_id, p_data, data_len);
@@ -261,8 +261,8 @@ int gps_mcudl_stpgps1_open(void)
 #endif
 	gps_dl_sleep_us(100*1000, 200*1000);
 
-	gps_mcudl_ap2mcu_set_wait_read_flag(GPS_MDLY_NORMAL, false);
-	gps_mcudl_ap2mcu_set_wait_read_flag(GPS_MDLY_URGENT, false);
+	gps_mcudl_mcu2ap_set_wait_read_flag(GPS_MDLY_NORMAL, false);
+	gps_mcudl_mcu2ap_set_wait_read_flag(GPS_MDLY_URGENT, false);
 
 	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMALESS_MGMT,
 		&gps_mcudl_link_drv_on_recv_mgmt_data);
