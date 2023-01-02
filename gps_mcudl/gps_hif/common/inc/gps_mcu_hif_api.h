@@ -15,6 +15,10 @@ extern union gps_mcu_hif_mcu2ap_shared_data_union *p_gps_mcu_hif_mcu2ap_region;
 
 void gps_mcu_hif_init(void);
 
+/* protect critical section such as bitmask uint which may set/clear by tasks */
+void gps_mcu_hif_lock(void);
+void gps_mcu_hif_unlock(void);
+
 /* return true for okay */
 bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
 	const unsigned char *p_data, unsigned int data_len);
