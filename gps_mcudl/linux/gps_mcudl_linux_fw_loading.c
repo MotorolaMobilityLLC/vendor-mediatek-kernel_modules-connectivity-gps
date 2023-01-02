@@ -96,12 +96,12 @@ void gps_mcudl_may_do_fw_loading(void)
 	/*MCU.bin*/
 	p_dst_addr = (void __iomem *)&p_layout->mcu_bin[0];
 	dst_len = sizeof(p_layout->mcu_bin);
-	gps_mcudl_load_single_firmware("soc7_1_ram_mcu_1_1_hdr.bin", p_dst_addr, dst_len);
+	gps_mcudl_load_single_firmware("soc7_1_ram_mcu_1a_1_hdr.bin", p_dst_addr, dst_len);
 
 	/*GPS.bin*/
 	p_dst_addr = (void __iomem *)&p_layout->gps_bin[0];
 	dst_len = sizeof(p_layout->gps_bin);
-	gps_mcudl_load_single_firmware("soc7_1_ram_gps_offload_1_1_hdr.bin", p_dst_addr, dst_len);
+	gps_mcudl_load_single_firmware("soc7_1_ram_gps_offload_1a_1_hdr.bin", p_dst_addr, dst_len);
 
 	/*MNL.bin*/
 	p_dst_addr = (void __iomem *)&p_layout->mnl_bin[0];
