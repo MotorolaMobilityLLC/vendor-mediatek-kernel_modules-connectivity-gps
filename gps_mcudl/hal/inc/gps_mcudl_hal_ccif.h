@@ -32,5 +32,8 @@ extern unsigned int g_gps_fw_log_irq_cnt;
 extern unsigned long g_gps_ccif_irq_cnt;
 void gps_mcudl_hal_ccif_rx_isr(void);
 
+bool gps_mcudl_hal_get_ccif_irq_en_flag(void);
+void gps_mcudl_hal_set_ccif_irq_en_flag(bool enable);
+
 #endif /* _GPS_MCUDL_HAL_CCIF_H */
 

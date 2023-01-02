@@ -164,7 +164,8 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		gps_mcudl_may_do_fw_loading();
 		MDL_LOGYI(yid, "gps_mcudl_may_do_fw_loading, after");
 		stp_ctrl_ret = gps_mcudl_mock_do_stp_ctrl(yid, true);
-		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_ON);
+		if (stp_ctrl_ret == 0)
+			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_ON);
 	} else if (!op && new_xbitmask == 0) {
 		/* turn off */
 		do_stp_ctrl = true;
@@ -289,7 +290,11 @@ int gps_mcudl_stpgps1_open(void)
 {
 	bool is_okay;
 #if (GPS_DL_HAS_MCUDL_FW && GPS_DL_HAS_MCUDL_HAL)
-	gps_mcudl_xlink_on(&c_gps_mcudl_rom_only_fw_list);
+	is_okay = gps_mcudl_xlink_on(&c_gps_mcudl_rom_only_fw_list);
+	if (!is_okay) {
+		MDL_LOGI("gps_mcudl_xlink_on failed");
+		return -1;
+	}
 #endif
 	gps_dl_sleep_us(100*1000, 200*1000);
 
