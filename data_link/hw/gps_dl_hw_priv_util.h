@@ -10,6 +10,12 @@
 #include "gps_dl_hw_type.h"
 #include "gps_dl_time_tick.h"
 
+#if GPS_DL_ON_LINUX
+#include <linux/delay.h>
+#include <asm/io.h>
+#include "gps_dl_linux.h"
+#endif
+
 enum GPS_DL_BUS_ENUM {
 	GPS_DL_GPS_BUS,
 	GPS_DL_BGF_BUS,
@@ -84,6 +90,28 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 #define GDL_HW_WR_GPS_REG(Addr, Value) gps_dl_bus_write(GPS_DL_GPS_BUS, Addr, Value)
 #define GDL_HW_RD_GPS_REG(Addr)        gps_dl_bus_read(GPS_DL_GPS_BUS, Addr)
 
+#define GDL_HW_SET_AP_ENTRY(Field, Shft, Mask, Value) do {     \
+		conn_reg val, rd_val;                                   \
+		void __iomem *pConnGPIObaseaddr;               \
+		pConnGPIObaseaddr = ioremap(Field, 0x4);        \
+		val = __raw_readl(pConnGPIObaseaddr);     \
+		GDL_LOGD("RD : addr = 0x%08x, r_val = 0x%08x", Field, val);			\
+		val &= (~Mask);                          \
+		val |= ((Value << Shft) & Mask);  \
+		gps_dl_linux_sync_writel(val, pConnGPIObaseaddr);     \
+		rd_val = __raw_readl(pConnGPIObaseaddr);     \
+		GDL_LOGD("WR : addr = 0x%08x, w_val = 0x%08x, read_back = 0x%08x,", Field, val, rd_val);	\
+		iounmap(pConnGPIObaseaddr);                 \
+	} while (0)
+
+#define GDL_HW_GET_AP_ENTRY(Field) do {     \
+		conn_reg val;                                   \
+		void __iomem *pConnGPIObaseaddr;			   \
+		pConnGPIObaseaddr = ioremap(Field, 0x4);		\
+		val = __raw_readl(pConnGPIObaseaddr);     \
+		GDL_LOGI_RRW("RD : addr = 0x%08x, r_val = 0x%08x", Field, val); \
+		iounmap(pConnGPIObaseaddr);          \
+	} while (0)
 
 #define GDL_HW_SET_ENTRY(Bus_ID, Field, Value) do {     \
 		conn_reg val;                                   \

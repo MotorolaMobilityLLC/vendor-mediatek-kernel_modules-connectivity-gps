@@ -39,7 +39,6 @@ bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable);
 void gps_dl_hw_gps_sw_request_emi_usage(bool request);
 void gps_dl_hw_gps_sw_request_peri_usage(bool request);
 
-extern unsigned int poll_ver;
 enum GDL_HW_RET gps_dl_hw_get_mcub_info(
 	enum gps_dl_link_id_enum link_id, struct gps_dl_hal_mcub_info *p);
 
@@ -53,10 +52,12 @@ enum GDL_RET_STATUS gps_dl_hw_mcub_dsp_read_request(
 
 void gps_dl_hw_set_gps_emi_remapping(unsigned int _20msb_of_36bit_phy_addr);
 unsigned int gps_dl_hw_get_gps_emi_remapping(void);
+
 #if GPS_DL_USE_PERI_REMAP
 void gps_dl_hw_set_gps_peri_remapping(unsigned int _20msb_of_36bit_phy_addr);
 unsigned int gps_dl_hw_get_gps_peri_remapping(void);
 #endif
+
 void gps_dl_hw_set_dma_start(enum gps_dl_hal_dma_ch_index channel,
 	struct gdl_hw_dma_transfer *p_transfer);
 

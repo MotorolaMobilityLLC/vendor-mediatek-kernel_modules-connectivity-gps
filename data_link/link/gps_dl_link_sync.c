@@ -74,10 +74,18 @@ enum GDL_RET_STATUS gps_dl_link_try_wait_on(enum gps_dl_link_id_enum link_id,
 {
 	struct gps_each_link *p_link;
 	struct gps_each_link_waitable *p;
-	bool is_fired;
 
 	p_link = gps_dl_link_get(link_id);
 	p = &p_link->waitables[type];
+	return gps_dl_waitable_try_wait_on(p);
+}
+
+enum GDL_RET_STATUS gps_dl_waitable_try_wait_on(struct gps_each_link_waitable *p)
+{
+	bool is_fired;
+
+	if (!p)
+		return GDL_FAIL;
 
 	GDL_TEST_TRUE_AND_SET_FALSE(p->fired, is_fired);
 	if (is_fired) {
@@ -89,11 +97,11 @@ enum GDL_RET_STATUS gps_dl_link_try_wait_on(enum gps_dl_link_id_enum link_id,
 	return GDL_FAIL;
 }
 
-void gps_dl_link_wake_up(struct gps_each_link_waitable *p)
+bool gps_dl_link_wake_up2(struct gps_each_link_waitable *p)
 {
 	bool is_fired = false;
 
-	ASSERT_NOT_NULL(p, GDL_VOIDF());
+	ASSERT_NOT_NULL(p, false);
 
 	if (!p->waiting) {
 		if (p->type == GPS_DL_WAIT_WRITE || p->type == GPS_DL_WAIT_READ) {
@@ -113,9 +121,17 @@ void gps_dl_link_wake_up(struct gps_each_link_waitable *p)
 	if (!is_fired) {
 #if GPS_DL_ON_LINUX
 		wake_up(&p->wq);
+		return true;
 #else
 #endif
 	}
+
+	return false;
+}
+
+void gps_dl_link_wake_up(struct gps_each_link_waitable *p)
+{
+	(void)gps_dl_link_wake_up2(p);
 }
 
 void gps_dl_link_open_wait(enum gps_dl_link_id_enum link_id, long *p_sigval)

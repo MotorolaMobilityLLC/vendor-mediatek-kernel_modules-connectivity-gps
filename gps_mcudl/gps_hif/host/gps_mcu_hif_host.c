@@ -202,6 +202,7 @@ void gps_mcu_hif_on_recv_dispatcher(enum gps_mcu_hif_ch hif_ch,
 		return;
 
 	memcpy(&gps_mcu_hif_on_recv_dispatcher_buf[0], p_data, data_len);
+
 	gps_mcu_hif_recv_start(hif_ch);
 	if (!p_ctx->custom_cb)
 		return;

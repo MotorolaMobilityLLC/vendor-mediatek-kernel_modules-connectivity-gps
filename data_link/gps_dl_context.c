@@ -15,6 +15,12 @@
 #define GPS_DL_ISR_NODATA1  gps_dl_linux_irq_dispatcher
 #define GPS_DL_ISR_MCUB1    gps_dl_linux_irq_dispatcher
 #define GPS_DL_ISR_DMA      gps_dl_linux_irq_dispatcher
+#if GPS_DL_HAS_MCUDL
+#define GPS_DL_ISR_CCIF     gps_dl_linux_irq_dispatcher
+#define GPS_DL_ISR_CONN2AP  gps_dl_linux_irq_dispatcher
+#define GPS_DL_ISR_WDT      gps_dl_linux_irq_dispatcher
+#define GPS_DL_ISR_HIF_ON   gps_dl_linux_irq_dispatcher
+#endif
 #elif GPS_DL_ON_CTP
 #define GPS_DL_ISR_DATA0    gps_dl_isr_dl0_has_data
 #define GPS_DL_ISR_NODATA0  gps_dl_isr_dl0_has_nodata
@@ -23,6 +29,12 @@
 #define GPS_DL_ISR_NODATA1  gps_dl_isr_dl1_has_nodata
 #define GPS_DL_ISR_MCUB1    gps_dl_isr_dl1_mcub
 #define GPS_DL_ISR_DMA      gps_dl_isr_dma_done
+#if GPS_DL_HAS_MCUDL
+#define GPS_DL_ISR_CCIF     gps_dl_isr_ccif
+#define GPS_DL_ISR_CONN2AP  gps_dl_isr_conn2ap
+#define GPS_DL_ISR_WDT      gps_dl_isr_wdt
+#define GPS_DL_ISR_HIF_ON   gps_dl_isr_hif_on
+#endif
 #endif
 
 static struct gps_dl_ctx s_gps_dl_ctx = {
@@ -55,6 +67,20 @@ static struct gps_dl_ctx s_gps_dl_ctx = {
 		{.cfg = {.index = GPS_DL_IRQ_DMA,          .name = "gps_dma",
 			.trig_type = GPS_DL_IRQ_TRIG_LEVEL_HIGH,
 			.isr = (void *)GPS_DL_ISR_DMA} },
+#if GPS_DL_HAS_MCUDL
+		{.cfg = {.index = GPS_DL_IRQ_CCIF,	   .name = "gps_cif",
+			.trig_type = GPS_DL_IRQ_TRIG_LEVEL_HIGH,
+			.isr = (void *)GPS_DL_ISR_DMA} },
+		{.cfg = {.index = GPS_DL_IRQ_CONN2AP,	   .name = "gps_c2a",
+			.trig_type = GPS_DL_IRQ_TRIG_LEVEL_HIGH,
+			.isr = (void *)GPS_DL_ISR_DMA} },
+		{.cfg = {.index = GPS_DL_IRQ_WDT,	   .name = "gps_wdt",
+			.trig_type = GPS_DL_IRQ_TRIG_LEVEL_HIGH,
+			.isr = (void *)GPS_DL_ISR_DMA} },
+		{.cfg = {.index = GPS_DL_IRQ_HIF_ON,	   .name = "gps_hon",
+			.trig_type = GPS_DL_IRQ_TRIG_LEVEL_HIGH,
+			.isr = (void *)GPS_DL_ISR_DMA} },
+#endif
 	},
 #if GPS_DL_ON_LINUX
 	.devices = {
@@ -272,4 +298,3 @@ void gps_dl_opid_timeout_info_show(void)
 	GDL_LOGE("opid enque timeout = %lu, opfunc timeout = %lu",
 		s_gps_rt_cfg.opid_enque_timeout, s_gps_rt_cfg.opid_opfunc_timeout);
 }
-

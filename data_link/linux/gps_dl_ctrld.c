@@ -11,17 +11,31 @@
 #include "gps_data_link_devices.h"
 #include "gps_dl_hal_api.h"
 #include "gps_dl_time_tick.h"
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_xlink.h"
+#include "gps_mcudl_ylink.h"
+#endif
+
 
 struct gps_dl_ctrld_context gps_dl_ctrld;
 
 static int gps_dl_opfunc_link_event_proc(struct gps_dl_osal_op_dat *pOpDat);
 static int gps_dl_opfunc_hal_event_proc(struct gps_dl_osal_op_dat *pOpDat);
+#if GPS_DL_HAS_MCUDL
+static int gps_dl_opfunc_xlink_event_proc(struct gps_dl_osal_op_dat *pOpDat);
+static int gps_dl_opfunc_ylink_event_proc(struct gps_dl_osal_op_dat *pOpDat);
+#endif
+
 static struct gps_dl_osal_lxop *gps_dl_get_op(struct gps_dl_osal_lxop_q *pOpQ);
 static int gps_dl_put_op(struct gps_dl_osal_lxop_q *pOpQ, struct gps_dl_osal_lxop *pOp);
 
 static const GPS_DL_OPID_FUNC gps_dl_core_opfunc[] = {
 	[GPS_DL_OPID_LINK_EVENT_PROC] = gps_dl_opfunc_link_event_proc,
 	[GPS_DL_OPID_HAL_EVENT_PROC]  = gps_dl_opfunc_hal_event_proc,
+#if GPS_DL_HAS_MCUDL
+	[GPS_DL_OPID_MCUDL_XLINK_EVENT_PROC] = gps_dl_opfunc_xlink_event_proc,
+	[GPS_DL_OPID_MCUDL_YLINK_EVENT_PROC] = gps_dl_opfunc_ylink_event_proc,
+#endif
 };
 
 static int gps_dl_opfunc_link_event_proc(struct gps_dl_osal_op_dat *pOpDat)
@@ -49,6 +63,32 @@ static int gps_dl_opfunc_hal_event_proc(struct gps_dl_osal_op_dat *pOpDat)
 
 	return 0;
 }
+
+#if GPS_DL_HAS_MCUDL
+static int gps_dl_opfunc_xlink_event_proc(struct gps_dl_osal_op_dat *pOpDat)
+{
+	enum gps_mcudl_xlink_event_id evt;
+	enum gps_mcudl_xid x_id;
+
+	x_id = (enum gps_mcudl_xid)pOpDat->au4OpData[0];
+	evt = (enum gps_mcudl_xlink_event_id)pOpDat->au4OpData[1];
+	gps_mcudl_xlink_event_proc(x_id, evt);
+
+	return 0;
+}
+
+static int gps_dl_opfunc_ylink_event_proc(struct gps_dl_osal_op_dat *pOpDat)
+{
+	enum gps_mcudl_ylink_event_id evt;
+	enum gps_mcudl_yid y_id;
+
+	y_id = (enum gps_mcudl_yid)pOpDat->au4OpData[0];
+	evt = (enum gps_mcudl_ylink_event_id)pOpDat->au4OpData[1];
+	gps_mcudl_ylink_event_proc(y_id, evt);
+
+	return 0;
+}
+#endif
 
 unsigned int gps_dl_wait_event_checker(struct gps_dl_osal_thread *pThread)
 {
@@ -87,6 +127,7 @@ static int gps_dl_core_opid(struct gps_dl_osal_op_dat *pOpDat)
 			pOpDat->au4OpData[0], pOpDat->au4OpData[1], pOpDat->opId, opid_duration);
 
 	opfunc_j0 = gps_dl_tick_get_ms();
+
 	if (gps_dl_core_opfunc[pOpDat->opId]) {
 		GDL_LOGD_EVT("GPS data link: operation id(%d)", pOpDat->opId);
 		ret = (*(gps_dl_core_opfunc[pOpDat->opId])) (pOpDat);

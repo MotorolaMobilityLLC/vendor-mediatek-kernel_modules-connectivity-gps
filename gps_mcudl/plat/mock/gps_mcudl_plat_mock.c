@@ -200,7 +200,7 @@ void gps_mcudl_stpgps1_read_proc2(const unsigned char *p_data, unsigned int data
 	gps_mcudl_ap2mcu_set_wait_read_flag(y_id, false);
 	MDL_LOGYD(y_id, "read: len=%u", data_len);
 	if (data_len > 0)
-		gps_mcudl_ap2mcu_ydata_recv(y_id, p_data, data_len);
+		gps_mcudl_ap2mcu_ydata_recv(y_id, (gpsmdl_u8 *)p_data, data_len);
 }
 
 void gps_mcudl_stpgps1_reset_start_cb(void)

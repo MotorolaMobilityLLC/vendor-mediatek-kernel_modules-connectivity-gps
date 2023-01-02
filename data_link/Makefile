@@ -78,7 +78,6 @@ ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/include
 ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/conn_drv/connv2/debug_utility/metlog
 ccflags-y += -DGPS_DL_HAS_CONNINFRA_DRV=1
 
-
 ccflags-y += -I$(GPS_SRC_FOLDER)/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/linux/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/link/inc

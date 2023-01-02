@@ -6,6 +6,10 @@
 #ifndef _GPS_DL_SUBSYS_RESET_H
 #define _GPS_DL_SUBSYS_RESET_H
 
+#include "gps_dl_config.h"
+#if GPS_DL_ON_LINUX
+#include <linux/types.h>
+#endif
 #include "gps_dl_base.h"
 
 enum gps_each_link_reset_level {
@@ -41,6 +45,10 @@ bool gps_dl_test_mask_mcub_irq_on_open_get(enum gps_dl_link_id_enum link_id);
 
 void gps_dl_test_mask_hasdata_irq_set(enum gps_dl_link_id_enum link_id, bool mask);
 bool gps_dl_test_mask_hasdata_irq_get(enum gps_dl_link_id_enum link_id);
+
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_reset.h"
+#endif
 
 #endif /* _GPS_DL_SUBSYS_RESET_H */
 

@@ -180,6 +180,11 @@
 		BMASK_RW_FORCE_PRINT); \
 } while (0)
 
+/* For Bollinger, the address for GPS is 0x1800110C */
+#define GDL_HW_SET_GPS_AP_MODE_ENABLE() \
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_CFG_ON_CONN_INFRA_CFG_GPS_MANUAL_CTRL_FORCE_AP_MODE_ENABLE, 1)
+
+
 /* For Bollinger, the address for GPS is 0x18000028 */
 #define GDL_HW_SET_CONN_INFRA_BGF_EN(val) do { \
 	unsigned int tmp_val; \
@@ -225,6 +230,15 @@
 			CONN_WT_SLP_CTL_REG_WB_GPS_CTL_GPS_HW_MODE_EN, 1); \
 	} \
 } while (0)
+
+#define GDL_HW_ADIE_TOP_CLK_EN_6686(val) do { \
+			GDL_HW_SET_CONN_INFRA_ENTRY( \
+				CONN_WT_SLP_CTL_REG_WB_SLP_TOP_CK_5_WB_SLP_TOP_CK_5, val); \
+			if (val) { \
+				GDL_HW_SET_CONN_INFRA_ENTRY( \
+					CONN_WT_SLP_CTL_REG_WB_GPS_CTL_GPS_HW_MODE_EN, 1); \
+			} \
+		} while (0)
 
 #define GDL_HW_RD_SPI_GPS_STATUS() do { \
 	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_REG_SPI_STA_ADDR); \

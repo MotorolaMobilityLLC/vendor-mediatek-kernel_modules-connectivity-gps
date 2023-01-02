@@ -173,11 +173,12 @@ int gps_mcudl_coredump_is_readable(void)
 {
 	int ret = 1;
 
+#if GPS_DL_HAS_CONNINFRA_DRV
 	if (conninfra_reg_readable() == 0) {
 		GDL_LOGI("conninfra_reg_readable: 0\n");
 		ret = 0;
 	}
-
+#endif
 	GDL_LOGI("gps_mcudl_coredump_is_readable: %d\n", ret);
 
 	return ret;
@@ -187,27 +188,33 @@ struct coredump_event_cb g_gps_coredump_cb = {
 	.reg_readable = gps_mcudl_coredump_is_readable,
 	.poll_cpupcr = NULL,
 };
-
+#if GPS_DL_HAS_CONNINFRA_DRV
 void *g_gps_coredump_handler;
-
+#endif
 
 void gps_mcudl_connsys_coredump_init(void)
 {
+#if GPS_DL_HAS_CONNINFRA_DRV
 	g_gps_coredump_handler = connsys_coredump_init(CONNDRV_TYPE_GPS, &g_gps_coredump_cb);
 	if (g_gps_coredump_handler == NULL)
 		GDL_LOGW("gps_mcudl_connsys_coredump_init fail");
+#endif
 }
 
 void gps_mcudl_connsys_coredump_deinit(void)
 {
+#if GPS_DL_HAS_CONNINFRA_DRV
 	connsys_coredump_deinit(g_gps_coredump_handler);
+#endif
 }
 
 void gps_mcudl_connsys_coredump_start(void)
 {
+#if GPS_DL_HAS_CONNINFRA_DRV
 	GDL_LOGI("gps_mcudl_connsys_coredump_start");
 	connsys_coredump_start(g_gps_coredump_handler, 0, CONNDRV_TYPE_GPS, "GPS");
 	connsys_coredump_clean(g_gps_coredump_handler);
+#endif
 }
 #endif
 

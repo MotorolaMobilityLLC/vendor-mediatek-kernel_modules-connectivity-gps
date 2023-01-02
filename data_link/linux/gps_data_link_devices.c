@@ -15,6 +15,10 @@
 #include "gps_dl_isr.h"
 #include "gps_data_link_devices.h"
 #include "gps_each_link.h"
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_devices.h"
+#include "gps_mcudl_each_device.h"
+#endif
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_dl_linux_reserved_mem.h"
@@ -64,6 +68,8 @@ int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, enum gps_dl_link_id_e
 	p_dma_buf->dev_index = link_id;
 	p_dma_buf->dir = dir;
 	p_dma_buf->len = len;
+	p_dma_buf->is_for_mcudl = false;
+	p_dma_buf->entry_l = GPS_DL_DMA_BUF_ENTRY_MAX;
 
 	GDL_LOGI_INI("p_linux_plat_dev = 0x%p", p_linux_plat_dev);
 	if (p_linux_plat_dev == NULL) {
@@ -224,6 +230,10 @@ static void gps_dl_devices_exit(void)
 	gps_dl_linux_plat_drv_unregister();
 #endif
 
+#if GPS_DL_HAS_MCUDL
+	gps_mcudl_devices_exit();
+#endif
+
 	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
 		p_dev = gps_dl_device_get(link_id);
 		gps_dl_cdev_cleanup(p_dev, link_id);
@@ -248,6 +258,10 @@ void gps_dl_device_context_deinit(void)
 	gps_dl_mock_deinit();
 #endif
 
+#if GPS_DL_HAS_MCUDL
+	gps_mcudl_device_context_deinit();
+#endif
+
 	gps_dl_ctx_links_deinit();
 	gps_dl_reserved_mem_deinit();
 }
@@ -261,6 +275,13 @@ int gps_dl_irq_init(void)
 		;
 #endif
 
+	/*
+	 * GPS_DL_IRQ_NUM == GPS_DL_IRQ_DMA+1 if GPS_DL_HAS_MCUDL
+	 * GPS_DL_IRQ_NUM == GPS_DL_IRQ_HIF_ON+1 if GPS_DL_HAS_MCUDL
+	 * we also uses GPS_DL_IRQ_NUM anyway,
+	 * gps_dl_linux_irq_index_to_id will return 0 if the irq does not defined in dts,
+	 * and than irq_register will be bypassed for it.
+	 */
 	gps_dl_linux_irqs_register(gps_dl_irq_get(0), GPS_DL_IRQ_NUM);
 
 	return 0;
@@ -303,6 +324,13 @@ static int gps_dl_devices_init(void)
 		}
 	}
 
+#if GPS_DL_HAS_MCUDL
+	result = gps_mcudl_devices_init();
+	if (result) {
+		gps_dl_devices_exit();
+		return result;
+	}
+#endif
 
 #if GPS_DL_HAS_PLAT_DRV
 	gps_dl_linux_plat_drv_register();
@@ -317,6 +345,9 @@ void gps_dl_device_context_init(void)
 {
 	gps_dl_reserved_mem_init();
 	gps_dl_ctx_links_init();
+#if GPS_DL_HAS_MCUDL
+	gps_mcudl_device_context_init();
+#endif
 
 #if GPS_DL_MOCK_HAL
 	gps_dl_mock_init();

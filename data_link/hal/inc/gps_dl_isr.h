@@ -17,6 +17,12 @@ enum gps_dl_irq_index_enum {
 	GPS_DL_IRQ_LINK1_NODATA,
 	GPS_DL_IRQ_LINK1_MCUB,
 	GPS_DL_IRQ_DMA,
+#if GPS_DL_HAS_MCUDL
+	GPS_DL_IRQ_CCIF,
+	GPS_DL_IRQ_CONN2AP,
+	GPS_DL_IRQ_WDT,
+	GPS_DL_IRQ_HIF_ON,
+#endif
 	GPS_DL_IRQ_NUM,
 };
 
@@ -127,6 +133,18 @@ void gps_dl_isr_dl1_mcub(void);
 #endif
 
 void gps_dl_isr_dma_done(void);
+
+#if GPS_DL_HAS_MCUDL
+void gps_dl_isr_ccif(void);
+void gps_dl_isr_conn2ap(void);
+void gps_dl_isr_wdt(void);
+void gps_dl_isr_hif_on(void);
+#endif
+
+#if GPS_DL_HAS_MCUDL_HAL
+/*TODO: Put it into header file*/
+void gps_mcudl_hal_ccif_rx_isr(void);
+#endif
 
 #endif /* _GPS_DL_ISR_H */
 

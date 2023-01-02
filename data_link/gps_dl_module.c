@@ -16,6 +16,9 @@ static int gps_dl_mod_init(void)
 {
 	int ret = 0;
 
+#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+	mtk_gps_fw_log_init();
+#endif
 	mtk_gps_data_link_devices_init();
 
 	return ret;
@@ -24,6 +27,9 @@ static int gps_dl_mod_init(void)
 /*****************************************************************************/
 static void gps_dl_mod_exit(void)
 {
+#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+	mtk_gps_fw_log_exit();
+#endif
 	mtk_gps_data_link_devices_exit();
 }
 

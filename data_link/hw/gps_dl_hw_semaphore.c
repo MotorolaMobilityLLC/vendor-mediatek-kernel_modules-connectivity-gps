@@ -126,7 +126,11 @@ bool gps_dl_hw_take_conn_rfspi_hw_sema(unsigned int try_timeout_ms)
 	poll_max_us = POLL_US * 1000 * try_timeout_ms;
 	okay = false;
 	while (!okay) {
-		val = GDL_HW_GET_CONN_INFRA_ENTRY(COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS);
+#if GPS_DL_CONNAC2
+	val = GDL_HW_GET_CONN_INFRA_ENTRY(COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS);
+#elif GPS_DL_CONNAC3
+	val = GDL_HW_GET_GPS_ENTRY(COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS);
+#endif
 		/* 2bit value:
 		 * 0 -> need waiting
 		 * 1,3 -> okay; 2 -> already taken
@@ -154,7 +158,11 @@ void gps_dl_hw_give_conn_rfspi_hw_sema(void)
 	bool show_log;
 
 	show_log = gps_dl_set_show_reg_rw_log(true);
+#if GPS_DL_CONNAC2
 	GDL_HW_SET_CONN_INFRA_ENTRY(COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS, 1);
+#elif GPS_DL_CONNAC3
+	GDL_HW_SET_GPS_ENTRY(COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS, 1);
+#endif
 	gps_dl_set_show_reg_rw_log(show_log);
 
 	GDL_LOGI("");

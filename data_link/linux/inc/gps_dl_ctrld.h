@@ -8,11 +8,15 @@
 #include "gps_dl_osal.h"
 #include "gps_dl_config.h"
 
-#define GPS_DL_OP_BUF_SIZE (16)
+#define GPS_DL_OP_BUF_SIZE (GPS_OSAL_OP_BUF_SIZE)
 
 enum gps_dl_ctrld_opid {
 	GPS_DL_OPID_LINK_EVENT_PROC,
 	GPS_DL_OPID_HAL_EVENT_PROC,
+#if GPS_DL_HAS_MCUDL
+	GPS_DL_OPID_MCUDL_XLINK_EVENT_PROC,
+	GPS_DL_OPID_MCUDL_YLINK_EVENT_PROC,
+#endif
 	GPS_DL_OPID_MAX
 };
 
