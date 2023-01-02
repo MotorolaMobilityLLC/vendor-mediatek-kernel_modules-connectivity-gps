@@ -61,7 +61,6 @@ static struct semaphore wr_mtx, rd_mtx, ring_buf_mtx;
 static wait_queue_head_t GPS2SCP_wq;
 #define SCP2GPS_BUFF_SIZE       1024
 #define SCP2GPS_BUFF_NUM  24
-#define DRV_TYPE_GPS    1
 struct scp2gps_data {
 	int size;
 	unsigned int msg_id;
