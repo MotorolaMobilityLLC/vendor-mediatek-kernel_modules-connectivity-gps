@@ -122,10 +122,15 @@ bool gps_mcu_hif_send(enum gps_mcu_hif_ch hif_ch,
 		MDL_LOGW("hif_ch=%d, len=%d, send fail due to last one not finished",
 			hif_ch, data_len);
 		/* TODO: Register resend for fail */
+		/* TODO: Print ccif status, mcu pc, emi status here */
 		return false;
 	}
 #if GPS_DL_HAS_MCUDL_HAL
-	gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_HIF_SEND);
+	if (!gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_HIF_SEND)) {
+		MDL_LOGW("hif_ch=%d, len=%d, send fail due to clr_fw_own fail",
+			hif_ch, data_len);
+		return false;
+	}
 	if (gps_mcudl_hal_ccif_tx_is_busy(GPS_MCUDL_CCIF_CH4)) {
 		MDL_LOGW("hif_ch=%d, len=%d, send fail due to ccif busy",
 			hif_ch, data_len);
@@ -255,8 +260,8 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 	gps_mcu_hif_get_trans_start_desc(trans_id, &start_desc);
 	gps_mcu_hif_get_trans_end_desc(trans_id, &end_desc);
 	if (start_desc.id != end_desc.id) {
-		/* bad one */
-		MDL_LOGW("ch=%d, trans_id=%d, desc_id=(%d, %d), mismatch",
+		/* bad one, change to LOGD due to it's normal and frequent */
+		MDL_LOGD("ch=%d, trans_id=%d, desc_id=(%d, %d), mismatch",
 			hif_ch, trans_id, start_desc.id, end_desc.id);
 		return;
 	}
