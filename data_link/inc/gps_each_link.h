@@ -94,6 +94,7 @@ enum gps_each_link_mutex {
 	GPS_DL_MTX_NUM
 };
 
+bool gps_each_link_mutex_take2(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id);
 void gps_each_link_mutex_take(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id);
 void gps_each_link_mutex_give(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id);
 
