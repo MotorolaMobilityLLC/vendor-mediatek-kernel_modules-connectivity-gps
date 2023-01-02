@@ -509,7 +509,7 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 {
 	int i;
 	bool done = false;
-	bool show_log = false;
+	bool record_last_show_log = false;
 	bool need_dump_for_reset_done = false;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
 
@@ -532,7 +532,8 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 
 	i = 0;
 
-	show_log = gps_dl_set_show_reg_rw_log(true);
+	record_last_show_log = gps_dl_show_reg_rw_log();
+	gps_dl_set_show_reg_rw_log(true);
 	do {
 		/* MCUB IRQ already mask at this time */
 		if (!gps_dl_hal_mcub_flag_handler(link_id)) {
@@ -572,12 +573,12 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 			i++;
 
 			if ((i % 20) == 0)
-				show_log = gps_dl_set_show_reg_rw_log(true);
+				gps_dl_set_show_reg_rw_log(true);
 			else
-				gps_dl_set_show_reg_rw_log(show_log);
+				gps_dl_set_show_reg_rw_log(false);
 		}
 	} while (0);
-	gps_dl_set_show_reg_rw_log(show_log);
+	gps_dl_set_show_reg_rw_log(record_last_show_log);
 	GDL_LOGXW(link_id, "2nd return, done = %d, i = %d, need_dump_for_reset_done = %d", done, i,
 		need_dump_for_reset_done);
 	return done;
