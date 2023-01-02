@@ -34,6 +34,7 @@ int gps_mcudl_each_link_open(enum gps_mcudl_xid link_id);
 int gps_mcudl_each_link_close(enum gps_mcudl_xid link_id);
 int gps_mcudl_each_link_check(enum gps_mcudl_xid link_id, int reason);
 int gps_mcudl_each_link_reset(enum gps_mcudl_xid link_id);
+int gps_mcudl_each_link_send_reset_evt(enum gps_mcudl_xid link_id);
 
 int gps_mcudl_each_link_write(enum gps_mcudl_xid link_id,
 	unsigned char *buf, unsigned int len);
