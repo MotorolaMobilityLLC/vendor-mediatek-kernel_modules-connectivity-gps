@@ -14,16 +14,17 @@ struct gps_mcudl_emi_layout {
 	unsigned char mpe_bin[0x080000];	/*0xF03D_2000 ~ 0xF045_2000, 512KB*/
 	unsigned char mcu_ro_rsv[0x01e000]; /*0xF045_2000 ~ 0xF047_0000, 120KB*/
 
-	unsigned char mcu_data[0x0A0000];	/*0xF047_0000 ~ 0xF051_0000, 640KB*/
-
-	unsigned char mcu_share[0x048000];	/*0xF051_0000 ~ 0xF055_8000, 288KB*/
-	unsigned char gps_legacy[0x078000]; /*0xF055_8000 ~ 0xF05D_0000, 480KB*/
-	unsigned char gps_nv_emi[0x080000]; /*0xF05D_0000 ~ 0xF065_0000, 512KB*/
-	unsigned char gps_ap2mcu[0x004000]; /*0xF065_0000 ~ 0xF065_4000, 16KB*/
-	unsigned char gps_mcu2ap[0x004000]; /*0xF065_4000 ~ 0xF065_8000, 16KB*/
+	unsigned char mcu_gps_rw[0x07EC00];	/*0xF047_0000 ~ 0xF04E_EC00, 507KB*/
+	unsigned char scp_batch[0x04B000];	/*0xF04E_EC00 ~ 0xF053_9C00, 300KB*/
+	unsigned char mcu_rw_rsv[0x016400];	/*0xF053_9C00 ~ 0xF055_0000, 89KB*/
+	unsigned char mcu_share[0x048000];	/*0xF055_0000 ~ 0xF059_0000, 288KB*/
+	unsigned char gps_legacy[0x078000]; /*0xF059_0000 ~ 0xF060_8000, 480KB*/
+	unsigned char gps_nv_emi[0x080000]; /*0xF060_8000 ~ 0xF068_8000, 512KB*/
+	unsigned char gps_ap2mcu[0x004000]; /*0xF068_8000 ~ 0xF068_C000, 16KB*/
+	unsigned char gps_mcu2ap[0x004000]; /*0xF068_C000 ~ 0xF069_0000, 16KB*/
 #if 0
-	unsigned char mnl_data[0x200000];	/*0xF065_8000 ~ 0xF085_8000, 2048KB*/
-	unsigned char mpe_data[0x080000];	/*0xF085_0000 ~ 0xF08D_8000, 512KB*/
+	unsigned char mnl_data[0x200000];	/*0xF069_0000 ~ 0xF089_0000, 2048KB*/
+	unsigned char mpe_data[0x080000];	/*0xF089_0000 ~ 0xF091_0000, 512KB*/
 #endif
 };
 
