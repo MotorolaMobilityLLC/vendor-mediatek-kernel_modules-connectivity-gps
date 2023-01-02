@@ -79,14 +79,18 @@
 #include <memory/mediatek/emi.h>
 #endif
 #endif
-#if defined(CONFIG_MACH_MT6833)
+#if defined(CONFIG_MACH_MT6833) || defined(CONFIG_MACH_MT6781)
 #define GPS_EMI_NEW_API
 #define GPS_EMI_MPU_REGION           29
 #define GPS_EMI_BASE_ADDR_OFFSET     (4*SZ_1M)
 #define GPS_EMI_MPU_SIZE             (0xFFFFF)
 #define GPS_DL_EMI_MPU_DOMAIN_AP      0
 #define GPS_DL_EMI_MPU_DOMAIN_CONN    2
+#if defined(CONFIG_MACH_MT6781) /*for MT6781 need to be set to 1 when EMI ready*/
+#define EMI_MPU_PROTECTION_IS_READY  0
+#else
 #define EMI_MPU_PROTECTION_IS_READY  1
+#endif
 #if EMI_MPU_PROTECTION_IS_READY
 #include <memory/mediatek/emi.h>
 #endif
