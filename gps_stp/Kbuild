@@ -68,11 +68,12 @@ GPS_DRV_CONTROL_LNA := y
 GPS_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps/gps_stp
 ccflags-y += -DMTK_GENERIC_HAL
 ccflags-y += -DCONFIG_GPSL5_SUPPORT
+ccflags-y += -DCONFIG_MTK_GPS_EMI
 
 WMT_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/common
-ccflags-y += -DSOC_CO_CLOCK_FLAG=0
-ccflags-y += -DWMT_CREATE_NODE_DYNAMIC=0
-ccflags-y += -DREMOVE_MK_NODE=1
+ccflags-y += -DSOC_CO_CLOCK_FLAG=1
+ccflags-y += -DWMT_CREATE_NODE_DYNAMIC=1
+ccflags-y += -DREMOVE_MK_NODE=0
 
 ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/include
 ccflags-y += -I$(WMT_SRC_FOLDER)/common_main/linux/include
@@ -93,9 +94,9 @@ ccflags-y += -I$(GPS_SRC_FOLDER)/
 ifeq ($(GPS_DRV_CONTROL_LNA),y)
         $(MODULE_NAME)-objs += lna_ctrl/src/gps_lna_drv.o
 endif
-ifneq ($(CONFIG_MTK_GPS_EMI),)
+
 $(MODULE_NAME)-objs += gps_emi.o
-endif
+
 ifneq ($(CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH),)
 $(MODULE_NAME)-objs += fw_log_gps.o
 endif
