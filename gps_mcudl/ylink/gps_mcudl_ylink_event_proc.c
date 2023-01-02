@@ -11,8 +11,10 @@
 #include "gps_mcudl_log.h"
 #include "gps_mcudl_plat_api.h"
 #include "gps_mcudl_data_pkt_host_api.h"
+#include "gps_mcudl_hal_ccif.h"
 #include "gps_mcusys_fsm.h"
 #include "gps_dl_time_tick.h"
+#include "gps_dl_subsys_reset.h"
 
 
 void gps_mcudl_ylink_event_send(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_event_id evt)
@@ -69,6 +71,19 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 	case GPS_MCUDL_YLINK_EVT_ID_MCU_RESET_END:
 		gps_mcusys_mnlbin_fsm(GPS_MCUSYS_MNLBIN_SYS_RESET_END);
 		break;
+	case GPS_MCUDL_YLINK_EVT_ID_CCIF_ISR_ABNORMAL: {
+		bool conninfra_okay, ccif_irq_en;
+
+		conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+		ccif_irq_en = gps_mcudl_hal_get_ccif_irq_en_flag();
+
+		MDL_LOGE("conninfra_okay = %d, ccif_irq_en = %d", conninfra_okay, ccif_irq_en);
+		if (conninfra_okay && !ccif_irq_en) {
+			gps_mcudl_hal_set_ccif_irq_en_flag(true);
+			gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_HAL);
+		}
+		break;
+	}
 	default:
 		break;
 	}
