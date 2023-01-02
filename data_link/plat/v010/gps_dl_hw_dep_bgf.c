@@ -128,3 +128,8 @@ void gps_dl_hw_dep_may_set_bus_debug_flag(void)
 	GDL_HW_WR_GPS_REG(0x80060000, 0x10);
 }
 
+void gps_dl_hw_dep_may_remap_conn2ap_gps_peri(void)
+{
+	/*mt6885 mt6893 do nothing*/
+}
+
