@@ -431,7 +431,7 @@ bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
 	fw_own = GDL_HW_GET_CONN_INFRA_ENTRY(
 		CONN_HOST_CSR_TOP_BGF_LPCTL_BGF_AP_HOST_OWNER_STATE_SYNC);
 
-	if (!!fw_own == to_set) {
+	if ((!!fw_own) == to_set) {
 		is_okay = true;
 		GDL_LOGW("fw_own=%d, to_set=%d, is_okay=%d, bypass", fw_own, to_set, is_okay);
 		return is_okay;
@@ -452,7 +452,7 @@ bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
 
 	if (!is_okay)
 		GDL_LOGE("fw_own=%d, to_set=%d, is_okay=%d, d_us=%lu", fw_own, to_set, is_okay, d_us);
-	else if (d_us > 2000)
+	else if (d_us > 5000)
 		GDL_LOGW("fw_own=%d, to_set=%d, is_okay=%d, d_us=%lu", fw_own, to_set, is_okay, d_us);
 	else
 		GDL_LOGD("fw_own=%d, to_set=%d, is_okay=%d, d_us=%lu", fw_own, to_set, is_okay, d_us);
