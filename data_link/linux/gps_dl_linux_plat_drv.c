@@ -497,7 +497,7 @@ struct gps_dl_iomem_addr_map_entry  *gps_dl_get_dyn_iomem_info(void)
 
 static int gps_dl_probe(struct platform_device *pdev)
 {
-	struct resource *irq = NULL;
+	int irq = 0;
 	struct gps_each_device *p_each_dev0 = gps_dl_device_get(GPS_DATA_LINK_ID0);
 	struct gps_each_device *p_each_dev1 = gps_dl_device_get(GPS_DATA_LINK_ID1);
 	int i;
@@ -541,15 +541,18 @@ static int gps_dl_probe(struct platform_device *pdev)
 		GDL_LOGW_INI("warning : get B13B14 status addr fail");
 
 	for (i = 0; i < GPS_DL_IRQ_NUM; i++) {
-		irq = platform_get_resource(pdev, IORESOURCE_IRQ, i);
-		if (irq == NULL) {
-			GDL_LOGE_INI("irq idx = %d, ptr = NULL!", i);
+		/* From Andriod-U, platform_get_resource can't get irq from dts.
+		*  replace with platform_get_irq().
+		*/
+		irq = platform_get_irq(pdev, i);
+		if (irq <= 0) {
+			GDL_LOGE_INI("irq idx = %d, get irq fail!", i);
 			continue;
 		}
 
-		GDL_LOGD_INI("irq idx = %d, start = %lld, end = %lld, name = %s, flag = 0x%lx",
-			i, irq->start, irq->end, irq->name, irq->flags);
-		gps_dl_irq_set_id(i, irq->start);
+		GDL_LOGD_INI("irq idx = %d, irq_num = %d",
+			i, irq);
+		gps_dl_irq_set_id(i, irq);
 	}
 
 	g_gps_dl_pinctrl_ptr = devm_pinctrl_get(&pdev->dev);
