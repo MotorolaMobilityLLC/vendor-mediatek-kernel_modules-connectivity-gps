@@ -134,7 +134,7 @@ ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/plat/$(GPS_DL_PLATFORM)/hw/inc
 ifeq ($(GPS_DL_HAS_CONNINFRA_DRV),y)
 CONNINFRA_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/conninfra
 ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/include
-ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/debug_utility/metlog
+ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/conn_drv/connv2/debug_utility/metlog
 ccflags-y += -DGPS_DL_HAS_CONNINFRA_DRV=1
 endif
 
