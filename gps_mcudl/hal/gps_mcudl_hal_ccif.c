@@ -73,7 +73,6 @@ void gps_mcudl_hal_ccif_rx_isr(void)
 	g_gps_ccif_irq_cnt++;
 	tick_us0 = gps_dl_tick_get_us();
 
-recheck_rch:
 	already_wakeup = gps_mcudl_hal_user_add_if_fw_own_is_clear(GMDL_FW_OWN_CTRL_BY_CCIF);
 	if (!already_wakeup) {
 		GDL_LOGD("ntf to clr_fw_own, ccif_irq_cnt=%d", g_gps_ccif_irq_cnt);
@@ -82,6 +81,7 @@ recheck_rch:
 		return;
 	}
 
+recheck_rch:
 	if (!gps_dl_conninfra_is_readable()) {
 		GDL_LOGE("readable check fail, ccif_irq_cnt=%d", g_gps_ccif_irq_cnt);
 		gps_mcudl_hal_set_ccif_irq_en_flag(false);
