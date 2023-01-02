@@ -49,6 +49,28 @@ struct gps_mcusys_nv_data_header *gps_mcusys_nv_data_get_hdr(enum gps_mcusys_nv_
 		return &g_host_nv_layout_ptr->dsp0.hdr;
 	case GPS_MCUSYS_NV_DATA_ID_DSPL5:
 		return &g_host_nv_layout_ptr->dsp1.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_XEPO:
+		return &g_host_nv_layout_ptr->xepo.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_QZ_QEPO:
+		return &g_host_nv_layout_ptr->qz_qepo.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_IR_QEPO:
+		return &g_host_nv_layout_ptr->ir_qepo.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_KR_QEPO:
+		return &g_host_nv_layout_ptr->kr_qepo.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_DSPL1_CW:
+		return &g_host_nv_layout_ptr->dsp0_cw.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_DSPL5_CW:
+		return &g_host_nv_layout_ptr->dsp1_cw.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_MPENV:
+		return &g_host_nv_layout_ptr->mpenv.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_MPE_CFG:
+		return &g_host_nv_layout_ptr->mpe_cfg.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_AP_MPE:
+		return &g_host_nv_layout_ptr->ap_mpe.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_RAW_MEAS:
+		return &g_host_nv_layout_ptr->raw_meas.hdr;
+	case GPS_MCUSYS_NV_DATA_ID_RAW_HIGEO:
+		return &g_host_nv_layout_ptr->raw_higeo.hdr;
 	default:
 		break;
 	}
@@ -78,6 +100,28 @@ gpsmdl_u32 gps_mcusys_nv_data_get_block_size(enum gps_mcusys_nv_data_id nv_id)
 		return GPS_MCUSYS_NV_DATA_DSPL1_MAX_SIZE;
 	case GPS_MCUSYS_NV_DATA_ID_DSPL5:
 		return GPS_MCUSYS_NV_DATA_DSPL5_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_XEPO:
+		return GPS_MCUSYS_NV_DATA_XEPO_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_QZ_QEPO:
+		return GPS_MCUSYS_NV_DATA_QZ_QEPO_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_IR_QEPO:
+		return GPS_MCUSYS_NV_DATA_IR_QEPO_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_KR_QEPO:
+		return GPS_MCUSYS_NV_DATA_KR_QEPO_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_DSPL1_CW:
+		return GPS_MCUSYS_NV_DATA_DSPL1_CW_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_DSPL5_CW:
+		return GPS_MCUSYS_NV_DATA_DSPL5_CW_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_MPENV:
+		return GPS_MCUSYS_NV_DATA_MPENV_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_MPE_CFG:
+		return GPS_MCUSYS_NV_DATA_MPE_CFG_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_AP_MPE:
+		return GPS_MCUSYS_NV_DATA_AP_MPE_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_RAW_MEAS:
+		return GPS_MCUSYS_NV_DATA_RAW_MEAS_MAX_SIZE;
+	case GPS_MCUSYS_NV_DATA_ID_RAW_HIGEO:
+		return GPS_MCUSYS_NV_DATA_RAW_HIGEO_MAX_SIZE;
 	default:
 		break;
 	}
