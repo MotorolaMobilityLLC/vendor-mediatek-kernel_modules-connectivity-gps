@@ -43,6 +43,17 @@ enum conn_smc_opid {
 	SMC_GPS_DL_HW_SET_DMA_STOP_OPID,
 	SMC_GPS_DL_HW_USRT_IRQ_ENABLE_OPID,
 	SMC_GPS_DL_HW_GET_DMA_INT_STATUS_OPID,
+	SMC_GPS_MVCD_GET_DSP_BOOT_UP_INFO,
+	SMC_GPS_MVCD_SEND_DSP_FRAGEMENT,
+};
+
+enum gps_dl_hw_mvcd_dsp_type {
+	GPS_DL_MVCD_DSP_L1 = 0,
+	GPS_DL_MVCD_DSP_L5,
+	GPS_DL_MVCD_DSP_L1_CW,
+	GPS_DL_MVCD_DSP_L5_CW,
+	GPS_DL_MVCD_DSP_RESERVED1,
+	GPS_DL_MVCD_DSP_RESERVED2,
 };
 
 bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable);

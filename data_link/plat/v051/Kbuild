@@ -109,6 +109,7 @@ $(MODULE_NAME)-objs += ../../hw/gps_dl_hw_atf_gps.o
 $(MODULE_NAME)-objs += ../../hw/gps_dl_hw_atf_power_ctrl.o
 $(MODULE_NAME)-objs += ../../hw/gps_dl_hw_atf_usrt_apb.o
 $(MODULE_NAME)-objs += ../../hw/gps_dl_hw_util.o
+$(MODULE_NAME)-objs += ../../hw/gps_dl_hw_atf_mvcd.o
 
 $(MODULE_NAME)-objs += ../../hal/gps_dl_hal.o
 $(MODULE_NAME)-objs += ../../hal/gps_dl_hal_util.o
