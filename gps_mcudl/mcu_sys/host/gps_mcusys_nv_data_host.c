@@ -11,6 +11,9 @@
 #include "gps_nv_each_device.h"
 #include "gps_each_link.h"
 #include "gps_mcudl_emi_layout.h"
+#if GPS_DL_ON_LINUX
+#include <asm/io.h>
+#endif
 
 
 struct gps_mcusys_nv_data_layout *g_host_nv_layout_ptr;
@@ -145,15 +148,14 @@ void gps_mcusys_nv_data_host_hdr_init(enum gps_mcusys_nv_data_id nv_id,
 		p_host->id == nv_id)
 		return;
 
+#if GPS_DL_ON_LINUX
+	memset_io(p_host, 0, sizeof(*p_host));
+#else
+	memset(p_host, 0, sizeof(*p_host));
+#endif
 	p_host->block_size = block_size;
 	p_host->id = nv_id;
-	p_host->attribute = 0;
 	p_host->magic = GPS_MCUSYS_NV_DATA_HEADER_MAGIC;
-	p_host->occupied = 0;
-	p_host->version = 0;
-	p_host->data_size = 0;
-	p_host->read_times = 0;
-	p_host->write_times = 0;
 }
 
 void gps_mcusys_nv_data_host_init(void)
