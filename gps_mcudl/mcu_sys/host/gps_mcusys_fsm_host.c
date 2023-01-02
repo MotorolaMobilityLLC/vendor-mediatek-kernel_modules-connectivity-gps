@@ -110,3 +110,8 @@ void gps_mcusys_gpsbin_state_set(enum gps_mcusys_gpsbin_state state)
 	MDL_LOGI("state:%d -> %d", old_state, state);
 }
 
+bool gps_mcusys_gpsbin_state_is(enum gps_mcusys_gpsbin_state state)
+{
+	return (g_gps_mcusys_gpsbin_state_host == state);
+}
+
