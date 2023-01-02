@@ -18,7 +18,8 @@ struct gps_mcusys_nv_data_layout *g_host_nv_layout_ptr;
 struct gps_mcusys_nv_data_header *gps_mcusys_nv_data_get_hdr(enum gps_mcusys_nv_data_id nv_id)
 {
 	if (g_host_nv_layout_ptr == NULL) {
-		g_host_nv_layout_ptr = (struct gps_mcusys_nv_data_layout *)gps_emi_get_nv_mem_ptr();
+		g_host_nv_layout_ptr =
+			(struct gps_mcusys_nv_data_layout *)gps_mcudl_plat_nv_emi_get_start_ptr();
 		GPS_OFL_TRC("g_host_nv_layout_ptr = 0x%p, offset=0x%x, sz=0x%x",
 			g_host_nv_layout_ptr,
 			gps_mcudl_get_offset_from_conn_base(g_host_nv_layout_ptr),
@@ -160,7 +161,7 @@ void gps_mcusys_nv_data_host_init(void)
 	enum gps_mcusys_nv_data_id nv_id;
 	struct gps_mcusys_nv_data_header *p_hdr;
 
-	gps_nv_emi_clear();
+	gps_mcudl_plat_nv_emi_clear();
 	for (nv_id = 0; nv_id < GPS_MCUSYS_NV_DATA_NUM; nv_id++) {
 		p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
 		if (p_hdr != NULL) {
