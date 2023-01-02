@@ -180,6 +180,7 @@ int gps_dl_procfs_set_opid_duration(int y, int z)
 	return 0;
 }
 #if GPS_DL_HAS_MCUDL
+/* arrive here if x == 0x10 */
 int gps_mcudl_procfs_dbg(int y, int z)
 {
 	if (y == 0)
@@ -190,6 +191,12 @@ int gps_mcudl_procfs_dbg(int y, int z)
 		gps_mcudl_xlink_test_toggle_ccif(z);
 	else if (y == 3)
 		gps_mcudl_xlink_fw_log_ctrl(z != 0);
+	else if (y == 4)
+		gps_mcudl_xlink_test_query_ver();
+	else if (y == 5)
+		gps_mcudl_xlink_test_wakeup_ap_later((unsigned int)z);
+	else if (y == 6)
+		gps_mcudl_xlink_test_send_4byte_mgmt_data((unsigned int)z);
 	return 0;
 }
 #endif
