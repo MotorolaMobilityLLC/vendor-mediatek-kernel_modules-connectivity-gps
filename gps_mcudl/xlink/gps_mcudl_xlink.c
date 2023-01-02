@@ -120,3 +120,33 @@ void gps_mcudl_xlink_test_read_mcu_reg(unsigned int addr, unsigned int bytes)
 	MDL_LOGW("write cmd5, is_ok=%d", is_okay);
 }
 
+void gps_mcudl_xlink_test_query_ver(void)
+{
+	bool is_okay = false;
+
+	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x06", 1);
+	MDL_LOGW("write cmd6, is_ok=%d", is_okay);
+}
+
+void gps_mcudl_xlink_test_wakeup_ap_later(unsigned int data)
+{
+	bool is_okay = false;
+	unsigned char u8_data;
+	unsigned char send_data[2];
+
+	u8_data = data & 0xff;
+	send_data[0] = '\x09';
+	send_data[1] = u8_data;
+	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, &send_data[0], 2);
+	MDL_LOGW("write cmd9: data=0x%02x, is_ok=%d", u8_data, is_okay);
+}
+
+void gps_mcudl_xlink_test_send_4byte_mgmt_data(unsigned int data_4byte)
+{
+	bool is_okay = false;
+
+	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT,
+		(const unsigned char *)&data_4byte, 4);
+	MDL_LOGW("write 0x%08x, is_ok=%d", data_4byte, is_okay);
+}
+
