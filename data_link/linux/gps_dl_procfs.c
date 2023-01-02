@@ -191,6 +191,10 @@ int gps_mcudl_procfs_dbg(int y, int z)
 			gps_mcudl_xlink_test_fw_own_ctrl(z != 0);
 		else if (z == 2)
 			gps_mcudl_hal_user_fw_own_status_dump();
+		else if (z == 3)
+			gps_mcudl_hal_set_non_lppm_sleep_flag(true);
+		else if (z == 4)
+			gps_mcudl_hal_set_non_lppm_sleep_flag(false);
 	}
 	else if (y == 2)
 		gps_mcudl_xlink_test_toggle_ccif(z);
