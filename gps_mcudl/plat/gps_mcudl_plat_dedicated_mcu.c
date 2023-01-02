@@ -302,6 +302,16 @@ void gps_mcudl_plat_mcu_ch1_reset_end_cb(void)
 	gps_mcudl_ylink_event_send(y_id, GPS_MCUDL_YLINK_EVT_ID_MCU_RESET_END);
 }
 
+enum gps_mcudl_plat_mcu_ctrl_status {
+	GDL_MCU_CLOSED,
+	GDL_MCU_OPEN_OKAY,
+	GDL_MCU_OPEN_FAIL_ON_POS,
+	GDL_MCU_OPEN_FAIL_ON_CMD,
+	GDL_MCU_OPEN_STATUS_NUM
+};
+
+enum gps_mcudl_plat_mcu_ctrl_status g_gps_mcudl_mcu_ctrl_status;
+
 int gps_mcudl_plat_mcu_open(void)
 {
 	bool is_okay;
@@ -310,6 +320,7 @@ int gps_mcudl_plat_mcu_open(void)
 	is_okay = gps_mcudl_xlink_on(&c_gps_mcudl_rom_only_fw_list);
 	if (!is_okay) {
 		MDL_LOGI("gps_mcudl_xlink_on failed");
+		g_gps_mcudl_mcu_ctrl_status = GDL_MCU_OPEN_FAIL_ON_POS;
 		return -1;
 	}
 #endif
@@ -325,41 +336,71 @@ int gps_mcudl_plat_mcu_open(void)
 
 	g_gps_ccif_irq_cnt = 0;
 	g_gps_fw_log_irq_cnt = 0;
-	if (g_gps_fw_log_is_on)
-		gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(true);
+	if (g_gps_fw_log_is_on) {
+		is_okay = gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(true);
+		if (!is_okay) {
+			MDL_LOGW("log_ctrl, is_ok=%d", is_okay);
+			g_gps_mcudl_mcu_ctrl_status = GDL_MCU_OPEN_FAIL_ON_CMD;
+			return -1;
+		}
+	}
 
 	gps_mcudl_mgmt_cmd_pre_send(GPS_MCUDL_CMD_OFL_INIT);
 	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x01", 1);
 	MDL_LOGW("write cmd1, is_ok=%d", is_okay);
-	if (!is_okay)
+	if (!is_okay) {
+		g_gps_mcudl_mcu_ctrl_status = GDL_MCU_OPEN_FAIL_ON_CMD;
 		return -1;
+	}
 
 	is_okay = gps_mcudl_mgmt_cmd_wait_ack(GPS_MCUDL_CMD_OFL_INIT, 100);
 	MDL_LOGW("write cmd1, wait_ok=%d", is_okay);
+	if (!is_okay)
+		g_gps_mcudl_mcu_ctrl_status = GDL_MCU_OPEN_FAIL_ON_CMD;
+	else
+		g_gps_mcudl_mcu_ctrl_status = GDL_MCU_OPEN_OKAY;
+
 	return is_okay ? 0 : -1;
 }
 
 int gps_mcudl_plat_mcu_close(void)
 {
 	bool is_okay;
+	bool do_adie_off_in_driver = false;
 
-	gps_mcudl_mgmt_cmd_pre_send(GPS_MCUDL_CMD_OFL_DEINIT);
-	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x02", 1);
-	MDL_LOGW("write cmd2, is_ok=%d", is_okay);
-	if (is_okay) {
-		is_okay = gps_mcudl_mgmt_cmd_wait_ack(GPS_MCUDL_CMD_OFL_DEINIT, 100);
-		MDL_LOGW("write cmd2, wait_ok=%d", is_okay);
+	if (g_gps_mcudl_mcu_ctrl_status != GDL_MCU_OPEN_OKAY)
+		MDL_LOGW("mcu_status = %d", g_gps_mcudl_mcu_ctrl_status);
+
+	if (g_gps_mcudl_mcu_ctrl_status == GDL_MCU_OPEN_OKAY) {
+		gps_mcudl_mgmt_cmd_pre_send(GPS_MCUDL_CMD_OFL_DEINIT);
+		is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x02", 1);
+		MDL_LOGW("write cmd2, is_ok=%d", is_okay);
+		if (is_okay) {
+			is_okay = gps_mcudl_mgmt_cmd_wait_ack(GPS_MCUDL_CMD_OFL_DEINIT, 100);
+			MDL_LOGW("write cmd2, wait_ok=%d", is_okay);
+		}
+
+		if (!is_okay)
+			do_adie_off_in_driver = true;
 	}
 
-	gps_mcu_hif_recv_listen_stop(GPS_MCU_HIF_CH_DMA_NORMAL);
-	gps_mcu_hif_recv_listen_stop(GPS_MCU_HIF_CH_DMALESS_MGMT);
-	MDL_LOGI("remove listeners, done");
+	if (g_gps_mcudl_mcu_ctrl_status != GDL_MCU_CLOSED &&
+		g_gps_mcudl_mcu_ctrl_status != GDL_MCU_OPEN_FAIL_ON_POS) {
+		gps_mcu_hif_recv_listen_stop(GPS_MCU_HIF_CH_DMA_NORMAL);
+		gps_mcu_hif_recv_listen_stop(GPS_MCU_HIF_CH_DMALESS_MGMT);
+		MDL_LOGI("remove listeners, done");
+	}
 
+	if (g_gps_mcudl_mcu_ctrl_status != GDL_MCU_CLOSED) {
 #if GPS_DL_HAS_MCUDL_HAL
-	gps_mcudl_xlink_off();
+		gps_mcudl_xlink_off();
 #endif
-	if (!is_okay)
+	}
+
+	if (do_adie_off_in_driver)
 		gps_dl_hw_dep_gps_control_adie_off();
+
+	g_gps_mcudl_mcu_ctrl_status = GDL_MCU_CLOSED;
 	return 0;
 }
 
