@@ -23,7 +23,7 @@ struct gps_mcusys_nv_data_header *gps_mcusys_nv_data_get_hdr(enum gps_mcusys_nv_
 	if (g_host_nv_layout_ptr == NULL) {
 		g_host_nv_layout_ptr =
 			(struct gps_mcusys_nv_data_layout *)gps_mcudl_plat_nv_emi_get_start_ptr();
-		GPS_OFL_TRC("g_host_nv_layout_ptr = 0x%p, offset=0x%x, sz=0x%x",
+		GPS_OFL_TRC("g_host_nv_layout_ptr = 0x%p, offset=0x%x, sz=0x%lx",
 			g_host_nv_layout_ptr,
 			gps_mcudl_get_offset_from_conn_base(g_host_nv_layout_ptr),
 			sizeof(*g_host_nv_layout_ptr));
