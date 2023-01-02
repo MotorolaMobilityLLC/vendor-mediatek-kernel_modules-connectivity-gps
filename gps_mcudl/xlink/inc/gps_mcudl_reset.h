@@ -17,6 +17,7 @@ void gps_mcudl_handle_connsys_reset_done(void);
 void gps_mcudl_connsys_coredump_init(void);
 void gps_mcudl_connsys_coredump_deinit(void);
 void gps_mcudl_connsys_coredump_start(void);
+void gps_mcudl_connsys_coredump_start_wrapper(void);
 
 #endif /* _GPS_MCUDL_RESET_H */
 

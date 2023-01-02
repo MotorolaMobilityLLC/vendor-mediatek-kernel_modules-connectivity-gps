@@ -14,6 +14,14 @@
 #include "gps_dl_name_list.h"
 #include "conninfra.h"
 #include "connsys_coredump.h"
+#include "gps_mcu_hif_host.h"
+#include "gps_mcudl_data_pkt_host_api.h"
+#include "gps_mcudl_hal_mcu.h"
+#include "gps_mcudl_hal_ccif.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
+#if GPS_DL_HAS_PLAT_DRV
+#include "gps_dl_linux_plat_drv.h"
+#endif
 
 #if 1
 enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
@@ -263,6 +271,35 @@ void gps_mcudl_connsys_coredump_start(void)
 		&g_gps_mcudl_subsys_reset_reason[0]);
 	connsys_coredump_clean(g_gps_coredump_handler);
 #endif
+}
+
+void gps_mcudl_connsys_coredump_start_wrapper(void)
+{
+#if GPS_DL_HAS_PLAT_DRV
+	/*dump tia status*/
+	gps_dl_tia_gps_ctrl(false);
+#endif
+	/* dump ydata status */
+	gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
+	gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
+	gps_mcu_hif_host_trans_hist_dump();
+	gps_mcudl_mcu2ap_rec_dump();
+	gps_mcudl_xlink_dump_all_rec();
+	gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_NORMAL, true);
+	gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_NORMAL);
+	gps_mcudl_host_sta_hist_dump(GPS_MDLY_NORMAL);
+	gps_mcudl_host_sta_hist_dump(GPS_MDLY_URGENT);
+	gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
+	gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
+	gps_mcudl_hal_user_fw_own_status_dump();
+
+	if (gps_mcudl_coredump_is_readable()) {
+		gps_mcudl_hal_mcu_show_status();
+		gps_mcudl_hal_ccif_show_status();
+	} else
+		MDL_LOGE("readable=0");
+
+	gps_mcudl_connsys_coredump_start();
 }
 #endif
 
