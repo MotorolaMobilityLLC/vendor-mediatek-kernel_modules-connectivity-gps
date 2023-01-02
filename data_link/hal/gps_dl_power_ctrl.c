@@ -122,6 +122,11 @@ void gps_dl_hal_set_need_clk_ext_flag(enum gps_dl_link_id_enum link_id, bool nee
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 }
 
+void gps_dl_hal_may_set_link_power_flag(enum gps_dl_link_id_enum link_id, bool power_ctrl)
+{
+	gps_dl_hw_may_set_link_power_flag(link_id, power_ctrl);
+}
+
 int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id,
 	enum gps_dl_hal_power_ctrl_op_enum op)
 {
