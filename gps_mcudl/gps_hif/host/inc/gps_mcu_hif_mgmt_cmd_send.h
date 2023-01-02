@@ -11,6 +11,7 @@
 bool gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(bool enable);
 
 enum gps_mcudl_mgmt_cmd_id {
+	GPS_MCUDL_CMD_LPBK,
 	GPS_MCUDL_CMD_OFL_INIT,
 	GPS_MCUDL_CMD_OFL_DEINIT,
 	GPS_MCUDL_CMD_FW_LOG_CTRL,
