@@ -7,6 +7,7 @@
 #include "gps_mcudl_hw_dep_macro.h"
 #include "gps_mcudl_hw_priv_util.h"
 #include "gps_dl_time_tick.h"
+#include "gps_mcudl_log.h"
 
 bool gps_mcudl_hw_ccif_is_tch_busy(enum gps_mcudl_ccif_ch ch)
 {
@@ -16,12 +17,16 @@ bool gps_mcudl_hw_ccif_is_tch_busy(enum gps_mcudl_ccif_ch ch)
 	do {
 		bitmask = GDL_HW_RD_CONN_INFRA_REG(
 			AP2BGF_CONN_INFRA_ON_CCIF4_AP2BGF_PCCIF_BUSY_ADDR);
-		if (!(bitmask & (1UL << ch)))
+		if (!(bitmask & (1UL << ch))) {
+			if (i >= 10)
+				MDL_LOGW("wait loop = %d, okay", i);
 			return false;
+		}
 
-		gps_dl_wait_us(1000);
+		gps_dl_sleep_us(1000, 2000);
 		i++;
-	} while (i >= 10);
+	} while (i < 100);
+	MDL_LOGE("wait loop = %d, still busy", i);
 	return true;
 }
 
