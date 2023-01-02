@@ -208,7 +208,6 @@ void gps_mcu_hif_recv_listen_stop(enum gps_mcu_hif_ch hif_ch)
 
 void gps_mcu_hif_host_on_tx_finished(enum gps_mcu_hif_ch hif_ch)
 {
-	MDL_LOGI("ch=%d", hif_ch);
 }
 
 unsigned char gps_mcu_hif_on_recv_dispatcher_buf[GPS_MCU_HIF_EMI_BUF_SIZE];
@@ -216,8 +215,6 @@ void gps_mcu_hif_host_on_rx_finished(enum gps_mcu_hif_ch hif_ch, unsigned int da
 {
 	struct gps_mcu_hif_recv_ch_context *p_ctx;
 	const unsigned char *p_data;
-
-	MDL_LOGI("ch=%d", hif_ch);
 
 	p_data = gps_mcu_hif_get_mcu2ap_emi_buf_addr(hif_ch);
 	p_ctx = &g_gps_mcu_hif_recv_contexts[hif_ch];
@@ -241,20 +238,27 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 	hif_ch = gps_mcu_hif_get_trans_hif_ch(trans_id);
 	gps_mcu_hif_get_trans_start_desc(trans_id, &start_desc);
 	gps_mcu_hif_get_trans_end_desc(trans_id, &end_desc);
-	if (start_desc.id != end_desc.id)
-		return; /* bad one*/
+	if (start_desc.id != end_desc.id) {
+		/* bad one */
+		MDL_LOGW("trans_id=%d, %d, mismatch", start_desc.id, end_desc.id);
+		return;
+	}
 
 	gps_mcu_hif_host_clr_trans_req_sent(trans_id);
 	switch (trans_id) {
 	case GPS_MCU_HIF_TRANS_AP2MCU_DMALESS_MGMT:
 	case GPS_MCU_HIF_TRANS_AP2MCU_DMA_NORMAL:
 	case GPS_MCU_HIF_TRANS_AP2MCU_DMA_URGENT:
+		MDL_LOGD("tx_done, ch=%d, id=%d, len=%d, dt_32k=%d",
+			hif_ch, end_desc.id, end_desc.len, end_desc.dticks);
 		gps_mcu_hif_host_on_tx_finished(hif_ch);
 		break;
 
 	case GPS_MCU_HIF_TRANS_MCU2AP_DMALESS_MGMT:
 	case GPS_MCU_HIF_TRANS_MCU2AP_DMA_NORMAL:
 	case GPS_MCU_HIF_TRANS_MCU2AP_DMA_URGENT:
+		MDL_LOGD("rx_done, ch=%d, id=%d, len=%d, dt_32k=%d",
+			hif_ch, end_desc.id, end_desc.len, end_desc.dticks);
 		gps_mcu_hif_host_on_rx_finished(hif_ch, end_desc.len);
 		break;
 
@@ -278,7 +282,3 @@ void gps_mcu_hif_host_ccif_irq_handler_in_isr(void)
 	}
 }
 
-void gps_mcu_hif_host_ccif_isr(void)
-{
-	gps_mcu_hif_host_ccif_irq_handler_in_isr();
-}
