@@ -310,7 +310,7 @@ static int gps_dl_devices_init(void)
 		return result;
 	}
 
-	GDL_LOGW_INI("success to get major %d\n", gps_dl_devno_major);
+	GDL_LOGD_INI("success to get major %d\n", gps_dl_devno_major);
 
 	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
 		devno = MKDEV(gps_dl_devno_major, gps_dl_devno_minor + link_id);

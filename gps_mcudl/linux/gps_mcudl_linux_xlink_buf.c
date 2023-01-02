@@ -83,7 +83,7 @@ int gps_mcudl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, enum gps_mcudl_xid
 	p_dma_buf->vir_addr = kzalloc(len, GFP_KERNEL);
 	p_dma_buf->phy_addr = 0;
 #endif
-	MDL_LOGI_INI(
+	MDL_LOGD_INI(
 #if GPS_DL_ON_LINUX
 		"alloc gps mcudl dma buf(%d,%d), addr: vir=0x%p, phy=0x%llx, len=%u",
 #else

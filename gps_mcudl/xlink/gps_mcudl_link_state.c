@@ -178,7 +178,7 @@ void gps_mcudl_each_link_set_state(enum gps_mcudl_xid link_id, enum gps_each_lin
 	p->state_for_user = state;
 	gps_mcudl_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
-	MDL_LOGXI_STA(link_id, "state change: %s -> %s",
+	MDL_LOGXD_STA(link_id, "state change: %s -> %s",
 		gps_dl_link_state_name(pre_state), gps_dl_link_state_name(state));
 }
 

@@ -531,7 +531,7 @@ int gps_mcudl_cdev_setup(struct gps_mcudl_each_device *dev, enum gps_mcudl_xid x
 		return result;
 	}
 
-	MDL_LOGI("class_create: %s, xid = %d", dev->cfg.dev_name, dev->cfg.xid);
+	MDL_LOGD("class_create: %s, xid = %d", dev->cfg.dev_name, dev->cfg.xid);
 	dev->cls = class_create(THIS_MODULE, dev->cfg.dev_name);
 	if (IS_ERR(dev->cls)) {
 		MDL_LOGE("class_create fail on %s", dev->cfg.dev_name);
