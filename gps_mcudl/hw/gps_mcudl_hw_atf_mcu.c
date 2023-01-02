@@ -562,15 +562,15 @@ void gps_mcudl_hw_mcu_do_off_1(void)
 
 void gps_mcudl_hw_mcu_do_off(void)
 {
-	/* Hold MCU reset */
-	gps_mcudl_hw_mcu_do_off_1();
-
 	/* Enable sleep prot */
 	if (gps_dl_hw_gps_sleep_prot_ctrl(0) != 0)
 		GDL_LOGE("_fail_enable_gps_slp_prot_not_okay");
 
 	gps_mcudl_hw_mcu_do_on_with_rst_held_fail_handler_2();
 	gps_mcudl_hw_mcu_do_on_with_rst_held_fail_handler_1();
+
+	/* Hold MCU reset */
+	gps_mcudl_hw_mcu_do_off_1();
 }
 
 void gps_mcudl_hw_mcu_show_status(void)
