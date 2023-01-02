@@ -35,6 +35,7 @@ void gps_dl_hw_gps_dump_top_rf_temp_cr(void);
 
 int gps_dl_hw_gps_common_on(void);
 int gps_dl_hw_gps_common_off(void);
+void gps_dl_hw_may_set_link_power_flag(enum gps_dl_link_id_enum link_id, bool power_ctrl);
 bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable);
 void gps_dl_hw_gps_sw_request_emi_usage(bool request);
 void gps_dl_hw_gps_sw_request_peri_usage(bool request);
