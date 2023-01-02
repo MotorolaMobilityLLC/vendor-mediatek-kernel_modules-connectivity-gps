@@ -4,6 +4,7 @@
  */
 
 #include "gps_mcudl_fw_code.h"
+#include "gps_dl_context.h"
 
 #if 0
 #include "plat/v060/fw/inc/mcu_rom_code.h"
