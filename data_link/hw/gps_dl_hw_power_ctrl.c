@@ -533,6 +533,17 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 	bool record_last_show_log = false;
 	bool need_dump_for_reset_done = false;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
+	struct gps_dl_hw_dma_status_struct a2d_dma_status, d2a_dma_status;
+	enum gps_dl_hal_dma_ch_index a2d_dma_ch, d2a_dma_ch;
+
+	if (link_id == GPS_DATA_LINK_ID0) {
+		a2d_dma_ch = GPS_DL_DMA_LINK0_A2D;
+		d2a_dma_ch = GPS_DL_DMA_LINK0_D2A;
+	} else if (link_id == GPS_DATA_LINK_ID1) {
+		a2d_dma_ch = GPS_DL_DMA_LINK1_A2D;
+		d2a_dma_ch = GPS_DL_DMA_LINK1_D2A;
+	} else
+		return false;
 
 	gps_each_dsp_reg_dump_if_any_rec(link_id);
 
@@ -576,6 +587,10 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 				gps_dl_hw_print_usrt_status_struct(GPS_DATA_LINK_ID0, &usrt_status);
 				gps_dl_hw_save_usrt_status_struct(GPS_DATA_LINK_ID1, &usrt_status);
 				gps_dl_hw_print_usrt_status_struct(GPS_DATA_LINK_ID1, &usrt_status);
+				gps_dl_hw_save_dma_status_struct(a2d_dma_ch, &a2d_dma_status);
+				gps_dl_hw_print_dma_status_struct(a2d_dma_ch, &a2d_dma_status);
+				gps_dl_hw_save_dma_status_struct(d2a_dma_ch, &d2a_dma_status);
+				gps_dl_hw_print_dma_status_struct(d2a_dma_ch, &d2a_dma_status);
 				gps_dl_hw_dep_dump_gps_pos_info(link_id);
 
 				/* it means a2z dump is already done */
