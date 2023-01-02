@@ -290,8 +290,10 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 	if (gGpsEmiPhyBase) {
 		/*set MPU for EMI share Memory*/
 		#if EMI_MPU_PROTECTION_IS_READY
+		#ifndef MTK_GENERIC_HAL
 		GPS_DBG("setting MPU for EMI share memory\n");
 		gps_emi_mpu_set_region_protection(gps_emi_mpu_region);
+		#endif
 		#endif
 		GPS_DBG("get consys start phy address(0x%zx)\n", (size_t)gGpsEmiPhyBase);
 		#if 0
