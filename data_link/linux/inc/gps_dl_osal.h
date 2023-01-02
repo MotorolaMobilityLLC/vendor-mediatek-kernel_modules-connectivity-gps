@@ -88,9 +88,8 @@ do { \
 	} \
 } while (0)
 
-#define MAX_THREAD_NAME_LEN 128
-#define OSAL_OP_DATA_SIZE   32
-#define OSAL_OP_BUF_SIZE    16
+#define GPS_MAX_THREAD_NAME_LEN 128
+#define GPS_OSAL_OP_BUF_SIZE    64 /* Should be 2^N */
 
 typedef void(*P_TIMEOUT_HANDLER) (unsigned long);
 typedef int(*P_COND) (void *);
@@ -125,7 +124,7 @@ struct gps_dl_osal_event {
 struct gps_dl_osal_op_dat {
 	unsigned int opId;	/* Event ID */
 	unsigned int u4InfoBit;	/* Reserved */
-	unsigned long au4OpData[OSAL_OP_DATA_SIZE];	/* OP Data */
+	unsigned long au4OpData[GPS_OSAL_OP_BUF_SIZE];	/* OP Data */
 	unsigned long op_enq;
 };
 
@@ -141,14 +140,14 @@ struct gps_dl_osal_lxop_q {
 	unsigned int write;
 	unsigned int read;
 	unsigned int size;
-	struct gps_dl_osal_lxop *queue[OSAL_OP_BUF_SIZE];
+	struct gps_dl_osal_lxop *queue[GPS_OSAL_OP_BUF_SIZE];
 };
 
 struct gps_dl_osal_thread {
 	struct task_struct *pThread;
 	void *pThreadFunc;
 	void *pThreadData;
-	char threadName[MAX_THREAD_NAME_LEN];
+	char threadName[GPS_MAX_THREAD_NAME_LEN];
 };
 
 typedef unsigned int(*OSAL_EVENT_CHECKER) (struct gps_dl_osal_thread *pThread);
