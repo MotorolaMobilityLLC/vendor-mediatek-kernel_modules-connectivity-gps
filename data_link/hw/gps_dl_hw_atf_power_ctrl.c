@@ -163,7 +163,6 @@ void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 			request, reg_rw_log, 0, 0, 0, 0, &res);
 	ret = res.a0;
 	GDL_LOGE("leave smc gps_dl_hw_gps_sw_request_emi_usage success");
-	return;
 }
 
 int gps_dl_hw_gps_common_on_part1(unsigned int *poll_ver)
