@@ -40,6 +40,7 @@ void gps_dl_link_event_send(enum gps_dl_link_event_id evt,
 		pOp->op.opId = GPS_DL_OPID_LINK_EVENT_PROC;
 		pOp->op.au4OpData[0] = link_id;
 		pOp->op.au4OpData[1] = evt;
+		pOp->op.op_enq = gps_dl_tick_get_ms();
 		iRet = gps_dl_put_act_op(pOp);
 	} else {
 		gps_dl_put_op_to_free_queue(pOp);

@@ -38,6 +38,7 @@ void gps_dl_hal_event_send(enum gps_dl_hal_event_id evt,
 		pOp->op.au4OpData[0] = link_id;
 		pOp->op.au4OpData[1] = evt;
 		pOp->op.au4OpData[2] = gps_each_link_get_session_id(link_id);
+		pOp->op.op_enq = gps_dl_tick_get_ms();
 		iRet = gps_dl_put_act_op(pOp);
 	} else {
 		gps_dl_put_op_to_free_queue(pOp);
