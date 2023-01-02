@@ -38,8 +38,10 @@ bool gps_mcudl_xlink_on(const struct gps_mcudl_fw_list *p_fw_list)
 		return false;
 
 	gps_mcudl_hal_user_fw_own_init(GMDL_FW_OWN_CTRL_BY_POS);
+	/* init status is clr_fw_own and force_wake should be true, so bypass it:
+	 * (void)gps_mcudl_hw_conn_force_wake(false);
+	 */
 	is_okay = gps_mcudl_hal_mcu_do_on(p_fw_list);
-	(void)gps_mcudl_hw_conn_force_wake(false);
 	ntf_set_fw_own = gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_POS);
 	MDL_LOGI("ok=%d, ntf=%d", is_okay, ntf_set_fw_own);
 	return is_okay;
