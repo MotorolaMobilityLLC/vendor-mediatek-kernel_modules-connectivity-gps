@@ -68,6 +68,8 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr
 	GDL_HW_RD_GPS_REG(0x80073160); /* DL0 */
 	GDL_HW_RD_GPS_REG(0x80073134); /* DL1 */
 
+	GDL_HW_GET_CONN_INFRA_ADIE();
+
 	GDL_HW_RD_SPI_GPS_STATUS();
 
 	if (dump_rf_cr) {
