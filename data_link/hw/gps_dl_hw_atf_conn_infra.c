@@ -28,11 +28,9 @@ void gps_dl_hw_set_gps_emi_remapping(unsigned int _20msb_of_36bit_phy_addr)
 	struct arm_smccc_res res;
 	int ret;
 
-	GDL_LOGE("enter smc gps_dl_hw_set_gps_emi_remapping success");
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_PART2_OPID,
 			_20msb_of_36bit_phy_addr, 0, 0, 0, 0, 0, &res);
 	ret = res.a0;
-	GDL_LOGE("leave smc gps_dl_hw_set_gps_emi_remapping success");
 }
 
 unsigned int gps_dl_hw_get_gps_emi_remapping(void)
