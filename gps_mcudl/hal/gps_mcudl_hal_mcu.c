@@ -137,17 +137,20 @@ bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list)
 		gps_mcudl_hw_mcu_release_rst();
 		is_okay = gps_mcudl_hw_mcu_wait_idle_loop_or_timeout_us(500 * 1000);
 	}
-	gps_mcudl_hw_mcu_show_status();
-	if (!is_okay)
+	if (!is_okay) {
+		gps_mcudl_hw_mcu_show_status();
 		return false;
+	}
 	/* gps_mcudl_hal_mcu_clr_fw_own();*/
 	gps_mcudl_hal_set_ccif_irq_en_flag(true);
 	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_HAL);
+	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_WDT), GPS_DL_IRQ_CTRL_FROM_HAL);
 	return is_okay;
 }
 
 void gps_mcudl_hal_mcu_do_off(void)
 {
+	gps_dl_irq_mask(gps_dl_irq_index_to_id(GPS_DL_IRQ_WDT), GPS_DL_IRQ_CTRL_FROM_HAL);
 	if (gps_mcudl_hal_get_ccif_irq_en_flag())
 		gps_dl_irq_mask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_HAL);
 
