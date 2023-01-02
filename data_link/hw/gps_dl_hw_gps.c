@@ -421,3 +421,16 @@ struct gps_dl_hw_pair_time_struct *gps_dl_hw_get_dsp_ms_counter(
 	return &pair_time;
 }
 
+bool gps_dl_hw_gps_get_bootup_info(enum gps_dl_link_id_enum link_id,
+				bool is_cw_dsp, struct gps_dl_hw_mvcd_gps_bootup_info *bootup_info)
+{
+	GDL_LOGXE(link_id, "NOT SUPPORT ATF %d 0x%x", is_cw_dsp, bootup_info);
+	return false;
+}
+
+bool gps_dl_hw_gps_send_dsp_fragement_num(enum gps_dl_link_id_enum link_id,
+				bool is_cw_dsp, unsigned int fragement_num)
+{
+	GDL_LOGXE(link_id, "NOT SUPPORT ATF %d %d", is_cw_dsp, fragement_num);
+	return false;
+}
