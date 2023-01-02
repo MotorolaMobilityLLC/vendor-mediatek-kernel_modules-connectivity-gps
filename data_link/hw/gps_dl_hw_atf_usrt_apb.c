@@ -27,10 +27,15 @@
 
 void gps_dl_hw_usrt_rx_irq_enable(enum gps_dl_link_id_enum link_id, bool enable)
 {
-	if (enable)
-		GDL_HW_SET_GPS_ENTRY2(link_id, 1, GPS_USRT_APB_APB_INTEN_TXIEN, GPS_L5_USRT_APB_APB_INTEN_TXIEN);
-	else
-		GDL_HW_SET_GPS_ENTRY2(link_id, 0, GPS_USRT_APB_APB_INTEN_TXIEN, GPS_L5_USRT_APB_APB_INTEN_TXIEN);
+	struct arm_smccc_res res;
+	int ret;
+
+	GDL_LOGE("enter smc gps_dl_hw_usrt_rx_irq_enable success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_USRT_IRQ_ENABLE_OPID,
+			link_id, enable, 0, 0, 0, 0, &res);
+	ret = res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_usrt_rx_irq_enable success");
+	return;
 }
 
 #define GPS_DSP_CFG_BITMASK_ADIE_IS_MT6631              (1UL << 0)
@@ -74,13 +79,28 @@ void gps_dl_hw_usrt_ctrl(enum gps_dl_link_id_enum link_id,
 
 bool gps_dl_hw_usrt_has_set_nodata_flag(enum gps_dl_link_id_enum link_id)
 {
-	return (bool)GDL_HW_GET_GPS_ENTRY2(link_id,
-		GPS_USRT_APB_APB_STA_NODAINTB, GPS_L5_USRT_APB_APB_STA_NODAINTB);
+	struct arm_smccc_res res;
+	int ret;
+
+	GDL_LOGE("enter smc gps_dl_hw_usrt_has_set_nodata_flag success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_USRT_HAS_SET_NODATA_FLAG_OPID,
+			link_id, 0, 0, 0, 0, 0, &res);
+	ret = (bool)res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_usrt_has_set_nodata_flag success");
+	return ret;
 }
 
 void gps_dl_hw_usrt_clear_nodata_irq(enum gps_dl_link_id_enum link_id)
 {
-	GDL_HW_SET_GPS_ENTRY2(link_id, 1, GPS_USRT_APB_APB_STA_NODAINTB, GPS_L5_USRT_APB_APB_STA_NODAINTB);
+	struct arm_smccc_res res;
+	int ret;
+
+	GDL_LOGE("enter smc gps_dl_hw_usrt_clear_nodata_irq success");
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_USRT_CLEAR_NODATA_IRQ_OPID,
+			link_id, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+	GDL_LOGE("leave smc gps_dl_hw_usrt_clear_nodata_irq success");
+	return;
 }
 
 void gps_dl_hw_print_usrt_status(enum gps_dl_link_id_enum link_id)
