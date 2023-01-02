@@ -149,6 +149,7 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 	struct gps_mcudl_ystate *p_ystate;
 	gpsmdl_u32 old_xbitmask, new_xbitmask;
 	bool do_mcu_ctrl = false;
+	bool non_lppm_sleep = false;
 	int mcu_ctrl_ret = 0;
 
 	yid = GPS_MDL_X2Y(xid);
@@ -161,9 +162,14 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		new_xbitmask &= ~(1UL << xid);
 
 	if (xid == GPS_MDLX_LPPM && op == 0) {
-		MDL_LOGYI(yid, "out_lpp_mode_notify_mcu");
-		/* disallow set_fw_own due to lpp mode is disabled */
-		(void)gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_NON_LPPM);
+		non_lppm_sleep = gps_mcudl_hal_get_non_lppm_sleep_flag();
+		MDL_LOGYI(yid, "out_lpp_mode_notify_mcu, non_lppm_slp=%d", non_lppm_sleep);
+		if (!non_lppm_sleep) {
+			/* disallow set_fw_own due to lpp mode is disabled
+			 * if non_lppm_sleep, no need this ctrl
+			 */
+			(void)gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_NON_LPPM);
+		}
 		gps_mcusys_data_sync2target_lpp_mode_status_cmd(op);
 	}
 
@@ -186,9 +192,14 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		MDL_LOGYI(yid, "gps_mcudl_may_do_fw_loading, after");
 		mcu_ctrl_ret = gps_mcudl_plat_do_mcu_ctrl(yid, true);
 		if (mcu_ctrl_ret == 0) {
-			/* disallow set_fw_own due to lpp mode has not been enabled yet */
-			MDL_LOGYI(yid, "disallow set_fw_own for non lpp mode");
-			(void)gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_NON_LPPM);
+			gps_mcudl_hal_sync_non_flag_lppm_sleep_flag();
+			non_lppm_sleep = gps_mcudl_hal_get_non_lppm_sleep_flag();
+			if (!non_lppm_sleep) {
+				/* disallow set_fw_own due to lpp mode has not been enabled yet */
+				MDL_LOGYI(yid, "disallow set_fw_own for non_lppm_slp=%d", non_lppm_sleep);
+				(void)gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_NON_LPPM);
+			} else
+				MDL_LOGYI(yid, "allow set_fw_own for non_lppm_slp=%d", non_lppm_sleep);
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_ON);
 		} else {
 			MDL_LOGYE(yid, "fail to turn on");
@@ -211,10 +222,15 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		p_ystate->xstate_bitmask = new_xbitmask;
 
 	if (xid == GPS_MDLX_LPPM && op == 1) {
-		MDL_LOGYI(yid, "in_lpp_mode_notify_mcu");
+		non_lppm_sleep = gps_mcudl_hal_get_non_lppm_sleep_flag();
+		MDL_LOGYI(yid, "in_lpp_mode_notify_mcu, non_lppm_slp=%d", non_lppm_sleep);
 		gps_mcusys_data_sync2target_lpp_mode_status_cmd(op);
-		/* allow set_fw_own due to lpp mode is enabled */
-		(void)gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_NON_LPPM);
+		if (!non_lppm_sleep) {
+			/* allow set_fw_own due to lpp mode is enabled
+			 * if non_lppm_sleep, it's already allowed by default
+			 */
+			(void)gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_NON_LPPM);
+		}
 	}
 
 	MDL_LOGYI(yid, "xid=%d, op=%d, xbitmask: 0x%08x -> 0x%08x, mcu_ctrl: do=%d, ret=%d",
