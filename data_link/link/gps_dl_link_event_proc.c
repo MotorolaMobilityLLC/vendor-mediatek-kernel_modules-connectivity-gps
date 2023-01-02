@@ -17,6 +17,9 @@
 #include "gps_dl_osal.h"
 #include "gps_dl_context.h"
 #include "gps_dl_subsys_reset.h"
+#if GPS_DL_HAS_PLAT_DRV
+#include "gps_dl_linux_plat_drv.h"
+#endif
 
 
 void gps_dl_link_event_send(enum gps_dl_link_event_id evt,
@@ -95,6 +98,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		/* gps_dl_set_show_reg_rw_log(show_log); */
 		break;
 	case GPS_DL_EVT_LINK_LEAVE_DPSTOP:
+		gps_dl_link_pre_leave_dpstop_setting(link_id);
 		gps_each_dsp_reg_gourp_read_init(link_id);
 		gps_each_link_inc_session_id(link_id);
 		gps_each_link_set_active(link_id, true);
@@ -146,6 +150,8 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_dma_buf_reset(&p_link->rx_dma_buf);
 #endif
 		gps_dl_link_close_ack(link_id, true);
+
+		gps_dl_link_post_enter_dpstop_setting(link_id);
 		break;
 	case GPS_DL_EVT_LINK_DSP_ROM_READY_TIMEOUT:
 		/* check again mcub not ready triggered */
@@ -190,6 +196,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 			 * before exit deep stop, need clear pwr stat to make sure dsp is in hold-on state
 			 * after exit deep stop mode.
 			 */
+			gps_dl_link_pre_leave_dpstop_setting(link_id);
 			gps_dl_hal_link_clear_hw_pwr_stat(link_id);
 			gps_dl_hal_link_power_ctrl(link_id, GPS_DL_HAL_LEAVE_DPSTOP);
 		} else {
@@ -305,5 +312,30 @@ void gps_dl_link_pre_off_setting(enum gps_dl_link_id_enum link_id)
 	gps_dl_hal_link_confirm_dma_stop(link_id);
 	gps_dl_link_irq_set(link_id, false);
 	gps_each_link_set_active(link_id, false);
+}
+
+bool g_gps_dl_dpstop_release_wakelock_fg;
+void gps_dl_link_post_enter_dpstop_setting(enum gps_dl_link_id_enum link_id)
+{
+	if (GPS_DSP_ST_HW_STOP_MODE == gps_dsp_state_get(GPS_DATA_LINK_ID0)
+			&& (GPS_DSP_ST_HW_STOP_MODE == gps_dsp_state_get(GPS_DATA_LINK_ID1)
+			|| GPS_DSP_ST_OFF == gps_dsp_state_get(GPS_DATA_LINK_ID1))) {
+#if GPS_DL_HAS_PLAT_DRV
+		gps_dl_wake_lock_hold(false);
+#endif
+		g_gps_dl_dpstop_release_wakelock_fg = true;
+		GDL_LOGXW(link_id, "enter dpstop with wake_lock relased");
+	}
+}
+
+void gps_dl_link_pre_leave_dpstop_setting(enum gps_dl_link_id_enum link_id)
+{
+	if (g_gps_dl_dpstop_release_wakelock_fg) {
+#if GPS_DL_HAS_PLAT_DRV
+		gps_dl_wake_lock_hold(true);
+#endif
+		g_gps_dl_dpstop_release_wakelock_fg = false;
+		GDL_LOGXW(link_id, "exit dpstop with wake_lock holded");
+	}
 }
 
