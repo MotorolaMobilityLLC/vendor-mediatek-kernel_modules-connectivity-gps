@@ -269,6 +269,7 @@ int gps_mcudl_stpgps1_open(void)
 		&gps_mcudl_link_drv_on_recv_normal_data);
 	MDL_LOGI("add listeners, done");
 
+	g_gps_fw_log_irq_cnt = 0;
 	if (g_gps_fw_log_is_on)
 		gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(true);
 
