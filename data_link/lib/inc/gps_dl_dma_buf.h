@@ -115,6 +115,7 @@ void gps_dma_buf_reset(struct gps_dl_dma_buf *p_dma);
 void gps_dma_buf_show(struct gps_dl_dma_buf *p_dma, bool is_warning);
 void gps_dma_buf_align_as_byte_mode(struct gps_dl_dma_buf *p_dma);
 bool gps_dma_buf_is_empty(struct gps_dl_dma_buf *p_dma);
+unsigned int gps_dma_buf_count_data_entry(struct gps_dl_dma_buf *p_dma);
 
 /* enum GDL_RET_STATUS gdl_dma_buf_init(struct gps_dl_dma_buf *p_dma); */
 /* enum GDL_RET_STATUS gdl_dma_buf_deinit(struct gps_dl_dma_buf *p_dma); */
