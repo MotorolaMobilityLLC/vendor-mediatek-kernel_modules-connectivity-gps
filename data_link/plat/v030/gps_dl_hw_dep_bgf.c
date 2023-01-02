@@ -131,3 +131,8 @@ void gps_dl_hw_dep_may_set_bus_debug_flag(void)
 
 }
 
+void gps_dl_hw_dep_may_remap_conn2ap_gps_peri(void)
+{
+	/*mt6877 do nothing*/
+}
+
