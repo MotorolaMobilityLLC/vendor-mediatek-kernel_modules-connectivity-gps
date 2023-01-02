@@ -7,7 +7,7 @@
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_dl_linux_reserved_mem.h"
-
+#include "gps_dl_linux_reserved_mem_v2.h"
 
 #include <linux/of_reserved_mem.h>
 
@@ -22,7 +22,7 @@
 
 struct gps_dl_iomem_addr_map_entry g_gps_dl_res_emi;
 
-void gps_dl_reserved_mem_init(void)
+void gps_dl_reserved_mem_init_v1(void)
 {
 	void __iomem *host_virt_addr = NULL;
 #if (GPS_DL_SET_EMI_MPU_CFG)
@@ -71,10 +71,9 @@ void gps_dl_reserved_mem_init(void)
 		g_gps_dl_res_emi.host_virt_addr,
 		g_gps_dl_res_emi.length, min_size);
 	gps_dl_reserved_mem_show_info();
-	gps_icap_probe();
 }
 
-void gps_dl_reserved_mem_deinit(void)
+void gps_dl_reserved_mem_deinit_v1(void)
 {
 	GDL_LOGI_INI("phy_addr = 0x%08x, vir_addr = 0x%p, size = 0x%x",
 		g_gps_dl_res_emi.host_phys_addr,
@@ -91,12 +90,29 @@ void gps_dl_reserved_mem_deinit(void)
 	g_gps_dl_res_emi.length = 0;
 }
 
+void gps_dl_reserved_mem_init(void)
+{
+#if (GPS_DL_CONN_EMI_MERGED)
+	gps_dl_reserved_mem_init_v2();
+#endif
+	gps_dl_reserved_mem_init_v1();
+	gps_icap_probe();
+}
+
+void gps_dl_reserved_mem_deinit(void)
+{
+	gps_dl_reserved_mem_deinit_v1();
+#if (GPS_DL_CONN_EMI_MERGED)
+	gps_dl_reserved_mem_deinit_v2();
+#endif
+}
+
 bool gps_dl_reserved_mem_is_ready(void)
 {
 	return (g_gps_dl_res_emi.host_virt_addr != NULL);
 }
 
-void gps_dl_reserved_mem_get_range(unsigned int *p_min, unsigned int *p_max)
+void gps_dl_reserved_mem_get_gps_legacy_range(unsigned int *p_min, unsigned int *p_max)
 {
 	*p_min = g_gps_dl_res_emi.host_phys_addr;
 	*p_max = g_gps_dl_res_emi.host_phys_addr + g_gps_dl_res_emi.length;
@@ -148,6 +164,8 @@ void gps_dl_reserved_mem_dma_buf_init(struct gps_dl_dma_buf *p_dma_buf,
 	p_dma_buf->dev_index = link_id;
 	p_dma_buf->dir = dir;
 	p_dma_buf->len = len;
+	p_dma_buf->is_for_mcudl = false;
+	p_dma_buf->entry_l = GPS_DL_DMA_BUF_ENTRY_MAX;
 
 	if (dir == GDL_DMA_A2D) {
 		p_dma_buf->vir_addr = (void *)&p_mem_vir->tx_dma_buf[link_id][0];
