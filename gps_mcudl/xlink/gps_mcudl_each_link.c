@@ -287,7 +287,7 @@ _try_change_to_reset_again:
 		/* no need to wait reset ack
 		 * TODO: make sure message send okay
 		 */
-		gps_dl_link_waitable_reset((enum gps_dl_link_id_enum)link_id, GPS_DL_WAIT_RESET);
+		gps_mcudl_link_waitable_reset(link_id, GPS_DL_WAIT_RESET);
 		gps_mcudl_xlink_event_send(link_id, GPS_MCUDL_EVT_LINK_RESET);
 		retval = 0;
 		break;
@@ -490,7 +490,7 @@ int gps_mcudl_each_link_check(enum gps_mcudl_xid link_id, int reason)
 		break;
 
 	case LINK_RESET_DONE:
-		retval = 889;
+		retval = -889;
 		break;
 
 	case LINK_RESUMING:
