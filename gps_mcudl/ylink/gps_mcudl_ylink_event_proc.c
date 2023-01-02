@@ -58,7 +58,7 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 		gps_mcudl_mcu2ap_ydata_proc(y_id);
 #else
 		if (y_id == GPS_MDLY_NORMAL)
-			gps_mcudl_stpgps1_read_proc();
+			gps_mcudl_plat_mcu_ch1_read_proc();
 #endif
 		break;
 
