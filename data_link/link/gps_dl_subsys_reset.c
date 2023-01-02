@@ -486,6 +486,14 @@ bool gps_mcudl_conninfra_is_okay_or_handle_it(void)
 }
 #endif /* GPS_DL_HAS_MCUDL */
 
+void gps_dl_slp_prot_fail_and_dump(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	conninfra_is_bus_hang();
+	gps_dl_hw_dump_host_csr_gps_info(false);
+#endif
+}
+
 
 bool g_gps_dl_test_mask_mcub_irq_on_open_flag[GPS_DATA_LINK_NUM];
 bool g_gps_dl_test_mask_hasdata_irq_flag[GPS_DATA_LINK_NUM];
