@@ -99,10 +99,12 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 	((Val & (MASK(Field))) >> SHFT(Field))
 
 #define POLL_INTERVAL_US (100)
-#define POLL_US      (1)
-#define POLL_1_TIME  (0)
-#define POLL_FOREVER (-1)
-#define POLL_DEFAULT (1000 * POLL_US)
+#define POLL_US       (1)
+#define POLL_1_TIME   (0)
+#define POLL_FOREVER  (-1)
+#define POLL_DEFAULT  (1000 * POLL_US)
+#define POLL_DEFAULT2 (500 * POLL_US)
+
 #if (GPS_DL_ON_CTP || GPS_DL_ON_LINUX)
 #define GDL_HW_POLL_ENTRY_VERBOSE(Bus_ID, Field, pIsOkay, pLastValue, TimeoutUsec, condExpected) \
 	do {                                                                       \
