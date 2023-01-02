@@ -231,6 +231,12 @@ _check_again:
 	return retval;
 }
 
+int gps_mcudl_each_link_send_reset_evt(enum gps_mcudl_xid link_id)
+{
+	gps_mcudl_xlink_event_send(link_id, GPS_MCUDL_EVT_LINK_RESET2);
+	return 0;
+}
+
 int gps_mcudl_each_link_reset(enum gps_mcudl_xid link_id)
 {
 	/*
