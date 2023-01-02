@@ -238,9 +238,7 @@ gpsmdl_u32 gps_mcudl_data_rbuf_put(struct gps_mcudl_data_rbuf_plus_t *p_rbuf,
 				break; /* still full -> break, drop data!*/
 			if (put_done_len >= left_len)
 				break; /* send finish*/
-
-				continue; /* reader change full to non-full, re-sync wri*/
-			break;
+			/* reader change full to non-full, re-sync wri*/
 		} while (1);
 	} else {
 		gfns_rbuf_put_work(p_rbuf, p_data, data_len);
