@@ -74,6 +74,9 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	bool is_okay = false;
 	unsigned long tick_us0, tick_us1;
 	int ret;
+	enum gps_each_link_state_enum old_state, new_state;
+	bool meet_state;
+	int cnt;
 
 	tick_us0 = gps_dl_tick_get_us();
 	MDL_LOGXD_EVT(link_id, "evt=%s", gps_mcudl_xlink_event_name(evt));
@@ -128,13 +131,56 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 		break;
 
 	case GPS_MCUDL_EVT_LINK_RESET2:
+		if (!gps_mcudl_conninfra_is_okay_or_handle_it())
+			break;
+
+		/* no more dump here, it should be dumped by
+		 * GPS_MCUDL_EVT_LINK_PRINT_HW_STATUS or
+		 * GPS_MCUDL_EVT_LINK_PRINT_DATA_STATUS
+		 */
 		is_okay = gps_mcudl_xlink_test_toggle_reset_by_gps_hif(0);
 		MDL_LOGXE(link_id, "toggle_reset_by_gps_hif, ok=%d", is_okay);
 		if (!is_okay) {
 			/* gps_dl_trigger_connsys_reset(); */
 			/* use subsys reset here */
-			gps_mcudl_trigger_gps_subsys_reset(false, "GNSS hif trigger fail");
+			gps_mcudl_trigger_gps_subsys_reset(false, "GNSS hif trigger fail-1");
+			break;
 		}
+
+		/* wait MCU reset if reset cmd sent okay */
+		old_state = gps_mcudl_each_link_get_state(link_id);
+		cnt = 0;
+		meet_state = false;
+		while (1) {
+			new_state = gps_mcudl_each_link_get_state(link_id);
+			MDL_LOGXE(link_id, "cnt=%d, state=%s,%s",
+				gps_dl_link_state_name(old_state),
+				gps_dl_link_state_name(new_state));
+			if (new_state == LINK_RESETTING || new_state == LINK_RESET_DONE ||
+				new_state == LINK_CLOSING || new_state == LINK_DISABLED) {
+				meet_state = true;
+				break;
+			}
+
+			/* ~15ms */
+			if (cnt >= 6)
+				break;
+
+			if (!gps_mcudl_conninfra_is_okay_or_handle_it())
+				break;
+
+			gps_mcudl_hal_mcu_show_status();
+			gps_mcudl_hal_ccif_show_status();
+			gps_dl_sleep_us(2200, 3200);
+			cnt++;
+		}
+
+		/* state have changed to reset-like */
+		if (meet_state)
+			break;
+
+		/* wait MCU reset timeout */
+		gps_mcudl_trigger_gps_subsys_reset(false, "GNSS hif trigger fail-2");
 		break;
 
 	case GPS_MCUDL_EVT_LINK_CLOSE:
@@ -188,6 +234,7 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE && !g_gps_mcudl_ever_do_coredump) {
 			/*dump tia status*/
 			gps_dl_tia_gps_ctrl(false);
+
 			/* dump ydata status */
 			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
 			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
@@ -199,23 +246,12 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 			gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
 			gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
 
-			/* try to dump host csr info if not normal close operation */
-			/*if (gps_dl_conninfra_is_okay_or_handle_it(NULL, true))*/
-			/*	gps_dl_hw_dump_host_csr_gps_info(true);*/
-			if (gps_dl_conninfra_is_readable())
+			if (gps_mcudl_coredump_is_readable()) {
 				gps_mcudl_hal_mcu_show_status();
-			else
+				gps_mcudl_hal_ccif_show_status();
+			} else
 				MDL_LOGE("readable=0");
-			gps_mcudl_hal_ccif_show_status();
 
-			/*TODO: replace with PAD EINT*/
-			gps_mcudl_hal_ccif_tx_prepare(GPS_MCUDL_CCIF_CH3);
-			gps_mcudl_hal_ccif_tx_trigger(GPS_MCUDL_CCIF_CH3);
-			if (gps_dl_conninfra_is_readable())
-				gps_mcudl_hal_mcu_show_status();
-			else
-				MDL_LOGE("readable=0");
-			gps_mcudl_hal_ccif_show_status();
 			gps_mcudl_connsys_coredump_start();
 			g_gps_mcudl_ever_do_coredump = true;
 		}
@@ -281,18 +317,13 @@ _close_or_reset_ack:
 		gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
 		gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
 
-		/*gps_dma_buf_show(&p_link->rx_dma_buf, true);*/
-		/*gps_dma_buf_show(&p_link->tx_dma_buf, true);*/
-		if (!gps_dl_conninfra_is_okay_or_handle_it(NULL, true))
+		if (!gps_mcudl_conninfra_is_okay_or_handle_it())
 			break;
 
-		show_log = gps_dl_set_show_reg_rw_log(true);
-		/* if (evt == GPS_MCUDL_EVT_LINK_PRINT_HW_STATUS)
-		 *	gps_dl_hw_dump_host_csr_gps_info(true);
-		 */
+		gps_mcudl_hal_mcu_show_pc_log();
 		gps_mcudl_hal_mcu_show_status();
 		gps_mcudl_hal_ccif_show_status();
-		gps_dl_set_show_reg_rw_log(show_log);
+		gps_dl_hw_dump_host_csr_gps_info(false);
 		break;
 
 	case GPS_MCUDL_EVT_LINK_FW_LOG_ON:

@@ -605,6 +605,11 @@ void gps_mcudl_hw_mcu_show_status(void)
 	GDL_LOGW("lp_status=0x%08X", lp_status);
 }
 
+void gps_mcudl_hw_mcu_show_pc_log(void)
+{
+	gps_dl_hw_dep_dump_host_csr_range(0xC0040D01, 0x31);
+}
+
 bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
 {
 	struct arm_smccc_res res;
