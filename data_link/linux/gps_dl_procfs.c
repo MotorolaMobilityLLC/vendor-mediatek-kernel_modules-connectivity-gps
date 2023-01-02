@@ -23,6 +23,7 @@
 #include "gps_mcu_hif_host.h"
 #include "gps_mcudl_data_pkt_payload_struct.h"
 #include "gps_mcudl_data_pkt_host_api.h"
+#include "gps_mcudl_each_link.h"
 #endif
 #include "gps_dl_iomem_dump.h"
 
@@ -210,6 +211,9 @@ int gps_mcudl_procfs_dbg(int y, int z)
 		} else if (z == 7) {
 			gps_mcudl_host_sta_hist_dump(GPS_MDLY_NORMAL);
 			gps_mcudl_host_sta_hist_dump(GPS_MDLY_URGENT);
+		} else if (z == 8) {
+			gps_mcudl_mcu2ap_rec_dump();
+			gps_mcudl_xlink_dump_all_rec();
 		}
 	}
 	else if (y == 2)
