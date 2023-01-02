@@ -156,6 +156,7 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		new_xbitmask |= (1UL << xid);
 	else
 		new_xbitmask &= ~(1UL << xid);
+
 	if (xid == GPS_MDLX_LPPM && op == 0) {
 		MDL_LOGYI(yid, "out_lpp_mode_notify_mcu");
 		gps_mcusys_data_sync2target_lpp_mode_status_cmd(op);
