@@ -213,6 +213,7 @@ void gps_mcudl_hal_wdt_dump(void)
 	readable = conninfra_reg_readable();
 	hung_value = conninfra_is_bus_hang();
 	MDL_LOGW("check1: readable=%d, hung_value=%d, fw_own=%d", readable, hung_value, is_fw_own);
+	gps_mcudl_hal_user_fw_own_status_dump();
 
 #if GPS_DL_HAS_PLAT_DRV
 	gps_dl_tia_gps_ctrl(false);
