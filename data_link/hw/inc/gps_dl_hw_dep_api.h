@@ -39,6 +39,7 @@ void gps_dl_hw_dep_cfg_dsp_mem(enum dsp_ctrl_enum ctrl);
  * Debug
  */
 void gps_dl_hw_dep_dump_gps_pos_info(enum gps_dl_link_id_enum link_id);
+void gps_dl_hw_dep_dump_host_csr_range(unsigned int flag_start, unsigned int len);
 void gps_dl_hw_dep_dump_host_csr_gps_info(void);
 void gps_dl_hw_dep_dump_host_csr_conninfra_info(void);
 
@@ -85,5 +86,10 @@ void gps_dl_hw_dep_enable_met(void);
 void gps_dl_hw_dep_disable_met(void);
 unsigned int gps_dl_hw_dep_get_met_read_ptr_addr(void);
 unsigned int gps_dl_hw_dep_get_met_write_ptr_addr(void);
+
+struct gps_dl_hw_host_csr_dump_range {
+	unsigned int flag_start;
+	unsigned int len;
+};
 #endif
 

@@ -89,6 +89,7 @@ enum conn_smc_opid {
 	SMC_GPS_DL_HW_GET_MCU_EMI_REMAPPING_TMP_OPID,
 	SMC_GPS_DL_HW_SET_GPS_DYNC_REMAPPING_TMP_OPID,
 #endif
+	SMC_GPS_DL_HW_DEP_DUMP_HOST_CSR_GPS_INFO_OPID,
 };
 
 enum gps_dl_hw_mvcd_dsp_type {
