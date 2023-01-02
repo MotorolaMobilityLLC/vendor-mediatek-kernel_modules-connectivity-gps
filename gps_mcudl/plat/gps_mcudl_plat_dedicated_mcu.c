@@ -26,7 +26,8 @@
 #include "gps_mcu_hif_mgmt_cmd_send.h"
 #include "gps_mcudl_hal_ccif.h"
 #include "gps_dl_hw_dep_api.h"
-
+#include "gps_mcusys_data_sync2target.h"
+#include "gps_dl_hw_dep_api.h"
 
 struct gps_mcudl_ystate {
 	bool open;
@@ -155,6 +156,10 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		new_xbitmask |= (1UL << xid);
 	else
 		new_xbitmask &= ~(1UL << xid);
+	if (xid == GPS_MDLX_LPPM && op == 0) {
+		MDL_LOGYI(yid, "out_lpp_mode_notify_mcu");
+		gps_mcusys_data_sync2target_lpp_mode_status_cmd(op);
+	}
 
 	if (new_xbitmask == old_xbitmask) {
 		/* do nothing */
@@ -195,6 +200,11 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 
 	if (mcu_ctrl_ret == 0 || !op)
 		p_ystate->xstate_bitmask = new_xbitmask;
+
+	if (xid == GPS_MDLX_LPPM && op == 1) {
+		MDL_LOGYI(yid, "in_lpp_mode_notify_mcu");
+		gps_mcusys_data_sync2target_lpp_mode_status_cmd(op);
+	}
 
 	MDL_LOGYI(yid, "xid=%d, op=%d, xbitmask: 0x%08x -> 0x%08x, mcu_ctrl: do=%d, ret=%d",
 		xid, op, old_xbitmask, new_xbitmask, do_mcu_ctrl, mcu_ctrl_ret);
