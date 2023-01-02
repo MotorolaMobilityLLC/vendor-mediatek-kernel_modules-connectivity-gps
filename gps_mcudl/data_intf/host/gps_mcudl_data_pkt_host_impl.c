@@ -775,6 +775,30 @@ void gps_mcudl_ap2mcu_set_wait_flush_flag(enum gps_mcudl_yid y_id, bool flag)
 	gps_mcudl_slot_unprotect();
 }
 
+bool gps_mcudl_slot_may_pend_pkt_type_if_near_full(struct gps_mcudl_data_slot_t *p_slot,
+	enum gps_mcudl_pkt_type type, int len)
+{
+	bool near_full;
+
+	/* near_full is always false if the pkt not in list */
+	if (!((unsigned int)type >= (unsigned int)GPS_MDLYPL_MCUSYS &&
+		(unsigned int)type < (unsigned int)GPS_MDLYPL_MAXID))
+		return false;
+
+	/* If there is no space for ap2mcu ack pkt for flowctrl, mcu2ap will be stuck.
+	 * When slot is near full, pending xlink pkt(which can be blocking and sent later),
+	 * in order to keep some space for flowctrl pkt.
+	 */
+	gps_mcudl_slot_protect();
+	/* Now, we think it's near full if only 10 pkt_entry or 2KB buf left */
+	near_full = (p_slot->entr_cursor.pkt_cnt + 10 >= ENTR_MAX ||
+		p_slot->rbuf_cursor.data_len + 2048 >= RBUF_MAX);
+	gps_mcudl_slot_unprotect();
+
+	if (near_full)
+		MDL_LOGW("hit:type=0x%x, len=%d", type, len);
+	return near_full;
+}
 
 void gps_mcudl_ap2mcu_try_to_wakeup_xlink_writer(enum gps_mcudl_yid y_id)
 {
