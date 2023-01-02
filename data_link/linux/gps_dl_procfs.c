@@ -21,6 +21,8 @@
 #include "gps_mcudl_xlink.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcu_hif_host.h"
+#include "gps_mcudl_data_pkt_payload_struct.h"
+#include "gps_mcudl_data_pkt_host_api.h"
 #endif
 #include "gps_dl_iomem_dump.h"
 
@@ -200,6 +202,10 @@ int gps_mcudl_procfs_dbg(int y, int z)
 			gps_mcudl_hal_set_non_lppm_sleep_flag(false);
 		else if (z == 5)
 			gps_mcu_hif_host_trans_hist_dump();
+		else if (z == 6) {
+			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
+			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
+		}
 	}
 	else if (y == 2)
 		gps_mcudl_xlink_test_toggle_ccif(z);
