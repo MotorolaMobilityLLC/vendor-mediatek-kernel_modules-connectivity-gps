@@ -310,6 +310,7 @@ bool gps_dl_get_iomem_by_name(struct platform_device *pdev, const char *p_name,
 	return okay;
 }
 
+int gps_not_allocate_emi_from_lk2;
 #if (GPS_DL_GET_RSV_MEM_IN_MODULE)
 phys_addr_t gGpsRsvMemPhyBase;
 unsigned long long gGpsRsvMemSize;
@@ -334,6 +335,36 @@ static int gps_dl_get_reserved_memory(struct device *dev)
 	gGpsRsvMemSize = (unsigned long long)rmem->size;
 	return 0;
 }
+
+static int gps_dl_get_reserved_memory_lk(struct device *dev)
+{
+	struct device_node *node;
+	unsigned int phy_addr = 0;
+	unsigned int phy_size = 0;
+
+	node = dev->of_node;
+	if (!node) {
+		pr_info("gps_dl_get_reserved_memory_lk: unable to get consys node\n");
+		return -1;
+	}
+
+	if (of_property_read_u32(node, "emi-addr", &phy_addr)) {
+		pr_info("gps_dl_get_reserved_memory_lk: unable to get emi_addr\n");
+		return -1;
+	}
+
+	if (of_property_read_u32(node, "emi-size", &phy_size)) {
+		pr_info("gps_dl_get_reserved_memory_lk: unable to get emi_size\n");
+		return -1;
+	}
+
+	pr_info("gps_dl_get_reserved_memory_lk emi_addr %x, emi_size %x\n", phy_addr, phy_size);
+	gGpsRsvMemPhyBase = phy_addr;
+	gGpsRsvMemSize = phy_size;
+
+	return 0;
+
+}
 #endif
 
 static int gps_dl_probe(struct platform_device *pdev)
@@ -346,8 +377,13 @@ static int gps_dl_probe(struct platform_device *pdev)
 
 	GDL_LOGW_INI("compatible = %s", (char *)pdev->dev.of_node->properties->value);
 
+	gps_not_allocate_emi_from_lk2 = 0;
+
 #if (GPS_DL_GET_RSV_MEM_IN_MODULE)
-	gps_dl_get_reserved_memory(&pdev->dev);
+	if (gps_dl_get_reserved_memory_lk(&pdev->dev) < 0) {
+		gps_not_allocate_emi_from_lk2 = 1;
+		gps_dl_get_reserved_memory(&pdev->dev);
+	}
 #endif
 	gps_dl_get_iomem_by_name(pdev, "conn_infra_base", &g_gps_dl_iomem_arrary[0]);
 	gps_dl_get_iomem_by_name(pdev, "conn_gps_base", &g_gps_dl_iomem_arrary[1]);
