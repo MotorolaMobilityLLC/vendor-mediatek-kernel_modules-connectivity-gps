@@ -237,6 +237,8 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 	struct gps_mcu_hif_trans_end_desc end_desc;
 	enum gps_mcu_hif_ch hif_ch;
 
+	memset(&start_desc, 0, sizeof(start_desc));
+	memset(&end_desc, 0, sizeof(end_desc));
 	hif_ch = gps_mcu_hif_get_trans_hif_ch(trans_id);
 	gps_mcu_hif_get_trans_start_desc(trans_id, &start_desc);
 	gps_mcu_hif_get_trans_end_desc(trans_id, &end_desc);
