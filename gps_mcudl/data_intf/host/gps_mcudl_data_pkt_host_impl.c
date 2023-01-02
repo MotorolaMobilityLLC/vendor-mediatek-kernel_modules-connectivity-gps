@@ -801,6 +801,11 @@ void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum g
 		return;
 	}
 
+	if (gps_mcudl_mcu2ap_test_bypass_get()) {
+		MDL_LOGYW(y_id, "recv type=%d, len=%d, bypass", type, payload_len);
+		return;
+	}
+
 _loop_start:
 	if (x_id == GPS_MDLX_GDLOG) {
 		/* duplicate the payload to GDLOG2 device node */
@@ -841,5 +846,17 @@ _loop_end:
 		x_id = x_id_next;
 		goto _loop_start;
 	}
+}
+
+bool g_mcu2ap_test_xdata_bypass;
+
+void gps_mcudl_mcu2ap_test_bypass_set(bool bypass)
+{
+	g_mcu2ap_test_xdata_bypass = bypass;
+}
+
+bool gps_mcudl_mcu2ap_test_bypass_get(void)
+{
+	return g_mcu2ap_test_xdata_bypass;
 }
 
