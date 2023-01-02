@@ -27,9 +27,9 @@ enum gps_dl_hal_power_ctrl_op_enum {
 };
 
 struct gps_each_dsp_reg_read_value {
-	unsigned int record_d2a0_index;
-	unsigned int record_d2a1;
-	unsigned int g_gps_rec_dsp_value[GPS_DSP_REG_DBG_POLL_MAX];
+	unsigned int record_d2a_index;
+	/* g_gps_rec_dsp_value include d2a0 history value and last d2a1 value */
+	unsigned int g_gps_rec_dsp_value[GPS_DSP_REG_DBG_POLL_MAX + 1];
 };
 
 bool gps_dl_hal_conn_infra_driver_on(void);
