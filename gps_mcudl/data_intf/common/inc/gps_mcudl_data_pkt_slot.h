@@ -101,6 +101,7 @@ gpsmdl_u32 gps_mcudl_flowctrl_cal_window_size(void);
 void gps_mcudl_flowctrl_remote_update_recv_byte(struct gps_mcudl_data_pkt_mcu_sta *p_sta);
 void gps_mcudl_flowctrl_local_add_send_byte(gpsmdl_u32 delta);
 void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid);
+void gps_mcudl_flowctrl_dump_host_sta(enum gps_mcudl_yid yid);
 
 gpsmdl_u8 *gps_mcudl_slot_pkt_reserve(struct gps_mcudl_data_slot_t *p_slot,
 	enum gps_mcudl_pkt_type type, gpsmdl_u32 payload_len,
