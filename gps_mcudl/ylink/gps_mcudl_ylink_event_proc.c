@@ -12,6 +12,7 @@
 #include "gps_mcudl_plat_api.h"
 #include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcusys_fsm.h"
+#include "gps_dl_time_tick.h"
 
 
 void gps_mcudl_ylink_event_send(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_event_id evt)
@@ -44,8 +45,10 @@ void gps_mcudl_ylink_event_send(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 
 void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_event_id evt)
 {
-	MDL_LOGYW(y_id, "evt=%d", evt);
+	unsigned long tick_us0, tick_us1, dt_us;
 
+	tick_us0 = gps_dl_tick_get_us();
+	MDL_LOGYD_EVT(y_id, "evt=%d", evt);
 	switch (evt) {
 	case GPS_MCUDL_YLINK_EVT_ID_RX_DATA_READY:
 #if 1
@@ -68,5 +71,8 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 	default:
 		break;
 	}
+	tick_us1 = gps_dl_tick_get_us();
+	dt_us = tick_us1 - tick_us0;
+	MDL_LOGYI_EVT(y_id, "evt=%d, dt_us=%lu", evt, dt_us);
 }
 
