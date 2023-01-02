@@ -30,6 +30,7 @@ enum gps_mcusys_gpsbin_state {
 	GPS_MCUSYS_GPSBIN_POST_OFF,
 };
 void gps_mcusys_gpsbin_state_set(enum gps_mcusys_gpsbin_state state);
+bool gps_mcusys_gpsbin_state_is(enum gps_mcusys_gpsbin_state state);
 
 void gps_mcusys_nvlock_fsm(enum gps_mcusys_nv_data_id nv_id,
 	enum gps_mcusys_nvlock_event_id lock_evt);
