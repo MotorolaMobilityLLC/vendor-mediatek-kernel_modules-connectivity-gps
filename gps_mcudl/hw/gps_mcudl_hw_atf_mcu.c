@@ -10,6 +10,8 @@
 #include "gps_mcudl_hw_priv_util.h"
 #include "gps_dl_hw_atf.h"
 #include "gps_mcudl_log.h"
+#include "gps_dl_subsys_reset.h"
+#include "gps_mcudl_hal_mcu.h"
 
 bool gps_mcudl_check_conn_infra_ver_is_ok(void)
 {
@@ -272,6 +274,8 @@ static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 		return 0;
 
 _fail_disable_gps_slp_prot:
+		gps_mcudl_hal_mcu_show_pc_log();
+		gps_dl_slp_prot_fail_and_dump();
 		return -1;
 	} else if (op == 0) {
 		ret = 0;
@@ -304,16 +308,16 @@ _fail_disable_gps_slp_prot:
 		}
 
 		/* AXI */
-		poll_okay = gps_dl_hw_gps_sleep_prot_ctrl_gps2conn_axi_rx(op);
+		poll_okay = gps_dl_hw_gps_sleep_prot_ctrl_gps2conn_axi_tx(op);
 		if (!poll_okay) {
-			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn_axi rx");
+			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn_axi tx");
 			ret = -1;
 			goto _fail_enable_gps_slp_prot;
 		}
 
-		poll_okay = gps_dl_hw_gps_sleep_prot_ctrl_gps2conn_axi_tx(op);
+		poll_okay = gps_dl_hw_gps_sleep_prot_ctrl_gps2conn_axi_rx(op);
 		if (!poll_okay) {
-			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn_axi tx");
+			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn_axi rx");
 			ret = -1;
 			goto _fail_enable_gps_slp_prot;
 		}
@@ -322,6 +326,8 @@ _fail_disable_gps_slp_prot:
 
 _fail_enable_gps_slp_prot:
 		/* trigger reset on outer function */
+		gps_mcudl_hal_mcu_show_pc_log();
+		gps_dl_slp_prot_fail_and_dump();
 		return -1;
 	}
 	return 0;
@@ -619,6 +625,7 @@ void gps_mcudl_hw_mcu_show_status(void)
 void gps_mcudl_hw_mcu_show_pc_log(void)
 {
 	gps_dl_hw_dep_dump_host_csr_range(0xC0040D01, 0x31);
+	gps_dl_hw_dep_dump_host_csr_range(0xC0040109, 0xA);
 }
 
 bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
