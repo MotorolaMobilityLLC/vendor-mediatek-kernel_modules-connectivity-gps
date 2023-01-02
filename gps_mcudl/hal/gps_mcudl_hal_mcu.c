@@ -33,11 +33,11 @@ bool gps_mcudl_xlink_on(const struct gps_mcudl_fw_list *p_fw_list)
 	if (!is_okay)
 		return false;
 
+	gps_mcudl_hal_user_fw_own_init(GMDL_FW_OWN_CTRL_BY_POS);
 	is_okay = gps_mcudl_conninfra_is_okay_or_handle_it();
 	if (!is_okay)
 		return false;
 
-	gps_mcudl_hal_user_fw_own_init(GMDL_FW_OWN_CTRL_BY_POS);
 	/* init status is clr_fw_own and force_wake should be true, so bypass it:
 	 * (void)gps_mcudl_hw_conn_force_wake(false);
 	 */
