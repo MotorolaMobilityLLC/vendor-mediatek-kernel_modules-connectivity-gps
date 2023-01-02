@@ -1,5 +1,4 @@
 
-$(warning GPS_CHIP_ID != common)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(MTK_GPS_SUPPORT), yes)
