@@ -949,6 +949,66 @@ bool gps_mcudl_ypl_type2xid(enum gps_mcudl_pkt_type type, enum gps_mcudl_xid *p_
 	return is_okay;
 }
 
+#define MCU2AP_PAYLOAD_REC_MAX (8)
+#define GPS_PKT_PL_DUMP_STR "pl=[%02x %02x %02x %02x, %02x %02x %02x %02x]"
+
+#define MCU2AP_PKT_REC_MAX (32)
+struct gps_mcudl_mcu2ap_pkt_rec_item {
+	unsigned long tick_us;
+	gpsmdl_u8 payload[MCU2AP_PAYLOAD_REC_MAX];
+	enum gps_mcudl_yid y_id;
+	enum gps_mcudl_xid x_id;
+	enum gps_mcudl_pkt_type type;
+	bool do_wake;
+	gpsmdl_u16 len;
+};
+
+struct gps_mcudl_mcu2ap_pkt_rec_item g_gps_mcu2ap_pkt_rec_list[MCU2AP_PKT_REC_MAX];
+unsigned long g_gps_mcu2ap_pkt_rec_cnt;
+
+void gps_mcudl_mcu2ap_rec_add_item(struct gps_mcudl_mcu2ap_pkt_rec_item *p_item)
+{
+	unsigned long index;
+
+	index = (g_gps_mcu2ap_pkt_rec_cnt % MCU2AP_PKT_REC_MAX);
+	g_gps_mcu2ap_pkt_rec_list[index] = *p_item;
+	g_gps_mcu2ap_pkt_rec_cnt++;
+}
+
+void gps_mcudl_mcu2ap_rec_dump_item(struct gps_mcudl_mcu2ap_pkt_rec_item *p_item, unsigned long index)
+{
+	MDL_LOGW("i=%lu,us=%lu,y=%d,x=%2d,type=0x%02x,w=%d,len=%4d,"GPS_PKT_PL_DUMP_STR,
+		index, p_item->tick_us, p_item->y_id, p_item->x_id,
+		p_item->type, p_item->do_wake, p_item->len,
+		p_item->payload[0], p_item->payload[1], p_item->payload[2], p_item->payload[3],
+		p_item->payload[4], p_item->payload[5], p_item->payload[6], p_item->payload[7]);
+}
+
+void gps_mcudl_mcu2ap_rec_dump(void)
+{
+	unsigned long index;
+	struct gps_mcudl_mcu2ap_pkt_rec_item *p_item;
+
+	if (g_gps_mcu2ap_pkt_rec_cnt == 0) {
+		MDL_LOGW("no_rec");
+		return;
+	}
+
+	if (g_gps_mcu2ap_pkt_rec_cnt <= MCU2AP_PKT_REC_MAX)
+		index = 0;
+	else
+		index = g_gps_mcu2ap_pkt_rec_cnt - MCU2AP_PKT_REC_MAX;
+
+	for ( ; index < g_gps_mcu2ap_pkt_rec_cnt; index++) {
+		p_item = &g_gps_mcu2ap_pkt_rec_list[index % MCU2AP_PKT_REC_MAX];
+		gps_mcudl_mcu2ap_rec_dump_item(p_item, index);
+	}
+}
+
+void gps_mcudl_mcu2ap_rec_init(void)
+{
+	g_gps_mcu2ap_pkt_rec_cnt = 0;
+}
 
 void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len)
@@ -958,6 +1018,8 @@ void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum g
 	struct gps_mcudl_each_link *p_xlink;
 	enum GDL_RET_STATUS gdl_ret;
 	bool do_wake;
+	struct gps_mcudl_mcu2ap_pkt_rec_item rec_item;
+	int rec_pl_len;
 
 	if (!gps_mcudl_ypl_type2xid(type, &x_id)) {
 		MDL_LOGYW(y_id, "recv type=%d, len=%d, no x_id", type, payload_len);
@@ -1003,6 +1065,22 @@ _loop_start:
 		MDL_LOGXD(x_id, "do_wake=%d, type=%d, len=%d, y_id=%d",
 			do_wake, type, payload_len, y_id);
 	}
+
+	/* Recording pkt info */
+	rec_item.tick_us = gps_dl_tick_get_us();
+	rec_item.x_id = x_id;
+	rec_item.y_id = y_id;
+	rec_item.type = type;
+	rec_item.len = payload_len;
+	rec_item.do_wake = do_wake;
+	if (payload_len >= MCU2AP_PAYLOAD_REC_MAX)
+		rec_pl_len = MCU2AP_PAYLOAD_REC_MAX;
+	else
+		rec_pl_len = payload_len;
+	memset(&rec_item.payload[0], 0, sizeof(rec_item.payload));
+	if (rec_pl_len > 0)
+		memcpy(&rec_item.payload[0], payload_ptr, rec_pl_len);
+	gps_mcudl_mcu2ap_rec_add_item(&rec_item);
 
 _loop_end:
 	if ((unsigned int)x_id_next < (unsigned int)GPS_MDLX_CH_NUM) {
