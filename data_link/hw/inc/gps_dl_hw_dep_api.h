@@ -37,6 +37,7 @@ void gps_dl_hw_dep_dump_host_csr_conninfra_info(void);
 
 /* Only need when BMASK_RW_DO_CHECK active for debug purpose */
 void gps_dl_hw_dep_may_do_bus_check_and_print(unsigned int host_addr);
+void gps_dl_hw_dep_dump_gps_rf_temp_cr(void);
 
 /*
  * MET2.0
