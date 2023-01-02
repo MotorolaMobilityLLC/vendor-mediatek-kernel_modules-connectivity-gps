@@ -11,6 +11,13 @@
 #include "../gps_dl_hw_priv_util.h"
 #include "conn_infra/conn_dbg_ctl.h"
 #include "gps/gps_aon_top.h"
+#if GPS_DL_HAS_CONNINFRA_DRV
+#if GPS_DL_ON_LINUX
+#include "conninfra.h"
+#elif GPS_DL_ON_CTP
+#include "conninfra_ext.h"
+#endif
+#endif
 
 
 void gps_dl_hw_dep_dump_gps_pos_info(enum gps_dl_link_id_enum link_id)
@@ -94,5 +101,27 @@ void gps_dl_hw_dep_dump_host_csr_conninfra_info(void)
 void gps_dl_hw_dep_may_do_bus_check_and_print(unsigned int host_addr)
 {
 	/* TODO */
+}
+
+void gps_dl_hw_gps_dump_gps_rf_temp_cr(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	unsigned int spi_data;
+	int rd_status;
+
+	/*GPS: read 0x500*/
+	spi_data = 0;
+	rd_status = conninfra_spi_read(SYS_SPI_GPS, 0x500, &spi_data);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+	GDL_LOGW("normally dump spi_data(GPS:0x500) = 0x%x", spi_data);
+
+	/*GPS: read 0x518*/
+	spi_data = 0;
+	rd_status = conninfra_spi_read(SYS_SPI_GPS, 0x518, &spi_data);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+	GDL_LOGW("normally dump spi_data(GPS:0x518) = 0x%x", spi_data);
+#else
+	GDL_LOGE("no conninfra driver");
+#endif
 }
 

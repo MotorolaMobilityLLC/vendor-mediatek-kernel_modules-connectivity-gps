@@ -31,6 +31,7 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl);
 bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_gps_adie_force_off(void);
 void gps_dl_hw_gps_dump_top_rf_cr(void);
+void gps_dl_hw_gps_dump_top_rf_temp_cr(void);
 
 int gps_dl_hw_gps_common_on(void);
 int gps_dl_hw_gps_common_off(void);
@@ -95,6 +96,7 @@ struct gps_dl_hw_usrt_status_struct {
 	unsigned int mcub_a2d_flag;
 	unsigned int mcub_a2d_d0;
 	unsigned int mcub_a2d_d1;
+	unsigned int monf;
 };
 
 struct gps_dl_hw_pair_time_struct {
@@ -127,6 +129,7 @@ void gps_dl_hw_do_gps_a2z_dump(void);
 void gps_dl_hw_print_usrt_status(enum gps_dl_link_id_enum link_id);
 bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_gps_dump_gps_rf_cr(void);
+void gps_dl_hw_gps_dump_gps_rf_temp_cr(void);
 void gps_dl_hw_print_ms_counter_status(void);
 struct gps_dl_hw_pair_time_struct *gps_dl_hw_get_dsp_ms_counter(
 	unsigned int *p_tcxo_low, unsigned int *p_tcxo_high);
