@@ -381,6 +381,10 @@ int gps_dl_hw_gps_pwr_stat_ctrl(enum dsp_ctrl_enum ctrl)
 	case GPS_L5_DSP_OFF:
 		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_GPS_PWR_STAT, 0);
 		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_FORCE_OSC_EN_ON, 0);
+		if (ctrl == GPS_L1_DSP_ON || ctrl == GPS_L5_DSP_ON)
+			GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 1);
+		else
+			GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 0);
 		g_gps_pwr_stat = 0;
 		break;
 
@@ -396,6 +400,10 @@ int gps_dl_hw_gps_pwr_stat_ctrl(enum dsp_ctrl_enum ctrl)
 	case GPS_L5_DSP_ENTER_DSTOP:
 		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_GPS_PWR_STAT, 1);
 		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_FORCE_OSC_EN_ON, clk_ext);
+		if (clk_ext)
+			GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 1);
+		else
+			GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 0);
 		gps_dl_hw_print_ms_counter_status();
 		g_gps_pwr_stat = 1;
 		break;
@@ -403,6 +411,7 @@ int gps_dl_hw_gps_pwr_stat_ctrl(enum dsp_ctrl_enum ctrl)
 	case GPS_L1_DSP_EXIT_DSTOP:
 	case GPS_L5_DSP_EXIT_DSTOP:
 		/* do nothing */
+		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 1);
 		gps_dl_hw_print_ms_counter_status();
 		break;
 
@@ -410,12 +419,17 @@ int gps_dl_hw_gps_pwr_stat_ctrl(enum dsp_ctrl_enum ctrl)
 	case GPS_L5_DSP_ENTER_DSLEEP:
 		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_GPS_PWR_STAT, 3);
 		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_FORCE_OSC_EN_ON, clk_ext);
+		if (clk_ext)
+			GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 1);
+		else
+			GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 0);
 		g_gps_pwr_stat = 3;
 		break;
 
 	case GPS_L1_DSP_EXIT_DSLEEP:
 	case GPS_L5_DSP_EXIT_DSLEEP:
 		/* do nothong */
+		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_DIS_HW_RST_CNT, 1);
 		break;
 
 	default:
