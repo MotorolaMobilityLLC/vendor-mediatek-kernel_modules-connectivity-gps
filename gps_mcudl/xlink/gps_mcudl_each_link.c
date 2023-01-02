@@ -182,7 +182,8 @@ _check_again:
 		}
 
 		if (!is_twice_check) {
-			gps_dl_trigger_connsys_reset();
+			/* gps_dl_trigger_connsys_reset(); */
+			gps_mcudl_trigger_gps_subsys_reset(false, "GNSS opening fail");
 			okay = false;
 		} else {
 			okay = gps_mcudl_each_link_change_state_from(link_id, LINK_OPENING, LINK_CLOSING);
