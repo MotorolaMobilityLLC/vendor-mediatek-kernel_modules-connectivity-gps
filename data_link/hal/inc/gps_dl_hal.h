@@ -10,6 +10,7 @@
 #include "gps_dl_dma_buf.h"
 #include "gps_dl_hal_type.h"
 #include "gps_dl_isr.h"
+#include "gps_dl_hw_dep_macro.h"
 
 /* for gps_each_device.c */
 
@@ -23,6 +24,12 @@ enum gps_dl_hal_power_ctrl_op_enum {
 	GPS_DL_HAL_ENTER_DPSTOP = 4,
 	GPS_DL_HAL_LEAVE_DPSTOP = 5,
 	GPS_DL_HAL_POWER_OP_MAX
+};
+
+struct gps_each_dsp_reg_read_value {
+	unsigned int record_d2a0_index;
+	unsigned int record_d2a1;
+	unsigned int g_gps_rec_dsp_value[GPS_DSP_REG_DBG_POLL_MAX];
 };
 
 bool gps_dl_hal_conn_infra_driver_on(void);
@@ -73,9 +80,12 @@ int gps_dl_hal_usrt_direct_read(enum gps_dl_link_id_enum link_id,
 
 void gps_each_dsp_reg_read_ack(
 	enum gps_dl_link_id_enum link_id, const struct gps_dl_hal_mcub_info *p_d2a);
+void gps_each_dsp_reg_dump_if_any_rec(enum gps_dl_link_id_enum link_id);
 void gps_each_dsp_reg_gourp_read_init(enum gps_dl_link_id_enum link_id);
 void gps_each_dsp_reg_gourp_read_start(enum gps_dl_link_id_enum link_id,
 	bool dbg, unsigned int round_max);
+void gps_dl_hal_show_dsp_reg(unsigned char *tag,  enum gps_dl_link_id_enum link_id,
+	unsigned int *buf, unsigned int len);
 
 enum GDL_RET_STATUS gps_each_dsp_reg_read_request(
 	enum gps_dl_link_id_enum link_id, unsigned int reg_addr);
