@@ -5,6 +5,7 @@
 #include "gps_dl_config.h"
 
 #include "gps_dl_hw_ver.h"
+#include "gps_dl_hw_api.h"
 #include "gps_dl_hw_dep_api.h"
 #include "gps_dl_hw_dep_macro.h"
 
