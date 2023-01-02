@@ -12,6 +12,7 @@
 
 #define NV_IS_ON_MCU (false)
 #define GPS_OFL_TRC GDL_LOGI
+#define GPS_OFL_DBG GDL_LOGD
 
 #define GPSMDL_PLAT_TICK_TYPE  unsigned long
 #define GPSMDL_PLAT_TICK_GET() gps_dl_tick_get_us()
