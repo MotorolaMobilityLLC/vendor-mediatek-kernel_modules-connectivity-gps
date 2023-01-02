@@ -52,6 +52,8 @@ enum GDL_RET_STATUS gps_dl_hw_mcub_dsp_read_request(
 void gps_dl_hw_set_gps_emi_remapping(unsigned int _20msb_of_36bit_phy_addr);
 unsigned int gps_dl_hw_get_gps_emi_remapping(void);
 
+void gps_dl_hw_set_gps_peri_remapping(unsigned int _20msb_of_36bit_phy_addr);
+
 void gps_dl_hw_set_dma_start(enum gps_dl_hal_dma_ch_index channel,
 	struct gdl_hw_dma_transfer *p_transfer);
 
