@@ -7,6 +7,7 @@
 #include "gps_mcudl_log.h"
 #include "gps_mcu_hif_mgmt_cmd_send.h"
 #include "gps_mcudl_data_pkt_slot.h"
+#include "gps_mcu_hif_host.h"
 #if GPS_DL_ON_LINUX
 #include <linux/jiffies.h>
 #include <linux/completion.h>
@@ -183,6 +184,7 @@ bool gps_mcudl_mgmt_cmd_wait_ack(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_
 	if (is_timeout || old_state != GMDL_CMD_ACK_AFTER_WAIT || !is_result_okay) {
 		GDL_LOGW("cmd_id=%d, is_timeout=%d, old_state=%d, is_okay=%d",
 			cmd_id, is_timeout, old_state, is_result_okay);
+		gps_mcu_hif_host_dump_ch(GPS_MCU_HIF_CH_DMALESS_MGMT);
 	}
 	return is_result_okay;
 }
