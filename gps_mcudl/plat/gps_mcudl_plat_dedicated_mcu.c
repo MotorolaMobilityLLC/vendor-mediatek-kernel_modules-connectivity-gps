@@ -138,6 +138,17 @@ bool gps_mcudl_link_drv_on_recv_mgmt_data(const unsigned char *p_data, unsigned 
 	return true;
 }
 
+bool gps_mcudl_link_drv_on_recv_urgent_data(const unsigned char *p_data, unsigned int data_len)
+{
+#if 1
+	gps_mcudl_mcu2ap_ydata_recv(GPS_MDLY_URGENT, p_data, data_len);
+#else
+	gps_mcudl_plat_mcu_ch1_read_proc2(p_data, data_len);
+#endif
+	return true;
+}
+
+
 bool gps_mcudl_link_drv_on_recv_normal_data(const unsigned char *p_data, unsigned int data_len)
 {
 	MDL_LOGD("data_len=%d, data0=0x%x", data_len, p_data[0]);
@@ -186,7 +197,8 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 	bool non_lppm_sleep = false;
 	int mcu_ctrl_ret = 0;
 
-	yid = GPS_MDL_X2Y(xid);
+	/* only need to power on normal channel */
+	yid = GPS_MDLY_NORMAL;
 	p_ystate = &g_gps_mcudl_ystate_list[yid];
 	old_xbitmask = p_ystate->xstate_bitmask;
 	new_xbitmask = old_xbitmask;
@@ -218,7 +230,8 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		gps_mcu_hif_init();
 		gps_mcudl_mcu2ap_ydata_sta_init();
 		MDL_LOGYI(yid, "gps_mcudl_ap2mcu_context_init");
-		gps_mcudl_ap2mcu_context_init(yid);
+		gps_mcudl_ap2mcu_context_init(GPS_MDLY_NORMAL);
+		gps_mcudl_ap2mcu_context_init(GPS_MDLY_URGENT);
 		gps_mcusys_mnlbin_fsm(GPS_MCUSYS_MNLBIN_SYS_ON);
 		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_PRE_ON);
 		MDL_LOGYI(yid, "gps_mcudl_may_do_fw_loading, before");
@@ -421,6 +434,8 @@ int gps_mcudl_plat_mcu_open(void)
 		&gps_mcudl_link_drv_on_recv_mgmt_data);
 	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMA_NORMAL,
 		&gps_mcudl_link_drv_on_recv_normal_data);
+	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMA_URGENT,
+		&gps_mcudl_link_drv_on_recv_urgent_data);
 	MDL_LOGI("add listeners, done");
 
 	g_gps_ccif_irq_cnt = 0;
@@ -551,6 +566,18 @@ int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 	is_okay_last = is_okay;
 	return count;
 }
+
+
+int gps_mcudl_plat_mcu_ch2_write(const unsigned char *kbuf, unsigned int count)
+{
+	bool is_okay;
+
+	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMA_URGENT, kbuf, count);
+	if (!is_okay)
+		return 0;
+	return count;
+}
+
 
 int gps_mcudl_plat_mcu_ch1_read_nonblock(unsigned char *kbuf, unsigned int count)
 {
