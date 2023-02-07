@@ -28,6 +28,7 @@
 #include "gps_mcudl_each_link.h"
 #include "gps_mcudl_xlink_buf.h"
 #include "gps_mcusys_nv_data_api.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
 
 
 #define GPS_MCUDL_DEV_NAME "gps_mcudl_cdev"
@@ -257,6 +258,7 @@ void gps_mcudl_device_context_deinit(void)
 #endif
 	gps_mcudl_connsys_coredump_deinit();
 	gps_mcudl_ctx_links_deinit();
+	gps_mcudl_hal_user_fw_own_timer_destroy();
 #if 0
 #if GPS_DL_HAS_PLAT_DRV
 	gps_dl_reserved_mem_deinit();
@@ -351,6 +353,7 @@ void gps_mcudl_device_context_init(void)
 #if 0
 	gps_mcusys_nv_data_host_init();
 #endif
+	gps_mcudl_hal_user_fw_own_timer_setup();
 	gps_mcudl_ctx_links_init();
 	gps_mcudl_connsys_coredump_init();
 #if 0
