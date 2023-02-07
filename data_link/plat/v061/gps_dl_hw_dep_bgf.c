@@ -523,7 +523,7 @@ twice_get_ecid:
 	}
 	ecid_data = ecid_msb;
 	ecid_data = ecid_data << 32 | ecid_lsb;
-	GDL_LOGI("get_ecid_data = 0x%lx", ecid_data);
+	GDL_LOGI("[MT6686P_ECID] : 0x%lx", ecid_data);
 	if (print_ecid_1st) {
 		print_ecid_1st = false;
 		goto twice_get_ecid;
