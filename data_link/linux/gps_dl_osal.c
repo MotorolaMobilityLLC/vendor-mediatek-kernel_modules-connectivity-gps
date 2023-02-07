@@ -317,3 +317,50 @@ int gps_dl_osal_unlock_unsleepable_lock(struct gps_dl_osal_unsleepable_lock *pUS
 	return 0;
 }
 
+int gps_dl_osal_timer_create(struct gps_dl_osal_timer *pTimer)
+{
+	struct timer_list *timer = &pTimer->timer;
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+	timer_setup(timer, pTimer->timeoutHandler, 0);
+#else
+	init_timer(timer);
+	timer->function = pTimer->timeoutHandler;
+	timer->data = (unsigned long)pTimer->timeroutHandlerData;
+#endif
+	return 0;
+}
+
+int gps_dl_osal_timer_start(struct gps_dl_osal_timer *pTimer, unsigned int ms)
+{
+
+	struct timer_list *timer = &pTimer->timer;
+
+	timer->expires = jiffies + (ms / (1000 / HZ));
+	add_timer(timer);
+	return 0;
+}
+
+int gps_dl_osal_timer_stop(struct gps_dl_osal_timer *pTimer)
+{
+	struct timer_list *timer = &pTimer->timer;
+
+	del_timer(timer);
+	return 0;
+}
+
+int gps_dl_osal_timer_stop_sync(struct gps_dl_osal_timer *pTimer)
+{
+	struct timer_list *timer = &pTimer->timer;
+
+	del_timer_sync(timer);
+	return 0;
+}
+
+int gps_dl_osal_timer_modify(struct gps_dl_osal_timer *pTimer, unsigned int ms)
+{
+
+	mod_timer(&pTimer->timer, jiffies + (ms) / (1000 / HZ));
+	return 0;
+}
+

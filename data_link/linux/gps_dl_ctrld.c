@@ -157,7 +157,7 @@ static int gps_dl_put_op(struct gps_dl_osal_lxop_q *pOpQ, struct gps_dl_osal_lxo
 		return -1;
 	}
 
-	iRet = gps_dl_osal_lock_sleepable_lock(&pOpQ->sLock);
+	iRet = gps_dl_osal_lock_unsleepable_lock(&pOpQ->spin_lock);
 	if (iRet) {
 		GDL_LOGW_EVT("gps_dl_osal_lock_sleepable_lock iRet(%d)", iRet);
 		return -1;
@@ -166,15 +166,15 @@ static int gps_dl_put_op(struct gps_dl_osal_lxop_q *pOpQ, struct gps_dl_osal_lxo
 	/* acquire lock success */
 	if (!RB_FULL(pOpQ))
 		RB_PUT(pOpQ, pOp);
-	else {
-		GDL_LOGW("RB_FULL(%p -> %p)", pOp, pOpQ);
+	else
 		iRet = -1;
-	}
 
-	gps_dl_osal_unlock_sleepable_lock(&pOpQ->sLock);
+	gps_dl_osal_unlock_unsleepable_lock(&pOpQ->spin_lock);
 
-	if (iRet)
+	if (iRet) {
+		GDL_LOGW("RB_FULL(%p -> %p)", pOp, pOpQ);
 		return -1;
+	}
 	return 0;
 }
 
@@ -270,7 +270,7 @@ static struct gps_dl_osal_lxop *gps_dl_get_op(struct gps_dl_osal_lxop_q *pOpQ)
 		return NULL;
 	}
 
-	iRet = gps_dl_osal_lock_sleepable_lock(&pOpQ->sLock);
+	iRet = gps_dl_osal_lock_unsleepable_lock(&pOpQ->spin_lock);
 	if (iRet) {
 		GDL_LOGE("gps_dl_osal_lock_sleepable_lock iRet(%d)", iRet);
 		return NULL;
@@ -278,7 +278,7 @@ static struct gps_dl_osal_lxop *gps_dl_get_op(struct gps_dl_osal_lxop_q *pOpQ)
 
 	/* acquire lock success */
 	RB_GET(pOpQ, pOp);
-	gps_dl_osal_unlock_sleepable_lock(&pOpQ->sLock);
+	gps_dl_osal_unlock_unsleepable_lock(&pOpQ->spin_lock);
 
 	if (pOp == NULL) {
 		GDL_LOGW("RB_GET(%p) return NULL", pOpQ);
@@ -376,8 +376,8 @@ int gps_dl_ctrld_init(void)
 
 	/* Initialize gps control Thread Information: Thread */
 	gps_dl_osal_event_init(&pgps_dl_ctrld->rgpsdlWq);
-	gps_dl_osal_sleepable_lock_init(&pgps_dl_ctrld->rOpQ.sLock);
-	gps_dl_osal_sleepable_lock_init(&pgps_dl_ctrld->rFreeOpQ.sLock);
+	gps_dl_osal_unsleepable_lock_init(&pgps_dl_ctrld->rOpQ.spin_lock);
+	gps_dl_osal_unsleepable_lock_init(&pgps_dl_ctrld->rFreeOpQ.spin_lock);
 	/* Initialize op queue */
 	RB_INIT(&pgps_dl_ctrld->rOpQ, GPS_DL_OP_BUF_SIZE);
 	RB_INIT(&pgps_dl_ctrld->rFreeOpQ, GPS_DL_OP_BUF_SIZE);
