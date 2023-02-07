@@ -26,7 +26,16 @@
 	GDL_HW_POLL_ENTRY_VERBOSE(GPS_DL_CONN_INFRA_BUS,                 \
 		CONN_INFRA_CFG_IP_VERSION_IP_VERSION,                    \
 		p_poll_okay, p_poll_ver, POLL_DEFAULT, (                 \
-			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6983))   \
+			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6983)   ||    \
+			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6897))   \
+	)
+
+#define GDL_HW_CHECK_BGF_IP_VER(p_poll_okay, p_poll_ver)             \
+	GDL_HW_POLL_ENTRY_VERBOSE(GPS_DL_GPS_BUS,                 \
+		BGF_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION,                    \
+		p_poll_okay, p_poll_ver, POLL_DEFAULT, (                 \
+			(*p_poll_ver == GDL_HW_BGF_VER_MT6893) ||    \
+			(*p_poll_ver == GDL_HW_BGF_VER_MT6897))   \
 	)
 
 #define GDL_HW_SET_EMI_REMAP_FIELD \
