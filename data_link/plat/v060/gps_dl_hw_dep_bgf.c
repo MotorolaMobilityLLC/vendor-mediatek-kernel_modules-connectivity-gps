@@ -478,35 +478,32 @@ bool gps_dl_hw_dep_gps_control_adie_on(void)
 	GDL_HW_ADIE_TOP_CLK_EN_6686(0x1);
 
 #if GPS_DL_HAS_CONNINFRA_DRV
-	if (0x6637 == gps_dl_hal_get_adie_ver() || 0x6686 == gps_dl_hal_get_adie_ver()) {
-		/*read adie chip id*/
-		if (conninfra_spi_read(SYS_SPI_TOP, 0x02C, &chip_ver) != 0) {
-			GDL_LOGD("conninfra_spi_read_adie_not_okay");
-			goto _fail_conninfra_spi_read_adie_not_okay;
-		}
-		GDL_LOGI("conninfra_spi_read_adie success, chip_ver = 0x%08x", chip_ver);
-		chip_ver = chip_ver & 0xffff0000;
-		if (chip_ver == 0x66860000)
-			GDL_LOGD("conninfra_spi_read_adie_6686 success, chip_ver = 0x%08x", chip_ver);
-
-		/**/
-		if (conninfra_spi_write(SYS_SPI_TOP, 0x008, 0x00000000) != 0) {
-			GDL_LOGI_RRW("_fail_conninfra_spi_write_top_data_driving not okay");
-			goto _fail_conninfra_spi_write_top_data_driving_not_okay;
-		}
-		/**/
-		if (conninfra_spi_read(SYS_SPI_TOP, 0x008, &chip_ver) == 0)
-			GDL_LOGD("spi_data[0x008] = 0x%x", chip_ver);
-
-		if (conninfra_spi_write(SYS_SPI_TOP, 0xB18, 0x00000007) != 0) {
-			GDL_LOGI_RRW("conninfra_spi_write_atop_rg_top_xo_07 not okay");
-			goto _fail_conninfra_spi_write_atop_rg_top_xo_07_not_okay;
-		}
-
-		if (conninfra_spi_read(SYS_SPI_TOP, 0xB18, &chip_ver) == 0)
-			GDL_LOGD("spi_data[0xB18] = 0x%x", chip_ver);
-
+	/*read adie chip id*/
+	if (conninfra_spi_read(SYS_SPI_TOP, 0x02C, &chip_ver) != 0) {
+		GDL_LOGD("conninfra_spi_read_adie_not_okay");
+		goto _fail_conninfra_spi_read_adie_not_okay;
 	}
+	GDL_LOGI("conninfra_spi_read_adie success, chip_ver = 0x%08x", chip_ver);
+	chip_ver = chip_ver & 0xffff0000;
+	if (chip_ver == 0x66860000)
+		GDL_LOGD("conninfra_spi_read_adie_6686 success, chip_ver = 0x%08x", chip_ver);
+
+	/**/
+	if (conninfra_spi_write(SYS_SPI_TOP, 0x008, 0x00000000) != 0) {
+		GDL_LOGI_RRW("_fail_conninfra_spi_write_top_data_driving not okay");
+		goto _fail_conninfra_spi_write_top_data_driving_not_okay;
+	}
+	/**/
+	if (conninfra_spi_read(SYS_SPI_TOP, 0x008, &chip_ver) == 0)
+		GDL_LOGD("spi_data[0x008] = 0x%x", chip_ver);
+
+	if (conninfra_spi_write(SYS_SPI_TOP, 0xB18, 0x00000007) != 0) {
+		GDL_LOGI_RRW("conninfra_spi_write_atop_rg_top_xo_07 not okay");
+		goto _fail_conninfra_spi_write_atop_rg_top_xo_07_not_okay;
+	}
+
+	if (conninfra_spi_read(SYS_SPI_TOP, 0xB18, &chip_ver) == 0)
+		GDL_LOGD("spi_data[0xB18] = 0x%x", chip_ver);
 #endif
 	return true;
 
@@ -521,6 +518,12 @@ _fail_conninfra_spi_read_adie_not_okay:
 
 void gps_dl_hw_dep_gps_control_adie_off(void)
 {
+	/*disable A-die top_clk_en_5*/
+	GDL_HW_ADIE_TOP_CLK_EN_6686(0x0);
+
+	/*de-assert A-sie reset*/
+	GDL_HW_SET_AP_ENTRY(0x18001010, 0, 0x1, 0x0);
+
 	/*mt6686 new pos -- beginning*/
 	/*set pinmux for the interface between D-die and A-die*/
 	GDL_HW_SET_AP_ENTRY(0x100054b8, 0, 0xffffffff, 0x77700000);
@@ -530,4 +533,55 @@ void gps_dl_hw_dep_gps_control_adie_off(void)
 	GDL_HW_SET_AP_ENTRY(0x11c00048, 0, 0xffffffff, 0x10);
 	GDL_HW_SET_AP_ENTRY(0x11c00034, 0, 0xffffffff, 0x10);
 }
+
+bool gps_dl_hw_dep_gps_get_ecid_info(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	unsigned int ecid_lsb = 0, ecid_msb = 0;
+	unsigned long ecid_data = 0;
+	unsigned int macro_sel;
+	bool print_ecid_1st = true;
+#endif
+
+#if GPS_DL_HAS_CONNINFRA_DRV
+twice_get_ecid:
+	macro_sel = (print_ecid_1st)?(0x0000030D):(0x0000050D);
+	if (conninfra_spi_write(SYS_SPI_TOP, 0x144, macro_sel) != 0) {
+		GDL_LOGI_RRW("conninfra_spi_write_ecid_macro_sel not okay");
+		goto _fail_conninfra_spi_write_ecid_macro_sel_not_okay;
+	}
+	if (conninfra_spi_write(SYS_SPI_TOP, 0x108, 0x40000040) != 0) {
+		GDL_LOGI_RRW("conninfra_spi_write_ecid_mode_trig not okay");
+		goto _fail_conninfra_spi_write_ecid_mode_trig_not_okay;
+	}
+
+	gps_dl_wait_us(10);
+
+	if (conninfra_spi_read(SYS_SPI_TOP, 0x130, &ecid_lsb) != 0) {
+		GDL_LOGI_RRW("conninfra_spi_read_ecid_lsb_data not okay");
+		goto _fail_conninfra_spi_read_ecid_lsb_data_not_okay;
+	}
+	if (conninfra_spi_read(SYS_SPI_TOP, 0x134, &ecid_msb) != 0) {
+		GDL_LOGI_RRW("conninfra_spi_read_ecid_hsb_data not okay");
+		goto _fail_conninfra_spi_read_ecid_hsb_data_not_okay;
+	}
+	ecid_data = ecid_msb;
+	ecid_data = ecid_data << 32 | ecid_lsb;
+	GDL_LOGI("get_ecid_data = 0x%lx", ecid_data);
+	if (print_ecid_1st) {
+		print_ecid_1st = false;
+		goto twice_get_ecid;
+	}
+#endif
+	return true;
+
+#if GPS_DL_HAS_CONNINFRA_DRV
+_fail_conninfra_spi_read_ecid_hsb_data_not_okay:
+_fail_conninfra_spi_read_ecid_lsb_data_not_okay:
+_fail_conninfra_spi_write_ecid_mode_trig_not_okay:
+_fail_conninfra_spi_write_ecid_macro_sel_not_okay:
+#endif
+	return false;
+}
+
 

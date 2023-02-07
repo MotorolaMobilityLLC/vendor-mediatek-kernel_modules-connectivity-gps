@@ -6,6 +6,7 @@
 #include "gps_dl_config.h"
 #include "gps_mcudl_hw_mcu.h"
 #include "gps_mcudl_hw_ccif.h"
+#include "gps_mcudl_hal_conn.h"
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcu_hif_api.h"
@@ -42,6 +43,7 @@ bool gps_mcudl_xlink_on(const struct gps_mcudl_fw_list *p_fw_list)
 	/* init status is clr_fw_own and force_wake should be true, so bypass it:
 	 * (void)gps_mcudl_hw_conn_force_wake(false);
 	 */
+	/*gps_mcudl_hal_get_ecid_info();*/
 	is_okay = gps_mcudl_hal_mcu_do_on(p_fw_list);
 	ntf_set_fw_own = gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_POS);
 	MDL_LOGI("ok=%d, ntf=%d", is_okay, ntf_set_fw_own);
@@ -131,6 +133,7 @@ bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list)
 	gps_mcudl_hw_ccif_clr_tch_busy_bitmask();
 	gps_mcudl_hw_ccif_clr_rch_busy_bitmask();
 	is_okay = gps_mcudl_hw_mcu_do_on_with_rst_held();
+	gps_mcudl_hal_get_ecid_info();
 	MDL_LOGW("is_okay=%d, p_fw_list=0x%p", is_okay, p_fw_list);
 	if (is_okay && p_fw_list) {
 		gps_mcudl_hal_load_fw(p_fw_list);
