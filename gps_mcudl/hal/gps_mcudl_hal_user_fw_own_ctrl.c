@@ -12,6 +12,7 @@
 #include "gps_mcudl_hw_ccif.h"
 #include "gps_mcudl_hw_mcu.h"
 #include "gps_mcudl_reset.h"
+#include "gps_dl_hw_api.h"
 #include "gps_dl_time_tick.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
@@ -110,7 +111,7 @@ bool gps_mcudl_hal_user_clr_fw_own(enum gps_mcudl_fw_own_ctrl_user user)
 		clear_okay = gps_mcudl_hal_mcu_clr_fw_own();
 		if (!clear_okay) {
 			gps_mcudl_hal_user_fw_own_status_dump();
-			gps_mcudl_hal_clr_fw_own_fail_handler();
+			clear_okay = gps_mcudl_hal_clr_fw_own_fail_handler();
 		}
 	}
 
@@ -221,6 +222,8 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 	unsigned user_clr_cnt;
 	unsigned user_clr_cnt_on_ntf_set;
 	unsigned int user_clr_bitmask;
+	int readable = 0;
+	int hung_value = 0;
 
 	gps_mcul_hal_user_fw_own_lock();
 	if (!g_gps_mcudl_fw_own_ctx.init_done) {
@@ -278,7 +281,21 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 	if (!set_okay) {
 		MDL_LOGW("set_okay = %d", set_okay);
 		gps_mcudl_hal_user_fw_own_status_dump();
+
+		/* show debug info if not okay */
+#if GPS_DL_HAS_CONNINFRA_DRV
+		readable = conninfra_reg_readable();
+		hung_value = conninfra_is_bus_hang();
+		MDL_LOGW("readable=%d, hung_value=%d", readable, hung_value);
+#endif
+		gps_mcudl_hal_mcu_show_pc_log();
 		gps_mcudl_hal_mcu_show_status();
+		gps_mcudl_hal_ccif_show_status();
+		gps_dl_hw_dump_host_csr_gps_info(false);
+
+		/* check one more time */
+		set_okay = gps_mcudl_hw_mcu_set_or_clr_fw_own_is_okay(true);
+		MDL_LOGW("recheck set_okay=%d", set_okay);
 	} else
 		MDL_LOGD("set_okay = %d", set_okay);
 }
@@ -321,10 +338,13 @@ bool gps_mcudl_hal_get_non_lppm_sleep_flag(void)
 	return g_gps_mcudl_hal_non_lppm_sleep_flag_used;
 }
 
-void gps_mcudl_hal_clr_fw_own_fail_handler(void)
+bool gps_mcudl_hal_clr_fw_own_fail_handler(void)
 {
 	bool ccif_irq_en, okay;
 	unsigned int rch_mask;
+	int readable = 0;
+	int hung_value = 0;
+	unsigned long start_us, curr_us;
 	int cnt;
 
 	ccif_irq_en = gps_mcudl_hal_get_ccif_irq_en_flag();
@@ -332,13 +352,14 @@ void gps_mcudl_hal_clr_fw_own_fail_handler(void)
 
 	okay = gps_mcudl_conninfra_is_okay_or_handle_it();
 	if (!okay)
-		return;
+		return false;
 
+	start_us = gps_dl_tick_get_us();
 	cnt = 0;
 	do {
 		ccif_irq_en = gps_mcudl_hal_get_ccif_irq_en_flag();
 		rch_mask = gps_mcudl_hw_ccif_get_rch_bitmask();
-		MDL_LOGW("ccif_irq_en=%d, rch_mask=0x%x", ccif_irq_en, rch_mask);
+		MDL_LOGW("ccif_irq_en=%d, rch_mask=0x%x, cnt=%d", ccif_irq_en, rch_mask, cnt);
 		if (rch_mask & (1UL << GPS_MCUDL_CCIF_CH3)) {
 			gps_mcudl_hw_ccif_set_rch_ack(GPS_MCUDL_CCIF_CH3);
 #if GPS_DL_HAS_CONNINFRA_DRV
@@ -346,25 +367,46 @@ void gps_mcudl_hal_clr_fw_own_fail_handler(void)
 			conninfra_trigger_whole_chip_rst(
 				CONNDRV_TYPE_GPS, "GNSS FW trigger whole chip reset2");
 
-			return;
+			return false;
 #endif
 		} else if (rch_mask & (1UL << GPS_MCUDL_CCIF_CH2)) {
 			gps_mcudl_hw_ccif_set_rch_ack(GPS_MCUDL_CCIF_CH2);
 			/* SUBSYS reset */
 			gps_mcudl_trigger_gps_subsys_reset(false, "GNSS FW trigger subsys reset2");
-			return;
+			return false;
+		}
+
+		if (cnt % 2 == 0) {
+			/* do not print them on each cnt to reduce log amount */
+#if GPS_DL_HAS_CONNINFRA_DRV
+			readable = conninfra_reg_readable();
+			hung_value = conninfra_is_bus_hang();
+			MDL_LOGW("readable=%d, hung_value=%d", readable, hung_value);
+#endif
+			gps_mcudl_hal_mcu_show_pc_log();
 		}
 		gps_mcudl_hal_mcu_show_status();
 		gps_mcudl_hal_ccif_show_status();
+		if (cnt % 2 == 0) {
+			/* do not print them on each cnt to reduce log amount */
+			gps_dl_hw_dump_host_csr_gps_info(false);
+		}
 
-		/* ~15ms */
-		if (cnt >= 6)
+		if (gps_mcudl_hw_mcu_set_or_clr_fw_own_is_okay(false)) {
+			MDL_LOGW("recheck clr_okay, cnt=%d", cnt);
+			return true;
+		}
+
+		/* timeout threshold set to 180ms(/2.5=72) */
+		curr_us = gps_dl_tick_get_us();
+		if (cnt >= 72 || curr_us - start_us >= 180*1000)
 			break;
 
 		gps_dl_sleep_us(2200, 3200);
 		cnt++;
 	} while (1);
 	gps_mcudl_trigger_gps_subsys_reset(false, "GNSS clear fw own fail");
+	return false;
 }
 
 bool gps_mcudl_hal_is_fw_own(void)
