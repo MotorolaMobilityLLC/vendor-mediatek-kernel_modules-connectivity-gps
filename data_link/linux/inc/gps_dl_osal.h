@@ -91,7 +91,11 @@ do { \
 #define GPS_MAX_THREAD_NAME_LEN 128
 #define GPS_OSAL_OP_BUF_SIZE    64 /* Should be 2^N */
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+typedef void(*P_TIMEOUT_HANDLER) (struct timer_list *t);
+#else
 typedef void(*P_TIMEOUT_HANDLER) (unsigned long);
+#endif
 typedef int(*P_COND) (void *);
 
 struct gps_dl_osal_timer {
@@ -136,7 +140,7 @@ struct gps_dl_osal_lxop {
 };
 
 struct gps_dl_osal_lxop_q {
-	struct gps_dl_osal_sleepable_lock sLock;
+	struct gps_dl_osal_unsleepable_lock spin_lock;
 	unsigned int write;
 	unsigned int read;
 	unsigned int size;
@@ -184,6 +188,12 @@ int gps_dl_osal_sleepable_lock_deinit(struct gps_dl_osal_sleepable_lock *pSL);
 int gps_dl_osal_unsleepable_lock_init(struct gps_dl_osal_unsleepable_lock *pUSL);
 int gps_dl_osal_lock_unsleepable_lock(struct gps_dl_osal_unsleepable_lock *pUSL);
 int gps_dl_osal_unlock_unsleepable_lock(struct gps_dl_osal_unsleepable_lock *pUSL);
+
+int gps_dl_osal_timer_create(struct gps_dl_osal_timer *pTimer);
+int gps_dl_osal_timer_start(struct gps_dl_osal_timer *pTimer, unsigned int ms);
+int gps_dl_osal_timer_stop(struct gps_dl_osal_timer *pTimer);
+int gps_dl_osal_timer_stop_sync(struct gps_dl_osal_timer *pTimer);
+int gps_dl_osal_timer_modify(struct gps_dl_osal_timer *pTimer, unsigned int ms);
 
 #define gps_dl_osal_assert(condition) \
 do { \
