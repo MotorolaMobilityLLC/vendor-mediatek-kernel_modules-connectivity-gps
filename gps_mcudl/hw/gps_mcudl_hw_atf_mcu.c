@@ -694,6 +694,16 @@ bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
 	return is_okay;
 }
 
+bool gps_mcudl_hw_mcu_set_or_clr_fw_own_is_okay(bool check_set)
+{
+	bool is_okay = false;
+
+	GDL_HW_POLL_CONN_INFRA_ENTRY(
+		CONN_HOST_CSR_TOP_BGF_LPCTL_BGF_AP_HOST_OWNER_STATE_SYNC, check_set,
+		POLL_1_TIME, &is_okay);
+	return is_okay;
+}
+
 /* tmp*/
 #if 1
 void gps_dl_hw_set_mcu_emi_remapping_tmp(unsigned int _20msb_of_36bit_phy_addr)
