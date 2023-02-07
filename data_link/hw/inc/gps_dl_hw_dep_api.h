@@ -27,6 +27,7 @@ bool gps_dl_hw_gps_common_on_inner(void);
 int gps_dl_hw_gps_sleep_prot_ctrl(int op);
 bool gps_dl_hw_dep_gps_control_adie_on(void);
 void gps_dl_hw_dep_gps_control_adie_off(void);
+bool gps_dl_hw_dep_gps_get_ecid_info(void);
 
 /*
  * GPS
