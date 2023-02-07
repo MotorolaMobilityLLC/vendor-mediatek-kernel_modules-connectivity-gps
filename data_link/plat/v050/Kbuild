@@ -72,6 +72,12 @@ GPS_PLATFORM := v050
 MODULE_NAME := gps_drv_dl_$(GPS_PLATFORM)
 obj-m += $(MODULE_NAME).o
 
+ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6897),y)
+    ccflags-y += -D GPS_DL_EMI_BASE_TO_VLP=1
+else
+
+endif
+
 GPS_DRV_CONTROL_LNA := n
 GPS_DL_HAS_MOCK := n
 GPS_SRC_FOLDER := $(srctree)/$(src)/../..
