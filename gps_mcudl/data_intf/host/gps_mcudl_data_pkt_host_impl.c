@@ -1010,6 +1010,32 @@ void gps_mcudl_mcu2ap_rec_init(void)
 	g_gps_mcu2ap_pkt_rec_cnt = 0;
 }
 
+struct gps_mcudl_mcu2ap_put_to_xlink_fail_rec_item {
+	unsigned long print_us;
+	unsigned int drop_cnt;
+	unsigned int drop_len;
+};
+
+struct gps_mcudl_mcu2ap_put_to_xlink_fail_rec_item g_gps_mcu2ap_put_to_xlink_fail_rec_list[GPS_MDLX_CH_NUM];
+
+void gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump(void)
+{
+	enum gps_mcudl_xid xid = 0;
+	struct gps_mcudl_mcu2ap_put_to_xlink_fail_rec_item *p_item;
+
+	for ( ; xid < GPS_MDLX_CH_NUM; xid++) {
+		p_item = &g_gps_mcu2ap_put_to_xlink_fail_rec_list[xid];
+		if (p_item->drop_cnt != 0)
+			MDL_LOGXW(xid, "drop_cnt = %d, drop_len = %d",
+				p_item->drop_cnt, p_item->drop_len);
+	}
+}
+
+void gps_mcudl_mcu2ap_put_to_xlink_fail_rec_init(void)
+{
+	memset(g_gps_mcu2ap_put_to_xlink_fail_rec_list, 0, sizeof(g_gps_mcu2ap_put_to_xlink_fail_rec_list));
+}
+
 void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len)
 {
@@ -1020,6 +1046,7 @@ void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum g
 	bool do_wake;
 	struct gps_mcudl_mcu2ap_pkt_rec_item rec_item;
 	int rec_pl_len;
+	unsigned long curr_tick;
 
 	if (!gps_mcudl_ypl_type2xid(type, &x_id)) {
 		MDL_LOGYW(y_id, "recv type=%d, len=%d, no x_id", type, payload_len);
@@ -1051,7 +1078,18 @@ _loop_start:
 
 	gdl_ret = gdl_dma_buf_put(&p_xlink->rx_dma_buf, payload_ptr, payload_len);
 	if (gdl_ret != GDL_OKAY) {
-		MDL_LOGXW(x_id, "gdl_dma_buf_put: ret=%s", gdl_ret_to_name(gdl_ret));
+		g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].drop_cnt++;
+		g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].drop_len += payload_len;
+		curr_tick = gps_dl_tick_get_us();
+		if (curr_tick - g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].print_us > 1000000UL) {
+			MDL_LOGXW(x_id,
+				"gdl_dma_buf_put: ret=%s, entry: %u, byte: %u, drop_cnt: %u, drop_len: %u",
+				gdl_ret_to_name(gdl_ret), gps_dma_buf_count_data_entry(&p_xlink->rx_dma_buf),
+				gps_dma_buf_count_data_byte(&p_xlink->rx_dma_buf),
+				g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].drop_cnt,
+				g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].drop_len);
+			g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].print_us = curr_tick;
+		}
 		/* not return, still wakeup to avoid race condition */
 		/* goto _loop_end; */
 	}
