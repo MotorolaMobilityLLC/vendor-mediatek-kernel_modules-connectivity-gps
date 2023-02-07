@@ -9,6 +9,7 @@
 /* impl@gps_emi.c */
 void gps_mcudl_may_do_fw_loading(void);
 void gps_mcudl_clear_fw_loading_done_flag(void);
+void gps_mcudl_set_need_to_load_fw_in_drv(bool need);
 
 
 /* impl@stpgps or dedicated_mcu.c */
