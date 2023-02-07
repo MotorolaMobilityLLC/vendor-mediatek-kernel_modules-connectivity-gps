@@ -24,7 +24,8 @@
 gpsmdl_u8              pars_rbuf[GPS_MDLY_CH_NUM][RBUF_MAX];
 gpsmdl_u8              slot_rbuf[GPS_MDLY_CH_NUM][RBUF_MAX];
 struct gps_mcudl_slot_entry_t entr_list[GPS_MDLY_CH_NUM][ENTR_MAX];
-
+static void gps_mcudl_mcu_proc_func(enum gps_mcudl_pkt_type type,
+	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len, enum gps_mcudl_yid y_id);
 
 #define TX_BUF_MAX (GPSMDL_PKT_PAYLOAD_MAX)
 struct gps_mcudl_data_trx_context {
@@ -68,6 +69,26 @@ struct gps_mcudl_data_pkt_context g_data_pkt_ctx = { .trx = {
 			.rbuf_len = RBUF_MAX,
 
 			.entry_list_ptr = &entr_list[GPS_MDLY_NORMAL][0],
+			.entry_list_len = ENTR_MAX,
+		}, },
+	},
+
+	[GPS_MDLY_URGENT] = {
+		.rx_rbuf = { .cfg = {
+			.rbuf_ptr = &pars_rbuf[GPS_MDLY_URGENT][0],
+			.rbuf_len = RBUF_MAX,
+		}, },
+		.parser = { .cfg = {
+			.p_pkt_proc_fn = &gps_mcudl_mcu_ch2_proc_func,
+			.rbuf_ptr = &pars_rbuf[GPS_MDLY_URGENT][0],
+			.rbuf_len = RBUF_MAX,
+		}, },
+		.slot = { .cfg = {
+			.slot_id = GPS_MDLY_URGENT,
+			.p_intf_send_fn = &gps_mcudl_mcu_ch2_send_func,
+			.rbuf_ptr = &slot_rbuf[GPS_MDLY_URGENT][0],
+			.rbuf_len = RBUF_MAX,
+			.entry_list_ptr = &entr_list[GPS_MDLY_URGENT][0],
 			.entry_list_len = ENTR_MAX,
 		}, },
 	},
@@ -148,7 +169,7 @@ void gps_mcudl_ap2mcu_context_init(enum gps_mcudl_yid yid)
 	p_trx_ctx = &g_data_pkt_ctx.trx[yid];
 	memset(&p_trx_ctx->host_sta, 0, sizeof(p_trx_ctx->host_sta));
 	p_trx_ctx->host_sta.is_enable = true;
-	gps_mcudl_flowctrl_init();
+	gps_mcudl_flowctrl_init(yid);
 	p_trx_ctx->wait_read_to_proc_flag = false;
 	p_trx_ctx->wait_write_to_flush_flag = false;
 	p_trx_ctx->wait_sta_to_flush_flag = false;
@@ -292,16 +313,35 @@ void gps_mcudl_mcu2ap_ydata_proc(enum gps_mcudl_yid yid)
 	p_trx_ctx->host_sta.pkt_sta.total_route_drop = 0;
 	p_trx_ctx->host_sta.pkt_sta.total_pkt_cnt    = (gpsmdl_u32)(p_parser->pkt_cnt);
 	p_trx_ctx->host_sta.pkt_sta.LUINT_L32_VALID_BIT = 32;
-	gps_mcudl_flowctrl_may_send_host_sta(yid);
+	if (yid != GPS_MDLY_URGENT)
+		gps_mcudl_flowctrl_may_send_host_sta(yid);
+}
+
+void gps_mcudl_mcu_ch2_proc_func(enum gps_mcudl_pkt_type type,
+	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len)
+{
+	gps_mcudl_mcu_proc_func(type, payload_ptr, payload_len, GPS_MDLY_URGENT);
 }
 
 void gps_mcudl_mcu_ch1_proc_func(enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len)
 {
-	enum gps_mcudl_yid y_id;
-	struct gps_mcudl_data_trx_context *p_trx_ctx;
+	gps_mcudl_mcu_proc_func(type, payload_ptr, payload_len, GPS_MDLY_NORMAL);
+}
 
-	y_id = GPS_MDLY_NORMAL;
+int gps_mcudl_mcu_ch2_send_func(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len)
+{
+	int send_len;
+
+	send_len = gps_mcudl_plat_mcu_ch2_write(p_data, data_len);
+	MDL_LOGYD(GPS_MDLY_URGENT, "send len=%d, ret=%d", data_len, send_len);
+	return send_len;
+}
+
+static void gps_mcudl_mcu_proc_func(enum gps_mcudl_pkt_type type,
+	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len, enum gps_mcudl_yid y_id)
+{
+	struct gps_mcudl_data_trx_context *p_trx_ctx;
 	p_trx_ctx = &g_data_pkt_ctx.trx[y_id];
 
 	MDL_LOGYD(y_id, "recv type=%d, len=%d", type, payload_len);
@@ -327,7 +367,8 @@ void gps_mcudl_mcu_ch1_proc_func(enum gps_mcudl_pkt_type type,
 		if (copy_size > payload_len)
 			copy_size = payload_len;
 		memcpy(&sta, payload_ptr, copy_size);
-		gps_mcudl_flowctrl_remote_update_recv_byte(&sta);
+		if (y_id == GPS_MDLY_NORMAL)
+			gps_mcudl_flowctrl_remote_update_recv_byte(&sta, y_id);
 		to_notify = !gps_mcudl_ap2mcu_get_wait_flush_flag(y_id);
 		rec_item.mcu_ack.total_recv = sta.total_recv;
 		rec_item.mcu_ack.total_parse_proc = sta.total_parse_proc;
@@ -457,35 +498,35 @@ bool gps_mcudl_pkt_is_critical_type(gpsmdl_u8 type)
 	return true;
 }
 
-void gps_mcudl_flowctrl_init(void)
+void gps_mcudl_flowctrl_init(enum gps_mcudl_yid y_id)
 {
-	enum gps_mcudl_yid y_id;
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
 
-	y_id = GPS_MDLY_NORMAL;
 	p_trx_ctx = get_txrx_ctx(y_id);
 	p_trx_ctx->local_flush_times = 0;
 	p_trx_ctx->local_tx_len = 0;
 	p_trx_ctx->remote_rx_len = 0;
 }
 
-void gps_mcudl_flowctrl_local_add_send_byte(gpsmdl_u32 delta)
+void gps_mcudl_flowctrl_local_add_send_byte(gpsmdl_u32 delta, enum gps_mcudl_yid y_id)
 {
-	enum gps_mcudl_yid y_id;
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
-
-	y_id = GPS_MDLY_NORMAL;
+	/* TBD flow control for urgent channel */
+	if (y_id == GPS_MDLY_URGENT)
+		return;
 	p_trx_ctx = get_txrx_ctx(y_id);
 	p_trx_ctx->local_flush_times++;
 	p_trx_ctx->local_tx_len += delta;
 }
 
-void gps_mcudl_flowctrl_remote_update_recv_byte(struct gps_mcudl_data_pkt_mcu_sta *p_sta)
+void gps_mcudl_flowctrl_remote_update_recv_byte(struct gps_mcudl_data_pkt_mcu_sta *p_sta, enum gps_mcudl_yid y_id)
 {
-	enum gps_mcudl_yid y_id;
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
 
-	y_id = GPS_MDLY_NORMAL;
+	/* TBD flow control for urgent channel */
+	if (y_id == GPS_MDLY_URGENT)
+		return;
+
 	p_trx_ctx = get_txrx_ctx(y_id);
 	p_trx_ctx->remote_rx_len = p_sta->total_recv;
 }
