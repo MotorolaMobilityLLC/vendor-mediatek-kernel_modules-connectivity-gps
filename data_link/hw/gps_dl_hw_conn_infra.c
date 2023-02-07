@@ -22,7 +22,13 @@
 
 void gps_dl_hw_set_gps_emi_remapping(unsigned int _20msb_of_36bit_phy_addr)
 {
+	/*mt6897 emi_remap addr is difference with v050 project.*/
+	/*meanwhile, conninfra set value in emi_remap cr.gps no need to set*/
+#ifdef GPS_DL_EMI_BASE_TO_VLP
+
+#else
 	GDL_HW_SET_CONN_INFRA_ENTRY(GDL_HW_SET_EMI_REMAP_FIELD, _20msb_of_36bit_phy_addr);
+#endif
 }
 
 unsigned int gps_dl_hw_get_gps_emi_remapping(void)
