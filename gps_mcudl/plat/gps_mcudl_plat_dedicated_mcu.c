@@ -498,8 +498,13 @@ int gps_mcudl_plat_mcu_close(void)
 
 int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 {
-	bool is_okay, conn_okay;
-	static bool is_okay_last, is_okay_new;
+	bool is_okay = false, conn_okay = false;
+	static bool is_okay_last = true, is_okay_new;
+	unsigned long curr_us;
+	bool not_too_freq = false;
+	static unsigned int skip_print_cnt;
+	static unsigned long print_us;
+	static bool pair_print;
 	struct gps_mcudl_data_pkt_rec_item rec_item;
 	enum gps_mcu_hif_send_status send_status;
 
@@ -521,16 +526,28 @@ int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 		MDL_LOGW("write count=%d, is_ok=%d", count, is_okay);
 	if (!is_okay) {
 		conn_okay = gps_mcudl_conninfra_is_okay_or_handle_it();
-		if ((is_okay_new != is_okay_last) || !conn_okay)
-			MDL_LOGW("write count=%d, is_ok=%d, conn_okay=%d, send_status = %d",
-				count, is_okay, conn_okay, send_status);
+		curr_us = gps_dl_tick_get_us();
+		not_too_freq = (curr_us - print_us > 1000*1000); /* > 1sec */
+		if (((is_okay_new != is_okay_last) && not_too_freq) || !conn_okay) {
+			MDL_LOGW("write count=%d, is_ok=%d, conn_okay=%d, send_status = %d, skip = %u",
+				count, is_okay, conn_okay, send_status, skip_print_cnt);
+			/* above is a writing-failure log,
+			 * set true to tigger a printing when writing becomes okay
+			 */
+			pair_print = true;
+			skip_print_cnt = 0;
+			print_us = curr_us;
+		} else
+			skip_print_cnt++;
 		is_okay_last = is_okay;
 		return 0;
 	}
 
-	if (is_okay_new != is_okay_last)
+	if (is_okay_new != is_okay_last && pair_print) {
 		MDL_LOGW("write count=%d, is_ok=%d, send_status = %d",
 			count, is_okay, send_status);
+		pair_print = false;
+	}
 	is_okay_last = is_okay;
 	return count;
 }
