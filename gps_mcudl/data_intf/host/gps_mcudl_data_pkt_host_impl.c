@@ -104,7 +104,7 @@ bool gps_mcudl_ap2mcu_xdata_send(enum gps_mcudl_xid xid, struct gdl_dma_buf_entr
 	struct gps_mcudl_data_trx_context *p_trx_ctx;
 	enum GDL_RET_STATUS status;
 	gpsmdl_u32 data_len = 0;
-	enum gps_mcudl_pkt_type type;
+	enum gps_mcudl_pkt_type type = GPS_MDLYPL_MAXID;
 	enum gps_mcudl_yid yid;
 	bool xid_is_valid;
 	bool send_is_okay;
@@ -1118,7 +1118,7 @@ _loop_start:
 		goto _loop_end;
 
 	gdl_ret = gdl_dma_buf_put(&p_xlink->rx_dma_buf, payload_ptr, payload_len);
-	if (gdl_ret != GDL_OKAY) {
+	if (gdl_ret != GDL_OKAY && ((unsigned int)x_id < (unsigned int)GPS_MDLX_CH_NUM)) {
 		g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].drop_cnt++;
 		g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].drop_len += payload_len;
 		curr_tick = gps_dl_tick_get_us();
