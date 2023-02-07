@@ -98,10 +98,10 @@ bool gps_mcudl_pkt_is_critical_type(gpsmdl_u8 type);
 bool gps_mcudl_slot_may_pend_pkt_type_if_near_full(struct gps_mcudl_data_slot_t *p_slot,
 	enum gps_mcudl_pkt_type type, int len);
 
-void gps_mcudl_flowctrl_init(void);
+void gps_mcudl_flowctrl_init(enum gps_mcudl_yid yid);
 gpsmdl_u32 gps_mcudl_flowctrl_cal_window_size(void);
-void gps_mcudl_flowctrl_remote_update_recv_byte(struct gps_mcudl_data_pkt_mcu_sta *p_sta);
-void gps_mcudl_flowctrl_local_add_send_byte(gpsmdl_u32 delta);
+void gps_mcudl_flowctrl_remote_update_recv_byte(struct gps_mcudl_data_pkt_mcu_sta *p_sta, enum gps_mcudl_yid y_id);
+void gps_mcudl_flowctrl_local_add_send_byte(gpsmdl_u32 delta, enum gps_mcudl_yid y_id);
 void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid);
 void gps_mcudl_flowctrl_dump_host_sta(enum gps_mcudl_yid yid);
 
