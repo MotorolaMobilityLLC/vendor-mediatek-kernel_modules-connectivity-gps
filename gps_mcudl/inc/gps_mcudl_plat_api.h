@@ -15,6 +15,7 @@ void gps_mcudl_clear_fw_loading_done_flag(void);
 int gps_mcudl_plat_mcu_open(void);
 int gps_mcudl_plat_mcu_close(void);
 int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count);
+int gps_mcudl_plat_mcu_ch2_write(const unsigned char *kbuf, unsigned int count);
 int gps_mcudl_plat_mcu_ch1_read_nonblock(unsigned char *kbuf, unsigned int count);
 
 

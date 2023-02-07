@@ -790,7 +790,7 @@ enum gps_mcudl_slot_flush_status gps_mcudl_slot_flush_inner(
 
 		flush_status = gps_mcudl_slot_flush_best_fit_in_window(p_slot, send_win_sz, &send_sz);
 		if (flush_status == FLUSH_OK) {
-			gps_mcudl_flowctrl_local_add_send_byte(send_sz);
+			gps_mcudl_flowctrl_local_add_send_byte(send_sz, p_slot->cfg.slot_id);
 			total_send_sz += send_sz;
 		}
 	} while (flush_status == FLUSH_OK && send_sz > 0);
