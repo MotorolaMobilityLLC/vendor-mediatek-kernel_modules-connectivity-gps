@@ -36,6 +36,7 @@
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_data_pkt_payload_struct.h"
 #include "gps_mcudl_link_state.h"
+#include "gps_dl_linux_plat_drv.h"
 
 struct gps_mcudl_ystate {
 	bool open;
@@ -413,6 +414,7 @@ int gps_mcudl_plat_mcu_open(void)
 	gps_mcu_host_trans_hist_init();
 	gps_mcudl_host_sta_hist_init();
 	gps_mcudl_mcu2ap_rec_init();
+	gps_mcudl_mcu2ap_put_to_xlink_fail_rec_init();
 	gps_mcudl_mcu2ap_test_bypass_set(false);
 
 	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMALESS_MGMT,
@@ -486,6 +488,9 @@ int gps_mcudl_plat_mcu_close(void)
 
 	if (do_adie_off_in_driver)
 		gps_dl_hw_dep_gps_control_adie_off();
+
+	gps_dl_update_status_for_md_blanking(false);
+	gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump();
 
 	g_gps_mcudl_mcu_ctrl_status = GDL_MCU_CLOSED;
 	return 0;

@@ -308,6 +308,7 @@ _close_or_reset_ack:
 		gps_mcudl_host_sta_hist_dump(GPS_MDLY_URGENT);
 		gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
 		gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
+		gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump();
 
 		if (!gps_mcudl_conninfra_is_okay_or_handle_it())
 			break;
