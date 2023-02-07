@@ -20,6 +20,7 @@ void gps_mcudl_hw_mcu_show_pc_log(void);
 bool gps_mcudl_hw_bg_is_readable(void);
 
 bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set);
+bool gps_mcudl_hw_mcu_set_or_clr_fw_own_is_okay(bool check_set);
 void gps_mcudl_hw_mcu_do_off(void);
 
 /* tmp*/
