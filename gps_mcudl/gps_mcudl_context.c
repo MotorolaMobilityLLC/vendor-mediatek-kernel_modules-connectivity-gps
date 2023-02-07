@@ -16,7 +16,7 @@ static struct gps_mcudl_ctx s_gps_mcudl_ctx = {
 		[GPS_MDLX_AGENT]  = {
 			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE * 10} },
 		[GPS_MDLX_NMEA]   = {
-			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE} },
+			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE * 10} },
 		[GPS_MDLX_GDLOG]  = {
 			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE * 10} },
 		[GPS_MDLX_GDLOG2] = {
@@ -40,9 +40,9 @@ static struct gps_mcudl_ctx s_gps_mcudl_ctx = {
 		[GPS_MDLX_LPPM]     = {
 			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE} },
 		[GPS_MDLX_MPELOG]   = {
-			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE * 10} },
+			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE} },
 		[GPS_MDLX_MPELOG2]  = {
-			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE * 10} },
+			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE} },
 	},
 #if GPS_DL_ON_LINUX
 	.devices = { /* gps_mcudl_each_device */
