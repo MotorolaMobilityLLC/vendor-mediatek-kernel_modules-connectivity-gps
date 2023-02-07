@@ -45,8 +45,11 @@ void gps_mcudl_ap2mcu_data_slot_flush_on_recv_sta(enum gps_mcudl_yid y_id);
 
 void gps_mcudl_mcu_ch1_proc_func(enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len);
+void gps_mcudl_mcu_ch2_proc_func(enum gps_mcudl_pkt_type type,
+	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len);
 
 int gps_mcudl_mcu_ch1_send_func(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len);
+int gps_mcudl_mcu_ch2_send_func(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len);
 
 void gps_mcudl_host_sta_hist_init(void);
 void gps_mcudl_host_sta_hist_rec(enum gps_mcudl_yid yid, struct geofence_pkt_host_sta_s *host_sta);
