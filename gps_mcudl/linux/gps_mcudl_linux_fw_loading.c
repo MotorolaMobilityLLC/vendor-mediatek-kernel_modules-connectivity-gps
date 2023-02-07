@@ -83,12 +83,18 @@ void gps_mcudl_load_single_firmware(unsigned char *p_src_file, void __iomem *p_d
 }
 
 bool g_gps_mcudl_fw_loading_done;
+bool g_gps_mcudl_need_to_load_fw_in_drv;
 void gps_mcudl_may_do_fw_loading(void)
 {
 	struct gps_mcudl_emi_layout *p_layout =
 		gps_dl_get_conn_emi_layout_ptr();
 	void __iomem *p_dst_addr;
 	unsigned int dst_len;
+
+	if (!g_gps_mcudl_need_to_load_fw_in_drv) {
+		MDL_LOGI("no need to load fw in drv");
+		return;
+	}
 
 	if (g_gps_mcudl_fw_loading_done)
 		return;
@@ -114,5 +120,14 @@ void gps_mcudl_may_do_fw_loading(void)
 void gps_mcudl_clear_fw_loading_done_flag(void)
 {
 	g_gps_mcudl_fw_loading_done = false;
+}
+
+void gps_mcudl_set_need_to_load_fw_in_drv(bool need)
+{
+	bool old_need;
+
+	old_need = g_gps_mcudl_need_to_load_fw_in_drv;
+	g_gps_mcudl_need_to_load_fw_in_drv = need;
+	MDL_LOGW("set need %d -> %d", old_need, need);
 }
 
