@@ -316,9 +316,12 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 		if (trans_id == GPS_MCU_HIF_TRANS_MCU2AP_DMA_NORMAL) {
 			trans_rec.total_trans_last =
 				gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(GPS_MDLY_NORMAL);
+		/* flow control for urgent channel not ready */
+		#if 0
 		} else if (trans_id == GPS_MCU_HIF_TRANS_MCU2AP_DMA_URGENT) {
 			trans_rec.total_trans_last =
 				gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(GPS_MDLY_URGENT);
+		#endif
 		}
 		gps_mcu_hif_host_trans_hist_rec(&trans_rec);
 		gps_mcu_hif_host_on_rx_finished(hif_ch, end_desc.len);
