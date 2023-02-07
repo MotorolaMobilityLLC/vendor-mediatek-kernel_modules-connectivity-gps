@@ -11,6 +11,7 @@
 #include "gps_dl_time_tick.h"
 #include "gps_dl_subsys_reset.h"
 #include "gps_mcudl_hal_mcu.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
 
 bool gps_mcudl_hw_conn_ver_and_wake_is_ok(void)
 {
@@ -506,7 +507,7 @@ bool gps_mcudl_hw_mcu_set_or_clr_fw_own(bool to_set)
 
 	if (!is_okay)
 		GDL_LOGE("fw_own=%d, to_set=%d, is_okay=%d, d_us=%lu", fw_own, to_set, is_okay, d_us);
-	else if (d_us > 5000)
+	else if (d_us > gps_mcudl_hal_user_get_fw_own_op_duration_us_to_warn())
 		GDL_LOGW("fw_own=%d, to_set=%d, is_okay=%d, d_us=%lu", fw_own, to_set, is_okay, d_us);
 	else
 		GDL_LOGD("fw_own=%d, to_set=%d, is_okay=%d, d_us=%lu", fw_own, to_set, is_okay, d_us);

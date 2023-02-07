@@ -34,6 +34,17 @@ struct gps_mcudl_fw_own_user_context {
 	unsigned long us_on_last_clr;
 	unsigned long us_on_last_set;
 	long us_clr_minus_set;
+
+	/* When there is no user to clear fw_own, we start a timer and
+	 * set fw_own after timeout if no user to clear fw_own in the duration.
+	 *
+	 * It's for debounce purpose to avoid too frequently set/clear ops
+	 * which have CPU loading overhead.
+	 */
+	struct gps_dl_osal_timer timer_to_set_fw_own;
+	bool timer_setup_done;
+	unsigned int timeout_ms_to_set_fw_own;
+	unsigned int fw_own_op_duration_us_to_warn;
 };
 
 struct gps_mcudl_fw_own_user_context g_gps_mcudl_fw_own_ctx;
@@ -52,6 +63,48 @@ void gps_mcul_hal_user_fw_own_unlock(void)
 {
 	gps_mcudl_slot_unprotect();
 }
+
+
+void gps_mcudl_hal_user_fw_own_timer_setup(void)
+{
+#if GPS_DL_ON_LINUX
+	g_gps_mcudl_fw_own_ctx.timer_to_set_fw_own.timeoutHandler =
+		&gps_mcudl_hal_user_timeout_and_ntf_set_fw_own;
+	g_gps_mcudl_fw_own_ctx.timer_to_set_fw_own.timeroutHandlerData = 0;
+	(void)gps_dl_osal_timer_create(&g_gps_mcudl_fw_own_ctx.timer_to_set_fw_own);
+	g_gps_mcudl_fw_own_ctx.timer_setup_done = true;
+#else
+	g_gps_mcudl_fw_own_ctx.timer_setup_done = false;
+#endif
+	gps_mcudl_hal_user_set_timeout_ms_to_set_fw_own(30);
+	gps_mcudl_hal_user_set_fw_own_op_duration_us_to_warn(5000);
+}
+
+void gps_mcudl_hal_user_fw_own_timer_destroy(void)
+{
+	g_gps_mcudl_fw_own_ctx.timer_setup_done = false;
+}
+
+void gps_mcudl_hal_user_set_timeout_ms_to_set_fw_own(unsigned int timeout_ms)
+{
+	g_gps_mcudl_fw_own_ctx.timeout_ms_to_set_fw_own = timeout_ms;
+}
+
+void gps_mcudl_hal_user_set_fw_own_op_duration_us_to_warn(unsigned int duration_us)
+{
+	g_gps_mcudl_fw_own_ctx.fw_own_op_duration_us_to_warn = duration_us;
+}
+
+unsigned int gps_mcudl_hal_user_get_timeout_ms_to_set_fw_own(void)
+{
+	return g_gps_mcudl_fw_own_ctx.timeout_ms_to_set_fw_own;
+}
+
+unsigned int gps_mcudl_hal_user_get_fw_own_op_duration_us_to_warn(void)
+{
+	return g_gps_mcudl_fw_own_ctx.fw_own_op_duration_us_to_warn;
+}
+
 
 void gps_mcudl_hal_user_fw_own_init(enum gps_mcudl_fw_own_ctrl_user user)
 {
@@ -208,9 +261,48 @@ bool gps_mcudl_hal_user_set_fw_own_may_notify(enum gps_mcudl_fw_own_ctrl_user us
 	MDL_LOGD("clr_bitmask=0x%x,0x%x, user=%d, ntf=%d,%d",
 		user_clr_bitmask, user_clr_bitmask_new, user, notified_to_set, to_notify);
 	if (to_notify)
-		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_MCU_SET_FW_OWN);
+		gps_mcudl_hal_user_set_fw_own_arrange_notify();
+
 	return to_notify;
 }
+
+void gps_mcudl_hal_user_set_fw_own_arrange_notify(void)
+{
+	unsigned int timeout_ms_to_set_fw_own;
+
+	timeout_ms_to_set_fw_own = gps_mcudl_hal_user_get_timeout_ms_to_set_fw_own();
+	if (!g_gps_mcudl_fw_own_ctx.timer_setup_done || timeout_ms_to_set_fw_own == 0) {
+		gps_mcudl_hal_user_set_fw_own_do_notify();
+		return;
+	}
+	gps_dl_osal_timer_stop(&g_gps_mcudl_fw_own_ctx.timer_to_set_fw_own);
+	gps_dl_osal_timer_start(&g_gps_mcudl_fw_own_ctx.timer_to_set_fw_own,
+		timeout_ms_to_set_fw_own);
+}
+
+void gps_mcudl_hal_user_set_fw_own_do_notify(void)
+{
+	gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_MCU_SET_FW_OWN);
+}
+
+void gps_mcudl_hal_user_timeout_and_ntf_set_fw_own_inner(void)
+{
+	gps_mcudl_hal_user_set_fw_own_do_notify();
+}
+
+#if GPS_DL_ON_LINUX
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+void gps_mcudl_hal_user_timeout_and_ntf_set_fw_own(struct timer_list *p_timer)
+{
+	gps_mcudl_hal_user_timeout_and_ntf_set_fw_own_inner();
+}
+#else
+void gps_mcudl_hal_user_timeout_and_ntf_set_fw_own(unsigned long data)
+{
+	gps_mcudl_hal_user_timeout_and_ntf_set_fw_own_inner();
+}
+#endif
+#endif
 
 void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 {
@@ -261,7 +353,7 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 		MDL_LOGD("has_recent_clr=%d, user=0x%x, ntf=%d, cnt=%d,%d",
 			has_recent_clr, user_clr_bitmask, notified_to_set,
 			user_clr_cnt_on_ntf_set, user_clr_cnt);
-		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_MCU_SET_FW_OWN);
+		gps_mcudl_hal_user_set_fw_own_arrange_notify();
 		return;
 	}
 
@@ -302,6 +394,9 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 
 void gps_mcudl_hal_user_fw_own_deinit(enum gps_mcudl_fw_own_ctrl_user user)
 {
+	if (g_gps_mcudl_fw_own_ctx.timer_setup_done)
+		gps_dl_osal_timer_stop_sync(&g_gps_mcudl_fw_own_ctx.timer_to_set_fw_own);
+
 	gps_mcul_hal_user_fw_own_lock();
 	g_gps_mcudl_fw_own_ctx.init_done = false;
 	gps_mcul_hal_user_fw_own_unlock();

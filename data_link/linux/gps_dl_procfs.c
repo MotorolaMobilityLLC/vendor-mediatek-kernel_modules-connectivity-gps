@@ -214,6 +214,10 @@ int gps_mcudl_procfs_dbg(int y, int z)
 		} else if (z == 8) {
 			gps_mcudl_mcu2ap_rec_dump();
 			gps_mcudl_xlink_dump_all_rec();
+		} else if (z == 9) {
+			GDL_LOGW("timeout_ms_to_set_fw_own=%u, fw_own_op_duration_us_to_warn=%u",
+				gps_mcudl_hal_user_get_timeout_ms_to_set_fw_own(),
+				gps_mcudl_hal_user_get_fw_own_op_duration_us_to_warn());
 		}
 	}
 	else if (y == 2)
@@ -226,6 +230,10 @@ int gps_mcudl_procfs_dbg(int y, int z)
 		gps_mcudl_xlink_test_wakeup_ap_later((unsigned int)z);
 	else if (y == 6)
 		gps_mcudl_xlink_test_send_4byte_mgmt_data((unsigned int)z);
+	else if (y == 7)
+		gps_mcudl_hal_user_set_timeout_ms_to_set_fw_own((unsigned int)z);
+	else if (y == 8)
+		gps_mcudl_hal_user_set_fw_own_op_duration_us_to_warn((unsigned int)z);
 	return 0;
 }
 #endif
