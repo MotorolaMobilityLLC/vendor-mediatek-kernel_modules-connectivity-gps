@@ -19,6 +19,7 @@
 #include "gps_each_device.h"
 #if GPS_DL_HAS_MCUDL
 #include "gps_mcudl_xlink.h"
+#include "gps_mcudl_ylink.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcu_hif_host.h"
 #include "gps_mcudl_data_pkt_payload_struct.h"
@@ -221,6 +222,10 @@ int gps_mcudl_procfs_dbg(int y, int z)
 				gps_mcudl_hal_user_get_fw_own_op_duration_us_to_warn());
 		} else if (z == 0xA || z == 0xB)
 			gps_mcudl_set_need_to_load_fw_in_drv(z == 0xB);
+		else if (z == 0x0C) {
+			GDL_LOGW("gps_mcudl_ylink_on_ap_resume - test");
+			gps_mcudl_ylink_on_ap_resume();
+		}
 	}
 	else if (y == 2)
 		gps_mcudl_xlink_test_toggle_ccif(z);

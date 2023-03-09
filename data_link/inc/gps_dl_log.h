@@ -172,6 +172,7 @@ void gps_dl_opid_timeout_info_show(void);
 
 #define GDL_LOGE_EVT(...) GDL_LOGE2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
 #define GDL_LOGW_EVT(...) GDL_LOGW2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
+#define GDL_LOGI_EVT(...) GDL_LOGI2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
 #define GDL_LOGD_EVT(...) GDL_LOGD2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
 
 #define GDL_LOGE_INI(...) GDL_LOGE2(GPS_DL_LOG_MOD_INIT, __VA_ARGS__)
