@@ -190,6 +190,7 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	case GPS_MCUDL_EVT_LINK_CLOSE:
 	case GPS_MCUDL_EVT_LINK_RESET:
 	case GPS_MCUDL_EVT_LINK_PRE_CONN_RESET:
+		gps_mcudl_link_trigger_state_ntf(link_id);
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE)
 			show_log = gps_dl_set_show_reg_rw_log(true);
 
@@ -268,6 +269,7 @@ _close_or_reset_ack:
 
 	case GPS_MCUDL_EVT_LINK_POST_CONN_RESET:
 		gps_mcudl_link_on_post_conn_reset(link_id);
+		gps_mcudl_link_trigger_state_ntf(link_id);
 		break;
 
 	case GPS_MCUDL_EVT_LINK_WRITE:

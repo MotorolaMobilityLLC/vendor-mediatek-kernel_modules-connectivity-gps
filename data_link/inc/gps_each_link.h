@@ -33,6 +33,7 @@ enum gps_each_link_waitable_type {
 	GPS_DL_WAIT_WRITE,
 	GPS_DL_WAIT_READ,
 	GPS_DL_WAIT_RESET,
+	GPS_DL_WAIT_STATE_NTF,
 	GPS_DL_WAIT_NUM
 };
 

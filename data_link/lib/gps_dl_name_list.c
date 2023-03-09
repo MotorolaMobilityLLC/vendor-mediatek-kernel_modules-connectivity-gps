@@ -7,6 +7,7 @@
 
 #include "gps_dl_base.h"
 #include "gps_dl_name_list.h"
+#include "gps_each_link.h"
 
 #if GPS_DL_ON_LINUX
 /* Make sure num for RETURN_NAME_IN_LIST is const to detect coding error such
@@ -184,6 +185,7 @@ const char *const gps_dl_waitable_name_list[GPS_DL_WAIT_NUM + 1] = {
 	[GPS_DL_WAIT_WRITE]      = "WRITE",
 	[GPS_DL_WAIT_READ]       = "READ",
 	[GPS_DL_WAIT_RESET]      = "RESET",
+	[GPS_DL_WAIT_STATE_NTF]  = "STATE_NTF",
 	[GPS_DL_WAIT_NUM]        = "INVALID"
 };
 
