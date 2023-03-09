@@ -117,6 +117,7 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 			break;
 		}
 		gps_mcudl_hal_dump_power_state();
+		gps_mcudl_mcu2ap_arrange_pkt_dump_after_ap_resume();
 		break;
 	default:
 		break;

@@ -84,4 +84,7 @@ bool gps_mcu_host_trans_get_if_need_dump(void);
 void gps_mcudl_mcu2ap_put_to_xlink_fail_rec_init(void);
 void gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump(void);
 
+void gps_mcudl_mcu2ap_arrange_pkt_dump_after_ap_resume(void);
+void gps_mcudl_mcu2ap_clear_ap_resume_pkt_dump_flag(void);
+
 #endif /* _GPS_MCUDL_DATA_PKT_HOST_API_H */
