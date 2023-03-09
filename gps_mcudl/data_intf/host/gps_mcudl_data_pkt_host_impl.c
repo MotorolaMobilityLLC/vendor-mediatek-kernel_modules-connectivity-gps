@@ -42,6 +42,7 @@ struct gps_mcudl_data_trx_context {
 	bool wait_read_to_proc_flag;
 	bool wait_write_to_flush_flag;
 	bool wait_sta_to_flush_flag;
+	bool write_to_mcu_may_fail_flag;
 };
 
 
@@ -813,6 +814,28 @@ void gps_mcudl_ap2mcu_set_wait_flush_flag(enum gps_mcudl_yid y_id, bool flag)
 	p_trx_ctx = &g_data_pkt_ctx.trx[y_id];
 	gps_mcudl_slot_protect();
 	p_trx_ctx->wait_sta_to_flush_flag = flag;
+	gps_mcudl_slot_unprotect();
+}
+
+bool gps_mcudl_ap2mcu_get_write_fail_flag(enum gps_mcudl_yid y_id)
+{
+	struct gps_mcudl_data_trx_context *p_trx_ctx;
+	bool flag;
+
+	p_trx_ctx = &g_data_pkt_ctx.trx[y_id];
+	gps_mcudl_slot_protect();
+	flag = p_trx_ctx->write_to_mcu_may_fail_flag;
+	gps_mcudl_slot_unprotect();
+	return flag;
+}
+
+void gps_mcudl_ap2mcu_set_write_fail_flag(enum gps_mcudl_yid y_id, bool flag)
+{
+	struct gps_mcudl_data_trx_context *p_trx_ctx;
+
+	p_trx_ctx = &g_data_pkt_ctx.trx[y_id];
+	gps_mcudl_slot_protect();
+	p_trx_ctx->write_to_mcu_may_fail_flag = flag;
 	gps_mcudl_slot_unprotect();
 }
 
