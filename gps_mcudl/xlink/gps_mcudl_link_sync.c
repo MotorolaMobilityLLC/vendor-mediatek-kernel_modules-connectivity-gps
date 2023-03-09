@@ -232,4 +232,41 @@ void gps_mcudl_link_on_post_conn_reset(enum gps_mcudl_xid link_id)
 	gps_mcudl_link_reset_ack_inner(link_id, true);
 }
 
+int gps_mcudl_link_wait_state_ntf(enum gps_mcudl_xid x_id, long *p_sigval)
+{
+	struct gps_mcudl_each_link *p_link;
 
+	enum GDL_RET_STATUS gdl_ret;
+	long sigval;
+
+	p_link = gps_mcudl_link_get(x_id);
+	gdl_ret = gps_dl_link_wait_on(&p_link->waitables[GPS_DL_WAIT_STATE_NTF], &sigval);
+	if (gdl_ret == GDL_FAIL_SIGNALED) {
+		if (p_sigval != NULL) {
+			*p_sigval = sigval;
+			return -ERESTARTSYS;
+		}
+	} else if (gdl_ret == GDL_FAIL_NOT_SUPPORT) {
+		MDL_LOGXW_ONF(x_id, "not support to wait");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+void gps_mcudl_link_trigger_state_ntf(enum gps_mcudl_xid x_id)
+{
+	struct gps_mcudl_each_link *p_link;
+
+	p_link = gps_mcudl_link_get(x_id);
+
+	gps_dl_link_wake_up(&p_link->waitables[GPS_DL_WAIT_STATE_NTF]);
+}
+
+void gps_mcudl_link_trigger_state_ntf_all(void)
+{
+	enum gps_mcudl_xid x_id;
+
+	for (x_id = 0; x_id < GPS_MDLX_CH_NUM; x_id++)
+		gps_mcudl_link_trigger_state_ntf(x_id);
+}
