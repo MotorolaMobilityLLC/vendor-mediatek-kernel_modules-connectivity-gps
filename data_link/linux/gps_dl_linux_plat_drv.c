@@ -16,6 +16,7 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/poll.h>
+#include <linux/suspend.h>
 
 #include <linux/io.h>
 #include <asm/io.h>
@@ -37,6 +38,9 @@
 #include "gps_each_device.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
+#endif
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_ylink.h"
 #endif
 
 
@@ -586,52 +590,25 @@ static int gps_dl_remove(struct platform_device *pdev)
 
 static int gps_dl_drv_suspend(struct device *dev)
 {
-#if 0
-	struct platform_device *pdev = to_platform_device(dev);
-	pm_message_t state = PMSG_SUSPEND;
-
-	return mtk_btif_suspend(pdev, state);
-#endif
+	GDL_LOGI_EVT("GDLP");
 	return 0;
 }
 
 static int gps_dl_drv_resume(struct device *dev)
 {
-#if 0
-	struct platform_device *pdev = to_platform_device(dev);
-
-	return mtk_btif_resume(pdev);
-#endif
+	GDL_LOGI_EVT("GDLP");
 	return 0;
 }
 
 static int gps_dl_plat_suspend(struct platform_device *pdev, pm_message_t state)
 {
-#if 0
-	int i_ret = 0;
-	struct _mtk_btif_ *p_btif = NULL;
-
-	BTIF_DBG_FUNC("++\n");
-	p_btif = platform_get_drvdata(pdev);
-	i_ret = _btif_suspend(p_btif);
-	BTIF_DBG_FUNC("--, i_ret:%d\n", i_ret);
-	return i_ret;
-#endif
+	GDL_LOGI_EVT("GDLP");
 	return 0;
 }
 
 static int gps_dl_plat_resume(struct platform_device *pdev)
 {
-#if 0
-	int i_ret = 0;
-	struct _mtk_btif_ *p_btif = NULL;
-
-	BTIF_DBG_FUNC("++\n");
-	p_btif = platform_get_drvdata(pdev);
-	i_ret = _btif_resume(p_btif);
-	BTIF_DBG_FUNC("--, i_ret:%d\n", i_ret);
-	return i_ret;
-#endif
+	GDL_LOGI_EVT("GDLP");
 	return 0;
 }
 
@@ -677,6 +654,25 @@ static ssize_t driver_flag_set(struct device_driver *drv,
 	__ATTR(_name, _mode, _show, _store)
 static DRIVER_ATTR(flag, 0644, driver_flag_read, driver_flag_set);
 
+#if GPS_DL_HAS_MCUDL
+static struct notifier_block gps_dl_pm_notifier;
+
+static int gps_dl_pm_notifier_callback(struct notifier_block *nb,
+		unsigned long event, void *dummy)
+{
+	GDL_LOGI("GDLP: event = %lu", event);
+	switch (event) {
+	case PM_SUSPEND_PREPARE:
+		break;
+	case PM_POST_SUSPEND:
+		gps_mcudl_ylink_on_ap_resume();
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_DONE;
+}
+#endif
 
 int gps_dl_linux_plat_drv_register(void)
 {
@@ -692,11 +688,19 @@ int gps_dl_linux_plat_drv_register(void)
 	/* if (result) */
 	GDL_LOGW_INI("driver_create_file, ret(%d)\n", result);
 
+#if GPS_DL_HAS_MCUDL
+	gps_dl_pm_notifier.notifier_call = gps_dl_pm_notifier_callback;
+	result = register_pm_notifier(&gps_dl_pm_notifier);
+	GDL_LOGW_INI("register_pm_notifier, ret(%d)\n", result);
+#endif
 	return 0;
 }
 
 int gps_dl_linux_plat_drv_unregister(void)
 {
+#if GPS_DL_HAS_MCUDL
+	unregister_pm_notifier(&gps_dl_pm_notifier);
+#endif
 	driver_remove_file(&gps_dl_dev_drv.driver, &driver_attr_flag);
 	platform_driver_unregister(&gps_dl_dev_drv);
 	gps_dl_wake_lock_deinit();

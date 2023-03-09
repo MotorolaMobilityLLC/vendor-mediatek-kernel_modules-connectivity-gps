@@ -19,6 +19,7 @@ enum gps_mcudl_ylink_event_id {
 	GPS_MCUDL_YLINK_EVT_ID_CCIF_CLR_FW_OWN,
 	GPS_MCUDL_YLINK_EVT_ID_TEST_CLR_FW_OWN,
 	GPS_MCUDL_YLINK_EVT_ID_MCU_WDT_DUMP,
+	GPS_MCUDL_YLINK_EVT_ID_AP_RESUME,
 	GPS_MCUDL_YLINK_EVT_NUM
 };
 
@@ -26,6 +27,7 @@ void gps_mcudl_ylink_event_send(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 
 void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_event_id evt);
 
+void gps_mcudl_ylink_on_ap_resume(void);
 
 
 #endif /* _GPS_MCUDL_YLINK_H */
