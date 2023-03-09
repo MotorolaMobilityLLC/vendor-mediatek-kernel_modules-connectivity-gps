@@ -210,6 +210,7 @@ int gps_mcudl_ctx_links_init(void)
 		gps_dl_set_rx_transfer_max(xid, GPS_LIBMNL_READ_MAX);
 #endif
 		gps_mcudl_each_link_init(xid);
+		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
 	}
 
 	return 0;
