@@ -29,6 +29,8 @@ enum gps_mcusys_gpsbin_state {
 	GPS_MCUSYS_GPSBIN_PRE_OFF,
 	GPS_MCUSYS_GPSBIN_POST_OFF,
 };
+
+enum gps_mcusys_gpsbin_state gps_mcusys_gpsbin_state_get(void);
 void gps_mcusys_gpsbin_state_set(enum gps_mcusys_gpsbin_state state);
 bool gps_mcusys_gpsbin_state_is(enum gps_mcusys_gpsbin_state state);
 
