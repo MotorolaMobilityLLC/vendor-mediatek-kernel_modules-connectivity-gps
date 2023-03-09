@@ -571,10 +571,12 @@ int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 int gps_mcudl_plat_mcu_ch2_write(const unsigned char *kbuf, unsigned int count)
 {
 	bool is_okay;
+	gps_mcudl_ap2mcu_set_write_fail_flag(GPS_MDLY_URGENT, true);
 
 	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMA_URGENT, kbuf, count);
 	if (!is_okay)
 		return 0;
+	gps_mcudl_ap2mcu_set_write_fail_flag(GPS_MDLY_URGENT, false);
 	return count;
 }
 

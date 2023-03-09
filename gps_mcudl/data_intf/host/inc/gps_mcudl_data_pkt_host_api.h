@@ -62,6 +62,8 @@ bool gps_mcudl_ap2mcu_get_wait_write_flag(enum gps_mcudl_yid y_id);
 void gps_mcudl_ap2mcu_set_wait_write_flag(enum gps_mcudl_yid y_id, bool flag);
 bool gps_mcudl_ap2mcu_get_wait_flush_flag(enum gps_mcudl_yid y_id);
 void gps_mcudl_ap2mcu_set_wait_flush_flag(enum gps_mcudl_yid y_id, bool flag);
+bool gps_mcudl_ap2mcu_get_write_fail_flag(enum gps_mcudl_yid y_id);
+void gps_mcudl_ap2mcu_set_write_fail_flag(enum gps_mcudl_yid y_id, bool flag);
 
 void gps_mcudl_ap2mcu_try_to_wakeup_xlink_writer(enum gps_mcudl_yid y_id);
 void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum gps_mcudl_pkt_type type,
