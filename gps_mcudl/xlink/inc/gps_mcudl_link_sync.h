@@ -25,5 +25,10 @@ void gps_mcudl_link_close_ack(enum gps_mcudl_xid link_id);
 void gps_mcudl_link_reset_ack(enum gps_mcudl_xid link_id);
 void gps_mcudl_link_on_post_conn_reset(enum gps_mcudl_xid link_id);
 
+int gps_mcudl_link_wait_state_ntf(enum gps_mcudl_xid x_id, long *p_sigval);
+void gps_mcudl_link_trigger_state_ntf(enum gps_mcudl_xid x_id);
+void gps_mcudl_link_trigger_state_ntf_all(void);
+
+
 #endif /* _GPS_MCUDL_LINK_SYNC_H */
 
