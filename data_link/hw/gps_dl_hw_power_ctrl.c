@@ -392,8 +392,8 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 
 bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 {
-	int i;
-	bool done = false;
+	int i, dsp_relog_cnt = 0;
+	bool done = false, if_need_relog = true;
 	bool record_last_show_log = false;
 	bool need_dump_for_reset_done = false;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
@@ -447,10 +447,22 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 			/* poll 200ms */
 			if (i >= 200) {
 				done = false;
+dsp_relog:
 				gps_dl_hw_save_usrt_status_struct(GPS_DATA_LINK_ID0, &usrt_status);
 				gps_dl_hw_print_usrt_status_struct(GPS_DATA_LINK_ID0, &usrt_status);
 				gps_dl_hw_save_usrt_status_struct(GPS_DATA_LINK_ID1, &usrt_status);
 				gps_dl_hw_print_usrt_status_struct(GPS_DATA_LINK_ID1, &usrt_status);
+				/*dsp request: dump usrt log three times*/
+				if (link_id == GPS_DATA_LINK_ID0) {
+					if (dsp_relog_cnt >= 2)
+						if_need_relog = false;
+					dsp_relog_cnt++;
+					if (if_need_relog) {
+						gps_dl_sleep_us(9999, 10001);
+						GDL_LOGW("dsp_relog_cnt = %d", dsp_relog_cnt);
+						goto dsp_relog;
+					}
+				}
 				gps_dl_hw_save_dma_status_struct(a2d_dma_ch, &a2d_dma_status);
 				gps_dl_hw_print_dma_status_struct(a2d_dma_ch, &a2d_dma_status);
 				gps_dl_hw_save_dma_status_struct(d2a_dma_ch, &d2a_dma_status);
