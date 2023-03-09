@@ -516,8 +516,33 @@ _fail_conninfra_spi_read_adie_not_okay:
 
 }
 
+static void gps_dl_hw_dep_adie_mt6686_dump_status(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	unsigned int adie_03C = 0, adie_B18 = 0, adie_750 = 0;
+	int rd_status;
+
+	/* READ TOP: 0x03C */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0x03C, &adie_03C);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	/* READ TOP: 0xB18 */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xB18, &adie_B18);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	/* READ TOP: 0x750 */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0x750, &adie_750);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	GDL_LOGW("adie_dump, 03C=0x%x, B18=0x%x, 750=0x%x",
+		adie_03C, adie_B18, adie_750);
+#endif
+}
+
 void gps_dl_hw_dep_gps_control_adie_off(void)
 {
+	gps_dl_hw_dep_adie_mt6686_dump_status();
+
 	/*disable A-die top_clk_en_5*/
 	GDL_HW_ADIE_TOP_CLK_EN_6686(0x0);
 
