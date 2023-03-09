@@ -9,6 +9,7 @@
 #include "gps_mcudl_data_pkt_slot.h"
 #include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcu_hif_host.h"
+#include "gps_mcudl_ylink.h"
 #if GPS_DL_HAS_MCUDL_HAL
 #include "gps_mcudl_hal_ccif.h"
 #endif
@@ -344,6 +345,10 @@ void gps_mcu_hif_host_ccif_irq_handler_in_isr(void)
 		if (!gps_mcu_hif_is_trans_req_finished(trans_id))
 			continue;
 		gps_mcu_hif_host_trans_finished(trans_id);
+	}
+	if (gps_mcudl_ap2mcu_get_write_fail_flag(GPS_MDLY_URGENT) == true) {
+		gps_mcudl_ylink_event_send(GPS_MDLY_URGENT,
+				GPS_MCUDL_YLINK_EVT_ID_SLOT_FLUSH_ON_RECV_STA);
 	}
 }
 
