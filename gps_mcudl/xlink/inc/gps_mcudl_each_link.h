@@ -69,6 +69,8 @@ void gps_mcudl_each_link_rec_write_end(enum gps_mcudl_xid x_id, int pid, int len
 void gps_mcudl_each_link_rec_dump(enum gps_mcudl_xid x_id);
 void gps_mcudl_xlink_dump_all_rec(void);
 
+int gps_mcudl_each_link_listen_state_ntf(enum gps_mcudl_xid x_id);
+
 
 #endif /* _GPS_MCUDL_EACH_LINK_H */
 

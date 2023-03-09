@@ -820,3 +820,48 @@ void gps_mcudl_xlink_dump_all_rec(void)
 		gps_mcudl_each_link_rec_dump(x_id);
 }
 
+bool gps_mcudl_xlink_is_in_state_to_listen(enum gps_each_link_state_enum state)
+{
+	return (state == LINK_RESETTING || state == LINK_RESET_DONE ||
+		state == LINK_CLOSING || state == LINK_CLOSED ||
+		state == LINK_DISABLED || state == LINK_UNINIT);
+}
+
+int gps_mcudl_each_link_listen_state_ntf(enum gps_mcudl_xid x_id)
+{
+	int wait_ret;
+	int retval;
+	long sigval = 0;
+	enum gps_each_link_state_enum state, pre_state;
+
+	pre_state = gps_mcudl_each_link_get_state(x_id);
+	if (gps_mcudl_xlink_is_in_state_to_listen(pre_state)) {
+		MDL_LOGXW(x_id, "state=%s, not wait",
+			gps_dl_link_state_name(pre_state));
+		return 0;
+	}
+
+	MDL_LOGXI(x_id, "state=%s, go waiting", gps_dl_link_state_name(pre_state));
+	gps_mcudl_each_link_waitable_reset(x_id, GPS_DL_WAIT_STATE_NTF);
+	wait_ret = gps_mcudl_link_wait_state_ntf(x_id, &sigval);
+	state = gps_mcudl_each_link_get_state(x_id);
+	retval = wait_ret;
+	if (wait_ret == 0) {
+		if (gps_mcudl_xlink_is_in_state_to_listen(state)) {
+			/* keeps 0 to indicate link is reset or not in proper state */
+			retval = 0;
+		} else {
+			/* indicates ap just resumed and may need to be reset for LP */
+			retval = 1;
+
+			/* TODO:
+			 * indicates ap just resumed and may not need to be reset for LP
+			 * retval = 2;
+			 */
+		}
+	}
+	MDL_LOGXW(x_id, "state=%s,%s, sigval=%ld, retval=%d,%d",
+		gps_dl_link_state_name(pre_state), gps_dl_link_state_name(state),
+		sigval, wait_ret, retval);
+	return retval;
+}
