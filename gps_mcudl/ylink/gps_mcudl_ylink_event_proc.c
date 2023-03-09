@@ -12,6 +12,7 @@
 #include "gps_mcudl_plat_api.h"
 #include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcudl_hal_ccif.h"
+#include "gps_mcudl_hal_conn.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcusys_fsm.h"
 #include "gps_dl_time_tick.h"
@@ -50,6 +51,7 @@ void gps_mcudl_ylink_event_send(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_event_id evt)
 {
 	unsigned long tick_us0, tick_us1, dt_us;
+	enum gps_mcusys_gpsbin_state  gpsbin_state;
 	bool is_okay = false;
 
 	tick_us0 = gps_dl_tick_get_us();
@@ -107,6 +109,14 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 			gps_mcudl_hal_wdt_dump();
 		} else
 			MDL_LOGW("bypass gps_mcudl_hal_wdt_dump");
+		break;
+	case GPS_MCUDL_YLINK_EVT_ID_AP_RESUME:
+		gpsbin_state = gps_mcusys_gpsbin_state_get();
+		if (GPS_MCUSYS_GPSBIN_POST_ON != gpsbin_state) {
+			MDL_LOGI("ap_resume: gpsbin state=%d, skip", gpsbin_state);
+			break;
+		}
+		gps_mcudl_hal_dump_power_state();
 		break;
 	default:
 		break;
