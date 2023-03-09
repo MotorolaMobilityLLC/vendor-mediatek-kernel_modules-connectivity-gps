@@ -563,6 +563,7 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 	bool old_reset_flag = false;
 	unsigned long curr_tick;
 	static unsigned long last_tick;
+	int delta_recv_len;
 
 	p_trx_ctx = get_txrx_ctx(yid);
 	not_ack_len = p_trx_ctx->host_sta.pkt_sta.total_recv - p_trx_ctx->host_sta.last_ack_recv_len;
@@ -597,11 +598,13 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 		gps_mcudl_host_sta_hist_rec(yid, &rec_items);
 
 		if ((curr_tick - last_tick) >= 1000000) {
+			delta_recv_len = (int)(p_trx_ctx->host_sta.pkt_sta.total_recv -
+				p_trx_ctx->host_sta.last_ack_recv_len);
 			MDL_LOGYI(yid,
-				"send_host_ack:recv_isr=%lu,recv=%llu,last=%llu,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%llu,ntf=%d",
+				"send_host_ack:recv_isr=%lu,recv=%llu,last=%llu,delta=%d,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%llu,ntf=%d",
 				gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(yid),
 				p_trx_ctx->host_sta.pkt_sta.total_recv,
-				p_trx_ctx->host_sta.last_ack_recv_len,
+				p_trx_ctx->host_sta.last_ack_recv_len, delta_recv_len,
 				p_trx_ctx->host_sta.pkt_sta.total_parse_proc,
 				p_trx_ctx->host_sta.pkt_sta.total_pkt_cnt,
 				p_trx_ctx->host_sta.pkt_sta.total_parse_drop,
@@ -1030,13 +1033,14 @@ struct gps_mcudl_mcu2ap_pkt_rec_item {
 struct gps_mcudl_mcu2ap_pkt_rec_item g_gps_mcu2ap_pkt_rec_list[MCU2AP_PKT_REC_MAX];
 unsigned long g_gps_mcu2ap_pkt_rec_cnt;
 
-void gps_mcudl_mcu2ap_rec_add_item(struct gps_mcudl_mcu2ap_pkt_rec_item *p_item)
+unsigned long gps_mcudl_mcu2ap_rec_add_item(struct gps_mcudl_mcu2ap_pkt_rec_item *p_item)
 {
 	unsigned long index;
 
 	index = (g_gps_mcu2ap_pkt_rec_cnt % MCU2AP_PKT_REC_MAX);
 	g_gps_mcu2ap_pkt_rec_list[index] = *p_item;
 	g_gps_mcu2ap_pkt_rec_cnt++;
+	return index;
 }
 
 void gps_mcudl_mcu2ap_rec_dump_item(struct gps_mcudl_mcu2ap_pkt_rec_item *p_item, unsigned long index)
@@ -1097,8 +1101,27 @@ void gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump(void)
 
 void gps_mcudl_mcu2ap_put_to_xlink_fail_rec_init(void)
 {
-	memset(g_gps_mcu2ap_put_to_xlink_fail_rec_list, 0, sizeof(g_gps_mcu2ap_put_to_xlink_fail_rec_list));
+	memset(g_gps_mcu2ap_put_to_xlink_fail_rec_list, 0,
+		sizeof(g_gps_mcu2ap_put_to_xlink_fail_rec_list));
 }
+
+
+bool g_gps_mcudl_mcu2ap_after_ap_resume_dump_flag;
+unsigned int g_gps_mcudl_mcu2ap_after_ap_resume_dump_cnt;
+#define GPS_MCUD_MCU2AP_AFTER_AP_RESUME_DUMP_MAX (2)
+
+void gps_mcudl_mcu2ap_arrange_pkt_dump_after_ap_resume(void)
+{
+	g_gps_mcudl_mcu2ap_after_ap_resume_dump_flag = true;
+	g_gps_mcudl_mcu2ap_after_ap_resume_dump_cnt = 0;
+}
+
+void gps_mcudl_mcu2ap_clear_ap_resume_pkt_dump_flag(void)
+{
+	g_gps_mcudl_mcu2ap_after_ap_resume_dump_flag = false;
+	g_gps_mcudl_mcu2ap_after_ap_resume_dump_cnt = 0;
+}
+
 
 void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len)
@@ -1111,6 +1134,7 @@ void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum g
 	struct gps_mcudl_mcu2ap_pkt_rec_item rec_item;
 	int rec_pl_len;
 	unsigned long curr_tick;
+	unsigned long record_pkt_idx;
 
 	if (!gps_mcudl_ypl_type2xid(type, &x_id)) {
 		MDL_LOGYW(y_id, "recv type=%d, len=%d, no x_id", type, payload_len);
@@ -1182,7 +1206,21 @@ _loop_start:
 	memset(&rec_item.payload[0], 0, sizeof(rec_item.payload));
 	if (rec_pl_len > 0)
 		memcpy(&rec_item.payload[0], payload_ptr, rec_pl_len);
-	gps_mcudl_mcu2ap_rec_add_item(&rec_item);
+
+	record_pkt_idx = gps_mcudl_mcu2ap_rec_add_item(&rec_item);
+	if (gdl_ret != GDL_OKAY || g_gps_mcudl_mcu2ap_after_ap_resume_dump_flag) {
+		MDL_LOGXW(x_id, "gdl_dma_buf_put: ret=%s, pkt_idx=%lu, ap_resume=%d,%d",
+			gdl_ret_to_name(gdl_ret), record_pkt_idx,
+			g_gps_mcudl_mcu2ap_after_ap_resume_dump_flag,
+			g_gps_mcudl_mcu2ap_after_ap_resume_dump_cnt);
+		gps_mcudl_mcu2ap_rec_dump_item(&rec_item, record_pkt_idx);
+	}
+	if (g_gps_mcudl_mcu2ap_after_ap_resume_dump_flag) {
+		g_gps_mcudl_mcu2ap_after_ap_resume_dump_cnt++;
+		if (g_gps_mcudl_mcu2ap_after_ap_resume_dump_cnt >=
+			GPS_MCUD_MCU2AP_AFTER_AP_RESUME_DUMP_MAX)
+			gps_mcudl_mcu2ap_clear_ap_resume_pkt_dump_flag();
+	}
 
 _loop_end:
 	if ((unsigned int)x_id_next < (unsigned int)GPS_MDLX_CH_NUM) {
