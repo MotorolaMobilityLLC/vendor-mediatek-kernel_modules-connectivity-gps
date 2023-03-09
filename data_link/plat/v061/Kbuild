@@ -143,6 +143,7 @@ $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/xlink/gps_mcudl_xlink_event_proc.o
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/xlink/gps_mcudl_reset.o
 
 ccflags-y += -I$(GPS_MDL_INC_ROOT)/ylink/inc
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/ylink/gps_mcudl_ylink.o
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/ylink/gps_mcudl_ylink_event_proc.o
 
 ccflags-y += -I$(GPS_MDL_INC_ROOT)/mcu_sys/common/inc
