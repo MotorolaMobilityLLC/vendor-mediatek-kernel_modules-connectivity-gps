@@ -212,6 +212,20 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 			gps_mcudl_hal_may_set_link_power_flag(link_id, false);
 			goto _close_or_reset_ack;
 		}
+
+		/* if gpsbin status == post off, mcu is not opened.
+		 * shouldn't gothrough following steps.
+		 * From mmap check, ap/offload mode will be tested .
+		 * enable slp prot fail in ap mode would call connsys reset and trigger
+		 * offload mode dump either.
+		 * we don't expect it to happen, so bypass.
+		 */
+		if (gps_mcusys_gpsbin_state_is(GPS_MCUSYS_GPSBIN_POST_OFF)) {
+			MDL_LOGXW(link_id, "gps_bin not open, just bypass for %s",
+				gps_mcudl_xlink_event_name(evt));
+			goto _close_or_reset_ack;
+		}
+
 #if 0
 		/* to avoid twice enter */
 		if (GPS_DSP_ST_OFF == gps_dsp_state_get(link_id)) {
