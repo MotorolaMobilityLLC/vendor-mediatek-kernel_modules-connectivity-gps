@@ -5,6 +5,7 @@
 
 #include "gps_dl_config.h"
 #include "gps_mcudl_ylink.h"
+#include "gps_mcudl_link_sync.h"
 #include "gps_dl_context.h"
 #include "gps_dl_osal.h"
 #include "gps_dl_name_list.h"
@@ -117,6 +118,7 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 			break;
 		}
 		gps_mcudl_hal_dump_power_state();
+		gps_mcudl_link_trigger_state_ntf_all();
 		gps_mcudl_mcu2ap_arrange_pkt_dump_after_ap_resume();
 		break;
 	default:
