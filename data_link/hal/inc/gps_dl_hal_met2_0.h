@@ -12,6 +12,7 @@
 #define GPS_DEBUG_MET_SETTINGS_EVENT_SIGNAL_VALID	((1)<<3)
 #define GPS_DEBUG_MET_SETTINGS_EADE_DETECTION_VALID	((1)<<4)
 #define GPS_DEBUG_MET_SETTINGS_EVENT_SELECT_VALID	((1)<<5)
+#define GPS_DEBUG_MET_SETTINGS_TIMER_SOURCE_VALID	((1)<<6)
 #define GPS_DEBUG_MET_OUTPUT_LEN			(32)
 
 enum gps_debug_met_status {
@@ -29,11 +30,13 @@ enum gps_debug_met_operator_index {
 	GPS_DEBUG_OP_SET_EVENT_SIGNAL,
 	GPS_DEBUG_OP_SET_EDGE_DETECTION,
 	GPS_DEBUG_OP_SET_EVENT_SELECT,
+	GPS_DEBUG_OP_SET_TIMER_SOURCE,
 	GPS_DEBUG_OP_END_INDEX
 };
 
 struct gps_debug_met_settings {
 	unsigned char is_ringbuffer_mode;
+	unsigned char timer_source;
 	unsigned char sample_rate;
 	unsigned char event_select;
 	unsigned int mask_signal;
