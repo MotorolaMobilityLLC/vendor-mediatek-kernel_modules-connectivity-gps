@@ -38,7 +38,7 @@ void gps_dl_hw_dep_dump_host_csr_range(unsigned int flag_start, unsigned int len
 			memset(&print_list[0], 0, sizeof(print_list));
 		}
 
-		arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_DEP_DUMP_HOST_CSR_GPS_INFO_OPID,
+		arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_DEP_SET_HOST_CSR_GPS_DBG_SEL_OPID,
 			flag, 0, 0, 0, 0, 0, &res);
 		atf_ret = res.a0;
 		flag2 = res.a1;
@@ -85,6 +85,20 @@ void gps_dl_hw_gps_dump_gps_rf_temp_cr(void)
 	/* TODO */
 }
 
+static void gps_dl_hw_dep_set_bgf_on_dbg_sel(unsigned int flag_value)
+{
+	struct arm_smccc_res res;
+	unsigned int atf_ret, flag2;
+
+	memset(&res, 0, sizeof(res));
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_DEP_SET_HOST_CSR2BGF_DBG_SEL_OPID,
+		flag_value, 0, 0, 0, 0, 0, &res);
+	atf_ret = res.a0;
+	flag2 = res.a1;
+	if (flag_value != flag2 || atf_ret != 0)
+		GDL_LOGW("atf_ret=%d, flag=0x%08x,0x%08x", atf_ret, flag_value, flag2);
+}
+
 void gps_dl_hw_dep_gps_dump_power_state(void)
 {
 #define BGF_LP_DBG_DUMP_LEN (5)
@@ -96,9 +110,7 @@ void gps_dl_hw_dep_gps_dump_power_state(void)
 	unsigned int bgf_dummy = 0;
 	unsigned int bgf_dbg_30004a = 0, bgf_dbg_30004b = 0;
 	unsigned int bgf_dbg_300040[BGF_LP_DBG_DUMP_LEN] = {0};
-#if 0
 	unsigned int i;
-#endif
 
 	is_fw_own = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_LPCTL_ADDR);
 	conn_wake_by_top = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_TOP_ADDR);
@@ -107,20 +119,17 @@ void gps_dl_hw_dep_gps_dump_power_state(void)
 	clock_det = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_CLOCK_DETECT_ADDR);
 	conn_pwr_st = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONNSYS_PWR_STATES_ADDR);
 
-	/* TODO: WR CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR by tf-a */
-#if 0
-	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x200c00);
+	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x200c00);
 	bgf_dummy = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 
 	for (i = 0; i < BGF_LP_DBG_DUMP_LEN; i++) {
-		GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, (0x300040 + i));
+		gps_dl_hw_dep_set_bgf_on_dbg_sel((0x300040 + i));
 		bgf_dbg_300040[i] = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 	}
-	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x30004a);
+	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x30004a);
 	bgf_dbg_30004a = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
-	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x30004b);
+	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x30004b);
 	bgf_dbg_30004b = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
-#endif
 
 	GDL_LOGI("fw_own=%u, conn_wk:t/g=%d/%d, clk_det=0x%x, conn_pwr=0x%x, bgf_dmy=0x%x",
 		is_fw_own, conn_wake_by_top, conn_wake_by_gps, clock_det, conn_pwr_st, bgf_dummy);
