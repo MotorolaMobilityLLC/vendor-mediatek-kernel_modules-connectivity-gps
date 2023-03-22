@@ -246,26 +246,60 @@ void gps_mcu_hif_recv_listen_stop(enum gps_mcu_hif_ch hif_ch)
 	p_ctx->custom_cb = NULL;
 }
 
-void gps_mcu_hif_host_on_tx_finished(enum gps_mcu_hif_ch hif_ch)
+void gps_mcu_hif_host_on_tx_finished(enum gps_mcu_hif_ch hif_ch, unsigned int data_len)
 {
+	unsigned char *p_data;
+
+	p_data = gps_mcu_hif_get_ap2mcu_emi_buf_addr(hif_ch);
+
+#if GPS_DL_ON_LINUX
+	memset_io(p_data, 0x0, data_len);
+#else
+	memset(p_data, 0x0, data_len);
+#endif
 }
 
 unsigned char gps_mcu_hif_on_recv_dispatcher_buf[GPS_MCU_HIF_EMI_BUF_SIZE];
+
 void gps_mcu_hif_host_on_rx_finished(enum gps_mcu_hif_ch hif_ch, unsigned int data_len)
 {
+/* #define GPS_DL_DBG_MEM_CPY_MIPS */
 	struct gps_mcu_hif_recv_ch_context *p_ctx;
-	const unsigned char *p_data;
+	unsigned char *p_data;
+
+#ifdef GPS_DL_DBG_MEM_CPY_MIPS
+	unsigned long t1 = 0;
+	unsigned long t2 = 0;
+#endif
 
 	p_data = gps_mcu_hif_get_mcu2ap_emi_buf_addr(hif_ch);
 	p_ctx = &g_gps_mcu_hif_recv_contexts[hif_ch];
-	if (!p_ctx->is_listening)
+	if (!p_ctx->is_listening) {
+#if GPS_DL_ON_LINUX
+		memset_io(p_data, 0x0, data_len);
+#else
+		memset(p_data, 0x0, data_len);
+#endif
 		return;
+	}
+
+#ifdef GPS_DL_DBG_MEM_CPY_MIPS
+	t1 = gps_dl_tick_get_us();
+#endif
 
 #if GPS_DL_ON_LINUX
 	memcpy_fromio(&gps_mcu_hif_on_recv_dispatcher_buf[hif_ch], p_data, data_len);
+	memset_io(p_data, 0x0, data_len);
 #else
 	memcpy(&gps_mcu_hif_on_recv_dispatcher_buf[hif_ch], p_data, data_len);
+	memset(p_data, 0x0, data_len);
 #endif
+
+#ifdef GPS_DL_DBG_MEM_CPY_MIPS
+	t2 = gps_dl_tick_get_us();
+	MDL_LOGW("clr mem used %lu us, data_len=%u\n", t2-t1, data_len);
+#endif
+
 	gps_mcu_hif_recv_start(hif_ch);
 	if (!p_ctx->custom_cb)
 		return;
@@ -306,7 +340,7 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 		MDL_LOGD("tx_done, ch=%d, id=%d, len=%d, dt_32k=%d",
 			hif_ch, end_desc.id, end_desc.len, end_desc.dticks);
 		gps_mcu_hif_host_trans_hist_rec(&trans_rec);
-		gps_mcu_hif_host_on_tx_finished(hif_ch);
+		gps_mcu_hif_host_on_tx_finished(hif_ch, end_desc.len);
 		break;
 
 	case GPS_MCU_HIF_TRANS_MCU2AP_DMALESS_MGMT:
