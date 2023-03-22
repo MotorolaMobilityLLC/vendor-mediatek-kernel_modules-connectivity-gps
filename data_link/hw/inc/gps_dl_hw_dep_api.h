@@ -77,7 +77,7 @@ void gps_dl_hw_dep_dump_gps_rf_temp_cr(void);
 /*
  * MET2.0
  */
-void gps_dl_hw_dep_set_emi_write_range(unsigned int bus_emi_met_phy_addr);
+void gps_dl_hw_dep_set_emi_write_range(void);
 void gps_dl_hw_dep_set_ringbuffer_mode(unsigned int mode);
 void gps_dl_hw_dep_set_sampling_rate(unsigned int rate);
 void gps_dl_hw_dep_set_mask_signal(unsigned int mask_signal);
@@ -88,6 +88,7 @@ void gps_dl_hw_dep_enable_met(void);
 void gps_dl_hw_dep_disable_met(void);
 unsigned int gps_dl_hw_dep_get_met_read_ptr_addr(void);
 unsigned int gps_dl_hw_dep_get_met_write_ptr_addr(void);
+void gps_dl_hw_dep_set_timer_source(unsigned int timer_source);
 
 struct gps_dl_hw_host_csr_dump_range {
 	unsigned int flag_start;

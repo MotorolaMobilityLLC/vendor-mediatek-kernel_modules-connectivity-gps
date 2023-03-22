@@ -69,6 +69,30 @@ void gps_dl_emi_remap_set_conn(unsigned int min_addr, unsigned int max_addr)
 #endif
 	gps_dl_remap_ctx_get()->mcu_emi_phy_remap_base = aligned_addr;
 }
+
+void gps_dl_emi_remap_set_conn_mcu(unsigned int min_addr, unsigned int max_addr)
+{
+	unsigned int aligned_addr = 0;
+	unsigned int _20msb_of_36bit_phy_addr;
+
+	/* TODO: addr may not use uint, due to addr might be 36bit and uint might be only 32bit */
+	aligned_addr = (min_addr & GPS_EMI_REMAP_BASE_MASK);
+
+
+	if (max_addr - aligned_addr > GPS_EMI_REMAP_LENGTH) {
+		GDL_LOGE("min = 0x%09x, max = 0x%09x, base = 0x%09x, over range",
+			min_addr, max_addr, aligned_addr);
+	} else {
+		GDL_LOGD("min = 0x%09x, max = 0x%09x, base = 0x%09x",
+			min_addr, max_addr, aligned_addr);
+	}
+
+	_20msb_of_36bit_phy_addr = aligned_addr >> 16;
+	GDL_LOGI("remap setting = 0x%08x", _20msb_of_36bit_phy_addr);
+
+	gps_dl_remap_ctx_get()->mcu_emi_phy_remap_base = aligned_addr;
+}
+
 #endif
 
 enum GDL_RET_STATUS gps_dl_emi_remap_phy_to_bus_addr_inner(
