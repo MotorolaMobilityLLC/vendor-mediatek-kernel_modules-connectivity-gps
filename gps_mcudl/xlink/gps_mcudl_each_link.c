@@ -766,6 +766,7 @@ void gps_mcudl_each_link_rec_read_end(enum gps_mcudl_xid x_id, int pid, int len)
 
 	gps_mcudl_each_link_mutex_take(x_id, GPS_DL_MTX_BIG_LOCK);
 	p->rec.is_reading = false;
+	p->rec.last2_read_retlen = p->rec.last_read_retlen;
 	p->rec.last_read_retlen = len;
 	gps_mcudl_each_link_mutex_give(x_id, GPS_DL_MTX_BIG_LOCK);
 }
@@ -786,6 +787,7 @@ void gps_mcudl_each_link_rec_write_end(enum gps_mcudl_xid x_id, int pid, int len
 
 	gps_mcudl_each_link_mutex_take(x_id, GPS_DL_MTX_BIG_LOCK);
 	p->rec.is_writing = false;
+	p->rec.last2_write_retlen = p->rec.last_write_retlen;
 	p->rec.last_write_retlen = len;
 	gps_mcudl_each_link_mutex_give(x_id, GPS_DL_MTX_BIG_LOCK);
 }
@@ -804,10 +806,12 @@ void gps_mcudl_each_link_rec_dump(enum gps_mcudl_xid x_id)
 	pending_w_count = gps_dma_buf_count_data_entry(&p->tx_dma_buf);
 
 	gps_mcudl_each_link_mutex_take(x_id, GPS_DL_MTX_BIG_LOCK);
-	MDL_LOGXW(x_id, "p0/1_us=%lu,%lu, r=%d,%lu,%d, w=%d,%lu,%d, pkt_r/w=%u,%u",
+	MDL_LOGXW(x_id, "p0/1_us=%lu,%lu, r=%d,%lu,%d,%d, w=%d,%lu,%d,%d, pkt_r/w=%u,%u",
 		p->rec.poll_zero_us, p->rec.poll_non_zero_us,
 		p->rec.is_reading, p->rec.reading_us, p->rec.last_read_retlen,
+		p->rec.last2_read_retlen,
 		p->rec.is_writing, p->rec.writing_us, p->rec.last_write_retlen,
+		p->rec.last2_write_retlen,
 		pending_r_count, pending_w_count);
 	gps_mcudl_each_link_mutex_give(x_id, GPS_DL_MTX_BIG_LOCK);
 }
