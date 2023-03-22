@@ -14,7 +14,9 @@ struct gps_mcudl_xlink_rec {
 	bool is_writing;
 
 	int last_read_retlen;
+	int last2_read_retlen;
 	int last_write_retlen;
+	int last2_write_retlen;
 
 	unsigned long  reading_us;
 	unsigned long  writing_us;
