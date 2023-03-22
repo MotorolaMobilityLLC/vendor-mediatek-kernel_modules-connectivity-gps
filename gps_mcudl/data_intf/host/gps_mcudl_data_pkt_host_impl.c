@@ -601,7 +601,9 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 			delta_recv_len = (int)(p_trx_ctx->host_sta.pkt_sta.total_recv -
 				p_trx_ctx->host_sta.last_ack_recv_len);
 			MDL_LOGYI(yid,
-				"send_host_ack:recv_isr=%lu,recv=%llu,last=%llu,delta=%d,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%llu,ntf=%d",
+				"send_host_ack:recv32=%u,recv_isr=%lu,recv_tsk=%llu,last=%llu,delta=%d,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%llu,ntf=%d",
+				/* trim to 32bits to match with FW log */
+				(unsigned int)p_trx_ctx->host_sta.pkt_sta.total_recv,
 				gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(yid),
 				p_trx_ctx->host_sta.pkt_sta.total_recv,
 				p_trx_ctx->host_sta.last_ack_recv_len, delta_recv_len,
