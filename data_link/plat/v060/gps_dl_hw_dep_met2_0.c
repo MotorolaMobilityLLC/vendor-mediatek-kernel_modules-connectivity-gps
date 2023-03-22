@@ -63,5 +63,10 @@ unsigned int gps_dl_hw_dep_get_met_write_ptr_addr(void)
 	return 1;
 }
 
+void gps_dl_hw_dep_set_timer_source(unsigned int timer_source)
+{
+	/* Do nothing for MT6893 or MT6885 */
+}
+
 #endif /* GPS_DL_ENABLE_MET */
 
