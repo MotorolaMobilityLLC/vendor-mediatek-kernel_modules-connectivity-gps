@@ -17,17 +17,23 @@
 #include "gps_dl_name_list.h"
 #include "conninfra.h"
 
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_link_state.h"
+#include "gps_dl_linux_reserved_mem_v2.h"
+#endif
 
 struct gps_debug_met_contex g_gps_debug_met_contex;
 static struct gps_debug_met_settings gps_debug_met_default_settings =  {
 	/*ringbuffer mode = on*/
 	.is_ringbuffer_mode = 1,
-	/*not mast any siganl*/
-	.mask_signal = 0,
+	/*timer source = osc*/
+	.timer_source = 1,
+	/*mast siganl*/
+	.mask_signal = 0xf800,
 	/*sample rate = 1M*/
-	.sample_rate = 25,
+	.sample_rate = 26,
 	/*default L1, channel 1*/
-	.event_select = 0x1,
+	.event_select = 0x0,
 	/*gps met debug message*/
 	.event_signal = 0x33333210,
 	/*detection*/
@@ -42,13 +48,26 @@ int gps_debug_met_start(struct gps_debug_met_contex *contex)
 	struct conn_metlog_info metlog_info;
 	int ret;
 
+#if GPS_DL_HAS_MCUDL
+	unsigned int min_addr = 0xFFFFFFFF;
+	unsigned int max_addr = 0;
+#endif
+
 	/*1. check if we can start GPS MET*/
 	/* 1.1 Check if GPS is opened*/
+#if GPS_DL_HAS_MCUDL
+	state = gps_mcudl_each_link_get_state(GPS_MDLX_MNL);
+	if (state != LINK_OPENED) {
+		GDL_LOGE("gps state:%s is not opend, set MET fail\n", gps_dl_link_state_name(state));
+		return -1;
+	}
+#else
 	state = gps_each_link_get_state(GPS_DATA_LINK_ID0);
 	if (state != LINK_OPENED) {
 		GDL_LOGE("gps state:%s is not opend, set MET fail\n", gps_dl_link_state_name(state));
 		return -1;
 	}
+#endif
 
 	/* 1.2 Check if MET is closed*/
 	if (contex->status != GPS_DEBUG_MET_CLOSED) {
@@ -64,6 +83,13 @@ int gps_debug_met_start(struct gps_debug_met_contex *contex)
 	}
 	p_mem_met_phy = p_mem_phy+offsetof(struct gps_dl_reserved_mem_layout, met_buf);
 
+#if GPS_DL_HAS_MCUDL
+#if GPS_DL_CONN_EMI_MERGED
+	gps_dl_reserved_mem_get_conn_range(&min_addr, &max_addr);
+	gps_dl_emi_remap_set_conn_mcu(min_addr, max_addr);
+#endif
+#endif
+
 	if (gps_dl_emi_remap_phy_to_bus_addr(p_mem_met_phy, &bus_emi_met_phy_addr) == GDL_FAIL) {
 		GDL_LOGE("MET remap EMI phy to bus addr fail\n");
 		return -1;
@@ -71,12 +97,19 @@ int gps_debug_met_start(struct gps_debug_met_contex *contex)
 
 	/*2. Set parameters for EMI CRs and notify connifra*/
 	/* 2.1 Set EMI Writing range*/
-	gps_dl_hw_dep_set_emi_write_range(bus_emi_met_phy_addr);
+	gps_dl_hw_dep_set_emi_write_range();
 
 	/* 2.2 Set ring buffer mode*/
 	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_BUFFER_MODE_VALID ?
 		contex->settings.is_ringbuffer_mode : gps_debug_met_default_settings.is_ringbuffer_mode);
 	gps_dl_hw_dep_set_ringbuffer_mode(value);
+
+#if GPS_DL_HAS_MCUDL
+	/* 2.2 Set timer source*/
+	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_TIMER_SOURCE_VALID ?
+		contex->settings.timer_source : gps_debug_met_default_settings.timer_source);
+	gps_dl_hw_dep_set_timer_source(value);
+#endif
 
 	/* 2.3 Set sampling rate*/
 	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_SAMPLE_RATE_VALID ?
@@ -125,7 +158,7 @@ int gps_debug_met_start(struct gps_debug_met_contex *contex)
 	gps_debug_met_clear(contex);
 
 	/*Dump setting for debug MET function*/
-	GDL_LOGW("Start MET,");
+	GDL_LOGW("Start MET, bus_emi_met_phy_addr = 0x%08x\n", bus_emi_met_phy_addr);
 	GDL_LOGW("bitmap :0x%.8X\n", contex->setting_bitmap);
 	GDL_LOGW("buffer mode :0x%.2X\n", contex->settings.is_ringbuffer_mode);
 	GDL_LOGW("sample rate :0x%.2X\n", contex->settings.sample_rate);
@@ -191,6 +224,10 @@ int gps_debug_met_set_parameter(struct gps_debug_met_contex *contex,
 	case GPS_DEBUG_OP_SET_EVENT_SELECT:
 		contex->settings.event_select = value;
 		contex->setting_bitmap |=  GPS_DEBUG_MET_SETTINGS_EVENT_SELECT_VALID;
+		break;
+	case GPS_DEBUG_OP_SET_TIMER_SOURCE:
+		contex->settings.timer_source = value;
+		contex->setting_bitmap |=  GPS_DEBUG_MET_SETTINGS_TIMER_SOURCE_VALID;
 		break;
 	default:
 		ret = -1;
