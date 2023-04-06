@@ -7,7 +7,9 @@
 #include "gps_dl_context.h"
 #include "gps_dl_hw_ver.h"
 #include "gps_dl_hw_api.h"
+#include "gps_dl_hal.h"
 #include "gps_dl_hal_api.h"
+#include "gps_dl_time_tick.h"
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_reserved_mem.h"
 #include "gps_dl_linux_reserved_mem_v2.h"
@@ -200,3 +202,19 @@ bool gps_dl_hal_conn_infra_ver_is_mt6893(void)
 	return (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6893);
 }
 
+struct gps_dl_gps_awake_status g_gps_dl_awake_status;
+void gps_dl_hal_set_gps_awake_status(bool is_gps_awake)
+{
+	unsigned long curr_ms = gps_dl_tick_get_ms();
+
+	g_gps_dl_awake_status.is_awake = is_gps_awake;
+	g_gps_dl_awake_status.updated_ms = curr_ms;
+
+}
+void gps_dl_hal_get_gps_awake_status(struct gps_dl_gps_awake_status *p_awake)
+{
+	if (p_awake == NULL)
+		return;
+
+	*p_awake = g_gps_dl_awake_status;
+}
