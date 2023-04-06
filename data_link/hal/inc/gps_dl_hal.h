@@ -119,5 +119,11 @@ unsigned int gps_dl_hal_get_adie_ver(void);
 bool gps_dl_hal_conn_infra_ver_is_mt6885(void);
 bool gps_dl_hal_conn_infra_ver_is_mt6893(void);
 
-#endif /* _GPS_DL_HAL_H */
+struct gps_dl_gps_awake_status {
+	bool is_awake;
+	unsigned long updated_ms;
+};
+void gps_dl_hal_set_gps_awake_status(bool is_gps_awake);
+void gps_dl_hal_get_gps_awake_status(struct gps_dl_gps_awake_status *p_awake);
 
+#endif /* _GPS_DL_HAL_H */
