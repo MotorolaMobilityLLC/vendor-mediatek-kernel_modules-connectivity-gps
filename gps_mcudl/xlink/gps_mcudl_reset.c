@@ -19,6 +19,7 @@
 #include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_ccif.h"
+#include "gps_mcudl_hal_conn.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
@@ -325,6 +326,7 @@ void gps_mcudl_connsys_coredump_start_wrapper(void)
 	gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
 	gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
 	gps_mcudl_hal_user_fw_own_status_dump();
+	(void)gps_mcudl_hal_dump_power_state();
 	gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump();
 
 	if (gps_mcudl_coredump_conninfra_on_is_readable()) {
