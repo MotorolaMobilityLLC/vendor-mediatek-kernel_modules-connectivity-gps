@@ -34,9 +34,9 @@ bool gps_mcudl_hw_ccif_is_tch_busy(enum gps_mcudl_ccif_ch ch)
 			return false;
 		}
 
-		gps_dl_sleep_us(1000, 2000);
+		gps_dl_sleep_us(20, 40);
 		i++;
-	} while (i < 100);
+	} while (i < 5000);
 	MDL_LOGE("wait loop = %d, still busy", i);
 	return true;
 }
