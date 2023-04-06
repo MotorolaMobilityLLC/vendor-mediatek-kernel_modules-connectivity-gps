@@ -104,7 +104,8 @@ bool gps_dl_link_wake_up2(struct gps_each_link_waitable *p)
 	ASSERT_NOT_NULL(p, false);
 
 	if (!p->waiting) {
-		if (p->type == GPS_DL_WAIT_WRITE || p->type == GPS_DL_WAIT_READ) {
+		if (p->type == GPS_DL_WAIT_WRITE || p->type == GPS_DL_WAIT_READ ||
+			p->type == GPS_DL_WAIT_STATE_NTF) {
 			/* normal case for read/write, not show warning */
 			GDL_LOGD("waitable = %s, nobody waiting",
 				gps_dl_waitable_type_name(p->type));
