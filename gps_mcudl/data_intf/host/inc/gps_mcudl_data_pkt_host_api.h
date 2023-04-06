@@ -17,6 +17,7 @@
 struct geofence_pkt_host_sta_s {
 	struct gps_mcudl_data_pkt_mcu_sta pkt_sta;
 	gpsmdl_u64 last_ack_recv_len;
+	gpsmdl_u64 last_print_recv_len;
 	bool reset_flag;
 	bool is_enable;
 };

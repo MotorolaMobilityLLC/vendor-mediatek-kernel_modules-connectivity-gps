@@ -327,7 +327,6 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 		return;
 	}
 
-	gps_mcu_hif_host_clr_trans_req_sent(trans_id);
 	trans_rec.trans_id = trans_id;
 	trans_rec.id = end_desc.id;
 	trans_rec.len = end_desc.len;
@@ -341,6 +340,7 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 			hif_ch, end_desc.id, end_desc.len, end_desc.dticks);
 		gps_mcu_hif_host_trans_hist_rec(&trans_rec);
 		gps_mcu_hif_host_on_tx_finished(hif_ch, end_desc.len);
+		gps_mcu_hif_host_clr_trans_req_sent(trans_id);
 		break;
 
 	case GPS_MCU_HIF_TRANS_MCU2AP_DMALESS_MGMT:
@@ -359,6 +359,7 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 		#endif
 		}
 		gps_mcu_hif_host_trans_hist_rec(&trans_rec);
+		gps_mcu_hif_host_clr_trans_req_sent(trans_id);
 		gps_mcu_hif_host_on_rx_finished(hif_ch, end_desc.len);
 		break;
 
