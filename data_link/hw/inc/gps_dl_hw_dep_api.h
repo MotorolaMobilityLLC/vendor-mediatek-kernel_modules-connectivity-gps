@@ -28,7 +28,13 @@ int gps_dl_hw_gps_sleep_prot_ctrl(int op);
 bool gps_dl_hw_dep_gps_control_adie_on(void);
 void gps_dl_hw_dep_gps_control_adie_off(void);
 bool gps_dl_hw_dep_gps_get_ecid_info(void);
-void gps_dl_hw_dep_gps_dump_power_state(void);
+
+struct gps_dl_power_raw_state {
+	unsigned int mcu_pc;
+	unsigned int is_hw_clk_ext;
+	unsigned int sw_gps_ctrl;
+};
+void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw);
 
 /*
  * GPS
