@@ -599,7 +599,7 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 
 		if ((curr_tick - last_tick) >= 1000000) {
 			delta_recv_len = (int)(p_trx_ctx->host_sta.pkt_sta.total_recv -
-				p_trx_ctx->host_sta.last_ack_recv_len);
+				p_trx_ctx->host_sta.last_print_recv_len);
 			MDL_LOGYI(yid,
 				"send_host_ack:recv32=%u,recv_isr=%lu,recv_tsk=%llu,last=%llu,delta=%d,proc=%u,pkt=%u,pdrop=%u,rdrop=%u,en=%u,rst=%u,nack=%llu,ntf=%d",
 				/* trim to 32bits to match with FW log */
@@ -616,6 +616,7 @@ void gps_mcudl_flowctrl_may_send_host_sta(enum gps_mcudl_yid yid)
 				not_ack_len,
 				to_notify);
 			last_tick = curr_tick;
+			p_trx_ctx->host_sta.last_print_recv_len = p_trx_ctx->host_sta.last_ack_recv_len;
 		}
 
 		if (p_trx_ctx->host_sta.is_enable && to_notify) {
