@@ -7,6 +7,7 @@
 #include "gps_mcudl_ylink.h"
 #include "gps_mcudl_link_sync.h"
 #include "gps_dl_context.h"
+#include "gps_dl_hal.h"
 #include "gps_dl_osal.h"
 #include "gps_dl_name_list.h"
 #include "gps_mcudl_log.h"
@@ -54,6 +55,7 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 	unsigned long tick_us0, tick_us1, dt_us;
 	enum gps_mcusys_gpsbin_state  gpsbin_state;
 	bool is_okay = false;
+	bool is_gps_awake = false;
 
 	tick_us0 = gps_dl_tick_get_us();
 	MDL_LOGYD_EVT(y_id, "evt=%d", evt);
@@ -117,7 +119,8 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 			MDL_LOGI("ap_resume: gpsbin state=%d, skip", gpsbin_state);
 			break;
 		}
-		gps_mcudl_hal_dump_power_state();
+		is_gps_awake = gps_mcudl_hal_dump_power_state();
+		gps_dl_hal_set_gps_awake_status(is_gps_awake);
 		gps_mcudl_link_trigger_state_ntf_all();
 		gps_mcudl_mcu2ap_arrange_pkt_dump_after_ap_resume();
 		break;
