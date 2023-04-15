@@ -603,3 +603,12 @@ void *gps_mcudl_plat_nv_emi_get_start_ptr(void)
 	return (void *)&p_layout->gps_nv_emi[0];
 }
 
+gpsmdl_u32 gps_mcudl_ylink_get_xbitmask(enum gps_mcudl_yid y_id)
+{
+	struct gps_mcudl_ystate *p_ystate;
+	gpsmdl_u32 xbitmask;
+
+	p_ystate = &g_gps_mcudl_ystate_list[y_id];
+	xbitmask = p_ystate->xstate_bitmask;
+	return xbitmask;
+}
