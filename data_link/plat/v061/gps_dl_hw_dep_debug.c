@@ -160,15 +160,16 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	 * reading from host_csr can avoid this.
 	 * lp_status = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
 	 */
-	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x300143);
+	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x300d43);
 	lp_status = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 	lp_status2 = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
 
-	GDL_LOGW("not_rst=%d, pc=0x%08X, 0x%08X, 0x%08X, 0x%08X, lp_status=0x%08X,0x%08x",
+	GDL_LOGW("not_rst=%d, pc=0x%08X, 0x%08X, 0x%08X, 0x%08X, lp_status=0x%08X,0x%08X",
 		not_rst, pc1, pc2, pc3, pc4, lp_status, lp_status2);
 	if (p_raw != NULL) {
 		p_raw->mcu_pc = pc1;
-		p_raw->is_hw_clk_ext = ((bgf_dbg_30004b & 0x8000) != 0); /* bit15 is gps_osc_on */
+		/* bit4(+16) and bit2(+16) are L5/L1 osc_en */
+		p_raw->is_hw_clk_ext = ((bgf_dbg_30004a & 0x0014) != 0);
 		p_raw->sw_gps_ctrl = (bgf_dummy & 0xFFFF);
 	}
 }
