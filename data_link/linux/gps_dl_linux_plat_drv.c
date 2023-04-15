@@ -54,6 +54,7 @@ const struct of_device_id gps_dl_of_ids[] = {
 	{ .compatible = "mediatek,mt6895-gps", },
 	{ .compatible = "mediatek,mt6897-gps", },
 	{ .compatible = "mediatek,mt6985-gps", },
+	{ .compatible = "mediatek,mt6989-gps", },
 	{},
 };
 /* #endif */
