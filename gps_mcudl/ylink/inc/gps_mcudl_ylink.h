@@ -29,6 +29,7 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 
 void gps_mcudl_ylink_on_ap_resume(void);
 
+gpsmdl_u32 gps_mcudl_ylink_get_xbitmask(enum gps_mcudl_yid y_id);
 
 #endif /* _GPS_MCUDL_YLINK_H */
 
