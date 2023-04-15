@@ -77,7 +77,7 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	unsigned int i;
 
 	unsigned int pc1, pc2, pc3, pc4, not_rst;
-	unsigned int lp_status;
+	unsigned int lp_status, lp_status2;
 
 	is_fw_own = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_LPCTL_ADDR);
 	conn_wake_by_top = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_TOP_ADDR);
@@ -118,12 +118,20 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	pc2 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
 	pc3 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
 	pc4 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
-	lp_status = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
-	GDL_LOGW("not_rst=%d, pc=0x%08X, 0x%08X, 0x%08X, 0x%08X, lp_status=0x%08X",
-		not_rst, pc1, pc2, pc3, pc4, lp_status);
+
+	/* Direct reading it from register gets 0xDEADFEED when MCU sleep,
+	 * reading from host_csr can avoid this.
+	 * lp_status = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
+	 */
+	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x300143);
+	lp_status = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
+	lp_status2 = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
+
+	GDL_LOGW("not_rst=%d, pc=0x%08X, 0x%08X, 0x%08X, 0x%08X, lp_status=0x%08X,0x%08x",
+		not_rst, pc1, pc2, pc3, pc4, lp_status, lp_status2);
 	if (p_raw != NULL) {
 		p_raw->mcu_pc = pc1;
-		p_raw->is_hw_clk_ext = false; /* TODO */
+		p_raw->is_hw_clk_ext = ((bgf_dbg_30004b & 0x8000) != 0); /* bit15 is gps_osc_on */
 		p_raw->sw_gps_ctrl = (bgf_dummy & 0xFFFF);
 	}
 }
