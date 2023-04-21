@@ -13,8 +13,9 @@
 #include "gps_dl_subsys_reset.h"
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
+#include "gps_dl_hal.h"
 
-bool gps_mcudl_check_conn_infra_ver_is_ok(void)
+bool gps_mcudl_check_conn_infra_ver_is_ok(unsigned int *poll_ver)
 {
 	struct arm_smccc_res res;
 	bool ret;
@@ -24,10 +25,12 @@ bool gps_mcudl_check_conn_infra_ver_is_ok(void)
 		arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_MCUDL_CHECK_CONN_INFRA_VER_IS_OK_OPID,
 				0, 0, 0, 0, 0, 0, &res);
 		ret = (bool)res.a0;
+		*poll_ver = (unsigned int)res.a1;
 		if (ret)
 			return ret;
 		if (i > 0)
-			GDL_LOGD("_poll_check_conn_infra_ver_is_ok, cnt = %d", i + 1);
+			GDL_LOGD("_poll_check_conn_infra_ver_is_ok, poll_ver = %d, cnt = %d",
+			(*poll_ver), i + 1);
 	}
 	if (!ret)
 		GDL_LOGE("_poll_check_conn_infra_ver_is_not_ok");
@@ -61,13 +64,18 @@ bool gps_mcudl_poll_conn_infra_cmbdt_restore_is_ok(void)
 bool gps_mcudl_hw_conn_ver_and_wake_is_ok(void)
 {
 	bool poll_okay = false;
+	unsigned int poll_ver = 0;
 
 	/* Poll conninfra hw version */
-	poll_okay = gps_mcudl_check_conn_infra_ver_is_ok();
+	poll_okay = gps_mcudl_check_conn_infra_ver_is_ok(&poll_ver);
 	if (!poll_okay) {
 		GDL_LOGE("_fail_check_conn_infra_ver_not_okay");
 		goto _fail_check_conn_infra_ver_not_okay;
 	}
+
+#if GPS_DL_ON_LINUX
+	gps_dl_hal_set_conn_infra_ver(poll_ver);
+#endif
 
 	/* Poll conninfra cmdbt restore done, 0.5ms * 10 */
 	poll_okay = gps_mcudl_poll_conn_infra_cmbdt_restore_is_ok();
