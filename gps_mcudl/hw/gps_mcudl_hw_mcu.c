@@ -12,6 +12,7 @@
 #include "gps_dl_subsys_reset.h"
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
+#include "gps_dl_hal.h"
 
 bool gps_mcudl_hw_conn_ver_and_wake_is_ok(void)
 {
@@ -24,6 +25,10 @@ bool gps_mcudl_hw_conn_ver_and_wake_is_ok(void)
 		GDL_LOGE("_fail_conn_hw_ver_not_okay, poll_ver = 0x%08x", poll_ver);
 		goto _fail_conn_hw_ver_not_okay;
 	}
+
+#if GPS_DL_ON_LINUX
+	gps_dl_hal_set_conn_infra_ver(poll_ver);
+#endif
 
 	/* Poll conninfra cmdbt restore done, 0.5ms * 10 */
 	GDL_HW_POLL_CONN_INFRA_ENTRY(
