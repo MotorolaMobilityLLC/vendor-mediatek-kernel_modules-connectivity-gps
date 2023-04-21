@@ -37,7 +37,8 @@
 	GDL_HW_POLL_ENTRY_VERBOSE(GPS_DL_CONN_INFRA_BUS,                 \
 		CONN_CFG_IP_VERSION_IP_VERSION,                    \
 		p_poll_okay, p_poll_ver, POLL_DEFAULT, (                 \
-			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6985))   \
+			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6985) || \
+			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6989))   \
 	)
 
 #define GDL_HW_SET_EMI_REMAP_FIELD \
