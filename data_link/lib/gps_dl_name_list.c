@@ -197,3 +197,28 @@ const char *gps_dl_waitable_type_name(enum gps_each_link_waitable_type type)
 	return retval;
 }
 
+const char *const gps_dl_ret_irq_status_list[GPS_DL_IRQ_NUM + 1] = {
+	[GPS_DL_IRQ_LINK0_DATA]         = "L1_HAS_DATA",
+	[GPS_DL_IRQ_LINK0_NODATA]       = "L1_HAS_NODATA",
+	[GPS_DL_IRQ_LINK0_MCUB]         = "L1_MCUB",
+	[GPS_DL_IRQ_LINK1_DATA]         = "L5_HAS_DATA",
+	[GPS_DL_IRQ_LINK1_NODATA]       = "L5_HAS_NODATA",
+	[GPS_DL_IRQ_LINK1_MCUB]         = "L5_MCUB",
+	[GPS_DL_IRQ_DMA]                = "DMA",
+#if GPS_DL_HAS_MCUDL
+	[GPS_DL_IRQ_CCIF]               = "CCIF",
+	[GPS_DL_IRQ_CONN2AP]            = "CONN2AP",
+	[GPS_DL_IRQ_WDT]                = "WDT",
+	[GPS_DL_IRQ_HIF_ON]             = "HIF_ON",
+	[GPS_DL_IRQ_NUM]                = "FAIL_NOT_SUPPORT"
+#endif
+};
+
+const char *gps_dl_irq_name(enum gps_dl_irq_index_enum irq_index)
+{
+	const char *retval = NULL;
+
+	RETURN_NAME_IN_LIST(gps_dl_ret_irq_status_list, GPS_DL_IRQ_NUM, irq_index, retval);
+	return retval;
+}
+
