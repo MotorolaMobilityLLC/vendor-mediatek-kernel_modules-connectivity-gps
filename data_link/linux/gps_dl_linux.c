@@ -6,6 +6,8 @@
 #include "gps_dl_linux.h"
 #include "gps_dl_hal.h"
 #include "gps_dl_log.h"
+#include "gps_dl_hw_common.h"
+#include "gps_dl_hw_ver.h"
 
 void gps_dl_irq_mask(int irq_id, enum gps_dl_irq_ctrl_from from)
 {
@@ -104,8 +106,21 @@ int gps_dl_linux_irqs_unregister(struct gps_each_irq *p_irqs, int irq_num)
 irqreturn_t gps_dl_linux_irq_dispatcher(int irq, void *data)
 {
 	struct gps_each_irq *p_irq;
+#if GPS_DL_CONNAC3
+	bool irq_is_triggerd = false;
+#endif
 
 	p_irq = (struct gps_each_irq *)data;
+
+#if GPS_DL_CONNAC3
+	/*irq_latency is exists from mt6989, do irq_check from mt6989*/
+	if (GDL_HW_CONN_INFRA_VER_MT6989 == gps_dl_hal_get_conn_infra_ver()) {
+		irq_is_triggerd = gps_dl_hw_is_gps_irq_triggerd(p_irq->cfg.index);
+
+		if (!irq_is_triggerd)
+			return IRQ_HANDLED;
+	}
+#endif
 
 	switch (p_irq->cfg.index) {
 	case GPS_DL_IRQ_LINK0_DATA:
