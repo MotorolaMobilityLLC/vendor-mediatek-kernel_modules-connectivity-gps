@@ -25,8 +25,10 @@ bool gps_dl_hw_dep_may_set_gps_axi_sleep_prot_ctrl(unsigned int val);
 void gps_dl_hw_dep_gps_sw_request_emi_usage(bool request);
 bool gps_dl_hw_gps_common_on_inner(void);
 int gps_dl_hw_gps_sleep_prot_ctrl(int op);
+void gps_dl_hw_dep_gps_control_adie_on_inner_1(bool if_on);
 bool gps_dl_hw_dep_gps_control_adie_on(void);
 void gps_dl_hw_dep_gps_control_adie_off(void);
+void gps_dl_hw_dep_adie_mt6686_dump_status(void);
 bool gps_dl_hw_dep_gps_get_ecid_info(void);
 
 struct gps_dl_power_raw_state {
@@ -101,4 +103,12 @@ struct gps_dl_hw_host_csr_dump_range {
 	unsigned int len;
 };
 #endif
+
+/*
+ * A-Die ctrl
+ */
+bool gps_dl_hw_dep_gps_control_adie_on_6985(void);
+bool gps_dl_hw_dep_gps_control_adie_on_6989(void);
+void gps_dl_hw_dep_gps_control_adie_off_6985(void);
+void gps_dl_hw_dep_gps_control_adie_off_6989(void);
 
