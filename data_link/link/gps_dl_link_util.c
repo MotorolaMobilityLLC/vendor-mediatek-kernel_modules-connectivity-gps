@@ -17,7 +17,9 @@
 #include "gps_dl_name_list.h"
 #include "gps_dl_context.h"
 #include "gps_dl_subsys_reset.h"
-
+#if GPS_DL_ON_LINUX
+#include <asm/bitops.h>
+#endif
 
 void gps_each_link_mutexes_init(struct gps_each_link *p)
 {
@@ -101,9 +103,11 @@ void gps_dl_link_waitable_init(struct gps_each_link_waitable *p,
 	enum gps_each_link_waitable_type type)
 {
 	p->type = type;
-	p->fired = false;
 #if GPS_DL_ON_LINUX
+	clear_bit(0, &p->fired);
 	init_waitqueue_head(&p->wq);
+#else
+	p->fired = false;
 #endif
 }
 
@@ -112,7 +116,11 @@ void gps_dl_link_waitable_reset(enum gps_dl_link_id_enum link_id, enum gps_each_
 	struct gps_each_link *p_link = gps_dl_link_get(link_id);
 
 	/* TOOD: check NULL and boundary */
+#if GPS_DL_ON_LINUX
+	clear_bit(0, &p_link->waitables[type].fired);
+#else
 	p_link->waitables[type].fired = false;
+#endif
 }
 
 int gps_each_link_take_big_lock(enum gps_dl_link_id_enum link_id,
