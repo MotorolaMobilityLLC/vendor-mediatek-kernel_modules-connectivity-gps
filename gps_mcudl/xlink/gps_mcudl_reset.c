@@ -282,7 +282,7 @@ void *g_gps_coredump_handler;
 
 void gps_mcudl_connsys_coredump_init(void)
 {
-#if 0 /* GPS_DL_HAS_CONNINFRA_DRV - temp mask it for bring-up issue */
+#if GPS_DL_HAS_CONNINFRA_DRV
 	g_gps_coredump_handler = connsys_coredump_init(CONNDRV_TYPE_GPS, &g_gps_coredump_cb);
 	if (g_gps_coredump_handler == NULL)
 		GDL_LOGW("gps_mcudl_connsys_coredump_init fail");
