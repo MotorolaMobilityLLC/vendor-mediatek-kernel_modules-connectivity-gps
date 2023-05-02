@@ -22,7 +22,9 @@
 #include "gps_mcudl_link_util.h"
 #include "gps_mcudl_context.h"
 #include "gps_mcudl_log.h"
-
+#if GPS_DL_ON_LINUX
+#include <asm/bitops.h>
+#endif
 
 void gps_mcudl_each_link_mutexes_init(struct gps_mcudl_each_link *p)
 {
@@ -113,7 +115,11 @@ void gps_mcudl_each_link_waitable_reset(enum gps_mcudl_xid x_id,
 	struct gps_mcudl_each_link *p_link = gps_mcudl_link_get(x_id);
 
 	/* TOOD: check NULL and boundary */
+#if GPS_DL_ON_LINUX
+	clear_bit(0, &p_link->waitables[type].fired);
+#else
 	p_link->waitables[type].fired = false;
+#endif
 }
 
 int gps_mcudl_each_link_take_big_lock(enum gps_mcudl_xid x_id,
