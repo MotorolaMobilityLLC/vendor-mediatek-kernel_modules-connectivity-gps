@@ -17,7 +17,9 @@
 #include "gps_dl_name_list.h"
 #include "gps_dl_context.h"
 #include "gps_dl_subsys_reset.h"
-
+#if GPS_DL_ON_LINUX
+#include <asm/bitops.h>
+#endif
 
 #define GDL_TEST_TRUE_AND_SET_FALSE(x, x_old) \
 	do {                \
@@ -40,8 +42,11 @@ enum GDL_RET_STATUS gps_dl_link_wait_on(struct gps_each_link_waitable *p, long *
 	bool is_fired;
 
 	p->waiting = true;
-	/* TODO: check race conditions? */
+#if GPS_DL_ON_LINUX
+	is_fired = test_and_clear_bit(0, &p->fired);
+#else
 	GDL_TEST_TRUE_AND_SET_FALSE(p->fired, is_fired);
+#endif
 	if (is_fired) {
 		GDL_LOGD("waitable = %s, no wait return", gps_dl_waitable_type_name(p->type));
 		p->waiting = false;
@@ -87,7 +92,11 @@ enum GDL_RET_STATUS gps_dl_waitable_try_wait_on(struct gps_each_link_waitable *p
 	if (!p)
 		return GDL_FAIL;
 
+#if GPS_DL_ON_LINUX
+	is_fired = test_and_clear_bit(0, &p->fired);
+#else
 	GDL_TEST_TRUE_AND_SET_FALSE(p->fired, is_fired);
+#endif
 	if (is_fired) {
 		GDL_LOGD("waitable = %s, okay", gps_dl_waitable_type_name(p->type));
 		p->waiting = false;
@@ -116,7 +125,11 @@ bool gps_dl_link_wake_up2(struct gps_each_link_waitable *p)
 		}
 	}
 
+#if GPS_DL_ON_LINUX
+	is_fired = test_and_set_bit(0, &p->fired);
+#else
 	GDL_TEST_FALSE_AND_SET_TRUE(p->fired, is_fired);
+#endif
 	GDL_LOGD("waitable = %s, fired = %d", gps_dl_waitable_type_name(p->type), is_fired);
 
 	if (!is_fired) {
