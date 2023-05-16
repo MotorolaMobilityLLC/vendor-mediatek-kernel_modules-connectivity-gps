@@ -87,11 +87,13 @@ void gps_mcudl_hal_ccif_rx_isr(void)
 	}
 
 recheck_rch:
-	if (!gps_dl_conninfra_is_readable()) {
-		GDL_LOGE("readable check fail, ccif_irq_cnt=%lu", g_gps_ccif_irq_cnt);
-		gps_mcudl_hal_set_ccif_irq_en_flag(false);
-		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_CCIF_ISR_ABNORMAL);
-		return;
+	if (recheck_cnt == 0) {
+		if (!gps_dl_conninfra_is_readable()) {
+			GDL_LOGE("readable check fail, ccif_irq_cnt=%lu", g_gps_ccif_irq_cnt);
+			gps_mcudl_hal_set_ccif_irq_en_flag(false);
+			gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_CCIF_ISR_ABNORMAL);
+			return;
+		}
 	}
 	rch_mask = gps_mcudl_hw_ccif_get_rch_bitmask();
 
