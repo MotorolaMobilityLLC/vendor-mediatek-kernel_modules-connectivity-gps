@@ -205,7 +205,7 @@ bool gps_mcudl_hal_bg_is_readable(bool check_conn_off)
 	return gps_mcudl_hw_bg_is_readable();
 }
 
-void gps_mcudl_hal_vndr_dump(void)
+void gps_mcudl_hal_vdnr_dump(void)
 {
 #if GPS_DL_ON_LINUX
 	gps_dl_iomem_dump(0x18c1f000, 0x4);

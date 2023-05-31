@@ -467,7 +467,7 @@ bool gps_mcudl_conninfra_is_okay_or_handle_it(void)
 			gps_mcudl_hal_ccif_show_status();
 			gps_dl_hw_dump_host_csr_gps_info(false);
 			if (gps_mcudl_hal_bg_is_readable(true))
-				gps_mcudl_hal_vndr_dump();
+				gps_mcudl_hal_vdnr_dump();
 			gps_dl_hw_dump_host_csr_gps_info(false);
 			trigger = true;
 			trigger_ret = conninfra_trigger_whole_chip_rst(
