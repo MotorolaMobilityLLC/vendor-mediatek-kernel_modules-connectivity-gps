@@ -108,7 +108,7 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	unsigned int clock_det = 0;
 	unsigned int conn_pwr_st = 0;
 
-	unsigned int bgf_dummy = 0;
+	unsigned int bgf_dummy = 0, bgf_dummy2 = 0;
 	unsigned int bgf_dbg_30004a = 0, bgf_dbg_30004b = 0;
 	unsigned int bgf_dbg_300040[BGF_LP_DBG_DUMP_LEN] = {0};
 	unsigned int i;
@@ -125,6 +125,9 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 
 	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x200c00);
 	bgf_dummy = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
+	GDL_HW_WR_CONN_INFRA_REG(
+		CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, 0x80040000);
+	bgf_dummy2 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
 
 	for (i = 0; i < BGF_LP_DBG_DUMP_LEN; i++) {
 		gps_dl_hw_dep_set_bgf_on_dbg_sel((0x300040 + i));
@@ -135,8 +138,9 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x30004b);
 	bgf_dbg_30004b = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 
-	GDL_LOGI("fw_own=%u, conn_wk:t/g=%d/%d, clk_det=0x%x, conn_pwr=0x%x, bgf_dmy=0x%x",
-		is_fw_own, conn_wake_by_top, conn_wake_by_gps, clock_det, conn_pwr_st, bgf_dummy);
+	GDL_LOGI("fw_own=%u, conn_wk:t/g=%d/%d, clk_det=0x%x, conn_pwr=0x%x, bgf_dmy=0x%x,0x%x",
+		is_fw_own, conn_wake_by_top, conn_wake_by_gps, clock_det, conn_pwr_st,
+		bgf_dummy, bgf_dummy2);
 
 	GDL_LOGI("bgf_dbg_300040: [0-4]=0x%x,0x%x,0x%x,0x%x,0x%x [a]=0x%x, [b]=0x%x",
 		bgf_dbg_300040[0],
