@@ -90,6 +90,21 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 #define GDL_HW_WR_GPS_REG(Addr, Value) gps_dl_bus_write(GPS_DL_GPS_BUS, Addr, Value)
 #define GDL_HW_RD_GPS_REG(Addr)        gps_dl_bus_read(GPS_DL_GPS_BUS, Addr)
 
+#define GDL_HW_SET_AP_ENTRY_TO_CHECK(Field, Shft, Mask, Value) do {     \
+		conn_reg val;                                   \
+		void __iomem *pConnGPIObaseaddr;               \
+		pConnGPIObaseaddr = ioremap(Field, 0x4);        \
+		val = __raw_readl(pConnGPIObaseaddr);     \
+		val &= (Mask);                          \
+		if (((Value << Shft) & Mask) == val)   \
+			GDL_LOGD("POS_CHECK PASS: addr = 0x%08x, w = 0x%08x, r = 0x%08x", \
+			Field, ((Value << Shft) & Mask), val); \
+		else  \
+			GDL_LOGI("POS_CHECK WARNING: addr = 0x%08x, w = 0x%08x, r = 0x%08x", \
+			Field, ((Value << Shft) & Mask), val); \
+		iounmap(pConnGPIObaseaddr);                 \
+	} while (0)
+
 #define GDL_HW_SET_AP_ENTRY(Field, Shft, Mask, Value) do {     \
 		conn_reg val, rd_val;                                   \
 		void __iomem *pConnGPIObaseaddr;               \
