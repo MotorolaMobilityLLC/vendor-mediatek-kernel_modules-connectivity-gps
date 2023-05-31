@@ -25,14 +25,19 @@ bool gps_dl_hw_dep_gps_control_adie_on_6989(void)
 	/*mt6686 new pos -- beginning*/
 	/*set pinmux for the interface between D-die and A-die*/
 	GDL_HW_SET_AP_ENTRY(0x10005408, 0, 0xffffffff, 0x07770000);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005400, 0, 0x77700000, 0x0);
 	GDL_HW_SET_AP_ENTRY(0x10005404, 0, 0xffffffff, 0x01110000);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005400, 0, 0x77700000, 0x01110000);
 
 	/*set pinmux driving to 4ma setting*/
 	GDL_HW_SET_AP_ENTRY(0x11c30000, 12, 0x7000, 0x1);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x11c30000, 12, 0x7000, 0x1);
 
 	/*set pinmux PUPD setting*/
 	GDL_HW_SET_AP_ENTRY(0x11c30088, 0, 0xffffffff, 0x100);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x11c30080, 0, 0x100, 0x0);
 	GDL_HW_SET_AP_ENTRY(0x11c30094, 0, 0xffffffff, 0x100);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x11c30090, 0, 0x100, 0x100);
 
 	/*CONN_TOP_DATA swtich to GPIO mode, GPIO output value low before patch download swtich back to CONN mode*/
 #if GPS_DL_HAS_CONNINFRA_DRV
@@ -52,14 +57,19 @@ bool gps_dl_hw_dep_gps_control_adie_on_6989(void)
 	GDL_LOGW("clk: sch from conninfra = %d", clock_sch);
 #endif
 	GDL_HW_SET_AP_ENTRY(0x10005044, 0, 0xffffffff, 0x00000020);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005040, 0, 0x00000020, 0x00000020);
 	GDL_HW_SET_AP_ENTRY(0x10005148, 0, 0xffffffff, 0x00000020);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005140, 0, 0x00000020, 0x0);
 	GDL_HW_SET_AP_ENTRY(0x10005408, 0, 0xffffffff, 0x00700000);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005400, 0, 0x00700000, 0x0);
 
 	/*de-assert A-sie reset*/
 	GDL_HW_SET_AP_ENTRY(0x18001010, 0, 0x1, 0x1);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x18001010, 0, 0x1, 0x1);
 
 	/*CONN_TOP_DATA switch to CONN mode*/
 	GDL_HW_SET_AP_ENTRY(0x10005404, 0, 0xffffffff, 0x00100000);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005400, 0, 0x00100000, 0x00100000);
 
 	/*enable A-die top_clk_en_5*/
 	GDL_HW_ADIE_TOP_CLK_EN_6686(0x1);
@@ -112,14 +122,19 @@ void gps_dl_hw_dep_gps_control_adie_off_6989(void)
 
 	/*de-assert A-sie reset*/
 	GDL_HW_SET_AP_ENTRY(0x18001010, 0, 0x1, 0x0);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x18001010, 0, 0x1, 0x0);
 
 	/*mt6686 new pos -- beginning*/
 	/*set pinmux for the interface between D-die and A-die*/
 	GDL_HW_SET_AP_ENTRY(0x10005408, 0, 0xffffffff, 0x07770000);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005400, 0, 0x07770000, 0x0);
 
 	/*set pinmux PUPD setting*/
 	GDL_HW_SET_AP_ENTRY(0x10005048, 0, 0xffffffff, 0x00000020);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005040, 0, 0x00000020, 0x0);
 	GDL_HW_SET_AP_ENTRY(0x11c30098, 0, 0xffffffff, 0x100);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x11c30090, 0, 0x100, 0x0);
 	GDL_HW_SET_AP_ENTRY(0x11c30084, 0, 0xffffffff, 0x100);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x11c30080, 0, 0x100, 0x100);
 }
 
