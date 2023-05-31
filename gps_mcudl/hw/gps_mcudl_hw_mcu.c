@@ -455,25 +455,20 @@ void gps_mcudl_hw_mcu_show_pc_log(void)
 bool gps_mcudl_hw_bg_is_readable(void)
 {
 	unsigned int slp_prot;
-	unsigned int conn_ver, bg_ver = 0;
-	bool is_okay = true;
+	unsigned int conn_ver = 0, bg_ver = 0;
+	bool is_okay = true, conn_ver_okay = false;
 
 	slp_prot = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_GALS_CONN2GPS_SLP_STATUS_ADDR);
-	conn_ver = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_IP_VERSION_ADDR);
+	GDL_HW_CHECK_CONN_INFRA_VER(&conn_ver_okay, &conn_ver);
 
 	if (slp_prot & (
 		CONN_CFG_ON_GALS_CONN2GPS_SLP_STATUS_CONN2GPS_GALS_CTRL_PROT_RX_RDY_MASK |
 		CONN_CFG_ON_GALS_CONN2GPS_SLP_STATUS_CONN2GPS_GALS_CTRL_PROT_TX_RDY_MASK))
 		is_okay = false;
 
-	if (!(conn_ver == GDL_HW_CONN_INFRA_VER_MT6985 ||
-		conn_ver == GDL_HW_CONN_INFRA_VER_MT6980))
+	if (is_okay && conn_ver_okay) {
 		is_okay = false;
-
-	if (is_okay) {
-		bg_ver = GDL_HW_RD_GPS_REG(BG_GPS_CFG_BGF_IP_VERSION_ADDR);
-		if (bg_ver != GDL_HW_BGF_VER_MT6985)
-			is_okay = false;
+		GDL_HW_CHECK_BGF_IP_VER(&is_okay, &bg_ver);
 	}
 
 	GDL_LOGW("slp_prot=0x%08X, conn_ver=0x%08X, bg_ver=0x%08X, ok=%d",
