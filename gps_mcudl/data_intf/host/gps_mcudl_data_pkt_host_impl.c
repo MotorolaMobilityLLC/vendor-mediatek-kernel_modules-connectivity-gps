@@ -1168,7 +1168,10 @@ _loop_start:
 		goto _loop_end;
 
 	gdl_ret = gdl_dma_buf_put(&p_xlink->rx_dma_buf, payload_ptr, payload_len);
-	if (gdl_ret != GDL_OKAY && (x_id >= 0 && x_id < GPS_MDLX_CH_NUM)) {
+	/* Openwrt, coverity is going to check enum variable more than 0 */
+	/* Andriod, coverity do not */
+	/* no need sync this code between Andriod and Openwrt*/
+	if (gdl_ret != GDL_OKAY && x_id < GPS_MDLX_CH_NUM) {
 		g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].drop_cnt++;
 		g_gps_mcu2ap_put_to_xlink_fail_rec_list[x_id].drop_len += payload_len;
 		curr_tick = gps_dl_tick_get_us();
