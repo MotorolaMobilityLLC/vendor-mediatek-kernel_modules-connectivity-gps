@@ -101,18 +101,11 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x30004b);
 	bgf_dbg_30004b = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 
-	GDL_LOGI("fw_own=%u, conn_wk:t/g=%d/%d, clk_det=0x%x, conn_pwr=0x%x, bgf_dmy=0x%x,0x%x",
+	GDL_LOGI(
+		"fo=%u,wk:t/g=%d/%d,clk/pwr=0x%x,0x%x,dmy=0x%x,0x%x,dbg[0-4;a-b]=0x%x,0x%x,0x%x,0x%x,0x%x;0x%x,0x%x",
 		is_fw_own, conn_wake_by_top, conn_wake_by_gps, clock_det, conn_pwr_st,
-		bgf_dummy, bgf_dummy2);
-
-	GDL_LOGI("bgf_dbg_300040: [0-4]=0x%x,0x%x,0x%x,0x%x,0x%x [a]=0x%x, [b]=0x%x",
-		bgf_dbg_300040[0],
-		bgf_dbg_300040[1],
-		bgf_dbg_300040[2],
-		bgf_dbg_300040[3],
-		bgf_dbg_300040[4], /* next to BGF_LP_DBG_DUMP_LEN */
-		bgf_dbg_30004a,
-		bgf_dbg_30004b);
+		bgf_dummy, bgf_dummy2, bgf_dbg_300040[0], bgf_dbg_300040[1], bgf_dbg_300040[2], bgf_dbg_300040[3],
+		bgf_dbg_300040[4], bgf_dbg_30004a, bgf_dbg_30004b);
 
 	not_rst = GDL_HW_GET_CONN_INFRA_ENTRY(
 		CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_GPSSYS_CPU_SW_RST_B);
@@ -131,7 +124,7 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	lp_status = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 	lp_status2 = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
 
-	GDL_LOGW("not_rst=%d, pc=0x%08X, 0x%08X, 0x%08X, 0x%08X, lp_status=0x%08X,0x%08X",
+	GDL_LOGW("nr=%d, pc=0x%08X,0x%08X,0x%08X,0x%08X, lp=0x%08X,0x%08X",
 		not_rst, pc1, pc2, pc3, pc4, lp_status, lp_status2);
 	if (p_raw != NULL) {
 		p_raw->mcu_pc = pc1;
