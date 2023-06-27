@@ -16,6 +16,9 @@
 #include "gps_dl_hist_rec.h"
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_dl_hw_api.h"
+#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
+#include "gps_dl_linux_clock_mng.h"
+#endif
 
 static ssize_t gps_each_device_read(struct file *filp,
 	char __user *buf, size_t count, loff_t *f_pos)
@@ -233,6 +236,11 @@ static int gps_each_device_hw_suspend(enum gps_dl_link_id_enum link_id, bool nee
 #define GPSDL_IOC_GPS_CWDSP_MVCD_FRAGEMENT_NO 26
 #define GPSDL_IOC_GPS_CTRL_L5_LNA      27
 #define GPSDL_IOC_GPS_GET_BOOT_TIME    28
+#if 0
+#define GPSDL_IOC_GPS_EAP_SAP_TIMESYNC 29
+#endif
+#define GPSDL_IOC_GET_PLATFORM_CLOCK_FREQ     30
+
 static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
 {
 	struct gps_each_device *dev; /* device information */
@@ -475,6 +483,11 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 		else
 			retval = -EFAULT;
 		break;
+#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
+	case GPSDL_IOC_GET_PLATFORM_CLOCK_FREQ:
+		retval = gps_dl_clock_mng_get_platform_clock();
+		break;
+#endif
 	default:
 		retval = -EFAULT;
 		GDL_LOGXI_DRW(dev->index, "cmd = %d, not support", cmd);
