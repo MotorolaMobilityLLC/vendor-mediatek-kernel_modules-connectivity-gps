@@ -498,12 +498,14 @@ int gps_mcudl_plat_mcu_close(void)
 
 	if (g_gps_mcudl_mcu_ctrl_status != GDL_MCU_CLOSED) {
 #if GPS_DL_HAS_MCUDL_HAL
+		if (do_adie_off_in_driver) {
+			gps_dl_hw_gps_dump_top_rf_cr();
+			gps_dl_hw_gps_dump_gps_rf_cr_new();
+			gps_dl_hw_dep_gps_control_adie_off();
+		}
 		gps_mcudl_xlink_off();
 #endif
 	}
-
-	if (do_adie_off_in_driver)
-		gps_dl_hw_dep_gps_control_adie_off();
 
 	gps_dl_update_status_for_md_blanking(false);
 	gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump();
