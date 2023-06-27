@@ -128,6 +128,7 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr
 void gps_dl_hw_do_gps_a2z_dump(void);
 void gps_dl_hw_print_usrt_status(enum gps_dl_link_id_enum link_id);
 bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id);
+void gps_dl_hw_gps_dump_gps_rf_cr_new(void);
 void gps_dl_hw_gps_dump_gps_rf_cr(void);
 void gps_dl_hw_gps_dump_gps_rf_temp_cr(void);
 void gps_dl_hw_print_ms_counter_status(void);
