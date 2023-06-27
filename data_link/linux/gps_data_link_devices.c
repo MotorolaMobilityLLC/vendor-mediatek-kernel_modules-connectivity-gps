@@ -29,6 +29,10 @@
 #include "gps_dl_procfs.h"
 #include "gps_dl_subsys_reset.h"
 
+#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
+#include "gps_dl_linux_clock_mng.h"
+#endif
+
 #define GPS_DATA_LINK_DEV_NAME "gps_data_link_cdev"
 int gps_dl_devno_major;
 int gps_dl_devno_minor;
@@ -224,6 +228,10 @@ static void gps_dl_devices_exit(void)
 	dev_t devno = MKDEV(gps_dl_devno_major, gps_dl_devno_minor);
 	struct gps_each_device *p_dev = NULL;
 
+#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
+	gps_dl_clock_mng_deinit();
+#endif
+
 	gps_dl_device_context_deinit();
 
 #if GPS_DL_HAS_PLAT_DRV
@@ -338,6 +346,9 @@ static int gps_dl_devices_init(void)
 	gps_dl_device_context_init();
 #endif
 
+#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
+	gps_dl_clock_mng_init();
+#endif
 	return 0;
 }
 
