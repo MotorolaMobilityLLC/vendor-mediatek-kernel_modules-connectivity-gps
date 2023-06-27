@@ -19,6 +19,13 @@
 #endif
 #include "conn_infra/conn_semaphore.h"
 #include "conn_infra/conn_rf_spi_mst_reg.h"
+#if GPS_DL_HAS_CONNINFRA_DRV
+#if GPS_DL_ON_LINUX
+#include "conninfra.h"
+#elif GPS_DL_ON_CTP
+#include "conninfra_ext.h"
+#endif
+#endif
 
 
 /*******************************************************************************
@@ -571,6 +578,35 @@ static bool gps_dl_hw_gps_fmspi_write_rfcr(unsigned int addr, unsigned int val)
 
 	okay = true;
 	return okay;
+}
+
+void gps_dl_hw_gps_dump_gps_rf_cr_new(void)
+{
+	unsigned int addr, val;
+
+	/* read: 0x500 ~ 0x51b */
+	for (addr = 0x500; addr <= 0x51B; addr++) {
+		if (!conninfra_spi_read(SYS_SPI_GPS, addr, &val))
+			GDL_LOGW("rd: addr = 0x%x, val = 0x%x", addr, val);
+		else
+			GDL_LOGW("rd: addr = 0x%x, fail", addr);
+	}
+
+	/* write: 0x51a = 1 */
+	addr = 0x51A;
+	val = 1;
+	if (!conninfra_spi_write(SYS_SPI_GPS, addr, val))
+		GDL_LOGW("wr: addr = 0x%x, val = 0x%x, okay", addr, val);
+	else
+		GDL_LOGW("wr: addr = 0x%x, val = 0x%x, fail", addr, val);
+
+	/* read: 0x51a & 0x51b */
+	for (addr = 0x51A; addr <= 0x51B; addr++) {
+		if (!conninfra_spi_read(SYS_SPI_GPS, addr, &val))
+			GDL_LOGW("rd: addr = 0x%x, val = 0x%x", addr, val);
+		else
+			GDL_LOGW("rd: addr = 0x%x, fail", addr);
+	}
 }
 
 void gps_dl_hw_gps_dump_gps_rf_cr(void)
