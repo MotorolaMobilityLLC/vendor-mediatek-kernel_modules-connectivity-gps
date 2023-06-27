@@ -36,6 +36,7 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_CONNAC3 (1)
 #define GPS_DL_CONNAC2 (0)
 #define GPS_DL_TFA (1)
+#define GPS_DL_GET_PLATFORM_CLOCK_FREQ (1)
 
 #define GPS_DL_CONN_EMI_MERGED (1)
 
