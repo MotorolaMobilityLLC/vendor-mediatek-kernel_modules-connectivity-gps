@@ -57,9 +57,9 @@ bool gps_mcudl_hal_dump_power_state(void)
 
 	is_gps_awake = is_sw_clk_ext || raw.is_hw_clk_ext || (raw.mcu_pc != 0);
 
-	MDL_LOGI("awake=%d, mcu_pc=0x%08x, clk_ext=%d,%d, sw_ctrl=0x%04X[on=%u,%u, off=%u,%u, flag=%u, cnt=%u]",
+	MDL_LOGI(
+		"awake=%d,mcu_pc=0x%08x,clk_ext=%d,%d,sw_ctrl=0x%04X[on=%u,%u,off=%u,%u,flag=%u,cnt=%u],xbitmask=0x%08x",
 		is_gps_awake, raw.mcu_pc, raw.is_hw_clk_ext, is_sw_clk_ext, raw.sw_gps_ctrl,
-		L1_on_mode, L5_on_mode, L1_off_mode, L5_off_mode, flag, on_off_cnt);
-	MDL_LOGI("xbitmask=0x%08x", xbitmask);
+		L1_on_mode, L5_on_mode, L1_off_mode, L5_off_mode, flag, on_off_cnt, xbitmask);
 	return is_gps_awake;
 }
