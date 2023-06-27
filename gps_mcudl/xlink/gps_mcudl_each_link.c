@@ -838,6 +838,7 @@ int gps_mcudl_each_link_listen_state_ntf(enum gps_mcudl_xid x_id)
 	long sigval = 0;
 	enum gps_each_link_state_enum state, pre_state;
 	struct gps_dl_gps_awake_status gps_awake_status;
+	unsigned long tick0, tick1;
 
 	pre_state = gps_mcudl_each_link_get_state(x_id);
 	if (gps_mcudl_xlink_is_in_state_to_listen(pre_state)) {
@@ -846,7 +847,8 @@ int gps_mcudl_each_link_listen_state_ntf(enum gps_mcudl_xid x_id)
 		return 0;
 	}
 
-	MDL_LOGXI(x_id, "state=%s, go waiting", gps_dl_link_state_name(pre_state));
+	MDL_LOGXD(x_id, "state=%s, go waiting", gps_dl_link_state_name(pre_state));
+	tick0 = gps_dl_tick_get_us();
 	gps_mcudl_each_link_waitable_reset(x_id, GPS_DL_WAIT_STATE_NTF);
 	wait_ret = gps_mcudl_link_wait_state_ntf(x_id, &sigval);
 	state = gps_mcudl_each_link_get_state(x_id);
@@ -867,9 +869,10 @@ int gps_mcudl_each_link_listen_state_ntf(enum gps_mcudl_xid x_id)
 			}
 		}
 	}
-	MDL_LOGXW(x_id, "state=%s,%s, awake=%d,%lums, sigval=%ld, retval=%d,%d",
+	tick1 = gps_dl_tick_get_us();
+	MDL_LOGXW(x_id, "state=%s,%s, awake=%d,%lums, sigval=%ld, retval=%d,%d, delta_us = %lu",
 		gps_dl_link_state_name(pre_state), gps_dl_link_state_name(state),
 		gps_awake_status.is_awake, gps_awake_status.updated_ms,
-		sigval, wait_ret, retval);
+		sigval, wait_ret, retval, (tick1 - tick0));
 	return retval;
 }

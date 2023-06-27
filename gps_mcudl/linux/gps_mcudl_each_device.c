@@ -431,7 +431,7 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 		break;
 	case GPSDL_IOC_GPS_LISTEN_RST_EVT:
 		retval = gps_mcudl_each_link_listen_state_ntf(dev->index);
-		MDL_LOGXI_ONF(dev->index,
+		MDL_LOGXD_ONF(dev->index,
 			"GPSDL_IOC_GPS_LISTEN_RST_EVT retval = %d", retval);
 		break;
 	case 21505:
