@@ -22,6 +22,9 @@
 #include "conn_infra/conn_cfg_on.h"
 #include "conn_infra/conn_cfg.h"
 #include "gps_dl_subsys_reset.h"
+#if GPS_DL_GET_ECID_FROM_NODE
+#include "gps_dl_info_node.h"
+#endif
 
 void gps_dl_hw_dep_gps_sw_request_peri_usage(bool request)
 {
@@ -483,7 +486,7 @@ bool gps_dl_hw_dep_gps_get_ecid_info(void)
 {
 #if GPS_DL_HAS_CONNINFRA_DRV
 	unsigned int ecid_lsb = 0, ecid_msb = 0;
-	unsigned long ecid_data = 0;
+	unsigned long ecid_data = 0, ecid_bak = 0;
 	unsigned int macro_sel;
 	bool print_ecid_1st = true;
 #endif
@@ -515,8 +518,12 @@ twice_get_ecid:
 	GDL_LOGI("get_ecid_data = 0x%lx", ecid_data);
 	if (print_ecid_1st) {
 		print_ecid_1st = false;
+		ecid_bak = ecid_data;
 		goto twice_get_ecid;
 	}
+#endif
+#if	GPS_DL_GET_ECID_FROM_NODE
+	gps_dl_info_node_set_ecid_info(ecid_bak, ecid_data);
 #endif
 	return true;
 
