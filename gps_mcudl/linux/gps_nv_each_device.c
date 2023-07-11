@@ -129,20 +129,35 @@ static unsigned int gps_nv_each_device_poll(struct file *filp, poll_table *p_tab
 	return mask;
 }
 
+#define COPY_MAX 128
 
 static gpsmdl_u32 gps_nv_each_device_copy_to_user(gpsmdl_u8 *p_dst, const gpsmdl_u8 *p_src, gpsmdl_u32 len)
 {
 	int retval;
 	char __user *p_user;
+	gpsmdl_u8 temp_buffer[COPY_MAX];
+	const gpsmdl_u8 *p_src2 = p_src;
+	unsigned int copy_len, cnt_len;
 
 	p_user = (char __user *)p_dst;
-	retval = copy_to_user(p_user, p_src, len);
-	if (retval != 0) {
-		GDL_LOGI_DRW("copy_to_user: len=%d, retval=%d",
-			len, retval);
-		return 0;
-	}
 
+	/* copy device mem into user buffer
+	 * 1.copy device mem into a kernel buffer
+	 * 2.copy kernel buffer into user buffer
+	 */
+	cnt_len = len;
+	while (cnt_len > 0) {
+		copy_len = (cnt_len >= COPY_MAX) ? COPY_MAX : cnt_len;
+		memcpy_fromio(temp_buffer, p_src2, copy_len);
+		retval = copy_to_user(p_user, temp_buffer, copy_len);
+		if (retval != 0) {
+			GDL_LOGI_DRW("copy_to_user: len=%d, retval=%d", copy_len, retval);
+			return (len - cnt_len);
+		}
+		p_src2 = p_src2 + copy_len;
+		p_user = p_user + copy_len;
+		cnt_len = cnt_len - copy_len;
+	}
 	return len;
 }
 
@@ -199,7 +214,6 @@ static ssize_t gps_nv_each_device_read(struct file *filp,
 	return retlen;
 }
 
-#define COPY_MAX 128
 static gpsmdl_u32 gps_nv_each_device_copy_from_user(gpsmdl_u8 *p_dst, const gpsmdl_u8 *p_src, gpsmdl_u32 len)
 {
 	int retval;
