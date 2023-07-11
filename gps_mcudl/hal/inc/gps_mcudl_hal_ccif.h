@@ -36,6 +36,7 @@ void gps_mcudl_hal_wdt_dump(void);
 
 bool gps_mcudl_hal_get_ccif_irq_en_flag(void);
 void gps_mcudl_hal_set_ccif_irq_en_flag(bool enable);
+void gps_mcudl_hal_wdt_init(void);
 
 #endif /* _GPS_MCUDL_HAL_CCIF_H */
 

@@ -148,6 +148,7 @@ bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list)
 	}
 	/* gps_mcudl_hal_mcu_clr_fw_own();*/
 	gps_mcudl_hal_set_ccif_irq_en_flag(true);
+	gps_mcudl_hal_wdt_init();
 	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_HAL);
 	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_WDT), GPS_DL_IRQ_CTRL_FROM_HAL);
 	return is_okay;
