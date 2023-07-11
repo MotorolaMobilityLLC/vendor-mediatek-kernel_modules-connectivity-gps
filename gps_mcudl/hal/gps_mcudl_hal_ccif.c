@@ -188,6 +188,14 @@ void gps_mcudl_hal_set_ccif_irq_en_flag(bool enable)
 }
 
 unsigned long g_gps_wdt_irq_cnt;
+unsigned long g_gps_wdt_irq_curr_session_cnt;
+bool wdt_irq_trigger_reset_done;
+void gps_mcudl_hal_wdt_init(void)
+{
+	g_gps_wdt_irq_curr_session_cnt = 0;
+	wdt_irq_trigger_reset_done = false;
+}
+
 void gps_mcudl_hal_wdt_isr(void)
 {
 	int readable;
@@ -195,8 +203,16 @@ void gps_mcudl_hal_wdt_isr(void)
 	bool is_fw_own;
 
 	g_gps_wdt_irq_cnt++;
-	MDL_LOGW("cnt=%ld", g_gps_wdt_irq_cnt);
+	g_gps_wdt_irq_curr_session_cnt++;
+	MDL_LOGW("cnt=%ld/%ld", g_gps_wdt_irq_cnt, g_gps_wdt_irq_curr_session_cnt);
 
+	if (g_gps_wdt_irq_curr_session_cnt > 3) {
+		if (!wdt_irq_trigger_reset_done) {
+			gps_mcudl_trigger_gps_subsys_reset(false, "WDT trigger subsys reset");
+			wdt_irq_trigger_reset_done = true;
+		}
+		return;
+	}
 	is_fw_own = gps_mcudl_hal_is_fw_own();
 	readable = conninfra_reg_readable();
 	hung_value = conninfra_is_bus_hang();
