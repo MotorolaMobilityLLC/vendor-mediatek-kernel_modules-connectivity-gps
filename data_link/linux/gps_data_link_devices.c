@@ -32,6 +32,9 @@
 #if GPS_DL_GET_PLATFORM_CLOCK_FREQ
 #include "gps_dl_linux_clock_mng.h"
 #endif
+#if GPS_DL_GET_ECID_FROM_NODE
+#include "gps_dl_info_node.h"
+#endif
 
 #define GPS_DATA_LINK_DEV_NAME "gps_data_link_cdev"
 int gps_dl_devno_major;
@@ -252,6 +255,10 @@ static void gps_dl_devices_exit(void)
 
 void gps_dl_device_context_deinit(void)
 {
+#if GPS_DL_GET_ECID_FROM_NODE
+	gps_dl_info_node_remove();
+#endif
+
 	gps_dl_procfs_remove();
 
 	gps_dl_unregister_conninfra_reset_cb();
@@ -375,6 +382,10 @@ void gps_dl_device_context_init(void)
 	gps_dl_register_conninfra_reset_cb();
 
 	gps_dl_procfs_setup();
+
+#if GPS_DL_GET_ECID_FROM_NODE
+	gps_dl_info_node_setup();
+#endif
 }
 
 void mtk_gps_data_link_devices_exit(void)
