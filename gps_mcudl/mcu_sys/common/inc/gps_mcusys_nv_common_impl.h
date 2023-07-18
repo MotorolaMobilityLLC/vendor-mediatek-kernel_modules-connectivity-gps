@@ -13,6 +13,9 @@ struct gps_mcusys_nv_data_sub_header *gps_mcusys_nv_common_get_local_sub_hdr(
 struct gps_mcusys_nv_data_sub_header *gps_mcusys_nv_common_get_remote_sub_hdr(
 	struct gps_mcusys_nv_data_header *p_hdr, bool is_on_mcu);
 
+bool gps_mcusys_nv_common_check_header(
+	enum gps_mcusys_nv_data_id nv_id);
+
 bool gps_mcusys_nv_common_shared_mem_take(
 	enum gps_mcusys_nv_data_id nv_id, bool is_on_mcu);
 

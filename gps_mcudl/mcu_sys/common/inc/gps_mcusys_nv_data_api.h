@@ -23,6 +23,7 @@ bool gps_mcusys_nv_data_take_read_lock(enum gps_mcusys_nv_data_id nv_id);
 bool gps_mcusys_nv_data_give_read_lock(enum gps_mcusys_nv_data_id nv_id);
 
 extern void *gps_mcudl_plat_nv_emi_get_start_ptr(void);
+extern void *gps_mcudl_plat_nv_emi_get_end_ptr(void);
 extern void gps_mcudl_plat_nv_emi_clear(void);
 extern struct gps_each_link_waitable *
 	gps_nv_each_link_get_read_waitable_ptr(enum gps_mcusys_nv_data_id nv_id);
