@@ -193,6 +193,11 @@ bool wdt_irq_trigger_reset_done;
 void gps_mcudl_hal_wdt_init(void)
 {
 	g_gps_wdt_irq_curr_session_cnt = 0;
+	if (wdt_irq_trigger_reset_done) {
+		gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_WDT), GPS_DL_IRQ_CTRL_FROM_THREAD);
+		MDL_LOGW("check wdt_irq_trigger_reset_done = %d, unmask for already wdt reset",
+			wdt_irq_trigger_reset_done);
+	}
 	wdt_irq_trigger_reset_done = false;
 }
 
@@ -208,8 +213,9 @@ void gps_mcudl_hal_wdt_isr(void)
 
 	if (g_gps_wdt_irq_curr_session_cnt > 3) {
 		if (!wdt_irq_trigger_reset_done) {
-			gps_mcudl_trigger_gps_subsys_reset(false, "WDT trigger subsys reset");
+			gps_dl_irq_mask(gps_dl_irq_index_to_id(GPS_DL_IRQ_WDT), GPS_DL_IRQ_CTRL_FROM_ISR);
 			wdt_irq_trigger_reset_done = true;
+			gps_mcudl_trigger_gps_subsys_reset(false, "WDT trigger subsys reset");
 		}
 		return;
 	}
