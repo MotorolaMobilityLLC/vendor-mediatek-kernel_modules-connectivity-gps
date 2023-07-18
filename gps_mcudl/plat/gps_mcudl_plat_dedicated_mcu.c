@@ -605,6 +605,14 @@ void *gps_mcudl_plat_nv_emi_get_start_ptr(void)
 	return (void *)&p_layout->gps_nv_emi[0];
 }
 
+void *gps_mcudl_plat_nv_emi_get_end_ptr(void)
+{
+	struct gps_mcudl_emi_layout *p_layout;
+
+	p_layout = gps_dl_get_conn_emi_layout_ptr();
+	return (void *)&p_layout->gps_ap2mcu[0];
+}
+
 gpsmdl_u32 gps_mcudl_ylink_get_xbitmask(enum gps_mcudl_yid y_id)
 {
 	struct gps_mcudl_ystate *p_ystate;
