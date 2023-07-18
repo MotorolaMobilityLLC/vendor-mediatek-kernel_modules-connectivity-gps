@@ -103,6 +103,8 @@ static ssize_t gps_mcudl_each_device_read(struct file *filp,
 			retlen = -EFAULT;
 		}
 	}
+	if (retlen <= 0)
+		MDL_LOGXW_DRW(link_id, "buf_len = %ld, pid = %d, ret_len = %d", count, pid, retlen);
 	if (print_log)
 		MDL_LOGXI_DRW(link_id, "buf_len = %ld, pid = %d, ret_len = %d", count, pid, retlen);
 	else
