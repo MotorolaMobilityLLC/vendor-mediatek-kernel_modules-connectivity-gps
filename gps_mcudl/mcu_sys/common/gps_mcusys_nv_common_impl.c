@@ -31,6 +31,30 @@ struct gps_mcusys_nv_data_sub_header *gps_mcusys_nv_common_get_remote_sub_hdr(
 	return is_on_mcu ? p_host : p_target; /* remote */
 }
 
+bool gps_mcusys_nv_common_check_header(
+	enum gps_mcusys_nv_data_id nv_id)
+{
+	struct gps_mcusys_nv_data_header *p_hdr;
+	struct gps_mcusys_nv_data_sub_header *p_local, *p_remote;
+
+	p_hdr = gps_mcusys_nv_data_get_hdr(nv_id);
+	if (!p_hdr) {
+		GPS_OFL_TRC("nv_id=%d, p_hdr get failed", nv_id);
+		return false;
+	}
+
+	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, false);
+	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, false);
+
+	/*check magic*/
+	if (p_local->magic == GPS_MCUSYS_NV_DATA_HEADER_MAGIC &&
+		p_remote->magic == GPS_MCUSYS_NV_DATA_HEADER_MAGIC) {
+		return true;
+	}
+	GPS_OFL_TRC("magic err, local/remote: %x/%x", p_local->magic, p_remote->magic);
+	return false;
+}
+
 bool gps_mcusys_nv_common_shared_mem_take(
 	enum gps_mcusys_nv_data_id nv_id, bool is_on_mcu)
 {
@@ -45,6 +69,10 @@ bool gps_mcusys_nv_common_shared_mem_take(
 
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, is_on_mcu);
 	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, is_on_mcu);
+
+	/*check header*/
+	if (!gps_mcusys_nv_common_check_header(nv_id))
+		return false;
 
 	/* 1. check remote occupied*/
 	if (p_remote->magic == GPS_MCUSYS_NV_DATA_HEADER_MAGIC &&
@@ -124,6 +152,20 @@ int gps_mcusys_nv_common_shared_mem_invalidate2(enum gps_mcusys_nv_data_id nv_id
 	} else {
 		old_size = p_local->data_size;
 		new_ver = local_ver + 1;
+	}
+
+	/*ALPS08204728, emi data may modified unexpectedly, check data if use*/
+	if (block_size != (gps_mcusys_nv_data_get_block_size(nv_id) - sizeof(struct gps_mcusys_nv_data_header))) {
+		GPS_OFL_TRC("block_size err, nv_id=%d, block_size=%d", nv_id, block_size);
+		return -1;
+	}
+	if ((p_dst < (gpsmdl_u8 *)gps_mcudl_plat_nv_emi_get_start_ptr()) ||
+		(p_dst > (gpsmdl_u8 *)gps_mcudl_plat_nv_emi_get_end_ptr())) {
+		GPS_OFL_TRC("dst err, nv_id=%d, p_dst = %p/%p/%p",
+			nv_id, p_dst,
+			gps_mcudl_plat_nv_emi_get_start_ptr(),
+			gps_mcudl_plat_nv_emi_get_end_ptr());
+		return -1;
 	}
 
 	if (old_local_size > 0 && old_local_size <= block_size) {
@@ -213,6 +255,21 @@ int gps_mcusys_nv_common_shared_mem_write2(enum gps_mcusys_nv_data_id nv_id,
 		old_size = p_local->data_size;
 		new_ver = local_ver + 1;
 	}
+
+	/*ALPS08204728, emi data may modified unexpectedly, check data if use*/
+	if (block_size != (gps_mcusys_nv_data_get_block_size(nv_id) - sizeof(struct gps_mcusys_nv_data_header))) {
+		GPS_OFL_TRC("block_size err, nv_id=%d, block_size=%d", nv_id, block_size);
+		return -1;
+	}
+	if ((p_dst < (gpsmdl_u8 *)gps_mcudl_plat_nv_emi_get_start_ptr()) ||
+		(p_dst > (gpsmdl_u8 *)gps_mcudl_plat_nv_emi_get_end_ptr())) {
+		GPS_OFL_TRC("dst err, nv_id=%d, p_dst = %p/%p/%p",
+			nv_id, p_dst,
+			gps_mcudl_plat_nv_emi_get_start_ptr(),
+			gps_mcudl_plat_nv_emi_get_end_ptr());
+		return -1;
+	}
+
 	if (pfn_copy) {
 		/* TODO: may handle the return length of pfn_copy */
 		(void)(*pfn_copy)(p_dst + _min, p_dat, dat_len);
@@ -304,6 +361,15 @@ int gps_mcusys_nv_common_shared_mem_read2(enum gps_mcusys_nv_data_id nv_id,
 
 	if (read_len > 0) {
 		p_src = (gpsmdl_u8 *)&p_hdr->data_start[0];
+		/*ALPS08204728, emi data may modified unexpectedly, check data if use*/
+		if ((p_src < (gpsmdl_u8 *)gps_mcudl_plat_nv_emi_get_start_ptr()) ||
+			(p_src > (gpsmdl_u8 *)gps_mcudl_plat_nv_emi_get_end_ptr())) {
+			GPS_OFL_TRC("p_src err, nv_id=%d, p_src = %p/%p/%p",
+				nv_id, p_src,
+				gps_mcudl_plat_nv_emi_get_start_ptr(),
+				gps_mcudl_plat_nv_emi_get_end_ptr());
+			return -1;
+		}
 		if (pfn_copy) {
 			/* TODO: may handle the return length of pfn_copy */
 			(void)(*pfn_copy)(p_buf, p_src + _min, read_len);
