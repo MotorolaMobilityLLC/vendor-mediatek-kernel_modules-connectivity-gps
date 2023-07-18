@@ -712,17 +712,18 @@ int gps_mcudl_each_link_read_with_timeout(enum gps_mcudl_xid link_id,
 				return -EAGAIN;
 			continue;
 #else
-			MDL_LOGXI_DRW(link_id, "gdl_dma_buf_get no data, poll_flag=%d", p->epoll_flag);
+			MDL_LOGXW_DRW(link_id, "gdl_dma_buf_get no data, poll_flag=%d", p->epoll_flag);
 			if (p->epoll_flag) {
 				gdl_ret = gps_mcudl_link_try_wait_on(link_id, GPS_DL_WAIT_READ);
 				if (gdl_ret == GDL_OKAY) {
-					MDL_LOGXI_DRW(link_id, "gdl_dma_buf_get no data, poll continue");
+					MDL_LOGXW_DRW(link_id, "gdl_dma_buf_get no data, poll continue");
 					continue;
 				}
 				p->epoll_flag = false;
 				return 0;
 			}
 			gdl_ret = gps_dl_link_wait_on(&p->waitables[GPS_DL_WAIT_READ], &sigval);
+			MDL_LOGXW_DRW(link_id, "gdl_dma_buf_get wait success, gdl_ret=%d", gdl_ret);
 			if (gdl_ret == GDL_FAIL_SIGNALED)
 				return -ERESTARTSYS;
 			else if (gdl_ret == GDL_FAIL_NOT_SUPPORT)
