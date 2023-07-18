@@ -141,7 +141,7 @@ int gps_dl_info_node_setup(void)
 
 	int i_ret = 0;
 
-	g_gps_dl_node_info_entry = proc_create(GPS_DL_PROCFS_NAME, 0664,
+	g_gps_dl_node_info_entry = proc_create(GPS_DL_PROCFS_NAME, 0600,
 		NULL, &gps_dl_log_node_fops);
 
 	if (g_gps_dl_node_info_entry == NULL) {

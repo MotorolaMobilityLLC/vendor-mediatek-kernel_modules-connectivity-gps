@@ -396,7 +396,7 @@ int gps_dl_procfs_setup(void)
 	int i_ret = 0;
 
 	g_gps_dl_procfs_entry = proc_create(GPS_DL_PROCFS_NAME,
-		0664, NULL, &gps_dl_procfs_fops);
+		0600, NULL, &gps_dl_procfs_fops);
 
 	if (g_gps_dl_procfs_entry == NULL) {
 		GDL_LOGE("Unable to create gps proc entry");
