@@ -26,6 +26,7 @@ union gps_mcu_hif_mcu2ap_shared_data_union *p_gps_mcu_hif_mcu2ap_region;
 
 struct gps_mcu_hif_recv_ch_context {
 	bool is_listening;
+	bool fail_flag;
 	gps_mcu_hif_ch_on_recv_cb custom_cb;
 };
 
@@ -198,7 +199,9 @@ void gps_mcu_hif_recv_start(enum gps_mcu_hif_ch hif_ch)
 
 #if GPS_DL_HAS_MCUDL_HAL
 	if (gps_mcudl_hal_ccif_tx_is_busy(GPS_MCUDL_CCIF_CH4)) {
-		MDL_LOGW("hif_ch=%d, recv fail due to ccif busy", hif_ch);
+		gps_mcu_hif_set_mcu2ap_recv_fail_flag(hif_ch, true);
+		MDL_LOGW("hif_ch=%d, recv fail due to ccif busy, mcu2ap recv flag %d",
+			hif_ch, gps_mcu_hif_get_mcu2ap_recv_fail_flag(hif_ch));
 		return;
 	}
 	gps_mcudl_hal_ccif_tx_prepare(GPS_MCUDL_CCIF_CH4);
@@ -371,6 +374,7 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 void gps_mcu_hif_host_ccif_irq_handler_in_isr(void)
 {
 	enum gps_mcu_hif_trans trans_id;
+	enum gps_mcu_hif_ch hif_ch;
 
 	for (trans_id = 0; trans_id < GPS_MCU_HIF_TRANS_NUM; trans_id++) {
 		if (!gps_mcu_hif_is_trans_req_sent(trans_id))
@@ -385,7 +389,16 @@ void gps_mcu_hif_host_ccif_irq_handler_in_isr(void)
 		gps_mcudl_ylink_event_send(GPS_MDLY_URGENT,
 				GPS_MCUDL_YLINK_EVT_ID_SLOT_FLUSH_ON_RECV_STA);
 	}
+
+	for (hif_ch = GPS_MCU_HIF_CH_DMALESS_MGMT; hif_ch < GPS_MCU_HIF_CH_NUM; hif_ch++) {
+		if (gps_mcu_hif_get_mcu2ap_recv_fail_flag(hif_ch)) {
+			MDL_LOGW("ch %d hif_recv fail, retry", hif_ch);
+			gps_mcu_hif_set_mcu2ap_recv_fail_flag(hif_ch, false);
+			gps_mcu_hif_recv_start(hif_ch);
+		}
+	}
 }
+
 
 void gps_mcu_hif_host_dump_ch(enum gps_mcu_hif_ch hif_ch)
 {
@@ -500,5 +513,22 @@ void gps_mcu_hif_host_trans_hist_dump(void)
 	gps_mcudl_slot_protect();
 	g_gps_mcu_hif_trans_rec_in_dump = false;
 	gps_mcudl_slot_unprotect();
+}
+
+/*no spin_lock protection, only 1 thread call this api in GPS working*/
+bool gps_mcu_hif_get_mcu2ap_recv_fail_flag(enum gps_mcu_hif_ch ch)
+{
+	struct gps_mcu_hif_recv_ch_context *p_ctx;
+
+	p_ctx = &g_gps_mcu_hif_recv_contexts[ch];
+	return p_ctx->fail_flag;
+}
+
+void gps_mcu_hif_set_mcu2ap_recv_fail_flag(enum gps_mcu_hif_ch ch, bool flag)
+{
+	struct gps_mcu_hif_recv_ch_context *p_ctx;
+
+	p_ctx = &g_gps_mcu_hif_recv_contexts[ch];
+	p_ctx->fail_flag = flag;
 }
 
