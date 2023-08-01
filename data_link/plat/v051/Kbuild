@@ -152,6 +152,7 @@ $(MODULE_NAME)-objs += linux/gps_dl_emi.o
 $(MODULE_NAME)-objs += linux/gps_dl_ctrld.o
 $(MODULE_NAME)-objs += linux/gps_dl_procfs.o
 $(MODULE_NAME)-objs += linux/gps_dl_osal.o
+$(MODULE_NAME)-objs += linux/gps_dl_linux_clock_mng.o
 
 $(MODULE_NAME)-objs += gps_dl_hw_dep_bgf.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_gps.o
