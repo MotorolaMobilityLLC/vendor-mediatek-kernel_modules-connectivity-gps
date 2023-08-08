@@ -127,6 +127,7 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 		if (gps_mcusys_mnlbin_state_is(GPS_MCUSYS_MNLBIN_ST_CTLR_CREATED))
 			gps_mcudl_link_open_ack(link_id, true);
 		else {
+			gps_mcudl_each_link_set_bool_flag(link_id, LINK_MISS_MNLBIN_ACK, true);
 			/* wait gps_mcusys_mnlbin_fsm to ack it */
 			MDL_LOGXI(link_id, "bypass gps_mcudl_link_open_ack now");
 		}
@@ -190,6 +191,9 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	case GPS_MCUDL_EVT_LINK_CLOSE:
 	case GPS_MCUDL_EVT_LINK_RESET:
 	case GPS_MCUDL_EVT_LINK_PRE_CONN_RESET:
+		if (gps_mcudl_each_link_get_bool_flag(link_id, LINK_MISS_MNLBIN_ACK))
+			gps_mcudl_each_link_set_bool_flag(link_id, LINK_MISS_MNLBIN_ACK, false);
+
 		gps_mcudl_link_trigger_state_ntf(link_id);
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE)
 			show_log = gps_dl_set_show_reg_rw_log(true);
