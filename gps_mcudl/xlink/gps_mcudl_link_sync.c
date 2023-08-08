@@ -78,6 +78,8 @@ void gps_mcudl_link_open_ack(enum gps_mcudl_xid link_id, bool okay)
 
 		/* Note: if pre_status not OPENING, it might be RESETTING, not handle it here */
 		gps_mcudl_each_link_change_state_from(link_id, LINK_OPENING, LINK_OPENED);
+		if (gps_mcudl_each_link_get_bool_flag(link_id, LINK_MISS_MNLBIN_ACK))
+			gps_mcudl_each_link_set_bool_flag(link_id, LINK_MISS_MNLBIN_ACK, false);
 
 		/* TODO: ack on DSP reset done */
 #if 0
