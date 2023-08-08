@@ -87,6 +87,11 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	case GPS_MCUDL_EVT_LINK_OPEN:
 		/* show_log = gps_dl_set_show_reg_rw_log(true); */
 		/* set flag to atf */
+		if (gps_dl_hal_get_open_flag() != 0) {
+			GDL_LOGXE(link_id, "offload/ap mismatch mode");
+			gps_mcudl_link_open_ack(link_id, false);
+			break;
+		}
 		gps_mcudl_hal_may_set_link_power_flag(link_id, true);
 		gps_mcudl_each_link_inc_session_id(link_id);
 		gps_mcudl_each_link_set_active(link_id, true);
