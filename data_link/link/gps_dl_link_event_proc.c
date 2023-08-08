@@ -20,6 +20,9 @@
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
 #endif
+#if GPS_DL_HAS_MCUDL
+#include "gps_mcudl_ylink.h"
+#endif
 
 
 void gps_dl_link_event_send(enum gps_dl_link_event_id evt,
@@ -69,6 +72,13 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	case GPS_DL_EVT_LINK_OPEN:
 		/* show_log = gps_dl_set_show_reg_rw_log(true); */
 		/* set flag to atf */
+#if GPS_DL_HAS_MCUDL
+		if (gps_mcudl_hal_get_open_flag() != 0) {
+			GDL_LOGXE(link_id, "ap/offload mismatch mode");
+			gps_dl_link_open_ack(link_id, false, false);
+			break;
+		}
+#endif
 		gps_dl_hal_may_set_link_power_flag(link_id, true);
 		gps_each_dsp_reg_gourp_read_init(link_id);
 		gps_each_link_inc_session_id(link_id);
