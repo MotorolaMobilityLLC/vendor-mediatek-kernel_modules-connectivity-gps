@@ -622,3 +622,9 @@ gpsmdl_u32 gps_mcudl_ylink_get_xbitmask(enum gps_mcudl_yid y_id)
 	xbitmask = p_ystate->xstate_bitmask;
 	return xbitmask;
 }
+
+unsigned int gps_mcudl_hal_get_open_flag(void)
+{
+	return g_conn_xuser;
+}
+

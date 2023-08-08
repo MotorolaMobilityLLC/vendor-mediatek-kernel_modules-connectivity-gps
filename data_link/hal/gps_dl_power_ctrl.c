@@ -760,3 +760,8 @@ void gps_dl_hal_gps_wait_wakeup_done_or_timeout(enum gps_dl_link_id_enum link_id
 	GDL_LOGXW(link_id, "dsp_st=%d, dt_wait=%d", dsp_state, dt_wait);
 }
 
+unsigned int gps_dl_hal_get_open_flag(void)
+{
+	return g_conn_user;
+}
+
