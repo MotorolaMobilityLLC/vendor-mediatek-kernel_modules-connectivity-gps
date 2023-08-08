@@ -37,6 +37,9 @@ void gps_mcudl_each_link_set_bool_flag(enum gps_mcudl_xid link_id,
 	case LINK_SUSPEND_TO_CLK_EXT:
 		p->sub_states.suspend_to_clk_ext = value;
 		break;
+	case LINK_MISS_MNLBIN_ACK:
+		p->sub_states.miss_mnlbin_ack = value;
+		break;
 	default:
 		break; /* do nothing */
 	}
@@ -68,6 +71,9 @@ bool gps_mcudl_each_link_get_bool_flag(enum gps_mcudl_xid link_id,
 		break;
 	case LINK_SUSPEND_TO_CLK_EXT:
 		value = p->sub_states.suspend_to_clk_ext;
+		break;
+	case LINK_MISS_MNLBIN_ACK:
+		value = p->sub_states.miss_mnlbin_ack;
 		break;
 	default:
 		break; /* TODO: warning it */

@@ -46,6 +46,7 @@ struct gps_each_link_state_list {
 	bool user_open;
 	bool need_a2z_dump;
 	bool suspend_to_clk_ext;
+	bool miss_mnlbin_ack;
 };
 
 enum gps_each_link_bool_state {
@@ -58,6 +59,7 @@ enum gps_each_link_bool_state {
 	LINK_OPEN_RESULT_OKAY,
 	LINK_NEED_A2Z_DUMP,
 	LINK_SUSPEND_TO_CLK_EXT,
+	LINK_MISS_MNLBIN_ACK,
 	BOOL_STATE_NUM
 };
 
