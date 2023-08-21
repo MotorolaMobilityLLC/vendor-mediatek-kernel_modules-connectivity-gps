@@ -129,9 +129,29 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 			break;
 		}
 
-		if (gps_mcusys_mnlbin_state_is(GPS_MCUSYS_MNLBIN_ST_CTLR_CREATED))
+		if (link_id == GPS_MDLX_LPPM) {
+			bool mnlbin_ready = gps_mcusys_mnlbin_state_is(GPS_MCUSYS_MNLBIN_ST_CTLR_CREATED);
+			bool scif_ready = gps_mcusys_scif_is_ready();
+
+			if (mnlbin_ready && scif_ready) {
+				gps_mcudl_link_open_ack(link_id, true);
+				gps_mcusys_scif_set_lppm_open_ack_done(true);
+				break;
+			}
+
+			if (!mnlbin_ready)
+				gps_mcudl_each_link_set_bool_flag(link_id, LINK_MISS_MNLBIN_ACK, true);
+
+			MDL_LOGXI(link_id,
+				"bypass gps_mcudl_link_open_ack now, mnlbin=%d, scif=%d",
+				mnlbin_ready, scif_ready);
+			break;
+		}
+
+		if (gps_mcusys_mnlbin_state_is(GPS_MCUSYS_MNLBIN_ST_CTLR_CREATED)) {
+			/* GPS_MDLX_LPPM has already been handled in previous if-break */
 			gps_mcudl_link_open_ack(link_id, true);
-		else {
+		} else {
 			gps_mcudl_each_link_set_bool_flag(link_id, LINK_MISS_MNLBIN_ACK, true);
 			/* wait gps_mcusys_mnlbin_fsm to ack it */
 			MDL_LOGXI(link_id, "bypass gps_mcudl_link_open_ack now");
@@ -198,6 +218,9 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	case GPS_MCUDL_EVT_LINK_PRE_CONN_RESET:
 		if (gps_mcudl_each_link_get_bool_flag(link_id, LINK_MISS_MNLBIN_ACK))
 			gps_mcudl_each_link_set_bool_flag(link_id, LINK_MISS_MNLBIN_ACK, false);
+
+		if (link_id == GPS_MDLX_LPPM)
+			gps_mcusys_scif_set_lppm_open_ack_done(false);
 
 		gps_mcudl_link_trigger_state_ntf(link_id);
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE)
