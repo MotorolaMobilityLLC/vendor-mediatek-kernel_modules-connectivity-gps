@@ -42,6 +42,10 @@ void gps_mcusys_nvdata_on_local_event(enum gps_mcusys_nv_data_id nv_id,
 void gps_mcusys_nvdata_on_remote_event(enum gps_mcusys_nv_data_id nv_id,
 	enum gps_mcusys_nvdata_event_id data_evt);
 
+void gps_mcusys_scif_set_ready(unsigned int ready_tick);
+void gps_mcusys_scif_clr_ready(void);
+bool gps_mcusys_scif_is_ready(void);
+void gps_mcusys_scif_set_lppm_open_ack_done(bool done);
 
 #endif /* _GPS_MCUSYS_FSM_H_ */
 

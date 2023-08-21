@@ -48,6 +48,10 @@ void gps_mcusys_data_frame_proc(const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload
 			frame.data.nvdata_event.evt_id);
 		break;
 
+	case GPS_MCUSYS_DST_SCIF_READY_EVENT:
+		gps_mcusys_scif_set_ready(frame.data.scif_ready_tick);
+		break;
+
 	default:
 		break;
 	}

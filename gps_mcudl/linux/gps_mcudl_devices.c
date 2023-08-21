@@ -212,7 +212,7 @@ int gps_mcudl_ctx_links_init(void)
 		gps_mcudl_each_link_init(xid);
 		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
 	}
-
+	gps_mcusys_scif_set_lppm_open_ack_done(false);
 	return 0;
 }
 
