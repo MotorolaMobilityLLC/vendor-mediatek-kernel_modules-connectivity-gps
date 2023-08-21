@@ -14,6 +14,8 @@ enum gps_mcusys_data_sync_type {
 	GPS_MCUSYS_DST_NVDATA_EVENT,
 	GPS_MCUSYS_DST_HOST_STATUS_COMMAND,
 	GPS_MCU_DST_HOST_LPPMODE_STATUS_CMD,
+	GPS_MCUSYS_DST_SCIF_READY_EVENT,    /* 5 */
+	GPS_MCUSYS_DST_1ST_TIMER_EVENT,     /* 6 */
 	GPS_MCUSYS_DST_NUM
 };
 
@@ -32,6 +34,7 @@ union gps_mcusys_data_sync_content {
 	struct gps_mcusys_nvdata_event nvdata_event;
 	struct gps_mcusys_host_status_cmd host_status_cmd;
 	bool lpp_mode_status_cmd;
+	unsigned int scif_ready_tick;
 };
 
 struct gps_mcusys_data_sync_frame {
@@ -44,3 +47,4 @@ struct gps_mcusys_data_sync_frame {
 };
 
 #endif /* _GPS_MCUSYS_DATA_WRAPPER_H_ */
+
