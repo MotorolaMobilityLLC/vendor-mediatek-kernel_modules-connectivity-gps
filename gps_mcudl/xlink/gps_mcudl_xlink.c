@@ -37,6 +37,16 @@ bool gps_mcudl_xlink_is_connected_mnlbin(enum gps_mcudl_xid x_id)
 		x_id == GPS_MDLX_PMTK ||
 		x_id == GPS_MDLX_MEAS ||
 		x_id == GPS_MDLX_CORR ||
+		/*
+		 * Bind LPPM node with MNL.bin load done event.
+		 *
+		 * Once it becomes LINK_OPENED, mnld will ack LPP mode init done to SCP,
+		 * then SCP will communicate with MNL.bin.
+		 *
+		 * More than this, we bind it to SCIF ready event also for same reason,
+		 * due to they communicate via SCIF.
+		 */
+		x_id == GPS_MDLX_LPPM ||
 		false
 	);
 
