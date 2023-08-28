@@ -192,7 +192,7 @@ void gps_each_device_data_submit(unsigned char *buf, unsigned int len, int index
 static int gps_mcudl_each_device_open(struct inode *inode, struct file *filp)
 {
 	struct gps_mcudl_each_device *dev; /* device information */
-	int retval = 0;
+	int retval = -EBUSY;
 
 	dev = container_of(inode->i_cdev, struct gps_mcudl_each_device, cdev);
 	filp->private_data = dev; /* for other methods */
