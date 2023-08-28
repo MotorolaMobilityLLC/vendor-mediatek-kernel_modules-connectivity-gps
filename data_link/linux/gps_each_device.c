@@ -160,11 +160,15 @@ static int gps_each_device_open(struct inode *inode, struct file *filp)
 		if (0 == retval) {
 			dev->is_open = true;
 			gps_each_link_rec_reset(dev->index);
+			return 0;
 		} else
 			return retval;
 	}
 
-	return 0;
+	GDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d, reopen fail",
+		imajor(inode), iminor(inode), current->pid);
+
+	return -EBUSY;
 }
 
 static int gps_each_device_hw_resume(enum gps_dl_link_id_enum link_id, bool revert_for_mvcd)
