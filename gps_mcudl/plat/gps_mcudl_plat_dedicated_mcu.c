@@ -37,6 +37,8 @@
 #include "gps_mcudl_data_pkt_payload_struct.h"
 #include "gps_mcudl_link_state.h"
 #include "gps_dl_linux_plat_drv.h"
+#include "gps_mcudl_hal_conn.h"
+
 
 struct gps_mcudl_ystate {
 	bool open;
@@ -246,6 +248,7 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 	} else if (!op && new_xbitmask == 0) {
 		/* turn off */
 		do_mcu_ctrl = true;
+		gps_mcudl_set_opp_vote_phase(GPS_MCU_CLOSING, true);
 		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_PRE_OFF);
 		mcu_ctrl_ret = gps_mcudl_plat_do_mcu_ctrl(yid, false);
 		MDL_LOGYD(yid, "gps_mcudl_clear_fw_loading_done_flag");
@@ -294,8 +297,13 @@ int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op)
 
 			g_gps_mcudl_ever_do_coredump = false;
 			gps_dl_log_info_show();
-			if (!gps_dl_hal_conn_infra_driver_on())
+			gps_mcudl_vote_to_deny_opp0_for_coinninfra_on(true);
+			if (!gps_dl_hal_conn_infra_driver_on()) {
+				gps_mcudl_vote_to_deny_opp0_for_coinninfra_on(false);
 				return -1;
+			}
+			gps_mcudl_set_opp_vote_phase(GPS_MCU_OPENING, true);
+			gps_mcudl_set_opp_vote_phase(GPS_DSP_NOT_WORKING, true);
 
 			gps_dl_hal_load_clock_flag();
 #if GPS_DL_HAS_PLAT_DRV
@@ -323,6 +331,15 @@ int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op)
 #endif
 			/*gps_dl_wake_lock_hold(false);*/
 #endif
+			gps_mcudl_set_opp_vote_phase(GPS_MCU_CLOSING, false);
+			gps_mcudl_set_opp_vote_phase(GPS_DSP_NOT_WORKING, false);
+			gps_mcudl_set_opp_vote_phase(GPS_MNLD_LPPM_CLOSING, false);
+			gps_mcudl_end_all_opp_vote_phase();
+
+			/* double trial in case that gps_mcudl_hw_conn_force_wake is not called */
+			gps_mcudl_vote_to_deny_opp0_for_coinninfra_on(false);
+
+			/* no need to vote opp for gps_dl_hal_conn_infra_driver_off */
 			gps_dl_hal_conn_infra_driver_off();
 		}
 	}

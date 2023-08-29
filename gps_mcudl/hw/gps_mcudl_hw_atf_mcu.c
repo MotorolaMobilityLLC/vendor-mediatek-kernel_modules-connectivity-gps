@@ -83,7 +83,7 @@ _fail_check_conn_infra_ver_not_okay:
 	return false;
 }
 
-bool gps_mcudl_hw_conn_force_wake(bool enable)
+bool gps_mcudl_hw_conn_force_wake_inner(bool enable)
 {
 	struct arm_smccc_res res;
 	bool poll_okay = false;

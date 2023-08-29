@@ -21,6 +21,7 @@
 #if GPS_DL_GET_PLATFORM_CLOCK_FREQ
 #include "gps_dl_linux_clock_mng.h"
 #endif
+#include "gps_mcudl_hal_conn.h"
 
 
 static bool gps_mcudl_xdevice_should_be_less_log(enum gps_mcudl_xid x_id)
@@ -287,6 +288,10 @@ static int gps_mcudl_each_device_hw_suspend(enum gps_mcudl_xid link_id, bool nee
 #endif
 #define GPSDL_IOC_GET_PLATFORM_CLOCK_FREQ   30
 
+
+#define GPSDL_IOC_MNLD_STATE_NOTIFY    31
+
+
 static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
 {
 	struct gps_mcudl_each_device *dev; /* device information */
@@ -294,6 +299,7 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 	unsigned long flags;
 	int retval;
 	unsigned int md2gps_status = 0;
+	unsigned int old_bitmask, new_bitmask;
 
 #if 0
 	dev = container_of(inode->i_cdev, struct gps_mcudl_each_device, cdev);
@@ -494,6 +500,40 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 			retval = gps_dl_clock_mng_get_platform_clock();
 			break;
 #endif
+
+	case GPSDL_IOC_MNLD_STATE_NOTIFY:
+		old_bitmask = gps_mcudl_get_opp_vote_phase_bitmask();
+		retval = 0;
+		if (arg == 0) {
+			/* MNLD: STOPPING to IDLE/SUSPEND_DONE */
+			gps_mcudl_set_opp_vote_phase(GPS_MNLD_FSM_STOPPING, false);
+		} else if (arg == 1) {
+			/* MNLD: IDLE/SUSPEND_DONE to STARTING */
+			gps_mcudl_set_opp_vote_phase(GPS_MNLD_FSM_STARTING, true);
+		} else if (arg == 2) {
+			/* MNLD: STARTING to STARTED */
+			gps_mcudl_set_opp_vote_phase(GPS_MNLD_FSM_STARTING, false);
+			gps_mcudl_set_opp_vote_phase(GPS_DSP_NOT_WORKING, false);
+		} else if (arg == 3) {
+			/* MNLD: STARTED to STOPPING */
+			gps_mcudl_set_opp_vote_phase(GPS_DSP_NOT_WORKING, true);
+			gps_mcudl_set_opp_vote_phase(GPS_MNLD_FSM_STOPPING, true);
+		} else if (arg == 10) {
+			/* MNLD: After opening LPPM dev node */
+			gps_mcudl_set_opp_vote_phase(GPS_MCU_OPENING, false);
+		} else if (arg == 11) {
+			/* MNLD: Before closing LPPM dev node
+			 * MNLD: SUSPEND_DONE to IDLE
+			 */
+			gps_mcudl_set_opp_vote_phase(GPS_MNLD_LPPM_CLOSING, true);
+		} else {
+			retval = -EFAULT;
+		}
+		new_bitmask = gps_mcudl_get_opp_vote_phase_bitmask();
+		MDL_LOGXI(dev->index, "cmd=%d, arg=%lu, vote_bitmask=0x%04x,0x%04x",
+			cmd, arg, old_bitmask, new_bitmask);
+		break;
+
 	default:
 		retval = -EFAULT;
 		MDL_LOGXI_DRW(dev->index, "cmd = %d, not support", cmd);

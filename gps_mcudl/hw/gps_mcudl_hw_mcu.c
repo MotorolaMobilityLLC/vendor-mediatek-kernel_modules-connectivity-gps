@@ -40,7 +40,7 @@ _fail_conn_hw_ver_not_okay:
 	return false;
 }
 
-bool gps_mcudl_hw_conn_force_wake(bool enable)
+bool gps_mcudl_hw_conn_force_wake_inner(bool enable)
 {
 	bool poll_okay = false;
 
