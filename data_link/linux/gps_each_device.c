@@ -573,11 +573,13 @@ int gps_dl_cdev_setup(struct gps_each_device *dev, int index)
 		return -1;
 	}
 
+#if (!GPS_DL_DISABLE_AP_MODE_DEVICENODE)
 	dev->dev = device_create(dev->cls, NULL, dev->devno, NULL, dev->cfg.dev_name);
 	if (IS_ERR(dev->dev)) {
 		GDL_LOGE("device_create fail on %s", dev->cfg.dev_name);
 		return -1;
 	}
+#endif
 
 	return 0;
 }
