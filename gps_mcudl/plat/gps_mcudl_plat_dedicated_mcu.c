@@ -590,3 +590,8 @@ void *gps_mcudl_plat_nv_emi_get_start_ptr(void)
 	return (void *)&p_layout->gps_nv_emi[0];
 }
 
+unsigned int gps_mcudl_hal_get_open_flag(void)
+{
+	return g_conn_xuser;
+}
+

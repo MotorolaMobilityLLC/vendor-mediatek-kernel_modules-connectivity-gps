@@ -119,5 +119,7 @@ unsigned int gps_dl_hal_get_adie_ver(void);
 bool gps_dl_hal_conn_infra_ver_is_mt6885(void);
 bool gps_dl_hal_conn_infra_ver_is_mt6893(void);
 
+unsigned int gps_dl_hal_get_open_flag(void);
+
 #endif /* _GPS_DL_HAL_H */
 
