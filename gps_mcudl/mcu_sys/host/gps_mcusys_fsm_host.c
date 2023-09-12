@@ -48,7 +48,7 @@ void gps_mcusys_mnlbin_fsm(enum gps_mcusys_mnlbin_event evt)
 		break;
 	case GPS_MCUSYS_MNLBIN_CTLR_CREATED:
 		for (x_id = 0; x_id < GPS_MDLX_CH_NUM; x_id++) {
-			if (gps_mcudl_each_link_get_state(x_id) != LINK_OPENING)
+			if (!gps_mcudl_each_link_get_bool_flag(x_id, LINK_MISS_MNLBIN_ACK))
 				continue;
 			MDL_LOGXI(x_id, "gps_mcudl_link_open_ack");
 			gps_mcudl_link_open_ack(x_id, true);
