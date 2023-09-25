@@ -32,6 +32,12 @@ void gps_dl_hw_usrt_rx_irq_enable(enum gps_dl_link_id_enum link_id, bool enable)
 		GDL_HW_SET_GPS_ENTRY2(link_id, 0, GPS_USRT_APB_APB_INTEN_TXIEN, GPS_L5_USRT_APB_APB_INTEN_TXIEN);
 }
 
+/*This macro is simply used as a record to avoid confusion. The detailed definition is as follows:*/
+/* bit2  bit0 */
+/*  0     1   => 6631 */
+/*  1     0   => 6635/6637 */
+/*  0     0   => 6686 */
+#define GPS_DSP_CFG_BITMASK_ADIE_IS_MT6686              (0UL << 0)
 #define GPS_DSP_CFG_BITMASK_ADIE_IS_MT6631              (1UL << 0)
 #define GPS_DSP_CFG_BITMASK_MVCD_SPEED_UP               (1UL << 1)
 #define GPS_DSP_CFG_BITMASK_ADIE_IS_MT6635_E2_OR_AFTER  (1UL << 2)
@@ -44,7 +50,12 @@ unsigned int gps_dl_hw_get_mcub_a2d1_cfg(enum gps_dl_link_id_enum link_id, bool 
 	unsigned int cfg = 0;
 
 	cfg |= GPS_DSP_CFG_BITMASK_MVCD_SPEED_UP;
-	cfg |= GPS_DSP_CFG_BITMASK_ADIE_IS_MT6635_E2_OR_AFTER;
+	if ((0x6635 == gps_dl_hal_get_adie_ver()) || (0x6637 == gps_dl_hal_get_adie_ver()))
+		cfg |= GPS_DSP_CFG_BITMASK_ADIE_IS_MT6635_E2_OR_AFTER;
+	else if (0x6686 == gps_dl_hal_get_adie_ver())
+		cfg |= GPS_DSP_CFG_BITMASK_ADIE_IS_MT6686;
+	else
+		cfg |= GPS_DSP_CFG_BITMASK_ADIE_IS_MT6631;
 	if (!is_1byte_mode)
 		cfg |= GPS_DSP_CFG_BITMASK_USRT_4BYTE_MODE;
 #if GPS_DL_USE_TIA
