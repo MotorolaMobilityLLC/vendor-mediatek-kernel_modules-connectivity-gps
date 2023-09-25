@@ -16,6 +16,9 @@
 #include "gps_dl_hw_dep_api.h"
 
 #include "gps_dl_hw_semaphore.h"
+#if GPS_DL_GET_INFO_FROM_NODE
+#include "gps_dl_info_node.h"
+#endif
 
 #if GPS_DL_USE_BGF_SEL_SEMA
 int gps_dl_hw_give_conn_bgf_sel_hw_sema_atf(unsigned int index, unsigned int master_index)
@@ -141,6 +144,9 @@ bool gps_dl_hw_dep_gps_control_adie_on_6878(void)
 		goto _fail_conninfra_spi_1_read_adie_not_okay;
 	}
 	GDL_LOGI("conninfra_spi_1_read_adie success, chip_ver = 0x%08x", chip_ver);
+#if GPS_DL_GET_INFO_FROM_NODE
+	gps_dl_info_node_set_adie_info(chip_ver);
+#endif
 	chip_ver = chip_ver & 0xffff0000;
 	if (chip_ver == 0x66860000)
 		GDL_LOGD("conninfra_spi_1_read_adie_6686 success, chip_ver = 0x%08x", chip_ver);
