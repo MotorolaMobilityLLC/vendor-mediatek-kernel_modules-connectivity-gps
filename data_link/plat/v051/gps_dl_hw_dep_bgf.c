@@ -276,6 +276,16 @@ _fail_enable_gps_slp_prot:
 	return 0;
 }
 
+void gps_dl_hw_gps_set_adie_chipid_to_atf(unsigned int chipid)
+{
+	struct arm_smccc_res res;
+	int ret;
+
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_SET_ADIE_CHIPID_TO_ATF_OPID,
+			chipid, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+}
+
 int gps_dl_hw_gps_common_on_part3(int i)
 {
 	struct arm_smccc_res res;
@@ -322,11 +332,32 @@ bool gps_dl_hw_gps_common_on_inner(void)
 
 #if GPS_DL_HAS_CONNINFRA_DRV
 	adie_ver = conninfra_get_ic_info(CONNSYS_ADIE_CHIPID);
-	if (!(adie_ver == 0x6637 || adie_ver == 0x6635 || adie_ver == 0x6686)) {
+	if (!(adie_ver == 0x6637 || adie_ver == 0x6635 || adie_ver == 0x6686
+		|| adie_ver == 0x6631)) {
 		GDL_LOGE("_fail_adie_ver_not_okay, adie_ver = 0x%08x", adie_ver);
 		goto _fail_adie_ver_not_okay;
 	}
+#if GPS_DL_DO_ADIE2_ACTION
+	/*
+	* mt6878 has 2 adie, check adie
+	* adie_ver==0x6631 from conninfra_get_ic_info(CONNSYS_ADIE_CHIPID)
+	* has 2 cases:
+	* MT6631 for BT/WIFI/GNSS
+	* MT6631 for BT/WIFI and MT6686 for GNSS
+	* so we need to check conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID) again for GNSS part
+	*/
+	if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878) {
+		if (adie_ver == 0x6631) {
+			adie_ver = conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID);
+			if (adie_ver == 0x6686)
+				adie_ver = 0x6686;
+		}
+	}
+#endif
 	gps_dl_hal_set_adie_ver(adie_ver);
+
+	/*6631/6637/6686+6631*/
+	gps_dl_hw_gps_set_adie_chipid_to_atf(adie_ver);
 #endif
 
 	GDL_LOGW("adie_ver = 0x%08x is ok", adie_ver);
@@ -344,7 +375,10 @@ bool gps_dl_hw_gps_common_on_inner(void)
 		GDL_LOGE("_fail_gps_hw_common_on_part4_fail");
 		goto _fail_gps_hw_common_on_part4_not_okay;
 	}
-
+#if GPS_DL_DO_ADIE2_ACTION
+	if (adie_ver == 0x6686)
+		gps_dl_hw_dep_gps_control_adie_on_6878();
+#endif
 	return true;
 
 _fail_gps_hw_common_on_part4_not_okay:
