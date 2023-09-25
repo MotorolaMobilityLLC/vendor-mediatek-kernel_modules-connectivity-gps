@@ -13,20 +13,21 @@
 #include "gps_dl_osal.h"
 #include "gps_dl_hw_dep_api.h"
 
-#if GPS_DL_GET_ECID_FROM_NODE
+#if GPS_DL_GET_INFO_FROM_NODE
 
-#define G_GPS_ECID_INFO_LENGTH 256
+#define G_GPS_INFO_LENGTH 256
 bool g_gps_dl_get_ecid_info_ready;
-char g_gps_dl_get_ecid_info[G_GPS_ECID_INFO_LENGTH];
-char *g_gps_dl_get_ecid_info_ptr;
-unsigned int g_gps_dl_ecid_info_length;
+bool g_gps_dl_get_adie_info_ready;
+char g_gps_dl_get_info[G_GPS_INFO_LENGTH];
+char *g_gps_dl_get_info_ptr;
+unsigned int g_gps_dl_info_length;
 void gps_dl_info_node_set_ecid_info(unsigned long ecid_data1,
 	unsigned long ecid_data2)
 {
 	int ret;
 
 	if (g_gps_dl_get_ecid_info_ready == false) {
-		ret = snprintf(g_gps_dl_get_ecid_info, G_GPS_ECID_INFO_LENGTH,
+		ret = snprintf(g_gps_dl_get_info, G_GPS_INFO_LENGTH,
 			"[MT6686P_ECID][0x%lx, 0x%lx]", ecid_data1, ecid_data2);
 		if (ret <= 0)
 			GDL_LOGW("snprintf fail");
@@ -35,11 +36,26 @@ void gps_dl_info_node_set_ecid_info(unsigned long ecid_data1,
 	}
 }
 
+void gps_dl_info_node_set_adie_info(unsigned int adie_info)
+{
+	int ret;
+
+	if (g_gps_dl_get_adie_info_ready == false) {
+		ret = snprintf(g_gps_dl_get_info, G_GPS_INFO_LENGTH,
+			"[MT6686_ADIE][0x%x]", adie_info);
+		if (ret <= 0)
+			GDL_LOGW("snprintf fail");
+		else
+			g_gps_dl_get_adie_info_ready = true;
+	}
+}
+
 static struct proc_dir_entry *g_gps_dl_node_info_entry;
 #define GPS_DL_PROCFS_NAME "driver/gpsdl_chip_info"
 
 enum gps_dl_log_info_type {
 	GPS_DL_ECID_INFO = 0,
+	GPS_DL_ADIE_ID_INFO = 1,
 	GPS_DL_MAX,
 };
 
@@ -87,8 +103,17 @@ ssize_t gps_dl_info_node_write(struct file *filp, const char __user *buffer, siz
 	case GPS_DL_ECID_INFO:
 	{
 		if (g_gps_dl_get_ecid_info_ready) {
-			g_gps_dl_get_ecid_info[G_GPS_ECID_INFO_LENGTH-1] = '\0';
-			g_gps_dl_ecid_info_length = strlen(g_gps_dl_get_ecid_info);
+			g_gps_dl_get_info[G_GPS_INFO_LENGTH-1] = '\0';
+			g_gps_dl_info_length = strlen(g_gps_dl_get_info);
+		} else
+			GDL_LOGW("g_gps_dl_get_ecid_info_ready is not set");
+		break;
+	}
+	case GPS_DL_ADIE_ID_INFO:
+	{
+		if (g_gps_dl_get_adie_info_ready) {
+			g_gps_dl_get_info[G_GPS_INFO_LENGTH-1] = '\0';
+			g_gps_dl_info_length = strlen(g_gps_dl_get_info);
 		} else
 			GDL_LOGW("g_gps_dl_get_ecid_info_ready is not set");
 		break;
@@ -107,14 +132,14 @@ ssize_t gps_dl_info_node_read(struct file *filp, char __user *buf, size_t count,
 	int ret = 0;
 	int dump_len;
 
-	if (g_gps_dl_ecid_info_length == 0)
+	if (g_gps_dl_info_length == 0)
 		goto exit;
 
 	if (*f_pos == 0)
-		g_gps_dl_get_ecid_info_ptr = g_gps_dl_get_ecid_info;
+		g_gps_dl_get_info_ptr = g_gps_dl_get_info;
 
-	dump_len = g_gps_dl_ecid_info_length >= count ? count : g_gps_dl_ecid_info_length;
-	ret = copy_to_user(buf, g_gps_dl_get_ecid_info_ptr, dump_len);
+	dump_len = g_gps_dl_info_length >= count ? count : g_gps_dl_info_length;
+	ret = copy_to_user(buf, g_gps_dl_get_info_ptr, dump_len);
 	if (ret) {
 		GDL_LOGE("copy to dump info buffer failed, ret:%d\n", ret);
 		ret = -EFAULT;
@@ -122,9 +147,9 @@ ssize_t gps_dl_info_node_read(struct file *filp, char __user *buf, size_t count,
 	}
 
 	*f_pos += dump_len;
-	g_gps_dl_ecid_info_length -= dump_len;
-	g_gps_dl_get_ecid_info_ptr += dump_len;
-	GDL_LOGI("gps_dbg:after read,gps for dump info buffer len(%d)\n", g_gps_dl_ecid_info_length);
+	g_gps_dl_info_length -= dump_len;
+	g_gps_dl_get_info_ptr += dump_len;
+	GDL_LOGI("gps_dbg:after read,gps for dump info buffer len(%d)\n", g_gps_dl_info_length);
 
 	ret = dump_len;
 exit:
