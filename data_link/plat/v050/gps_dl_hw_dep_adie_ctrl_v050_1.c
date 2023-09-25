@@ -21,7 +21,7 @@
 bool gps_dl_hw_dep_gps_control_adie_on_6878(void)
 {
 #if GPS_DL_HAS_CONNINFRA_DRV
-	/*unsigned int chip_ver;*/
+	unsigned int chip_ver;
 	enum connsys_clock_schematic clock_sch;
 #endif
 	bool okay = false;
@@ -117,7 +117,6 @@ bool gps_dl_hw_dep_gps_control_adie_on_6878(void)
 	GDL_HW_ADIE_TOP_CLK2_EN_6686(0x1);
 
 #if GPS_DL_HAS_CONNINFRA_DRV
-#if GPS_DL_HAS_CONNINFRA_DRV_2
 	/*read adie chip id with spi1 api*/
 	if (conninfra_spi_1_read(SYS_SPI_TOP, 0x02C, &chip_ver) != 0) {
 		GDL_LOGD("conninfra_spi_1_read_adie_not_okay");
@@ -145,15 +144,12 @@ bool gps_dl_hw_dep_gps_control_adie_on_6878(void)
 	if (conninfra_spi_1_read(SYS_SPI_TOP, 0xB18, &chip_ver) == 0)
 		GDL_LOGD("spi_data[0xB18] = 0x%x", chip_ver);
 #endif
-#endif
 	return true;
 
 #if GPS_DL_HAS_CONNINFRA_DRV
-#if GPS_DL_HAS_CONNINFRA_DRV_2
 _fail_conninfra_spi_1_write_atop_rg_top_xo_07_not_okay:
 _fail_conninfra_spi_1_write_top_data_driving_not_okay:
 _fail_conninfra_spi_1_read_adie_not_okay:
-#endif
 #endif
 	return false;
 
