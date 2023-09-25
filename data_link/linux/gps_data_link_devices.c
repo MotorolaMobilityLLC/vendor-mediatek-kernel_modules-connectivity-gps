@@ -32,7 +32,7 @@
 #if GPS_DL_GET_PLATFORM_CLOCK_FREQ
 #include "gps_dl_linux_clock_mng.h"
 #endif
-#if GPS_DL_GET_ECID_FROM_NODE
+#if GPS_DL_GET_INFO_FROM_NODE
 #include "gps_dl_info_node.h"
 #endif
 
@@ -255,7 +255,7 @@ static void gps_dl_devices_exit(void)
 
 void gps_dl_device_context_deinit(void)
 {
-#if GPS_DL_GET_ECID_FROM_NODE
+#if GPS_DL_GET_INFO_FROM_NODE
 	gps_dl_info_node_remove();
 #endif
 
@@ -383,7 +383,7 @@ void gps_dl_device_context_init(void)
 
 	gps_dl_procfs_setup();
 
-#if GPS_DL_GET_ECID_FROM_NODE
+#if GPS_DL_GET_INFO_FROM_NODE
 	gps_dl_info_node_setup();
 #endif
 }

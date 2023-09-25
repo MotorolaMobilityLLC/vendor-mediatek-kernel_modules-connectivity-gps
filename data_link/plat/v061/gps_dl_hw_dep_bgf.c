@@ -23,7 +23,7 @@
 #include "conn_infra/conn_cfg.h"
 #include "gps_dl_hw_atf.h"
 #include "gps_dl_subsys_reset.h"
-#if	GPS_DL_GET_ECID_FROM_NODE
+#if	GPS_DL_GET_INFO_FROM_NODE
 #include "gps_dl_info_node.h"
 #endif
 
@@ -497,7 +497,7 @@ twice_get_ecid:
 		goto twice_get_ecid;
 	}
 #endif
-#if	GPS_DL_GET_ECID_FROM_NODE
+#if	GPS_DL_GET_INFO_FROM_NODE
 	gps_dl_info_node_set_ecid_info(ecid_bak, ecid_data);
 #endif
 	return true;
