@@ -105,13 +105,14 @@ int gps_dl_hw_gps_common_on(void)
 	gps_dl_hw_dep_may_set_bus_debug_flag();
 
 #if GPS_DL_CONNAC2
-	/* Power on A-die top clock */
-	GDL_HW_ADIE_TOP_CLK_EN(1, &poll_okay);
-	if (!poll_okay) {
-		GDL_LOGE("_fail_adie_top_clk_en_not_okay");
-		goto _fail_adie_top_clk_en_not_okay;
+	if (0x6686 != gps_dl_hal_get_adie_ver()) {
+		/* Power on A-die top clock */
+		GDL_HW_ADIE_TOP_CLK_EN(1, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_adie_top_clk_en_not_okay");
+			goto _fail_adie_top_clk_en_not_okay;
+		}
 	}
-
 #if GPS_DL_HAS_CONNINFRA_DRV
 	if (0x6637 == gps_dl_hal_get_adie_ver()) {
 		/*open mt6637 top clock buffer : ADIE TOP 0xB18[1] = 1*/
@@ -172,12 +173,22 @@ int gps_dl_hw_gps_common_off(void)
 	}
 #endif
 
-	/* Power off A-die top clock */
-	GDL_HW_ADIE_TOP_CLK_EN(0, &poll_okay);
-	if (!poll_okay) {
-		/* Just show log */
-		GDL_LOGE("_fail_adie_top_clk_dis_not_okay");
+	if (0x6686 != gps_dl_hal_get_adie_ver()) {
+		/* Power off A-die top clock */
+		GDL_HW_ADIE_TOP_CLK_EN(0, &poll_okay);
+		if (!poll_okay) {
+			/* Just show log */
+			GDL_LOGE("_fail_adie_top_clk_dis_not_okay");
+		}
 	}
+
+#if GPS_DL_DO_ADIE2_ACTION
+	/*mt6878 need close 6686 adie*/
+	if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878) {
+		if (gps_dl_hal_get_adie_ver() == 0x6686)
+			gps_dl_hw_dep_gps_control_adie_off_6878();
+	}
+#endif
 
 #elif GPS_DL_CONNAC3
 	gps_dl_hw_dep_gps_control_adie_off();
