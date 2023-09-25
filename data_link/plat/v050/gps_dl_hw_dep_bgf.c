@@ -320,7 +320,6 @@ bool gps_dl_hw_gps_common_on_inner(void)
 	}
 
 #if GPS_DL_DO_ADIE2_ACTION
-#if GPS_DL_HAS_CONNINFRA_DRV_2
 	/*
 	* mt6878 has 2 adie, check adie
 	* adie_ver==0x6631 from conninfra_get_ic_info(CONNSYS_ADIE_CHIPID)
@@ -337,7 +336,7 @@ bool gps_dl_hw_gps_common_on_inner(void)
 		}
 	}
 #endif
-#endif
+
 	gps_dl_hal_set_adie_ver(adie_ver);
 #endif
 
