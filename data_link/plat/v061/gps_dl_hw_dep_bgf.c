@@ -289,6 +289,16 @@ _fail_enable_gps_slp_prot:
 	return 0;
 }
 
+void gps_dl_hw_gps_set_adie_chipid_to_atf(unsigned int chipid)
+{
+	struct arm_smccc_res res;
+	int ret;
+
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_SET_ADIE_CHIPID_TO_ATF_OPID,
+			chipid, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+}
+
 int gps_dl_hw_gps_common_on_part3(int i)
 {
 	struct arm_smccc_res res;
@@ -336,6 +346,8 @@ bool gps_dl_hw_gps_common_on_inner(void)
 		goto _fail_adie_ver_not_okay;
 	}
 	gps_dl_hal_set_adie_ver(adie_ver);
+
+	gps_dl_hw_gps_set_adie_chipid_to_atf(adie_ver);
 #endif
 
 	GDL_LOGW("adie_ver = 0x%08x is ok", adie_ver);

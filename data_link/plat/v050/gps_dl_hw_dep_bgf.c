@@ -298,11 +298,10 @@ _fail_enable_gps_slp_prot:
 
 }
 
-unsigned int adie_ver;
 bool gps_dl_hw_gps_common_on_inner(void)
 {
 	bool poll_okay = false;
-	unsigned int poll_ver = 0;
+	unsigned int adie_ver;
 
 	gps_dl_hw_dep_may_remap_conn2ap_gps_peri();
 
@@ -312,24 +311,36 @@ bool gps_dl_hw_gps_common_on_inner(void)
 	/* Enable Conninfra BGF */
 	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
 
-	/* GDL_HW_CHECK_CONN_INFRA_VER may check a list and return ok if poll_ver is in the list,
-	 * record the poll_ver here and we can know which one it is,
-	 * and it may help for debug purpose.
-	 */
-#if GPS_DL_ON_LINUX
-	gps_dl_hal_set_conn_infra_ver(poll_ver);
-#endif
-
 #if GPS_DL_HAS_CONNINFRA_DRV
 	adie_ver = conninfra_get_ic_info(CONNSYS_ADIE_CHIPID);
-	if (!(adie_ver == 0x6637 || adie_ver == 0x6635)) {
+	if (!(adie_ver == 0x6637 || adie_ver == 0x6635 || adie_ver == 0x6631 ||
+		adie_ver == 0x6686)) {
 		GDL_LOGE("_fail_adie_ver_not_okay, adie_ver = 0x%08x", adie_ver);
 		goto _fail_adie_ver_not_okay;
 	}
+
+#if GPS_DL_DO_ADIE2_ACTION
+	/*
+	* mt6878 has 2 adie, check adie
+	* adie_ver==0x6631 from conninfra_get_ic_info(CONNSYS_ADIE_CHIPID)
+	* has 2 cases:
+	* MT6631 for BT/WIFI/GNSS
+	* MT6631 for BT/WIFI and MT6686 for GNSS
+	* so we need to check conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID) again for GNSS part
+	*/
+	if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878) {
+		if (adie_ver == 0x6631) {
+			adie_ver = conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID);
+			if (adie_ver == 0x6686)
+				adie_ver = 0x6686;
+		}
+	}
+#endif
+
 	gps_dl_hal_set_adie_ver(adie_ver);
 #endif
 
-	GDL_LOGW("%s: poll_ver = 0x%08x, adie_ver = 0x%08x is ok", GDL_HW_SUPPORT_LIST, poll_ver, adie_ver);
+	GDL_LOGW("adie_ver = 0x%08x is ok", adie_ver);
 
 #if GPS_DL_ON_CTP
 	/* Request EMI anyway */
@@ -359,6 +370,11 @@ bool gps_dl_hw_gps_common_on_inner(void)
 	poll_okay = gps_dl_hw_dep_poll_bgf_bus_and_gps_top_ack();
 	if (!poll_okay)
 		goto _fail_bgf_bus_or_gps_top_pwr_ack_not_okay;
+
+#if GPS_DL_DO_ADIE2_ACTION
+	if (adie_ver == 0x6686)
+		gps_dl_hw_dep_gps_control_adie_on_6878();
+#endif
 
 	return true;
 _fail_bgf_bus_or_gps_top_pwr_ack_not_okay:

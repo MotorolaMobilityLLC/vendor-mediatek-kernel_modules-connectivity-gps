@@ -163,6 +163,8 @@ $(MODULE_NAME)-objs += gps_dl_hw_dep_gps.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_debug.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_dma.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_met2_0.o
+# For MT6878 SoC + MT6686 A-die
+$(MODULE_NAME)-objs += gps_dl_hw_dep_adie_ctrl_v050_1.o
 
 ifeq ($(GPS_DL_HAS_MOCK),y)
 $(MODULE_NAME)-objs += data_link_mock/mock/gps_mock_mvcd.o
