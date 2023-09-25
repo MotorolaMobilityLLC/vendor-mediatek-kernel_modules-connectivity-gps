@@ -111,4 +111,6 @@ bool gps_dl_hw_dep_gps_control_adie_on_6985(void);
 bool gps_dl_hw_dep_gps_control_adie_on_6989(void);
 void gps_dl_hw_dep_gps_control_adie_off_6985(void);
 void gps_dl_hw_dep_gps_control_adie_off_6989(void);
+bool gps_dl_hw_dep_gps_control_adie_on_6878(void);
+void gps_dl_hw_dep_gps_control_adie_off_6878(void);
 
