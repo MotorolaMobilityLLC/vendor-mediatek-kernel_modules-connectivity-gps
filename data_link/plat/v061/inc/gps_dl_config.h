@@ -39,6 +39,8 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_GET_PLATFORM_CLOCK_FREQ (1)
 #define GPS_DL_GET_ECID_FROM_NODE (1)
 #define GPS_DL_DISABLE_AP_MODE_DEVICENODE (1)
+/*MT6878 has two A-dies, and this macro controls the operation for the second A-die. */
+#define GPS_DL_DO_ADIE2_ACTION    (0)
 
 #define GPS_DL_CONN_EMI_MERGED (1)
 
