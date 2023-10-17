@@ -210,15 +210,25 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 
 		/* handle open fail case */
 		if (!gps_each_link_get_bool_flag(link_id, LINK_OPEN_RESULT_OKAY)) {
-			GDL_LOGXD(link_id, "not open okay, just power off for %s",
-				gps_dl_link_event_name(evt));
+			/* result_okay = y, is_active = y/n, case1: open success
+			 * result_okay = n, is_active = y, case2: opened but not success
+			 * result_okay = n, is_active = n, case3: not opened.
+			 */
+			/* Case3 might occur in L1 only when MNL trigger EE,
+			 * we need to prevent bellow if-block being executed to avoid
+			 * unexpected power_ctrl.
+			 */
+			if (gps_each_link_is_active(link_id)) {
+				GDL_LOGXD(link_id, "not open okay, just power off for %s",
+					gps_dl_link_event_name(evt));
 
-			gps_each_link_set_active(link_id, false);
-			gps_dl_hal_link_power_ctrl(link_id, GPS_DL_HAL_POWER_OFF);
-			gps_dl_hal_conn_power_ctrl(link_id, 0);
+				gps_each_link_set_active(link_id, false);
+				gps_dl_hal_link_power_ctrl(link_id, GPS_DL_HAL_POWER_OFF);
+				gps_dl_hal_conn_power_ctrl(link_id, 0);
 
-			/* set flag to atf */
-			gps_dl_hal_may_set_link_power_flag(link_id, false);
+				/* set flag to atf */
+				gps_dl_hal_may_set_link_power_flag(link_id, false);
+			}
 			goto _close_or_reset_ack;
 		}
 
