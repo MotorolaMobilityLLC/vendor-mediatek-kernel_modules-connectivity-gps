@@ -148,7 +148,6 @@ static unsigned int gps_pwr_poll(struct file *file, poll_table *wait)
 	poll_wait(file, &GPS_PWR_wq, wait);
 	if (has_new_battery_level == true)
 		mask = (POLLIN | POLLRDNORM);
-	pr_info("gps_pwr_poll been return , mask = %d\n", mask);
 
 	return mask;
 }
