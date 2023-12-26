@@ -62,6 +62,26 @@ void gps_dl_hw_dep_set_dsp_off(enum gps_dl_link_id_enum link_id)
 	}
 }
 
+void gps_dl_hw_dep_set_dsp_dpstop(enum gps_dl_link_id_enum link_id)
+{
+	/*no need in legacy project*/
+}
+
+void gps_dl_hw_dep_common_enter_dpstop_dsleep(void)
+{
+	/*no need in legacy project*/
+}
+
+void gps_dl_hw_dep_common_leave_dpstop_dsleep(void)
+{
+	/*no need in legacy project*/
+}
+
+void gps_dl_hw_dep_common_clear_wakeup_source(void)
+{
+	/*no need in legacy project*/
+}
+
 void gps_dl_hw_dep_cfg_dsp_mem(enum dsp_ctrl_enum ctrl)
 {
 	switch (ctrl) {

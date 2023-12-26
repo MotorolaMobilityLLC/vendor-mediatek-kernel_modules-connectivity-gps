@@ -9,6 +9,7 @@
 #include "gps_dl_hw_dep_macro.h"
 
 #include "../gps_dl_hw_priv_util.h"
+#include "gps_dl_hw_atf.h"
 
 bool gps_dl_hw_dep_set_dsp_on_and_poll_ack(enum gps_dl_link_id_enum link_id)
 {
@@ -59,6 +60,58 @@ void gps_dl_hw_dep_set_dsp_off(enum gps_dl_link_id_enum link_id)
 		GDL_HW_SET_GPS_ENTRY(
 			BG_GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_ON, 0);
 	}
+}
+
+void gps_dl_hw_dep_common_enter_dpstop_dsleep(void)
+{
+	struct arm_smccc_res res;
+	int ret;
+
+	/*close a-die*/
+	gps_dl_hw_dep_gps_control_adie_off();
+
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_COMMON_ENTER_DPSTOP_DSLEEP,
+			0, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+}
+
+void gps_dl_hw_dep_common_leave_dpstop_dsleep(void)
+{
+	struct arm_smccc_res res;
+	int ret;
+	bool poll_okay;
+
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_COMMON_LEAVE_DPSTOP_DSLEEP,
+			0, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+
+	poll_okay = gps_dl_hw_dep_poll_bgf_bus_and_gps_top_ack();
+	if (!poll_okay) {
+		/* Just show log */
+		GDL_LOGE("_fail_bgf_check\n");
+		return;
+	}
+
+	/*open a-die*/
+	poll_okay = gps_dl_hw_dep_gps_control_adie_on();
+	if (!poll_okay) {
+		GDL_LOGE("_fail_gps_dl_hw_dep_gps_control_adie_on_not_okay");
+		return;
+	}
+
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_COMMON_ON_PART5_OPID,
+			0, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+}
+
+void gps_dl_hw_dep_common_clear_wakeup_source(void)
+{
+	struct arm_smccc_res res;
+	int ret;
+
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_COMMON_CLEAR_WAKEUP_SOURCE,
+			0, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
 }
 
 void gps_dl_hw_dep_cfg_dsp_mem(enum dsp_ctrl_enum ctrl)
