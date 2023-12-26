@@ -77,10 +77,10 @@ bool gps_dl_hw_dep_poll_bgf_bus_and_gps_top_ack(void)
 {
 	bool poll_okay = false;
 	int i;
+	unsigned int poll_ver_v051;
 
 	/* 0x18c21010[31:0] bgf ip version */
-	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION,
-		GDL_HW_BGF_VER_MT6893, POLL_DEFAULT, &poll_okay);
+	GDL_HW_CHECK_BGF_IP_VER(&poll_okay, &poll_ver_v051);
 	if (!poll_okay) {
 		GDL_LOGE("_fail_bgf_ip_ver_not_okay");
 		goto _fail_bgf_ip_ver_not_okay;
