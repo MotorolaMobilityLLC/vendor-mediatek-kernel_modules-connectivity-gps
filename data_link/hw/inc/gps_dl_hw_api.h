@@ -32,6 +32,9 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_gps_adie_force_off(void);
 void gps_dl_hw_gps_dump_top_rf_cr(void);
 void gps_dl_hw_gps_dump_top_rf_temp_cr(void);
+void gps_dl_hw_common_enter_dpstop_dpsleep(void);
+void gps_dl_hw_common_leave_dpstop_dpsleep(void);
+void gps_dl_hw_common_clear_wakeup_source(void);
 
 int gps_dl_hw_gps_common_on(void);
 int gps_dl_hw_gps_common_off(void);
