@@ -42,6 +42,7 @@ bool g_gps_need_clk_ext[GPS_DATA_LINK_NUM];
 int g_gps_conn_clock_flag = GPSDL_CLOCK_FLAG_COTMS;
 unsigned int g_conn_user;
 bool g_gps_need_revert_for_mvcd[GPS_DATA_LINK_NUM];
+unsigned char g_gps_common_dpstop_state[GPS_DATA_LINK_NUM];
 
 enum gps_blanking_setting_enum {
 	USE_PTA_DEFAULT,
@@ -215,6 +216,8 @@ int gps_dl_hal_link_power_ctrl_inner(enum gps_dl_link_id_enum link_id,
 		gps_dl_mock_open(link_id);
 #endif
 
+		gps_dl_set_res_enable(link_id, GPS_DUAL_COMMON_LEAVE_DPSTOP_DPSLEEP, true, true);
+
 		if (GPS_DATA_LINK_ID0 == link_id)
 			dsp_ctrl_ret = gps_dl_hw_gps_dsp_ctrl(GPS_L1_DSP_ON);
 		else if (GPS_DATA_LINK_ID1 == link_id)
@@ -223,6 +226,8 @@ int gps_dl_hal_link_power_ctrl_inner(enum gps_dl_link_id_enum link_id,
 			dsp_ctrl_ret = -1;
 		return dsp_ctrl_ret;
 	} else if (3 == op || 5 == op) {
+		/*set dpstop mode bitmask when l1/l5 exit dpstop mode*/
+		gps_dl_set_res_enable(link_id, GPS_DUAL_COMMON_LEAVE_DPSTOP_DPSLEEP, true, false);
 		gps_dl_lna_pin_ctrl(link_id, true, false);
 		if (GPS_DATA_LINK_ID0 == link_id) {
 			if (3 == op) {
@@ -241,6 +246,15 @@ int gps_dl_hal_link_power_ctrl_inner(enum gps_dl_link_id_enum link_id,
 				g_gps_dsp_off_ret_array[link_id] = 0;
 			}
 		}
+		/* clear wakeup src when l1/l5 both exit dpstop mode.
+		 *      op          |  bitmask     |     if_setting
+		 * l1 enter dpstop  | l1:1 l5:0    |    TRUE no_opt
+		 * l5 enter dpstop  | l1:1 l5:1    |        N
+		 * l1 exit  dpstop  | l1:0 l5:1    |        N
+		 * l5 exit  dpstop  | l1:0 l5:0    |    FLASE clear_hw_wakeup_src
+		 */
+		gps_dl_set_res_enable(link_id, GPS_DUAL_SET_HW_WAKEUP_SRC, true, false);
+		gps_dl_set_res_enable(link_id, GPS_DUAL_SET_HW_WAKEUP_SRC, false, false);
 		return 0;
 	} else if (2 == op || 4 == op) {
 		if (GPS_DATA_LINK_ID0 == link_id) {
@@ -266,6 +280,8 @@ int gps_dl_hal_link_power_ctrl_inner(enum gps_dl_link_id_enum link_id,
 		}
 
 		gps_dl_lna_pin_ctrl(link_id, false, false);
+		gps_dl_set_res_enable(link_id, GPS_DUAL_COMMON_LEAVE_DPSTOP_DPSLEEP, false, false);
+		gps_dl_set_res_enable(link_id, GPS_DUAL_SET_HW_WAKEUP_SRC, true, false);
 		return 0;
 	} else if (0 == op) {
 		if (g_gps_dsp_on_array[link_id]) {
@@ -764,4 +780,54 @@ unsigned int gps_dl_hal_get_open_flag(void)
 {
 	return g_conn_user;
 }
+
+void gps_dl_set_res_enable(enum gps_dl_link_id_enum link_id, enum gps_dl_hal_power_ctrl_res_enum res,
+	int enable, bool bypass_op)
+{
+	unsigned char old_dpstop_bitmask;
+	unsigned char new_dpstop_bitmask;
+	unsigned char enable_old, enable_new;
+
+	old_dpstop_bitmask =
+		g_gps_common_dpstop_state[GPS_DATA_LINK_ID0] |
+		g_gps_common_dpstop_state[GPS_DATA_LINK_ID1];
+	enable_old = !!(old_dpstop_bitmask & (1UL << res));
+
+	if (enable)
+		g_gps_common_dpstop_state[link_id] |= (1UL << res);
+	else
+		g_gps_common_dpstop_state[link_id] &= ~(1UL << res);
+
+	new_dpstop_bitmask =
+		g_gps_common_dpstop_state[GPS_DATA_LINK_ID0] |
+		g_gps_common_dpstop_state[GPS_DATA_LINK_ID1];
+	enable_new = !!(new_dpstop_bitmask & (1UL << res));
+
+	if (enable_new == enable_old || bypass_op)
+		return;
+
+	switch (res) {
+	case GPS_DUAL_COMMON_LEAVE_DPSTOP_DPSLEEP:
+		if (enable_new)
+			gps_dl_hw_common_leave_dpstop_dpsleep();
+		else
+			gps_dl_hw_common_enter_dpstop_dpsleep();
+		break;
+
+	case GPS_DUAL_SET_HW_WAKEUP_SRC:
+		if (enable_new) {
+			/* do noting, just keep the sw flag*/
+		} else {
+			/* clear when both clear*/
+			gps_dl_hw_common_clear_wakeup_source();
+		}
+		break;
+
+	default:
+		break;
+	}
+
+
+}
+
 
