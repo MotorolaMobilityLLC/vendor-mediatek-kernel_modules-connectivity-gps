@@ -43,7 +43,11 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw);
  */
 bool gps_dl_hw_dep_set_dsp_on_and_poll_ack(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_dep_set_dsp_off(enum gps_dl_link_id_enum link_id);
+void gps_dl_hw_dep_set_dsp_dpstop(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_dep_cfg_dsp_mem(enum dsp_ctrl_enum ctrl);
+void gps_dl_hw_dep_common_enter_dpstop_dsleep(void);
+void gps_dl_hw_dep_common_leave_dpstop_dsleep(void);
+void gps_dl_hw_dep_common_clear_wakeup_source(void);
 
 /*
  * Debug
