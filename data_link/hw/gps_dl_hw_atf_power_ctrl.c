@@ -717,3 +717,18 @@ void gps_dl_hw_gps_dump_top_rf_temp_cr(void)
 #endif
 }
 
+void gps_dl_hw_common_enter_dpstop_dpsleep(void)
+{
+	gps_dl_hw_dep_common_enter_dpstop_dsleep();
+}
+
+void gps_dl_hw_common_leave_dpstop_dpsleep(void)
+{
+	gps_dl_hw_dep_common_leave_dpstop_dsleep();
+}
+
+void gps_dl_hw_common_clear_wakeup_source(void)
+{
+	gps_dl_hw_dep_common_clear_wakeup_source();
+}
+

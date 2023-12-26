@@ -167,9 +167,9 @@ bool gps_dl_hw_dep_may_check_conn_infra_restore_done(void)
 void gps_dl_hw_dep_may_set_conn_infra_l1_request(bool request)
 {
 	if (request)
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_L1_INFRA_REQ_GPS_L1, 1);
+		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_SW_CONN_SRCCLKENA_GPS, 1);
 	else
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_L1_INFRA_REQ_GPS_L1, 0);
+		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_SW_CONN_SRCCLKENA_GPS, 0);
 }
 
 void gps_dl_hw_dep_gps_sw_request_emi_usage(bool request)
