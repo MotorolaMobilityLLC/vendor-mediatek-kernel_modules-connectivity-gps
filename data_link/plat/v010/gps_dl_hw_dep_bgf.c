@@ -346,3 +346,18 @@ _fail_adie_ver_not_okay:
 	return false;
 }
 
+unsigned int gps_dl_hw_gps_get_adie_id_from_conninfra(void)
+{
+	unsigned int adie_ver = 0xFF;
+
+#if GPS_DL_HAS_CONNINFRA_DRV
+	adie_ver = conninfra_get_ic_info(CONNSYS_ADIE_CHIPID);
+	if (!(adie_ver == 0x6637 || adie_ver == 0x6635)) {
+		GDL_LOGE("_fail_adie_ver_not_okay, adie_ver = 0x%08x", adie_ver);
+		return -1;
+	}
+#endif
+
+	return adie_ver;
+}
+
