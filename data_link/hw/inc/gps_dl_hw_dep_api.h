@@ -37,6 +37,7 @@ struct gps_dl_power_raw_state {
 	unsigned int sw_gps_ctrl;
 };
 void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw);
+unsigned int gps_dl_hw_gps_get_adie_id_from_conninfra(void);
 
 /*
  * GPS

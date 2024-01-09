@@ -79,6 +79,17 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 			break;
 		}
 #endif
+		/* if adie chip == 0x6631, no need control l5 related hw reg*/
+		/* conninfra_get_ic_info(CONNSYS_SOC_CHIPID/CONNSYS_ADIE_CHIPID/ */
+		/* CONSYS_ADIE_GPS_CHIPID) available after insmod stage*/
+		if (gps_dl_hw_gps_get_adie_id_from_conninfra() == 0x6631) {
+			if (link_id == GPS_DATA_LINK_ID1) {
+				GDL_LOGXE(link_id, "6631 no L5");
+				gps_dl_link_open_ack(link_id, false, false);
+				break;
+			}
+		}
+
 		gps_dl_hal_may_set_link_power_flag(link_id, true);
 		gps_each_dsp_reg_gourp_read_init(link_id);
 		gps_each_link_inc_session_id(link_id);
