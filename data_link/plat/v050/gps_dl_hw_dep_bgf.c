@@ -388,3 +388,39 @@ _fail_adie_ver_not_okay:
 	return false;
 }
 
+unsigned int gps_dl_hw_gps_get_adie_id_from_conninfra(void)
+{
+	unsigned int adie_ver  = 0xFF;
+	unsigned int chip_ver  = 0xFF;
+
+#if GPS_DL_HAS_CONNINFRA_DRV
+	adie_ver = conninfra_get_ic_info(CONNSYS_ADIE_CHIPID);
+	if (!(adie_ver == 0x6637 || adie_ver == 0x6635 || adie_ver == 0x6631 ||
+		adie_ver == 0x6686)) {
+		GDL_LOGE("_fail_adie_ver_not_okay, adie_ver = 0x%08x", adie_ver);
+		return -1;
+	}
+
+	chip_ver = conninfra_get_ic_info(CONNSYS_SOC_CHIPID);
+
+#if GPS_DL_DO_ADIE2_ACTION
+	/*
+	* mt6878 has 2 adie, check adie
+	* adie_ver==0x6631 from conninfra_get_ic_info(CONNSYS_ADIE_CHIPID)
+	* has 2 cases:
+	* MT6631 for BT/WIFI/GNSS
+	* MT6631 for BT/WIFI and MT6686 for GNSS
+	* so we need to check conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID) again for GNSS part
+	*/
+	if (chip_ver == 0x6878) {
+		if (adie_ver == 0x6631) {
+			adie_ver = conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID);
+			if (adie_ver == 0x6686)
+				adie_ver = 0x6686;
+		}
+	}
+#endif
+#endif
+	return adie_ver;
+}
+
