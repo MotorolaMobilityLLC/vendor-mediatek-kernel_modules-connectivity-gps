@@ -29,7 +29,6 @@
 #include <linux/printk.h>
 #include <linux/version.h>
 #include <asm/memblock.h>
-#define EMI_MPU_PROTECTION_IS_READY  0
 #if EMI_MPU_PROTECTION_IS_READY
 #if defined(CONFIG_MACH_MT6873)
 #include <memory/mediatek/emi.h>
@@ -360,122 +359,10 @@ static const struct file_operations gps_emi_fops = {
 };
 
 /*****************************************************************************/
-#if EMI_MPU_PROTECTION_IS_READY
-static int gps_emi_probe(struct platform_device *dev)
-{
-	int ret = 0, err = 0;
-
-	pr_err("Enter gps_emi_probe\n");
-
-	devobj = kzalloc(sizeof(*devobj), GFP_KERNEL);
-	if (devobj == NULL) {
-		err = -ENOMEM;
-		ret = -ENOMEM;
-		goto err_out;
-	}
-
-	pr_err("Registering chardev\n");
-	ret = alloc_chrdev_region(&devobj->devno, 0, 1, GPSEMI_DEVNAME);
-	if (ret) {
-		GPS_ERR("alloc_chrdev_region fail: %d\n", ret);
-		err = -ENOMEM;
-		goto err_out;
-	} else {
-		GPS_ERR("major: %d, minor: %d\n", MAJOR(devobj->devno), MINOR(devobj->devno));
-	}
-	cdev_init(&devobj->chdev, &gps_emi_fops);
-	devobj->chdev.owner = THIS_MODULE;
-	err = cdev_add(&devobj->chdev, devobj->devno, 1);
-	if (err) {
-		GPS_ERR("cdev_add fail: %d\n", err);
-		goto err_out;
-	}
-	devobj->cls = class_create(THIS_MODULE, "gpsemi");
-	if (IS_ERR(devobj->cls)) {
-		GPS_ERR("Unable to create class, err = %d\n", (int)PTR_ERR(devobj->cls));
-		goto err_out;
-	}
-	devobj->dev = device_create(devobj->cls, NULL, devobj->devno, devobj, "gps_emi");
-
-	GPS_ERR("GPS EMI Done\n");
-	return 0;
-
-err_out:
-	if (devobj != NULL) {
-		if (err == 0)
-			cdev_del(&devobj->chdev);
-		if (ret == 0)
-			unregister_chrdev_region(devobj->devno, 1);
-
-		kfree(devobj);
-		devobj = NULL;
-	}
-	return -1;
-}
-#endif
-/*****************************************************************************/
-#if EMI_MPU_PROTECTION_IS_READY
-static int gps_emi_remove(struct platform_device *dev)
-{
-	if (!devobj) {
-		GPS_ERR("null pointer: %p\n", devobj);
-		return -1;
-	}
-
-	GPS_DBG("Unregistering chardev\n");
-	cdev_del(&devobj->chdev);
-	unregister_chrdev_region(devobj->devno, 1);
-	device_destroy(devobj->cls, devobj->devno);
-	class_destroy(devobj->cls);
-	kfree(devobj);
-	GPS_DBG("Done\n");
-	return 0;
-}
-#endif
-/*****************************************************************************/
-#ifdef CONFIG_PM
-/*****************************************************************************/
-#if EMI_MPU_PROTECTION_IS_READY
-static int gps_emi_suspend(struct platform_device *dev, pm_message_t state)
-{
-	GPS_DBG("dev = %p, event = %u,", dev, state.event);
-	if (state.event == PM_EVENT_SUSPEND)
-		GPS_DBG("Receive PM_EVENT_SUSPEND!!\n");
-	return 0;
-}
-#endif
-/*****************************************************************************/
-#if EMI_MPU_PROTECTION_IS_READY
-static int gps_emi_resume(struct platform_device *dev)
-{
-	GPS_DBG("");
-	return 0;
-}
-#endif
-/*****************************************************************************/
-#endif        /* CONFIG_PM */
-/*****************************************************************************/
 #ifdef CONFIG_OF
 static const struct of_device_id apgps_of_ids[] = {
 	{ .compatible = "mediatek,gps_emi-v1", },
 	{}
-};
-#endif
-#if EMI_MPU_PROTECTION_IS_READY
-static struct platform_driver gps_emi_driver = {
-	.probe = gps_emi_probe,
-	.remove = gps_emi_remove,
-#if defined(CONFIG_PM)
-	.suspend = gps_emi_suspend,
-	.resume = gps_emi_resume,
-#endif
-	.driver = {
-		.name = GPSEMI_DEVNAME,
-		.bus = &platform_bus_type,
-#ifdef CONFIG_OF
-		.of_match_table = apgps_of_ids,
-#endif
-	},
 };
 #endif
 /*****************************************************************************/
