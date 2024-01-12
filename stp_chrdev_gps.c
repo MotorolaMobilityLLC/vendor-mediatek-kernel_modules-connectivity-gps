@@ -40,9 +40,7 @@
 #include <mtk_freqhopping_drv.h>
 #endif
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
-/*
- *#include <helio-dvfsrc.h>
- */
+#include <helio-dvfsrc.h>
 #endif
 
 MODULE_LICENSE("GPL");
