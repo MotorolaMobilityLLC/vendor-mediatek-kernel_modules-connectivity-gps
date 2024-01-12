@@ -18,10 +18,6 @@ endif
 
 ccflags-y += -imacros $(AUTOCONF_H)
 
-ifeq ($(CONFIG_MTK_COMBO_CHIP),)
-    $(error CONFIG_MTK_COMBO_CHIP not defined)
-endif
-
 ifeq ($(TARGET_BUILD_VARIANT),$(filter $(TARGET_BUILD_VARIANT),userdebug user))
     ldflags-y += -s
 endif
@@ -126,6 +122,10 @@ endif
 
 else #Legacy drivers
 WMT_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/common
+
+ifeq ($(CONFIG_MTK_COMBO_CHIP),)
+    $(error CONFIG_MTK_COMBO_CHIP not defined)
+endif
 
 ifneq ($(filter "CONSYS_%",$(CONFIG_MTK_COMBO_CHIP)),)
         ccflags-y += -DSOC_CO_CLOCK_FLAG=1
