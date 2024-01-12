@@ -40,9 +40,9 @@
 #include <mtk_freqhopping_drv.h>
 #endif
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
-/*
- *#include <helio-dvfsrc.h>
- */
+
+#include <helio-dvfsrc.h>
+
 #endif
 #include <linux/version.h>
 
@@ -986,9 +986,7 @@ static void GPS_handle_desense(bool on)
 		KERNEL_clk_buf_ctrl(CLK_BUF_AUDIO, 1);
 #endif
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
-		/*
-		 *dvfsrc_enable_dvfs_freq_hopping(1);
-		 */
+		dvfsrc_enable_dvfs_freq_hopping(1);
 		GPS_WARN_FUNC("mt6765/61 GPS desense solution on\n");
 #endif
 	} else {
@@ -999,9 +997,7 @@ static void GPS_handle_desense(bool on)
 			GPS_WARN_FUNC("Error to disable MEMPLL\n");
 #endif
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
-		/*
-		 *dvfsrc_enable_dvfs_freq_hopping(0);
-		 */
+		dvfsrc_enable_dvfs_freq_hopping(0);
 		GPS_WARN_FUNC("mt6765/61 GPS desense solution off\n");
 #endif
 #if defined(CONFIG_MACH_MT6580)
