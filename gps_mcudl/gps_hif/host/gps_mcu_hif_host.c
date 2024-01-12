@@ -65,8 +65,7 @@ void gps_mcu_hif_host_init_ch(enum gps_mcu_hif_ch hif_ch)
 unsigned int gps_mcu_hif_convert_ap_addr2mcu_addr(unsigned char *p_buf)
 {
 #if GPS_DL_ON_LINUX
-	struct gps_mcudl_emi_layout *p_layout =
-		gps_dl_get_conn_emi_layout_ptr();
+	void *p_layout = gps_dl_get_conn_emi_virt_addr();
 
 	return (unsigned int)(p_buf - (unsigned char *)p_layout) + 0x70000000;
 #else
@@ -77,19 +76,23 @@ unsigned int gps_mcu_hif_convert_ap_addr2mcu_addr(unsigned char *p_buf)
 void gps_mcu_hif_init(void)
 {
 #if GPS_DL_ON_LINUX
-	struct gps_mcudl_emi_layout *p_layout =
-		gps_dl_get_conn_emi_layout_ptr();
+	struct gps_mcudl_emi_region_item ap2mcu_region;
+	struct gps_mcudl_emi_region_item mcu2ap_region;
+	void *ap2mcu_va;
+	void *mcu2ap_va;
 
-	p_gps_mcu_hif_ap2mcu_region = (union gps_mcu_hif_ap2mcu_shared_data_union *)&p_layout->gps_ap2mcu[0];
-	p_gps_mcu_hif_mcu2ap_region = (union gps_mcu_hif_mcu2ap_shared_data_union *)&p_layout->gps_mcu2ap[0];
-	MDL_LOGI("ap2mcu: p=0x%p, offset=0x%x, size=0x%lx",
+	ap2mcu_va = gps_mcudl_get_emi_region_info(GDL_EMI_REGION_AP2MCU, &ap2mcu_region);
+	mcu2ap_va = gps_mcudl_get_emi_region_info(GDL_EMI_REGION_MCU2AP, &mcu2ap_region);
+	p_gps_mcu_hif_ap2mcu_region = (union gps_mcu_hif_ap2mcu_shared_data_union *)ap2mcu_va;
+	p_gps_mcu_hif_mcu2ap_region = (union gps_mcu_hif_mcu2ap_shared_data_union *)mcu2ap_va;
+	MDL_LOGI("ap2mcu: p=0x%p, offset=0x%x, size=0x%lx,0x%x",
 		p_gps_mcu_hif_ap2mcu_region,
 		gps_mcudl_get_offset_from_conn_base(p_gps_mcu_hif_ap2mcu_region),
-		sizeof(*p_gps_mcu_hif_ap2mcu_region));
-	MDL_LOGI("mcu2ap: p=0x%p, offset=0x%x, size=0x%lx",
+		sizeof(*p_gps_mcu_hif_ap2mcu_region), ap2mcu_region.length);
+	MDL_LOGI("mcu2ap: p=0x%p, offset=0x%x, size=0x%lx,0x%x",
 		p_gps_mcu_hif_mcu2ap_region,
 		gps_mcudl_get_offset_from_conn_base(p_gps_mcu_hif_mcu2ap_region),
-		sizeof(*p_gps_mcu_hif_mcu2ap_region));
+		sizeof(*p_gps_mcu_hif_mcu2ap_region), mcu2ap_region.length);
 #else
 	p_gps_mcu_hif_ap2mcu_region = (union gps_mcu_hif_ap2mcu_shared_data_union *)0x8707A000;
 	p_gps_mcu_hif_mcu2ap_region = (union gps_mcu_hif_mcu2ap_shared_data_union *)0x8707E000;

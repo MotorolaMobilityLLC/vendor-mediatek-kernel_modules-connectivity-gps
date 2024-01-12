@@ -11,8 +11,6 @@
 #if GPS_DL_CONN_EMI_MERGED
 #if GPS_DL_HAS_MCUDL
 #include "gps_mcudl_emi_layout.h"
-struct gps_mcudl_emi_layout *gps_dl_get_conn_emi_layout_ptr(void);
-unsigned long gps_dl_get_conn_emi_phys_addr(void);
 #endif
 
 int gps_dl_get_reserved_memory_from_conninfra_drv(void);

@@ -591,26 +591,36 @@ int gps_mcudl_plat_mcu_ch1_read_nonblock(unsigned char *kbuf, unsigned int count
 
 void gps_mcudl_plat_nv_emi_clear(void)
 {
-	struct gps_mcudl_emi_layout *p_layout;
+	struct gps_mcudl_emi_region_item region;
+	void *region_virt_addr;
 
-	p_layout = gps_dl_get_conn_emi_layout_ptr();
-	memset_io(&p_layout->gps_nv_emi[0], 0, sizeof(p_layout->gps_nv_emi));
+	region_virt_addr = gps_mcudl_get_emi_region_info(GDL_EMI_REGION_NVEMI, &region);
+	if (region_virt_addr == NULL) {
+		MDL_LOGW("region: nv_emi is null");
+		return;
+	}
+
+	memset_io(region_virt_addr, 0, region.length);
 }
 
 void *gps_mcudl_plat_nv_emi_get_start_ptr(void)
 {
-	struct gps_mcudl_emi_layout *p_layout;
+	void *region_virt_addr;
 
-	p_layout = gps_dl_get_conn_emi_layout_ptr();
-	return (void *)&p_layout->gps_nv_emi[0];
+	region_virt_addr = gps_mcudl_get_emi_region_info(GDL_EMI_REGION_NVEMI, NULL);
+	return (void *)region_virt_addr;
 }
 
 void *gps_mcudl_plat_nv_emi_get_end_ptr(void)
 {
-	struct gps_mcudl_emi_layout *p_layout;
+	struct gps_mcudl_emi_region_item region;
+	void *region_virt_addr;
 
-	p_layout = gps_dl_get_conn_emi_layout_ptr();
-	return (void *)&p_layout->gps_ap2mcu[0];
+	region_virt_addr = gps_mcudl_get_emi_region_info(GDL_EMI_REGION_NVEMI, &region);
+	if (region_virt_addr == NULL)
+		return NULL;
+
+	return (void *)(region.offset + (unsigned char *)region_virt_addr);
 }
 
 gpsmdl_u32 gps_mcudl_ylink_get_xbitmask(enum gps_mcudl_yid y_id)

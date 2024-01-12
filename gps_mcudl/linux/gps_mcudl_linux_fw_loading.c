@@ -86,8 +86,7 @@ bool g_gps_mcudl_fw_loading_done;
 bool g_gps_mcudl_need_to_load_fw_in_drv;
 void gps_mcudl_may_do_fw_loading(void)
 {
-	struct gps_mcudl_emi_layout *p_layout =
-		gps_dl_get_conn_emi_layout_ptr();
+	struct gps_mcudl_emi_region_item bin_region;
 	void __iomem *p_dst_addr;
 	unsigned int dst_len;
 
@@ -100,18 +99,18 @@ void gps_mcudl_may_do_fw_loading(void)
 		return;
 
 	/*MCU.bin*/
-	p_dst_addr = (void __iomem *)&p_layout->mcu_bin[0];
-	dst_len = sizeof(p_layout->mcu_bin);
+	p_dst_addr = (void __iomem *)gps_mcudl_get_emi_region_info(GDL_EMI_REGION_MCU_BIN, &bin_region);
+	dst_len = bin_region.length;
 	gps_mcudl_load_single_firmware("soc7_1_ram_mcu_1a_1_hdr.bin", p_dst_addr, dst_len);
 
 	/*GPS.bin*/
-	p_dst_addr = (void __iomem *)&p_layout->gps_bin[0];
-	dst_len = sizeof(p_layout->gps_bin);
+	p_dst_addr = (void __iomem *)gps_mcudl_get_emi_region_info(GDL_EMI_REGION_GPS_BIN, &bin_region);
+	dst_len = bin_region.length;
 	gps_mcudl_load_single_firmware("soc7_1_ram_gps_offload_1a_1_hdr.bin", p_dst_addr, dst_len);
 
 	/*MNL.bin*/
-	p_dst_addr = (void __iomem *)&p_layout->mnl_bin[0];
-	dst_len = sizeof(p_layout->mnl_bin);
+	p_dst_addr = (void __iomem *)gps_mcudl_get_emi_region_info(GDL_EMI_REGION_MNL_BIN, &bin_region);
+	dst_len = bin_region.length;
 	gps_mcudl_load_single_firmware("MNL_hdr.bin", p_dst_addr, dst_len);
 
 	g_gps_mcudl_fw_loading_done = true;

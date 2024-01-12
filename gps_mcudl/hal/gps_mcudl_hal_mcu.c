@@ -97,7 +97,7 @@ void gps_mcudl_hal_load_fw(const struct gps_mcudl_fw_list *p_fw_list)
 			break;
 		case MCU_FW_EMI:
 #if GPS_DL_ON_LINUX
-			p_dst = (void *)gps_dl_get_conn_emi_layout_ptr();
+			p_dst = gps_dl_get_conn_emi_virt_addr();
 			phys_addr = gps_dl_get_conn_emi_phys_addr();
 			gps_dl_hw_set_mcu_emi_remapping_tmp((phys_addr >> 16) & 0xFFFFF);
 #else

@@ -60,6 +60,7 @@ long gps_icap_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long 
 {
 	int retval = 0;
 #if GPS_DL_CONNAC3
+	struct gps_mcudl_emi_region_item gps_legacy_region;
 	unsigned int offset = 0;
 	unsigned int tmp_add = 0;
 #endif
@@ -93,7 +94,13 @@ long gps_icap_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long 
 #endif
 
 #if GPS_DL_CONNAC3
-		offset = (unsigned int)(unsigned long)&(((struct gps_mcudl_emi_layout *)0)->gps_legacy[0]);
+		(void)gps_mcudl_get_emi_region_info(GDL_EMI_REGION_LEGACY, &gps_legacy_region);
+		if (!gps_legacy_region.valid) {
+			retval = -EINVAL;
+			GDL_LOGW("IOCTL_ADC_CAPTURE_ADDR_GET,(%d),no valid info", retval);
+			break;
+		}
+		offset = gps_legacy_region.offset;
 		tmp_add = 0xF0000000 + offset - 0x78000000;/*for address trans*/
 		GDL_LOGW("gps_emi:offset (%x)\n", offset);
 		GDL_LOGW("gps_emi:tmp_add  (%x)\n", tmp_add);

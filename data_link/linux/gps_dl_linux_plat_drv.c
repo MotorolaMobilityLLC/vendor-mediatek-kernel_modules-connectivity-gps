@@ -58,6 +58,9 @@ const struct of_device_id gps_dl_of_ids[] = {
 	{ .compatible = "mediatek,mt6989-gps", },
 	{ .compatible = "mediatek,mt6991-gps", },
 	{},
+	/* please check bellow list when adding a new id:
+	 * 1. gps_mcudl_set_emi_layout_in_probe
+	 */
 };
 /* #endif */
 #define GPS_DL_IOMEM_NUM 3
@@ -501,6 +504,19 @@ struct gps_dl_iomem_addr_map_entry  *gps_dl_get_dyn_iomem_info(void)
 {
 	return &g_gps_dl_iomem_arrary[2];
 }
+
+static void gps_mcudl_set_emi_layout_in_probe(const char *p_compatible)
+{
+	/* See gps_dl_of_ids for full list */
+	if (0 == strcmp("mediatek,mt6985-gps", p_compatible))
+		gps_mcudl_set_emi_layout(GDL_EMI_LAYOUT_SOC711X);
+	else if (0 == strcmp("mediatek,mt6989-gps", p_compatible))
+		gps_mcudl_set_emi_layout(GDL_EMI_LAYOUT_SOC711X);
+	else if (0 == strcmp("mediatek,mt6990-gps", p_compatible))
+		gps_mcudl_set_emi_layout(GDL_EMI_LAYOUT_SOC711X);
+	else if (0 == strcmp("mediatek,mt6991-gps", p_compatible))
+		gps_mcudl_set_emi_layout(GDL_EMI_LAYOUT_SOC721A);
+}
 #endif
 
 static int gps_dl_probe(struct platform_device *pdev)
@@ -512,6 +528,9 @@ static int gps_dl_probe(struct platform_device *pdev)
 	bool okay = false;
 
 	GDL_LOGW_INI("compatible = %s", (char *)pdev->dev.of_node->properties->value);
+#if GPS_DL_HAS_MCUDL
+	gps_mcudl_set_emi_layout_in_probe((const char *)pdev->dev.of_node->properties->value);
+#endif
 
 #if (GPS_DL_CONN_EMI_MERGED)
 	/* always from lk2 */
