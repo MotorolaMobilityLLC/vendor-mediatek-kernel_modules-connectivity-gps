@@ -14,6 +14,7 @@
 
 #include "gps_dl_context.h"
 #include "gps_dl_hw_api.h"
+#include "gps_dl_hw_semaphore.h"
 #include "gps_dl_hw_dep_macro.h"
 #include "gps_dl_hw_priv_util.h"
 
@@ -439,123 +440,7 @@ void gps_dl_hw_set_pta_blanking_parameter(bool use_direct_path)
 	/* Use IDC mode */
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_PTA6_GPS_BLANK_CFG_r_gps_blank_src, 0);
 }
-
-/*
- * COS_SEMA_COEX_INDEX = 5(see conninfra/platform/include/consys_hw.h)
- * GPS use M3
- */
-#define COS_SEMA_COEX_STA_ENTRY_FOR_GPS \
-	CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_STA_CONN_SEMA05_M3_OWN_STA
-
-#define COS_SEMA_COEX_REL_ENTRY_FOR_GPS \
-	CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_REL_CONN_SEMA05_M3_OWN_REL
-
-bool gps_dl_hw_take_conn_coex_hw_sema(unsigned int try_timeout_ms)
-{
-	bool okay;
-	bool show_log;
-	unsigned int poll_us, poll_max_us;
-	unsigned int val;
-
-	show_log = gps_dl_set_show_reg_rw_log(true);
-	/* poll until value is expected or timeout */
-	poll_us = 0;
-	poll_max_us = POLL_US * 1000 * try_timeout_ms;
-	okay = false;
-	while (!okay) {
-		val = GDL_HW_GET_CONN_INFRA_ENTRY(COS_SEMA_COEX_STA_ENTRY_FOR_GPS);
-		/* 2bit value:
-		 * 0 -> need waiting
-		 * 1,3 -> okay; 2 -> already taken
-		 */
-		if (val != 0) {
-			okay = true;
-			break;
-		}
-		if (poll_us >= poll_max_us) {
-			okay = false;
-			break;
-		}
-		gps_dl_wait_us(POLL_INTERVAL_US);
-		poll_us += POLL_INTERVAL_US;
-	}
-	gps_dl_set_show_reg_rw_log(show_log);
-
-	if (!okay)
-		GDL_LOGW("okay = %d", okay);
-	else
-		GDL_LOGD("okay = %d", okay);
-	return okay;
-}
-
-void gps_dl_hw_give_conn_coex_hw_sema(void)
-{
-	bool show_log;
-
-	show_log = gps_dl_set_show_reg_rw_log(true);
-	GDL_HW_SET_CONN_INFRA_ENTRY(COS_SEMA_COEX_REL_ENTRY_FOR_GPS, 1);
-	gps_dl_set_show_reg_rw_log(show_log);
-
-	GDL_LOGD("");
-}
 #endif /* GPS_DL_HAS_PTA */
-
-/*
- * COS_SEMA_RFSPI_INDEX = 11(see conninfra/platform/include/consys_hw.h)
- * GPS use M3
- */
-#define COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS \
-	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_STA_CONN_SEMA11_M3_OWN_STA
-
-#define COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS \
-	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_REL_CONN_SEMA11_M3_OWN_REL
-
-bool gps_dl_hw_take_conn_rfspi_hw_sema(unsigned int try_timeout_ms)
-{
-	bool okay;
-	bool show_log;
-	unsigned int poll_us, poll_max_us;
-	unsigned int val;
-
-	show_log = gps_dl_set_show_reg_rw_log(true);
-	/* poll until value is expected or timeout */
-	poll_us = 0;
-	poll_max_us = POLL_US * 1000 * try_timeout_ms;
-	okay = false;
-	while (!okay) {
-		val = GDL_HW_GET_CONN_INFRA_ENTRY(COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS);
-		/* 2bit value:
-		 * 0 -> need waiting
-		 * 1,3 -> okay; 2 -> already taken
-		 */
-		if (val != 0) {
-			okay = true;
-			break;
-		}
-		if (poll_us >= poll_max_us) {
-			okay = false;
-			break;
-		}
-		gps_dl_wait_us(POLL_INTERVAL_US);
-		poll_us += POLL_INTERVAL_US;
-	}
-	gps_dl_set_show_reg_rw_log(show_log);
-
-	GDL_LOGI("okay = %d", okay);
-
-	return okay;
-}
-
-void gps_dl_hw_give_conn_rfspi_hw_sema(void)
-{
-	bool show_log;
-
-	show_log = gps_dl_set_show_reg_rw_log(true);
-	GDL_HW_SET_CONN_INFRA_ENTRY(COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS, 1);
-	gps_dl_set_show_reg_rw_log(show_log);
-
-	GDL_LOGI("");
-}
 
 
 #define GPS_DL_RFSPI_BUSY_POLL_MAX (10*1000*POLL_US) /* 10ms */

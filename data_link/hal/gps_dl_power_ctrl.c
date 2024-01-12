@@ -15,6 +15,7 @@
 
 #include "gps_dl_hal.h"
 #include "gps_dl_hw_api.h"
+#include "gps_dl_hw_semaphore.h"
 #include "gps_dl_hal.h"
 #if GPS_DL_MOCK_HAL
 #include "gps_mock_hal.h"

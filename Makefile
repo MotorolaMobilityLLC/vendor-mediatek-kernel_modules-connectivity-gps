@@ -134,6 +134,7 @@ $(MODULE_NAME)-objs += data_link/lib/gps_dl_time_tick.o
 $(MODULE_NAME)-objs += data_link/lib/gps_dl_name_list.o
 
 $(MODULE_NAME)-objs += data_link/hw/gps_dl_hw_conn_infra.o
+$(MODULE_NAME)-objs += data_link/hw/gps_dl_hw_semaphore.o
 $(MODULE_NAME)-objs += data_link/hw/gps_dl_hw_bgf.o
 $(MODULE_NAME)-objs += data_link/hw/gps_dl_hw_gps.o
 $(MODULE_NAME)-objs += data_link/hw/gps_dl_hw_power_ctrl.o
