@@ -182,9 +182,11 @@ INT32 gps_emi_mpu_set_region_protection(INT32 region)
 
 INT32 gps_emi_patch_get(PUINT8 pPatchName, osal_firmware **ppPatch)
 {
-	INT32 iRet = -1;
-	osal_firmware *fw = NULL;
+	INT32 iRet;
+	osal_firmware *fw;
 
+	iRet = -1;
+	fw = NULL;
 	if (!ppPatch) {
 		GPS_DBG("invalid ppBufptr!\n");
 		return -1;
@@ -205,7 +207,9 @@ INT32 gps_emi_patch_get(PUINT8 pPatchName, osal_firmware **ppPatch)
 
 INT32 mtk_wcn_consys_gps_emi_init(void)
 {
-	INT32 iRet = -1;
+	INT32 iRet;
+
+	iRet = -1;
 	down(&fw_dl_mtx);
 	mtk_wcn_consys_gps_memory_reserve();
 	if (gGpsEmiPhyBase) {
@@ -283,9 +287,10 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 /*---------------------------------------------------------------------------*/
 long gps_emi_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-	int retval = 0;
+	int retval;
 	unsigned int *tmp;
 
+	retval = 0;
 	GPS_DBG("gps_emi:cmd (%d),arg(%ld)\n", cmd, arg);
 
 	switch (cmd) {
@@ -347,7 +352,9 @@ static int gps_emi_release(struct inode *inode, struct file *file)
 /******************************************************************************/
 static ssize_t gps_emi_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
-	ssize_t ret = 0;
+	ssize_t ret;
+
+	ret = 0;
 	GPS_DBG("gps_emi_read begin\n");
 	if (count > GPS_ADC_CAPTURE_BUFF_SIZE)
 		count = GPS_ADC_CAPTURE_BUFF_SIZE;

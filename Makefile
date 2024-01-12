@@ -70,6 +70,10 @@ GPS_DL_HAS_MOCK := n
 GPS_DL_HAS_CONNINFRA_DRV := n
 GPS_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps
 
+ifeq ($(CONFIG_ARCH_MTK_PROJECT),"k6833v1_64_swrgo")
+ccflags-y += -DCONFIG_GPSL5_SUPPORT
+endif
+
 ifeq ($(CONFIG_MACH_MT6885),y)
 SELECT_GPS_DL_DRV := y
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0
@@ -187,6 +191,9 @@ ifeq ($(CONFIG_MTK_CONN_MT3337_CHIP_SUPPORT),y)
         $(MODULE_NAME)-objs += gps_mt3337.o
 else
         $(MODULE_NAME)-objs += stp_chrdev_gps.o
+ifeq ($(CONFIG_ARCH_MTK_PROJECT),"k6833v1_64_swrgo")
+        $(MODULE_NAME)-objs += stp_chrdev_gps2.o
+endif
 endif
 ifneq ($(CONFIG_MTK_GPS_EMI),)
 $(MODULE_NAME)-objs += gps_emi.o

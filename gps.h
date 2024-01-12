@@ -34,6 +34,12 @@ extern void mtk_gps_emi_exit(void);
 extern int mtk_gps_fw_log_init(void);
 extern void mtk_gps_fw_log_exit(void);
 void GPS_fwlog_ctrl(bool on);
+
+/* stp_chrdev_gps2 */
+extern struct wakeup_source gps2_wake_lock;
+extern struct semaphore wr_mtx2, rd_mtx2, fwctl_mtx2, status_mtx2;
+extern const struct file_operations GPS2_fops;
+
 #endif
 
 #endif
