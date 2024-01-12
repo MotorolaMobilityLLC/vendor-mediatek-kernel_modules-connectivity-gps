@@ -18,13 +18,15 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/sched.h>
-#include <linux/wakelock.h>
+#include <linux/device.h>
+#include <linux/pm_wakeup.h>
 #include <asm/current.h>
 #include <linux/uaccess.h>
 #include <linux/skbuff.h>
-#if WMT_CREATE_NODE_DYNAMIC || REMOVE_MK_NODE
-#include <linux/device.h>
-#endif
+#include <linux/jiffies.h>
+#include <linux/time.h>
+#include <linux/sched.h>
+#include <asm/div64.h>
 #include "osal_typedef.h"
 #include "stp_exp.h"
 #include "wmt_exp.h"
@@ -60,6 +62,11 @@ MODULE_LICENSE("GPL");
 #define COMBO_IOC_TAKE_GPS_WAKELOCK         14
 #define COMBO_IOC_GIVE_GPS_WAKELOCK         15
 #define COMBO_IOC_GET_GPS_LNA_PIN    16
+#define COMBO_IOC_GPS_FWCTL          17
+
+#if defined(CONFIG_MACH_MT6765)
+#define GPS_FWCTL_SUPPORT
+#endif
 
 static UINT32 gDbgLevel = GPS_LOG_DBG;
 
@@ -84,6 +91,14 @@ do { if (gDbgLevel >= GPS_LOG_DBG)	\
 		pr_info(PFX "<%s> <%d>\n", __func__, __LINE__);	\
 } while (0)
 
+#ifdef GPS_FWCTL_SUPPORT
+bool fgGps_fwctl_ready;
+#endif
+
+#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+bool fgGps_fwlog_on;
+#endif
+
 static int GPS_devs = 1;	/* device count */
 static int GPS_major = GPS_DEV_MAJOR;	/* dynamic allocation */
 module_param(GPS_major, uint, 0);
@@ -99,7 +114,7 @@ static unsigned char wake_lock_acquired;   /* default: 0 */
 #endif
 static unsigned char i_buf[STP_GPS_BUFFER_SIZE];	/* input buffer of read() */
 static unsigned char o_buf[STP_GPS_BUFFER_SIZE];	/* output buffer of write() */
-static struct semaphore wr_mtx, rd_mtx;
+static struct semaphore wr_mtx, rd_mtx, fwctl_mtx;
 static DECLARE_WAIT_QUEUE_HEAD(GPS_wq);
 static int flag;
 static int rstflag;
@@ -291,6 +306,185 @@ OUT:
 	return retval;
 }
 
+#ifdef GPS_FWCTL_SUPPORT
+#define GPS_FWCTL_OPCODE_ENTER_SLEEP_MODE (2)
+#define GPS_FWCTL_OPCODE_EXIT_SLEEP_MODE  (3)
+#define GPS_FWCTL_OPCODE_ENTER_STOP_MODE  (4)
+#define GPS_FWCTL_OPCODE_EXIT_STOP_MODE   (5)
+#define GPS_FWCTL_OPCODE_LOG_CFG          (6)
+#define GPS_FWCTL_OPCODE_LOOPBACK_TEST    (7)
+
+struct gps_fwctl_data {
+	UINT32 size;
+	UINT32 tx_len;
+	UINT32 rx_max;
+	UINT32 pad;         /* 128byte */
+	UINT64 p_tx_buf;    /* cast pointer to UINT64 to be compatible both 32/64bit */
+	UINT64 p_rx_buf;    /* 256byte */
+	UINT64 p_rx_len;
+	UINT64 p_reserved;  /* 384byte */
+};
+
+#define GPS_FWCTL_BUF_MAX   (128)
+long GPS_fwctl(struct gps_fwctl_data *user_ptr)
+{
+	UINT8 tx_buf[GPS_FWCTL_BUF_MAX];
+	UINT8 rx_buf[GPS_FWCTL_BUF_MAX];
+	UINT8 tx0 = 0;
+	UINT8 rx0 = 0;
+	UINT8 rx1 = 0;
+	UINT32 rx_len = 0;
+	UINT32 rx_to_user_len;
+	struct gps_fwctl_data ctl_data;
+	INT32 status = 0;
+	UINT64 delta_time = 0;
+	bool fwctl_ready;
+	int retval = 0;
+
+	if (copy_from_user(&ctl_data, user_ptr, sizeof(struct gps_fwctl_data))) {
+		pr_err("GPS_fwctl: copy_from_user error - ctl_data");
+		return -EFAULT;
+	}
+
+	if (ctl_data.size < sizeof(struct gps_fwctl_data)) {
+		/* user space data size not enough, risk to use it */
+		pr_err("GPS_fwctl: struct size(%u) is too short than(%u)",
+			ctl_data.size, (UINT32)sizeof(struct gps_fwctl_data));
+		return -EFAULT;
+	}
+
+	if ((ctl_data.tx_len > GPS_FWCTL_BUF_MAX) || (ctl_data.tx_len == 0)) {
+		/* check tx data len */
+		pr_err("GPS_fwctl: tx_len=%u too long (> %u) or too short",
+			ctl_data.tx_len, GPS_FWCTL_BUF_MAX);
+		return -EFAULT;
+	}
+
+	if (copy_from_user(&tx_buf[0], (PUINT8)ctl_data.p_tx_buf, ctl_data.tx_len)) {
+		pr_err("GPS_fwctl: copy_from_user error - tx_buf");
+		return -EFAULT;
+	}
+
+	down(&fwctl_mtx);
+	if (fgGps_fwctl_ready) {
+		delta_time = local_clock();
+		status = mtk_wmt_gps_mcu_ctrl(
+			&tx_buf[0], ctl_data.tx_len, &rx_buf[0], GPS_FWCTL_BUF_MAX, &rx_len);
+		delta_time = local_clock() - delta_time;
+		do_div(delta_time, 1e3); /* convert to us */
+		fwctl_ready = true;
+	} else {
+		fwctl_ready = false;
+	}
+	up(&fwctl_mtx);
+
+	tx0 = tx_buf[0];
+	if (fwctl_ready && (status == 0) && (rx_len <= GPS_FWCTL_BUF_MAX) && (rx_len >= 2)) {
+		rx0 = rx_buf[0];
+		rx1 = rx_buf[1];
+		pr_info("GPS_fwctl: st=%d, tx_len=%u ([0]=%u), rx_len=%u ([0]=%u, [1]=%u), us=%u",
+			status, ctl_data.tx_len, tx0, rx_len, rx0, rx1, (UINT32)delta_time);
+
+		if (ctl_data.rx_max < rx_len)
+			rx_to_user_len = ctl_data.rx_max;
+		else
+			rx_to_user_len = rx_len;
+
+		if (copy_to_user((PUINT8)ctl_data.p_rx_buf, &rx_buf[0], rx_to_user_len)) {
+			pr_err("GPS_fwctl: copy_to_user error - rx_buf");
+			retval = -EFAULT;
+		}
+
+		if (copy_to_user((PUINT32)ctl_data.p_rx_len, &rx_len, sizeof(UINT32))) {
+			pr_err("GPS_fwctl: copy_to_user error - rx_len");
+			retval = -EFAULT;
+		}
+		return retval;
+	}
+
+	pr_info("GPS_fwctl: st=%d, tx_len=%u ([0]=%u), rx_len=%u, us=%u, ready=%u",
+		status, ctl_data.tx_len, tx0, rx_len, (UINT32)delta_time, (UINT32)fwctl_ready);
+	return -EFAULT;
+}
+
+#define GPS_FWLOG_CTRL_BUF_MAX  (20)
+void GPS_fwlog_ctrl_inner(bool on)
+{
+	UINT8 tx_buf[GPS_FWLOG_CTRL_BUF_MAX];
+	UINT8 rx_buf[GPS_FWLOG_CTRL_BUF_MAX];
+	UINT8 rx0 = 0;
+	UINT8 rx1 = 0;
+	UINT32 tx_len;
+	UINT32 rx_len = 0;
+	INT32 status;
+	UINT32 fw_tick = 0;
+	UINT32 local_ms0, local_ms1;
+	struct timeval tv;
+	UINT64 tmp;
+
+	do_gettimeofday(&tv);
+	tmp = local_clock();
+	do_div(tmp, 1e6);
+	local_ms0 = (UINT32)tmp; /* overflow almost 4.9 days */
+
+	tx_buf[0]  = GPS_FWCTL_OPCODE_LOG_CFG;
+	tx_buf[1]  = (UINT8)on;
+	tx_buf[2]  = 0;
+	tx_buf[3]  = 0;
+	tx_buf[4]  = 0; /* bitmask, reserved now */
+	tx_buf[5]  = (UINT8)((local_ms0  >>  0) & 0xFF);
+	tx_buf[6]  = (UINT8)((local_ms0  >>  8) & 0xFF);
+	tx_buf[7]  = (UINT8)((local_ms0  >> 16) & 0xFF);
+	tx_buf[8]  = (UINT8)((local_ms0  >> 24) & 0xFF); /* local time msecs */
+	tx_buf[9]  = (UINT8)((tv.tv_usec >>  0) & 0xFF);
+	tx_buf[10] = (UINT8)((tv.tv_usec >>  8) & 0xFF);
+	tx_buf[11] = (UINT8)((tv.tv_usec >> 16) & 0xFF);
+	tx_buf[12] = (UINT8)((tv.tv_usec >> 24) & 0xFF); /* utc usec */
+	tx_buf[13] = (UINT8)((tv.tv_sec  >>  0) & 0xFF);
+	tx_buf[14] = (UINT8)((tv.tv_sec  >>  8) & 0xFF);
+	tx_buf[15] = (UINT8)((tv.tv_sec  >> 16) & 0xFF);
+	tx_buf[16] = (UINT8)((tv.tv_sec  >> 24) & 0xFF); /* utc sec */
+	tx_len = 17;
+
+	status = mtk_wmt_gps_mcu_ctrl(&tx_buf[0], tx_len, &rx_buf[0], GPS_FWLOG_CTRL_BUF_MAX, &rx_len);
+
+	/* local_ms1 = jiffies_to_msecs(jiffies); */
+	tmp = local_clock();
+	do_div(tmp, 1e6);
+	local_ms1 = (UINT32)tmp;
+
+
+	if (status == 0) {
+		if (rx_len >= 2) {
+			rx0 = rx_buf[0];
+			rx1 = rx_buf[1];
+		}
+
+		if (rx_len >= 6) {
+			fw_tick |= (((UINT32)rx_buf[2]) <<  0);
+			fw_tick |= (((UINT32)rx_buf[3]) <<  8);
+			fw_tick |= (((UINT32)rx_buf[4]) << 16);
+			fw_tick |= (((UINT32)rx_buf[5]) << 24);
+		}
+	}
+
+	pr_info("GPS_fwlog: st=%d, rx_len=%u ([0]=%u, [1]=%u), ms0=%u, ms1=%u, fw_tick=%u",
+		status, rx_len, rx0, rx1, local_ms0, local_ms1, fw_tick);
+}
+#endif /* GPS_FWCTL_SUPPORT */
+
+void GPS_fwlog_ctrl(bool on)
+{
+#if (defined(GPS_FWCTL_SUPPORT) && defined(CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH))
+	down(&fwctl_mtx);
+	if (fgGps_fwctl_ready)
+		GPS_fwlog_ctrl_inner(on);
+
+	fgGps_fwlog_on = on;
+	up(&fwctl_mtx);
+#endif
+}
+
 /* int GPS_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg) */
 long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
@@ -423,6 +617,12 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		else
 			retval = -EAGAIN;
 		break;
+#ifdef GPS_FWCTL_SUPPORT
+	case COMBO_IOC_GPS_FWCTL:
+		GPS_INFO_FUNC("COMBO_IOC_GPS_FWCTL\n");
+		retval = GPS_fwctl((struct gps_fwctl_data *)arg);
+		break;
+#endif
 	case COMBO_IOC_GET_GPS_LNA_PIN:
 		gps_lna_pin = mtk_wmt_get_gps_lna_pin_num();
 		GPS_DBG_FUNC("GPS_ioctl(): get gps lna pin = %d\n", gps_lna_pin);
@@ -467,6 +667,11 @@ static void gps_cdev_rst_cb(ENUM_WMTDRV_TYPE_T src,
 			case WMTRSTMSG_RESET_START:
 				GPS_INFO_FUNC("Whole chip reset start!\n");
 				rstflag = 1;
+#ifdef GPS_FWCTL_SUPPORT
+				/* down(&fwctl_mtx); */
+				fgGps_fwctl_ready = false;
+				/* up(&fwctl_mtx); */
+#endif
 				break;
 			case WMTRSTMSG_RESET_END:
 			case WMTRSTMSG_RESET_END_FAIL:
@@ -539,6 +744,17 @@ static int GPS_open(struct inode *inode, struct file *file)
 	clk_buf_ctrl(CLK_BUF_AUDIO, 1);
 #endif
 
+#ifdef GPS_FWCTL_SUPPORT
+	down(&fwctl_mtx);
+	fgGps_fwctl_ready = true;
+#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+	if (fgGps_fwlog_on) {
+		/* GPS fw clear log on flag when GPS on, no need to send it if log setting is off */
+		GPS_fwlog_ctrl_inner(fgGps_fwlog_on);
+	}
+#endif
+	up(&fwctl_mtx);
+#endif /* GPS_FWCTL_SUPPORT */
 	return 0;
 }
 
@@ -551,6 +767,12 @@ static int GPS_close(struct inode *inode, struct file *file)
 		GPS_WARN_FUNC("whole chip resetting...\n");
 		return -EPERM;
 	}
+
+#ifdef GPS_FWCTL_SUPPORT
+	down(&fwctl_mtx);
+	fgGps_fwctl_ready = false;
+	up(&fwctl_mtx);
+#endif
 
 	if (mtk_wcn_wmt_func_off(WMTDRV_TYPE_GPS) == MTK_WCN_BOOL_FALSE) {
 		GPS_WARN_FUNC("WMT turn off GPS fail!\n");
@@ -636,6 +858,7 @@ static int GPS_init(void)
 
 	wakeup_source_init(&gps_wake_lock, "gpswakelock");
 
+	sema_init(&fwctl_mtx, 1);
 	/* init_MUTEX(&wr_mtx); */
 	sema_init(&wr_mtx, 1);
 	/* init_MUTEX(&rd_mtx); */

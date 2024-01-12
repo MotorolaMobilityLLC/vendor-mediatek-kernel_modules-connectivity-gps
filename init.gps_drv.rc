@@ -1,5 +1,4 @@
 
 # load gps_drv
-on property:service.wcn.driver.ready=yes
+on property:vendor.connsys.driver.ready=yes
   insmod /vendor/lib/modules/gps_drv.ko
-  setprop gps_drv.ko 1
