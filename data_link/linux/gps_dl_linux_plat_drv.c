@@ -52,7 +52,10 @@ const struct of_device_id gps_dl_of_ids[] = {
 
 struct gps_dl_iomem_addr_map_entry g_gps_dl_iomem_arrary[GPS_DL_IOMEM_NUM];
 struct gps_dl_iomem_addr_map_entry g_gps_dl_status_dummy_cr;
-struct gps_dl_iomem_addr_map_entry g_gps_dl_tia_gps;
+struct gps_dl_iomem_addr_map_entry g_gps_dl_tia1_gps;
+struct gps_dl_iomem_addr_map_entry g_gps_dl_tia2_gps_on;
+struct gps_dl_iomem_addr_map_entry g_gps_dl_tia2_gps_rc_sel;
+
 
 void __iomem *gps_dl_host_addr_to_virt(unsigned int host_addr)
 {
@@ -90,9 +93,9 @@ void gps_dl_update_status_for_md_blanking(bool gps_is_on)
 		GDL_LOGW_INI("dummy cr addr is invalid, can not update (on = %d)", gps_is_on);
 }
 
-void gps_dl_tia_gps_ctrl(bool gps_is_on)
+void gps_dl_tia1_gps_ctrl(bool gps_is_on)
 {
-	void __iomem *p = g_gps_dl_tia_gps.host_virt_addr;
+	void __iomem *p = g_gps_dl_tia1_gps.host_virt_addr;
 	unsigned int tia_gps_on, tia_gps_ctrl, tia_temp;
 	unsigned int tia_gps_on1, tia_gps_ctrl1, tia_temp1;
 
@@ -129,6 +132,60 @@ void gps_dl_tia_gps_ctrl(bool gps_is_on)
 		gps_is_on, tia_gps_on, tia_gps_on1,
 		tia_gps_ctrl, tia_gps_ctrl1,
 		tia_temp, tia_temp1);
+}
+
+void gps_dl_tia2_gps_ctrl(bool gps_is_on)
+{
+	void __iomem *p_gps_on = g_gps_dl_tia2_gps_on.host_virt_addr;
+	void __iomem *p_gps_rc_sel = g_gps_dl_tia2_gps_rc_sel.host_virt_addr;
+	unsigned int tia2_gps_on_old = 0, tia2_gps_rc_sel_old = 0;
+	unsigned int tia2_gps_on_new = 0, tia2_gps_rc_sel_new = 0;
+
+	if (p_gps_on == NULL) {
+		GDL_LOGW_INI("on = %d, tia2_gps_on addr is null", gps_is_on);
+		return;
+	}
+
+	tia2_gps_on_old = __raw_readl(p_gps_on);
+	if (gps_is_on) {
+		/* 0x1001C000[5] = 1 (GPS on) */
+		gps_dl_linux_sync_writel(tia2_gps_on_old | (1UL << 5), p_gps_on);
+
+		if (p_gps_rc_sel == NULL)
+			GDL_LOGW_INI("on = %d, p_gps_rc_sel addr is null", gps_is_on);
+		else {
+			/* 0x1001C030[ 1: 0] = 0
+			 * 0x1001C030[ 5: 4] = 0
+			 * 0x1001C030[ 9: 8] = 0
+			 * 0x1001C030[13:12] = 0
+			 * 0x1001C030[17:16] = 0
+			 */
+			tia2_gps_rc_sel_old = __raw_readl(p_gps_rc_sel);
+			gps_dl_linux_sync_writel(tia2_gps_rc_sel_old & ~(0x00033333), p_gps_rc_sel);
+			tia2_gps_rc_sel_new = __raw_readl(p_gps_rc_sel);
+		}
+	} else {
+		tia2_gps_rc_sel_old = __raw_readl(p_gps_rc_sel);
+
+		/* 0x1001C000[5] = 0 (GPS off) */
+		gps_dl_linux_sync_writel(tia2_gps_on_old & ~(1UL << 5), p_gps_on);
+	}
+	tia2_gps_on_new = __raw_readl(p_gps_on);
+	GDL_LOGI_INI(
+		"on = %d, tia2_gps_on = 0x%08x/0x%08x, rc_sel = 0x%08x/0x%08x",
+		gps_is_on,
+		tia2_gps_on_old, tia2_gps_on_new,
+		tia2_gps_rc_sel_old, tia2_gps_rc_sel_new);
+}
+
+void gps_dl_tia_gps_ctrl(bool gps_is_on)
+{
+	if (g_gps_dl_tia2_gps_on.host_virt_addr != NULL)
+		gps_dl_tia2_gps_ctrl(gps_is_on);
+	else if (g_gps_dl_tia1_gps.host_virt_addr != NULL)
+		gps_dl_tia1_gps_ctrl(gps_is_on);
+	else
+		GDL_LOGE("tia reg not found, bypass!");
 }
 
 enum gps_dl_pinctrl_state_enum {
@@ -301,7 +358,12 @@ static int gps_dl_probe(struct platform_device *pdev)
 	if (okay)
 		gps_dl_update_status_for_md_blanking(false);
 
-	gps_dl_get_iomem_by_name(pdev, "tia_gps", &g_gps_dl_tia_gps);
+	/* TIA 1 */
+	gps_dl_get_iomem_by_name(pdev, "tia_gps", &g_gps_dl_tia1_gps);
+
+	/* TIA 2 */
+	gps_dl_get_iomem_by_name(pdev, "tia2_gps_on", &g_gps_dl_tia2_gps_on);
+	gps_dl_get_iomem_by_name(pdev, "tia2_gps_rc_sel", &g_gps_dl_tia2_gps_rc_sel);
 
 	for (i = 0; i < GPS_DL_IRQ_NUM; i++) {
 		irq = platform_get_resource(pdev, IORESOURCE_IRQ, i);
