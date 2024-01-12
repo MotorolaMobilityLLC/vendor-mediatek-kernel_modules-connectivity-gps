@@ -20,7 +20,7 @@
 #include "gps/bg_gps_cfg.h"
 #include "gps/bg_gps_cfg_on.h"
 
-#define GDL_HW_SUPPORT_LIST "SUPPORT:MT6985"
+#define GDL_HW_SUPPORT_LIST "SUPPORT:MT6985,MT6989"
 
 
 #define GDL_HW_CHECK_CONN_INFRA_VER(p_poll_okay, p_poll_ver)             \
