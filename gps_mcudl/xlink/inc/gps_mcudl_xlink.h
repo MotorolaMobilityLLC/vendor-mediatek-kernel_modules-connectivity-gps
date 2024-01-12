@@ -70,6 +70,7 @@ void gps_mcudl_xlink_event_send(enum gps_mcudl_xid link_id,
 void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	enum gps_mcudl_xlink_event_id evt);
 extern bool g_gps_fw_log_is_on;
+extern unsigned int g_gps_fw_log_irq_cnt;
 
 void gps_mcudl_xlink_trigger_print_hw_status(void);
 void gps_mcudl_xlink_test_fw_own_ctrl(bool to_set);
