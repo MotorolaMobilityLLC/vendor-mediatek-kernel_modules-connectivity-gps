@@ -103,7 +103,7 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			/* TODO: handling fail case */
 			conninfra_pwr_on(CONNDRV_TYPE_GPS);
 #endif
-			gps_dl_remap_ctx_cal_and_set();
+			gps_dl_emi_remap_calc_and_set();
 
 #if GPS_DL_HAS_PLAT_DRV
 			gps_dl_wake_lock_hold(true);

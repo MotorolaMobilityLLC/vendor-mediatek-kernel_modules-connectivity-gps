@@ -13,7 +13,6 @@
 #include "gps_dl_config.h"
 
 #if GPS_DL_HAS_PLAT_DRV
-#include <linux/of_reserved_mem.h>
 #include <linux/pinctrl/consumer.h>
 
 #include <linux/module.h>
@@ -46,11 +45,6 @@ const struct of_device_id gps_dl_of_ids[] = {
 };
 /* #endif */
 #define GPS_DL_IOMEM_NUM 2
-struct gps_dl_iomem_addr_map_entry {
-	void __iomem *host_virt_addr;
-	unsigned int host_phys_addr;
-	unsigned int length;
-};
 
 struct gps_dl_iomem_addr_map_entry g_gps_dl_iomem_arrary[GPS_DL_IOMEM_NUM];
 struct gps_dl_iomem_addr_map_entry g_gps_dl_status_dummy_cr;
@@ -295,8 +289,6 @@ static int gps_dl_probe(struct platform_device *pdev)
 		gps_dl_pinctrl_show_info();
 	}
 
-	gps_dl_reserved_mem_show_info();
-
 	GDL_LOGE("do gps_dl_probe\n");
 	platform_set_drvdata(pdev, p_each_dev0);
 	p_each_dev0->private_data = (struct device *)&pdev->dev;
@@ -443,17 +435,9 @@ int gps_dl_linux_plat_drv_unregister(void)
 	return 0;
 }
 
-phys_addr_t g_gps_emi_mem_base;
-int g_gps_emi_mem_size;
-
-void gps_dl_reserved_mem_show_info(void)
-{
-	GDL_LOGE("base = 0x%llx, size = 0x%llx",
-		(unsigned long long)g_gps_emi_mem_base, (unsigned long long)g_gps_emi_mem_size);
-}
-
-
+#if 0
 static struct wakeup_source g_gps_dl_wake_lock;
+#endif
 void gps_dl_wake_lock_init(void)
 {
 #if 0

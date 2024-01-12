@@ -79,6 +79,8 @@ void gps_dl_hal_dma_start(enum gps_dl_hal_dma_ch_index ch,
 	struct gdl_dma_buf_entry *p_entry);
 void gps_dl_hal_dma_stop(enum gps_dl_hal_dma_ch_index ch);
 
+void gps_dl_emi_remap_calc_and_set(void);
+enum GDL_RET_STATUS gps_dl_emi_remap_phy_to_bus_addr(unsigned int phy_addr, unsigned int *bus_addr);
 
 #endif /* _GPS_DL_HAL_API_H */
 
