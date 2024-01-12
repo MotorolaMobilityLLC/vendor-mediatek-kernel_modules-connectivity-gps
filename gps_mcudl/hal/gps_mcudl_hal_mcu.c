@@ -9,6 +9,7 @@
 #include "gps_mcudl_hal_conn.h"
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
+#include "gps_mcudl_hw_dep_macro.h"
 #include "gps_mcu_hif_api.h"
 #include "gps_dl_isr.h"
 #include "gps_dl_hal.h"
@@ -209,8 +210,8 @@ bool gps_mcudl_hal_bg_is_readable(bool check_conn_off)
 void gps_mcudl_hal_vdnr_dump(void)
 {
 #if GPS_DL_ON_LINUX
-	gps_dl_iomem_dump(0x18c1f000, 0x4);
-	gps_dl_iomem_dump(0x18c1f408, 0x3c);
+	gps_dl_iomem_dump(VDNR_DEBUG_AO_CTRL_ADDR, 0x4);
+	gps_dl_iomem_dump(VDNR_DEBUG_CTRL_RESULT_ADDR, 0x3c);
 #else
 	MDL_LOGW("not impl!");
 #endif
