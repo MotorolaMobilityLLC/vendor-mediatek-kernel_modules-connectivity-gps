@@ -20,6 +20,8 @@
 #endif
 
 
+#define GDL_DIFF_PTR_AS_CHAR_STAR(x, y) ((unsigned int)((char *)(x) - (char *)(y)))
+
 struct gps_dl_iomem_addr_map_entry g_gps_dl_res_emi;
 
 void gps_dl_reserved_mem_init_v1(void)
@@ -134,17 +136,17 @@ void gps_dl_reserved_mem_show_info(void)
 		g_gps_dl_res_emi.host_virt_addr,
 		g_gps_dl_res_emi.length, min_size);
 
-	offset = (unsigned int)((void *)&p_mem_vir->icap_buf[0] - (void *)p_mem_vir);
+	offset = GDL_DIFF_PTR_AS_CHAR_STAR(&p_mem_vir->icap_buf[0], p_mem_vir);
 	GDL_LOGD_INI("icap_buf: phy_addr = 0x%08x, vir_addr = 0x%p, size = 0x%x",
 		p_mem_phy + offset, &p_mem_vir->icap_buf[0], GPS_ICAP_MEM_SIZE);
 
 	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
-		offset = (unsigned int)((void *)&p_mem_vir->tx_dma_buf[link_id][0] - (void *)p_mem_vir);
+		offset = GDL_DIFF_PTR_AS_CHAR_STAR(&p_mem_vir->tx_dma_buf[link_id][0], p_mem_vir);
 		p_buf_phy = p_mem_phy + offset;
 		GDL_LOGXD_INI(link_id, "tx_dma_buf: phy_addr = 0x%08x, vir_addr = 0x%p, size = 0x%x",
 			p_buf_phy, &p_mem_vir->tx_dma_buf[link_id][0], GPS_DL_TX_BUF_SIZE);
 
-		offset = (unsigned int)((void *)&p_mem_vir->rx_dma_buf[link_id][0] - (void *)p_mem_vir);
+		offset = GDL_DIFF_PTR_AS_CHAR_STAR(&p_mem_vir->rx_dma_buf[link_id][0], p_mem_vir);
 		p_buf_phy = p_mem_phy + offset;
 		GDL_LOGXD_INI(link_id, "rx_dma_buf: phy_addr = 0x%08x, vir_addr = 0x%p, size = 0x%x",
 			p_buf_phy, &p_mem_vir->rx_dma_buf[link_id][0], GPS_DL_RX_BUF_SIZE);
@@ -176,7 +178,8 @@ void gps_dl_reserved_mem_dma_buf_init(struct gps_dl_dma_buf *p_dma_buf,
 		return;
 	}
 
-	offset = (unsigned int)((void *)p_dma_buf->vir_addr - (void *)p_mem_vir);
+	offset = GDL_DIFF_PTR_AS_CHAR_STAR(p_dma_buf->vir_addr, p_mem_vir);
+
 	p_dma_buf->phy_addr = p_mem_phy + offset;
 
 	GDL_LOGI_INI("init gps dl dma buf(%d,%d) in arch64, addr: vir=0x%p, phy=0x%llx, len=%u\n",
@@ -203,7 +206,7 @@ void *gps_dl_reserved_mem_icap_buf_get_vir_addr(void)
 		return NULL;
 	}
 
-	offset = (unsigned int)((void *)&p_mem_vir->icap_buf[0] - (void *)p_mem_vir);
+	offset = GDL_DIFF_PTR_AS_CHAR_STAR(&p_mem_vir->icap_buf[0], p_mem_vir);
 	GDL_LOGI("gps_icap_buf: phy_addr = 0x%08x, vir_addr = 0x%p, size = 0x%x",
 		p_mem_phy + offset, &p_mem_vir->icap_buf[0], GPS_ICAP_MEM_SIZE);
 
