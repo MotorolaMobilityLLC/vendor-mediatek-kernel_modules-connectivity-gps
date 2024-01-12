@@ -16,9 +16,30 @@
 #include "gps_dl_config.h"
 #if GPS_DL_ON_LINUX
 #include <linux/printk.h>
+#define __GDL_LOGE(mod, fmt, ...) pr_notice("GDL[E:%d] [%s:%d]: "fmt, \
+	mod, __func__, __LINE__, ##__VA_ARGS__)
+#define __GDL_LOGW(mod, fmt, ...) pr_notice("GDL[W:%d] [%s:%d]: "fmt, \
+	mod, __func__, __LINE__, ##__VA_ARGS__)
+#define __GDL_LOGI(mod, fmt, ...) pr_info("GDL[I:%d] [%s:%d]: "fmt, \
+	mod, __func__, __LINE__, ##__VA_ARGS__)
+#define __GDL_LOGD(mod, fmt, ...) pr_info("GDL[D:%d] [%s:%d]: "fmt, \
+	mod, __func__, __LINE__, ##__VA_ARGS__)
+
+#define __GDL_LOGXE(mod, link_id, fmt, ...) pr_notice("GDL-%d[E:%d] [%s:%d]: "fmt, \
+	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
+
+#define __GDL_LOGXW(mod, link_id, fmt, ...) pr_notice("GDL-%d[W:%d] [%s:%d]: "fmt, \
+	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
+
+#define __GDL_LOGXI(mod, link_id, fmt, ...) pr_info("GDL-%d[I:%d] [%s:%d]: "fmt, \
+	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
+
+#define __GDL_LOGXD(mod, link_id, fmt, ...) pr_info("GDL-%d[D:%d] [%s:%d]: "fmt, \
+	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
 #elif GPS_DL_ON_CTP
 #include "gps_dl_ctp_log.h"
-#endif
+#endif /* GPS_DL_ON_XX */
+
 
 enum gps_dl_log_level_enum {
 	GPS_DL_LOG_LEVEL_DBG  = 1,
@@ -77,30 +98,6 @@ void gps_dl_log_mod_off(enum gps_dl_log_module_enum mod);
 bool gps_dl_log_reg_rw_is_on(enum gps_dl_log_reg_rw_ctrl_enum log_reg_rw);
 
 void gps_dl_log_info_show(void);
-
-
-#if GPS_DL_ON_LINUX
-#define __GDL_LOGE(mod, fmt, ...) pr_notice("GDL[E:%d] [%s:%d]: "fmt, \
-	mod, __func__, __LINE__, ##__VA_ARGS__)
-#define __GDL_LOGW(mod, fmt, ...) pr_notice("GDL[W:%d] [%s:%d]: "fmt, \
-	mod, __func__, __LINE__, ##__VA_ARGS__)
-#define __GDL_LOGI(mod, fmt, ...) pr_info("GDL[I:%d] [%s:%d]: "fmt, \
-	mod, __func__, __LINE__, ##__VA_ARGS__)
-#define __GDL_LOGD(mod, fmt, ...) pr_info("GDL[D:%d] [%s:%d]: "fmt, \
-	mod, __func__, __LINE__, ##__VA_ARGS__)
-
-#define __GDL_LOGXE(mod, link_id, fmt, ...) pr_notice("GDL-%d[E:%d] [%s:%d]: "fmt, \
-	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
-
-#define __GDL_LOGXW(mod, link_id, fmt, ...) pr_notice("GDL-%d[W:%d] [%s:%d]: "fmt, \
-	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
-
-#define __GDL_LOGXI(mod, link_id, fmt, ...) pr_info("GDL-%d[I:%d] [%s:%d]: "fmt, \
-	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
-
-#define __GDL_LOGXD(mod, link_id, fmt, ...) pr_info("GDL-%d[D:%d] [%s:%d]: "fmt, \
-	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
-#endif /* GPS_DL_ON_XX */
 
 
 #define _GDL_LOGE(...) \

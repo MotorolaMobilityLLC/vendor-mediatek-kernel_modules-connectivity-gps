@@ -182,12 +182,14 @@ void gps_dl_hw_print_dma_status_struct(
 	if (!gps_dl_show_reg_wait_log())
 		return;
 
-	GDL_LOGW("dma ch %d, wrap = 0x%08x; tra = 0x%08x, count l/w/t = %d/%d/%d, str/int/sta = %d/%d/%d",
-		ch, p->wrap_to_addr,
-		p->curr_addr, p->left_count, p->wrap_count, p->total_count,
+	GDL_LOGW("dma ch %d, addr curr = 0x%08x, wrap = 0x%08x; str/int/sta = %d/%d/%d",
+		ch, p->curr_addr, p->wrap_to_addr,
 		GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_START_STR, p->start_flag),
 		GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_INTSTA_INT, p->intr_flag),
 		GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_STATE_STATE, p->state));
+
+	GDL_LOGW("dma ch %d, count left/wrap/total = %d/%d/%d",
+		ch, p->left_count, p->wrap_count, p->total_count);
 
 	GDL_LOGW("dma ch %d, conf = 0x%08x, master = %d, b2w = %d, w2b = %d, size = %d",
 		ch, p->config,
@@ -205,7 +207,7 @@ enum GDL_RET_STATUS gps_dl_hw_wait_until_dma_complete_and_stop_it(
 	enum gps_dl_link_id_enum link_id = DMA_CH_TO_LINK_ID(ch);
 	bool last_rw_log_on;
 	unsigned long tick0, tick1;
-	bool conninfra_okay;
+	bool conninfra_okay = true;
 	bool do_stop = true;
 	enum GDL_RET_STATUS ret = GDL_OKAY;
 	int loop_cnt;
@@ -246,7 +248,9 @@ enum GDL_RET_STATUS gps_dl_hw_wait_until_dma_complete_and_stop_it(
 	}
 
 	while (1) {
+#if GPS_DL_ON_LINUX
 		conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+#endif
 		if (!conninfra_okay) {
 			ret = GDL_FAIL_CONN_NOT_OKAY;
 			do_stop = false;

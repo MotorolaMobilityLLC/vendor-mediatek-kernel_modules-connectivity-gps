@@ -22,7 +22,9 @@
 #include "gps_dl_hw_priv_util.h"
 #include "gps_dl_hal_util.h"
 #include "gps_dsp_fsm.h"
+#if GPS_DL_ON_LINUX
 #include "gps_dl_subsys_reset.h"
+#endif
 
 #include "conn_infra/conn_infra_cfg.h"
 #include "conn_infra/conn_host_csr_top.h"
@@ -138,9 +140,12 @@ bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 
 void gps_dl_hw_gps_sw_request_emi_usage(bool request)
 {
-	bool show_log;
-	bool reg_rw_log = gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_EMI_SW_REQ_CTRL);
+	bool show_log = false;
+	bool reg_rw_log = false;
 
+#if GPS_DL_ON_LINUX
+	reg_rw_log = gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_EMI_SW_REQ_CTRL);
+#endif
 	if (reg_rw_log) {
 		show_log = gps_dl_set_show_reg_rw_log(true);
 		GDL_HW_RD_CONN_INFRA_REG(CONN_INFRA_CFG_EMI_CTL_TOP_ADDR);
@@ -183,14 +188,17 @@ int gps_dl_hw_gps_common_on(void)
 	 * record the poll_ver here and we can know which one it is,
 	 * and it may help for debug purpose.
 	 */
+#if GPS_DL_ON_LINUX
 	gps_dl_hal_set_conn_infra_ver(poll_ver);
+#endif
 	GDL_LOGW("%s: poll_ver = 0x%08x is ok", GDL_HW_SUPPORT_LIST, poll_ver);
 
+#if GPS_DL_ON_LINUX
 	/* GPS SW EMI request
 	 * gps_dl_hw_gps_sw_request_emi_usage(true);
 	 */
 	gps_dl_hal_emi_usage_init();
-
+#endif
 	poll_okay = gps_dl_hw_dep_en_gps_func_and_poll_bgf_ack();
 	if (!poll_okay)
 		goto _fail_bgf_top_pwr_ack_not_okay;
@@ -246,15 +254,18 @@ int gps_dl_hw_gps_common_off(void)
 
 	if (gps_dl_hw_gps_sleep_prot_ctrl(0) != 0) {
 		GDL_LOGE("enable sleep prot fail, trigger connsys reset");
+#if GPS_DL_ON_LINUX
 		gps_dl_trigger_connsys_reset();
+#endif
 		return -1;
 	}
 
+#if GPS_DL_ON_LINUX
 	/* GPS SW EMI request
 	 * gps_dl_hw_gps_sw_request_emi_usage(false);
 	 */
 	gps_dl_hal_emi_usage_deinit();
-
+#endif
 	if (gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_HOST_CSR_GPS_OFF))
 		gps_dl_hw_dump_host_csr_conninfra_info(true);
 
@@ -276,8 +287,11 @@ int gps_dl_hw_gps_common_off(void)
 unsigned int g_gps_pwr_stat;
 int gps_dl_hw_gps_pwr_stat_ctrl(enum dsp_ctrl_enum ctrl)
 {
-	bool clk_ext = gps_dl_hal_get_need_clk_ext_flag(GPS_DATA_LINK_ID0);
+	bool clk_ext = false;
 
+#if GPS_DL_ON_LINUX
+	clk_ext = gps_dl_hal_get_need_clk_ext_flag(GPS_DATA_LINK_ID0);
+#endif
 	switch (ctrl) {
 	case GPS_L1_DSP_ON:
 	case GPS_L5_DSP_ON:

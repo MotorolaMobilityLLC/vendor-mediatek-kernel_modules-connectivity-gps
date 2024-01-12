@@ -32,6 +32,18 @@ unsigned int gps_dl_hw_get_gps_emi_remapping(void)
 	return GDL_HW_GET_CONN_INFRA_ENTRY(GDL_HW_SET_EMI_REMAP_FIELD);
 }
 
+#if GPS_DL_ON_CTP
+void gps_dl_hw_set_gps_peri_remapping(unsigned int _20msb_of_36bit_phy_addr)
+{
+	GDL_HW_SET_CONN_INFRA_ENTRY(GDL_HW_SET_PERI_REMAP_FIELD, _20msb_of_36bit_phy_addr);
+}
+
+unsigned int gps_dl_hw_get_gps_peri_remapping(void)
+{
+	return GDL_HW_GET_CONN_INFRA_ENTRY(GDL_HW_SET_PERI_REMAP_FIELD);
+}
+#endif
+
 void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr)
 {
 	struct gps_dl_hw_dma_status_struct a2d_dma_status, d2a_dma_status;
@@ -69,8 +81,10 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr
 		gps_dl_hw_gps_dump_gps_rf_cr();
 	}
 
+#if GPS_DL_ON_LINUX
 	/* only need for L1 */
 	gps_each_link_set_bool_flag(GPS_DATA_LINK_ID0, LINK_NEED_A2Z_DUMP, true);
+#endif
 }
 
 void gps_dl_hw_do_gps_a2z_dump(void)
