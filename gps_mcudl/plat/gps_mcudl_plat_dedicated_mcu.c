@@ -448,8 +448,13 @@ int gps_mcudl_plat_mcu_close(void)
 
 int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 {
-	bool is_okay;
+	bool is_okay, conn_okay;
 	struct gps_mcudl_data_pkt_rec_item rec_item;
+
+	if (!gps_mcusys_gpsbin_state_is(GPS_MCUSYS_GPSBIN_POST_ON)) {
+		MDL_LOGW("write count=%d, fail due to MCU not post_on", count);
+		return 0;
+	}
 
 	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMA_NORMAL, kbuf, count);
 
@@ -461,8 +466,9 @@ int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 	if (gps_mcu_host_trans_get_if_need_dump())
 		MDL_LOGW("write count=%d, is_ok=%d", count, is_okay);
 	if (!is_okay) {
-		(void)gps_mcudl_conninfra_is_okay_or_handle_it();
-		MDL_LOGW("write count=%d, is_ok=%d", count, is_okay);
+		conn_okay = gps_mcudl_conninfra_is_okay_or_handle_it();
+		MDL_LOGW("write count=%d, is_ok=%d, conn_okay=%d",
+			count, is_okay, conn_okay);
 		return 0;
 	}
 	return count;
