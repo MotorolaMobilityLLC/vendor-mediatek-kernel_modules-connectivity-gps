@@ -287,8 +287,16 @@ bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 		if (d2a.flag == 0)
 			break;
 
-		GDL_LOGXI(link_id, "d2a: flag = 0x%04x, d0 = 0x%04x, d1 = 0x%04x",
-			d2a.flag, d2a.dat0, d2a.dat1);
+		if (d2a.flag == GPS_MCUB_D2AF_MASK_DSP_REG_READ_READY) {
+			/* do nothing
+			 *
+			 * only "reg read ready" in flag bits, print the information in
+			 * gps_each_dsp_reg_read_ack, rather than here.
+			 */
+		} else {
+			GDL_LOGXI(link_id, "d2a: flag = 0x%04x, d0 = 0x%04x, d1 = 0x%04x",
+				d2a.flag, d2a.dat0, d2a.dat1);
+		}
 
 		if (d2a.flag == 0xdeadfeed) {
 			gps_dl_hw_dump_host_csr_gps_info(true);
@@ -323,16 +331,20 @@ bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 #else
 				gps_dl_hw_dump_host_csr_conninfra_info(true);
 #endif
-				gps_dl_hw_print_hw_status(link_id);
+				gps_dl_hw_print_hw_status(link_id, true);
 				gps_dl_hw_dump_host_csr_gps_info(true);
 				continue;
 			}
+
+			/* bypass gps_dsp_fsm if ariving here and the status is already working */
+			if (GPS_DSP_ST_WORKING == gps_dsp_state_get(link_id))
+				continue;
 
 			/* gps_dl_hal_event_send(GPS_DL_HAL_EVT_DSP_RAM_START, link_id); */
 			gps_dsp_fsm(GPS_DSP_EVT_RAM_CODE_READY, link_id);
 
 			/* start reg polling */
-			gps_each_dsp_reg_gourp_read_start(link_id);
+			gps_each_dsp_reg_gourp_read_start(link_id, false, 1);
 		}
 
 		if (d2a.flag & GPS_MCUB_D2AF_MASK_DSP_REG_READ_READY)

@@ -47,6 +47,7 @@ struct gps_each_link_state_list {
 	bool open_result_okay;
 	bool user_open;
 	bool need_a2z_dump;
+	bool suspend_to_clk_ext;
 };
 
 enum gps_each_link_bool_state {
@@ -58,6 +59,7 @@ enum gps_each_link_bool_state {
 	LINK_IS_RESETTING,
 	LINK_OPEN_RESULT_OKAY,
 	LINK_NEED_A2Z_DUMP,
+	LINK_SUSPEND_TO_CLK_EXT,
 	BOOL_STATE_NUM
 };
 
@@ -117,6 +119,9 @@ enum gps_each_link_state_enum {
 	LINK_RESETTING, /* Not distinguish EACH_LINK or WHOLE_GPS or WHOLE_CONNSYS */
 	LINK_RESET_DONE,
 	LINK_DISABLED,
+	LINK_SUSPENDING,
+	LINK_SUSPENDED,
+	LINK_RESUMING,
 	LINK_STATE_NUM
 };
 
@@ -162,7 +167,7 @@ void gps_each_link_inc_session_id(enum gps_dl_link_id_enum link_id);
 int gps_each_link_get_session_id(enum gps_dl_link_id_enum link_id);
 
 int gps_each_link_open(enum gps_dl_link_id_enum link_id);
-void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay);
+void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay, bool hw_resume);
 
 enum gps_each_link_lock_reason {
 	GDL_LOCK_FOR_OPEN,
@@ -188,12 +193,17 @@ void gps_dl_link_reset_ack(enum gps_dl_link_id_enum link_id);
 void gps_dl_link_on_post_conn_reset(enum gps_dl_link_id_enum link_id);
 bool gps_dl_link_try_to_clear_both_resetting_status(void);
 
+enum gps_each_link_close_or_suspend_op {
+	GDL_CLOSE,
+	GDL_DPSTOP,
+	GDL_CLKEXT,
+};
 int gps_each_link_enter_dsleep(enum gps_dl_link_id_enum link_id);
 int gps_each_link_leave_dsleep(enum gps_dl_link_id_enum link_id);
-int gps_each_link_enter_dstop(enum gps_dl_link_id_enum link_id);
-int gps_each_link_leave_dstop(enum gps_dl_link_id_enum link_id);
+int gps_each_link_hw_suspend(enum gps_dl_link_id_enum link_id, bool need_clk_ext);
+int gps_each_link_hw_resume(enum gps_dl_link_id_enum link_id);
 int gps_each_link_close(enum gps_dl_link_id_enum link_id);
-int gps_each_link_check(enum gps_dl_link_id_enum link_id);
+int gps_each_link_check(enum gps_dl_link_id_enum link_id, int reason);
 
 int gps_each_link_write(enum gps_dl_link_id_enum link_id,
 	unsigned char *buf, unsigned int len);
@@ -230,11 +240,12 @@ enum gps_dl_link_event_id {
 	GPS_DL_EVT_LINK_PRE_CONN_RESET,
 	GPS_DL_EVT_LINK_POST_CONN_RESET,
 	GPS_DL_EVT_LINK_PRINT_HW_STATUS,
-	GPS_DL_EVT_LINK_ENTER_DSLEEP,
-	GPS_DL_EVT_LINK_EXIT_DSLEEP,
-	GPS_DL_EVT_LINK_ENTER_DSTOP,
-	GPS_DL_EVT_LINK_EXIT_DSTOP,
+	GPS_DL_EVT_LINK_ENTER_DPSLEEP,
+	GPS_DL_EVT_LINK_LEAVE_DPSLEEP,
+	GPS_DL_EVT_LINK_ENTER_DPSTOP,
+	GPS_DL_EVT_LINK_LEAVE_DPSTOP,
 	GPS_DL_EVT_LINK_UPDATE_SETTING,
+	GPS_DL_EVT_LINK_PRINT_DATA_STATUS,
 	GPS_DL_LINK_EVT_NUM,
 };
 

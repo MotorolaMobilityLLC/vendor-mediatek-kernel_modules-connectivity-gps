@@ -18,6 +18,7 @@
 #include "gps_dl_hw_api.h"
 #include "gps_dl_hw_priv_util.h"
 #include "gps/bgf_gps_dma.h"
+#include "gps/gps_aon_top.h"
 #include "gps/gps_usrt_apb.h"
 #include "gps/gps_l5_usrt_apb.h"
 
@@ -181,14 +182,14 @@ void gps_dl_hw_print_dma_status_struct(
 	if (!gps_dl_show_reg_wait_log())
 		return;
 
-	GDL_LOGD("dma ch %d, wrap = 0x%08x; tra = 0x%08x, count l/w/t = %d/%d/%d, str/int/sta = %d/%d/%d",
+	GDL_LOGW("dma ch %d, wrap = 0x%08x; tra = 0x%08x, count l/w/t = %d/%d/%d, str/int/sta = %d/%d/%d",
 		ch, p->wrap_to_addr,
 		p->curr_addr, p->left_count, p->wrap_count, p->total_count,
 		GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_START_STR, p->start_flag),
 		GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_INTSTA_INT, p->intr_flag),
 		GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_STATE_STATE, p->state));
 
-	GDL_LOGD("dma ch %d, conf = 0x%08x, master = %d, b2w = %d, w2b = %d, size = %d",
+	GDL_LOGW("dma ch %d, conf = 0x%08x, master = %d, b2w = %d, w2b = %d, size = %d",
 		ch, p->config,
 		GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_CON_MAS, p->config),
 		GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_CON_B2W, p->config),
@@ -196,15 +197,21 @@ void gps_dl_hw_print_dma_status_struct(
 		GDL_HW_EXTRACT_ENTRY(BGF_GPS_DMA_DMA1_CON_SIZE, p->config));
 }
 
-enum GDL_RET_STATUS gps_dl_hw_wait_until_dma_complete_and_stop_it(enum gps_dl_hal_dma_ch_index ch, int timeout_usec)
+enum GDL_RET_STATUS gps_dl_hw_wait_until_dma_complete_and_stop_it(
+	enum gps_dl_hal_dma_ch_index ch, int timeout_usec, bool return_if_not_start)
 {
 	struct gps_dl_hw_dma_status_struct dma_status;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
 	enum gps_dl_link_id_enum link_id = DMA_CH_TO_LINK_ID(ch);
 	bool last_rw_log_on;
-	unsigned int tick0, tick1;
+	unsigned long tick0, tick1;
+	bool conninfra_okay;
+	bool do_stop = true;
+	enum GDL_RET_STATUS ret = GDL_OKAY;
+	int loop_cnt;
 
 	tick0 = gps_dl_tick_get();
+	loop_cnt = 0;
 	while (1) {
 		gps_dl_hw_save_dma_status_struct(ch, &dma_status);
 		if (gps_dl_only_show_wait_done_log())
@@ -218,18 +225,34 @@ enum GDL_RET_STATUS gps_dl_hw_wait_until_dma_complete_and_stop_it(enum gps_dl_ha
 				gps_dl_hw_print_dma_status_struct(ch, &dma_status);
 				gps_dl_hw_save_dma_status_struct(ch, &dma_status);
 			}
-			break;
+			break; /* to next while-loop */
+		} else if (return_if_not_start) {
+			ret = GDL_OKAY;
+			do_stop = false;
+			goto _end;
 		}
 
 		tick1 = gps_dl_tick_get();
-		if (timeout_usec > GPS_DL_RW_NO_TIMEOUT &&
-			gps_dl_tick_delta_to_usec(tick0, tick1) >= timeout_usec)
-			return GDL_FAIL_TIMEOUT;
+		if (timeout_usec > GPS_DL_RW_NO_TIMEOUT && (
+			gps_dl_tick_delta_to_usec(tick0, tick1) >= timeout_usec ||
+			loop_cnt * GDL_HW_STATUS_POLL_INTERVAL_USEC >= timeout_usec)) {
+			ret = GDL_FAIL_TIMEOUT;
+			do_stop = false;
+			goto _end;
+		}
 
 		gps_dl_wait_us(GDL_HW_STATUS_POLL_INTERVAL_USEC);
+		loop_cnt++;
 	}
 
 	while (1) {
+		conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+		if (!conninfra_okay) {
+			ret = GDL_FAIL_CONN_NOT_OKAY;
+			do_stop = false;
+			break;
+		}
+
 		gps_dl_hw_save_dma_status_struct(ch, &dma_status);
 		gps_dl_hw_save_usrt_status_struct(link_id, &usrt_status);
 		if (gps_dl_only_show_wait_done_log())
@@ -251,18 +274,29 @@ enum GDL_RET_STATUS gps_dl_hw_wait_until_dma_complete_and_stop_it(enum gps_dl_ha
 			gps_dl_hw_set_dma_stop(ch);
 			gps_dl_hw_save_dma_status_struct(ch, &dma_status);
 			gps_dl_hw_print_dma_status_struct(ch, &dma_status);
+			ret = GDL_OKAY;
+			do_stop = true;
 			break;
 		}
 
 		tick1 = gps_dl_tick_get();
-		if (timeout_usec > GPS_DL_RW_NO_TIMEOUT &&
-			gps_dl_tick_delta_to_usec(tick0, tick1) >= timeout_usec)
-			return GDL_FAIL_TIMEOUT;
+		if (timeout_usec > GPS_DL_RW_NO_TIMEOUT && (
+			gps_dl_tick_delta_to_usec(tick0, tick1) >= timeout_usec ||
+			loop_cnt * GDL_HW_STATUS_POLL_INTERVAL_USEC >= timeout_usec)) {
+			ret = GDL_FAIL_TIMEOUT;
+			do_stop = false;
+			break;
+		}
 
 		gps_dl_wait_us(GDL_HW_STATUS_POLL_INTERVAL_USEC);
+		loop_cnt++;
 	}
 
-	return GDL_OKAY;
+_end:
+	tick1 = gps_dl_tick_get();
+	GDL_LOGW("ch = %d, d_us = %d, do_stop = %d, ret = %s",
+		ch, gps_dl_tick_delta_to_usec(tick0, tick1), do_stop, gdl_ret_to_name(ret));
+	return ret;
 }
 
 unsigned int gps_dl_hw_get_dma_left_len(enum gps_dl_hal_dma_ch_index channel)
@@ -332,14 +366,14 @@ void gps_dl_hw_print_usrt_status_struct(
 	if (!gps_dl_show_reg_wait_log())
 		return;
 
-	GDL_LOGXD(link_id, "usrt ctrl = 0x%08x[DMA_EN RX=%d,TX=%d; 1BYTE=%d], intr_en = 0x%08x",
+	GDL_LOGXW(link_id, "usrt ctrl = 0x%08x[DMA_EN RX=%d,TX=%d; 1BYTE=%d], intr_en = 0x%08x",
 		p->ctrl_setting,
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_CTRL_RX_EN, p->ctrl_setting),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_CTRL_TX_EN, p->ctrl_setting),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_CTRL_BYTEN, p->ctrl_setting),
 		p->intr_enable);
 
-	GDL_LOGXD(link_id, "usrt state = 0x%08x, [UOEFS]RX=%d%d%d%d(%d),TX=%d%d%d%d(%d)",
+	GDL_LOGXW(link_id, "usrt state = 0x%08x, [UOEFS]RX=%d%d%d%d(%d),TX=%d%d%d%d(%d)",
 		p->state,
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_RX_UNDR, p->state),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_RX_OVF, p->state),
@@ -352,17 +386,17 @@ void gps_dl_hw_print_usrt_status_struct(
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_TX_FULL, p->state),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_TX_ST, p->state));
 
-	GDL_LOGXD(link_id, "usrt TxReg_em=%d, TX_IND=%d, TX_IND=%d, U_em=%d, NOD_INT=%d",
+	GDL_LOGXW(link_id, "usrt TxReg_em=%d, TX_IND=%d, TX_IND=%d, U_em=%d, NOD_INT=%d",
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_REGE, p->state),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_TX_IND, p->state),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_TXINTB, p->state),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_URAME, p->state),
 		GDL_HW_EXTRACT_ENTRY(GPS_USRT_APB_APB_STA_NODAINTB, p->state));
 
-	GDL_LOGXD(link_id, "mcub d2a flag=0x%08x, d0=0x%08x, d1=0x%08x",
+	GDL_LOGXW(link_id, "mcub d2a flag=0x%08x, d0=0x%08x, d1=0x%08x",
 		p->mcub_d2a_flag, p->mcub_d2a_d0, p->mcub_d2a_d1);
 
-	GDL_LOGXD(link_id, "mcub a2d flag=0x%08x, d0=0x%08x, d1=0x%08x",
+	GDL_LOGXW(link_id, "mcub a2d flag=0x%08x, d0=0x%08x, d1=0x%08x",
 		p->mcub_a2d_flag, p->mcub_a2d_d0, p->mcub_a2d_d1);
 }
 
@@ -450,5 +484,17 @@ enum GDL_RET_STATUS gps_dl_hw_mcub_dsp_read_request(enum gps_dl_link_id_enum lin
 	}
 
 	return GDL_OKAY;
+}
+
+void gps_dl_hw_print_ms_counter_status(void)
+{
+	bool show_log;
+
+	show_log = gps_dl_set_show_reg_rw_log(true);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_DSLEEP_CTL_ADDR, BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_WAKEUP_CTL_ADDR, BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_TCXO_MS_H_ADDR, BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, GPS_AON_TOP_TCXO_MS_L_ADDR, BMASK_RW_FORCE_PRINT);
+	gps_dl_set_show_reg_rw_log(show_log);
 }
 

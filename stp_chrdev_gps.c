@@ -557,14 +557,14 @@ void GPS_fwlog_ctrl_inner(bool on)
 }
 
 #ifdef GPS_HW_SUSPEND_SUPPORT
-#define HW_SUSPEND_CTRL_TX_LEN	(2)
+#define HW_SUSPEND_CTRL_TX_LEN	(3)
 #define HW_SUSPEND_CTRL_RX_LEN	(3)
 
 /* return 0 if okay, otherwise is fail */
-static int GPS_hw_suspend_ctrl(bool to_suspend)
+static int GPS_hw_suspend_ctrl(bool to_suspend, UINT8 mode)
 {
-	UINT8 tx_buf[HW_SUSPEND_CTRL_TX_LEN];
-	UINT8 rx_buf[HW_SUSPEND_CTRL_RX_LEN];
+	UINT8 tx_buf[HW_SUSPEND_CTRL_TX_LEN] = {0};
+	UINT8 rx_buf[HW_SUSPEND_CTRL_RX_LEN] = {0};
 	UINT8 rx0 = 0;
 	UINT8 rx1 = 0;
 	UINT32 tx_len;
@@ -581,7 +581,8 @@ static int GPS_hw_suspend_ctrl(bool to_suspend)
 
 	tx_buf[0] = to_suspend ? GPS_FWCTL_OPCODE_ENTER_STOP_MODE :
 		GPS_FWCTL_OPCODE_EXIT_STOP_MODE;
-	tx_len = 1;
+	tx_buf[1] = mode;  /*mode value should be set in mnld, 0: HW suspend mode, 1: clock extension mode*/
+	tx_len = 2;
 
 	wmt_status = mtk_wmt_gps_mcu_ctrl(&tx_buf[0], tx_len,
 		&rx_buf[0], HW_SUSPEND_CTRL_RX_LEN, &rx_len);
@@ -602,28 +603,28 @@ static int GPS_hw_suspend_ctrl(bool to_suspend)
 		/* Fail due to WMT fail or FW not support,
 		 * bypass the following operations
 		 */
-		GPS_WARN_FUNC("GPS_hw_suspend_ctrl %d: st=%d, rx_len=%u ([0]=%u, [1]=%u), ms0=%u, ms1=%u",
-			to_suspend, wmt_status, rx_len, rx0, rx1, local_ms0, local_ms1);
+		GPS_WARN_FUNC("GPS_hw_suspend_ctrl %d: st=%d, rx_len=%u ([0]=%u, [1]=%u), ms0=%u, ms1=%u, mode=%u",
+			to_suspend, wmt_status, rx_len, rx0, rx1, local_ms0, local_ms1, mode);
 		return -1;
 	}
 
 	/* Okay */
-	GPS_INFO_FUNC("GPS_hw_suspend_ctrl %d: st=%d, rx_len=%u ([0]=%u, [1]=%u), ms0=%u, ms1=%u",
-		to_suspend, wmt_status, rx_len, rx0, rx1, local_ms0, local_ms1);
+	GPS_INFO_FUNC("GPS_hw_suspend_ctrl %d: st=%d, rx_len=%u ([0]=%u, [1]=%u), ms0=%u, ms1=%u, mode=%u",
+		to_suspend, wmt_status, rx_len, rx0, rx1, local_ms0, local_ms1, mode);
 	return 0;
 }
 
 
 static void GPS_handle_desense(bool on);
 
-static int GPS_hw_suspend(void)
+static int GPS_hw_suspend(UINT8 mode)
 {
 	MTK_WCN_BOOL wmt_okay;
 	enum gps_ctrl_status_enum gps_status;
 
 	gps_status = g_gps_ctrl_status;
 	if (gps_status == GPS_OPENED) {
-		if (GPS_hw_suspend_ctrl(true) != 0)
+		if (GPS_hw_suspend_ctrl(true, mode) != 0)
 			return -EINVAL; /* Stands for not support */
 
 		wmt_okay = mtk_wmt_gps_suspend_ctrl(MTK_WCN_BOOL_TRUE);
@@ -652,7 +653,7 @@ static int GPS_hw_suspend(void)
 	return 0;
 }
 
-static int GPS_hw_resume(void)
+static int GPS_hw_resume(UINT8 mode)
 {
 	MTK_WCN_BOOL wmt_okay;
 	enum gps_ctrl_status_enum gps_status;
@@ -669,7 +670,7 @@ static int GPS_hw_resume(void)
 
 		/* should register it before real resuming to prepare for receiving data */
 		mtk_wcn_stp_register_event_cb(GPS_TASK_INDX, GPS_event_cb);
-		if (GPS_hw_suspend_ctrl(false) != 0)
+		if (GPS_hw_suspend_ctrl(false, mode) != 0)  /*Ignore mode value for resume stage*/
 			return -EINVAL; /* Stands for not support */
 
 		GPS_ctrl_status_change_from_to(GPS_SUSPENDED, GPS_OPENED);
@@ -865,12 +866,12 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 #ifdef GPS_HW_SUSPEND_SUPPORT
 	case COMBO_IOC_GPS_HW_SUSPEND:
-		GPS_INFO_FUNC("COMBO_IOC_GPS_HW_SUSPEND\n");
-		retval = GPS_hw_suspend();
+		GPS_INFO_FUNC("COMBO_IOC_GPS_HW_SUSPEND: mode %lu\n", arg);
+		retval = GPS_hw_suspend((UINT8)(arg&0xFF));
 		break;
 	case COMBO_IOC_GPS_HW_RESUME:
-		GPS_INFO_FUNC("COMBO_IOC_GPS_HW_RESUME\n");
-		retval = GPS_hw_resume();
+		GPS_INFO_FUNC("COMBO_IOC_GPS_HW_RESUME: mode %lu\n", arg);
+		retval = GPS_hw_resume((UINT8)(arg&0xFF));
 		break;
 #endif /* GPS_HW_SUSPEND_SUPPORT */
 

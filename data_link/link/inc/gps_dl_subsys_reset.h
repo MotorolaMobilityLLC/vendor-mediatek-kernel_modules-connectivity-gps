@@ -31,6 +31,7 @@ bool gps_dl_reset_level_is_single(void);
 bool gps_dl_reset_level_gt_single(void);
 
 void gps_dl_trigger_gps_print_hw_status(void);
+void gps_dl_trigger_gps_print_data_status(void);
 int gps_dl_trigger_gps_subsys_reset(bool wait_reset_done);
 int gps_dl_trigger_connsys_reset(void);
 void gps_dl_handle_connsys_reset_done(void);

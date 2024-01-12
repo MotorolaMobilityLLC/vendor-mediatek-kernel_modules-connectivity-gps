@@ -56,15 +56,15 @@ void gps_dl_hal_a2d_tx_dma_stop(enum gps_dl_link_id_enum link_id)
 }
 
 enum GDL_RET_STATUS gps_dl_hal_a2d_tx_dma_wait_until_done_and_stop_it(
-	enum gps_dl_link_id_enum link_id, int timeout_usec)
+	enum gps_dl_link_id_enum link_id, int timeout_usec, bool return_if_not_start)
 {
 	GDL_LOGXD(link_id, "");
 	if (link_id == GPS_DATA_LINK_ID0) {
 		return gps_dl_hw_wait_until_dma_complete_and_stop_it(
-			GPS_DL_DMA_LINK0_A2D, timeout_usec);
+			GPS_DL_DMA_LINK0_A2D, timeout_usec, return_if_not_start);
 	} else if (link_id == GPS_DATA_LINK_ID1) {
 		return gps_dl_hw_wait_until_dma_complete_and_stop_it(
-			GPS_DL_DMA_LINK1_A2D, timeout_usec);
+			GPS_DL_DMA_LINK1_A2D, timeout_usec, return_if_not_start);
 	}
 
 	return GDL_FAIL;
@@ -99,10 +99,10 @@ enum GDL_RET_STATUS gps_dl_hal_d2a_rx_dma_wait_until_done(
 {
 	if (link_id == GPS_DATA_LINK_ID0) {
 		return gps_dl_hw_wait_until_dma_complete_and_stop_it(
-			GPS_DL_DMA_LINK0_D2A, timeout_usec);
+			GPS_DL_DMA_LINK0_D2A, timeout_usec, false);
 	} else if (link_id == GPS_DATA_LINK_ID1) {
 		return gps_dl_hw_wait_until_dma_complete_and_stop_it(
-			GPS_DL_DMA_LINK1_D2A, timeout_usec);
+			GPS_DL_DMA_LINK1_D2A, timeout_usec, false);
 	}
 
 	return GDL_FAIL;

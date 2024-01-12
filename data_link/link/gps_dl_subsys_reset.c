@@ -90,6 +90,9 @@ enum GDL_RET_STATUS gps_dl_reset_level_set_and_trigger(
 		case LINK_OPENED:
 		case LINK_CLOSING:
 		case LINK_RESET_DONE:
+		case LINK_RESUMING:
+		case LINK_SUSPENDING:
+		case LINK_SUSPENDED:
 			need_wait[link_id] = true;
 			p->state_for_user = LINK_RESETTING;
 			p->reset_level = level;
@@ -174,6 +177,13 @@ void gps_dl_trigger_gps_print_hw_status(void)
 	GDL_LOGE("");
 	gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, GPS_DATA_LINK_ID0);
 	gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, GPS_DATA_LINK_ID1);
+}
+
+void gps_dl_trigger_gps_print_data_status(void)
+{
+	GDL_LOGE("");
+	gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_DATA_STATUS, GPS_DATA_LINK_ID0);
+	gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_DATA_STATUS, GPS_DATA_LINK_ID1);
 }
 
 void gps_dl_handle_connsys_reset_done(void)

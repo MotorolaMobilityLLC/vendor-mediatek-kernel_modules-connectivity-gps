@@ -77,6 +77,8 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 		gps_dl_test_mask_hasdata_irq_set(z, true);
 	else if (y == 6 && (z >= 0 && z <= GPS_DATA_LINK_NUM))
 		gps_dl_test_mask_mcub_irq_on_open_set(z, true);
+	else if (y == 7)
+		gps_dl_trigger_gps_print_data_status();
 	return 0;
 }
 

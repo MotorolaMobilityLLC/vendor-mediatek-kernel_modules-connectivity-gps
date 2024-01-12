@@ -26,8 +26,11 @@ enum GDL_HW_RET {
 	E_MAX
 };
 
+#if GPS_DL_ON_LINUX
+#define GDL_HW_STATUS_POLL_INTERVAL_USEC	(1) /* 1us */
+#else
 #define GDL_HW_STATUS_POLL_INTERVAL_USEC	(2*1000) /* 2ms */
-
+#endif
 
 enum dsp_ctrl_enum {
 	GPS_L1_DSP_ON,
@@ -42,6 +45,8 @@ enum dsp_ctrl_enum {
 	GPS_L5_DSP_EXIT_DSLEEP,
 	GPS_L5_DSP_ENTER_DSTOP,
 	GPS_L5_DSP_EXIT_DSTOP,
+	GPS_L1_DSP_CLEAR_PWR_STAT,
+	GPS_L5_DSP_CLEAR_PWR_STAT,
 	GPS_DSP_CTRL_MAX
 };
 int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl);
@@ -95,7 +100,8 @@ void gps_dl_hw_save_dma_status_struct(
 void gps_dl_hw_print_dma_status_struct(
 	enum gps_dl_hal_dma_ch_index ch, struct gps_dl_hw_dma_status_struct *p);
 
-enum GDL_RET_STATUS gps_dl_hw_wait_until_dma_complete_and_stop_it(enum gps_dl_hal_dma_ch_index ch, int timeout_usec);
+enum GDL_RET_STATUS gps_dl_hw_wait_until_dma_complete_and_stop_it(
+	enum gps_dl_hal_dma_ch_index ch, int timeout_usec, bool return_if_not_start);
 
 
 struct gps_dl_hw_usrt_status_struct {
@@ -130,11 +136,12 @@ void gps_dl_hw_print_usrt_status_struct(
 void gps_dl_hw_dump_sleep_prot_status(void);
 void gps_dl_hw_dump_host_csr_gps_info(bool force_show_log);
 void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log);
-void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id);
+void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr);
 void gps_dl_hw_do_gps_a2z_dump(void);
 void gps_dl_hw_print_usrt_status(enum gps_dl_link_id_enum link_id);
 bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_gps_dump_gps_rf_cr(void);
+void gps_dl_hw_print_ms_counter_status(void);
 
 void gps_dl_hw_switch_dsp_jtag(void);
 
@@ -165,7 +172,7 @@ void gps_dl_hw_give_conn_coex_hw_sema(void);
 bool gps_dl_hw_take_conn_rfspi_hw_sema(unsigned int timeout_ms);
 void gps_dl_hw_give_conn_rfspi_hw_sema(void);
 
-unsigned int gps_dl_hw_get_mcub_a2d1_cfg(bool is_1byte_mode);
+unsigned int gps_dl_hw_get_mcub_a2d1_cfg(enum gps_dl_link_id_enum link_id, bool is_1byte_mode);
 
 #endif /* _GPS_DL_HW_API_H */
 
