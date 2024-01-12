@@ -26,7 +26,6 @@ enum gps_mcudl_yid {
 	GPS_MDLY_CH_NUM
 };
 
-/* GPS_MDLY_URGENT channel is not ready yet */
 #define GPS_MDL_X2Y(xid) \
 	((xid == GPS_MDLX_AGENT) ? GPS_MDLY_NORMAL : GPS_MDLY_NORMAL)
 
