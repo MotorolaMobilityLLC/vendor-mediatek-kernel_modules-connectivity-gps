@@ -89,6 +89,7 @@ $(MODULE_NAME)-objs += data_link/gps_dl_context.o
 $(MODULE_NAME)-objs += data_link/lib/gps_dl_dma_buf.o
 $(MODULE_NAME)-objs += data_link/lib/gps_dl_lib_misc.o
 $(MODULE_NAME)-objs += data_link/lib/gps_dl_time_tick.o
+$(MODULE_NAME)-objs += data_link/lib/gps_dl_name_list.o
 
 $(MODULE_NAME)-objs += data_link/hw/gps_dl_hw_conn_infra.o
 $(MODULE_NAME)-objs += data_link/hw/gps_dl_hw_bgf.o
