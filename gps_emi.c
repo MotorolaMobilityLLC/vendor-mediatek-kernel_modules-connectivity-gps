@@ -86,6 +86,7 @@ phys_addr_t gGpsEmiPhyBase;
 void __iomem *pGpsEmibaseaddr;
 struct gps_emi_dev *devobj;
 
+static struct semaphore fw_dl_mtx;
 
 void mtk_wcn_consys_gps_memory_reserve(void)
 {
@@ -148,7 +149,7 @@ INT32 gps_emi_patch_get(PUINT8 pPatchName, osal_firmware **ppPatch)
 INT32 mtk_wcn_consys_gps_emi_init(void)
 {
 	INT32 iRet = -1;
-
+	down(&fw_dl_mtx);
 	mtk_wcn_consys_gps_memory_reserve();
 	if (gGpsEmiPhyBase) {
 		/*set MPU for EMI share Memory*/
@@ -213,6 +214,7 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 	} else {
 		GPS_DBG("gps emi memory address gGpsEmiPhyBase invalid\n");
 	}
+	up(&fw_dl_mtx);
 	return iRet;
 }
 
@@ -447,6 +449,8 @@ static int __init gps_emi_mod_init(void)
 	goto err_out;
 	}
 	devobj->dev = device_create(devobj->cls, NULL, devobj->devno, devobj, "gps_emi");
+
+	sema_init(&fw_dl_mtx, 1);
 
 	GPS_ERR("GPS EMI Done\n");
 	return 0;
