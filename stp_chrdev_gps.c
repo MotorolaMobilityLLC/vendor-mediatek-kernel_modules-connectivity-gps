@@ -628,7 +628,7 @@ static int GPS_hw_suspend(UINT8 mode)
 		 * mtk_wcn_wmt_msgcb_unreg(WMTDRV_TYPE_GPS);
 		 */
 
-		GPS_reference_count(HANDLE_DESENSE, false, GPS_USER1);
+		GPS_reference_count(HANDLE_DESENSE, false, GPS_DATA_LINK_ID0);
 		gps_hold_wake_lock(0);
 		GPS_WARN_FUNC("gps_hold_wake_lock(0)\n");
 
@@ -646,7 +646,7 @@ static int GPS_hw_resume(UINT8 mode)
 
 	gps_status = g_gps_ctrl_status;
 	if (gps_status == GPS_SUSPENDED) {
-		GPS_reference_count(HANDLE_DESENSE, true, GPS_USER1);
+		GPS_reference_count(HANDLE_DESENSE, true, GPS_DATA_LINK_ID0);
 		gps_hold_wake_lock(1);
 		GPS_WARN_FUNC("gps_hold_wake_lock(1)\n");
 
@@ -678,7 +678,7 @@ void GPS_fwlog_ctrl(bool on)
 #if (defined(GPS_FWCTL_SUPPORT) && defined(CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH))
 	down(&fwctl_mtx);
 	if (fgGps_fwctl_ready)
-		GPS_reference_count(FWLOG_CTRL_INNER, on, GPS_USER1);
+		GPS_fwlog_ctrl_inner(on);
 	fgGps_fwlog_on = on;
 	up(&fwctl_mtx);
 #endif
@@ -915,7 +915,11 @@ static void gps_cdev_rst_cb(ENUM_WMTDRV_TYPE_T src,
 				rstflag = 1;
 #ifdef GPS_FWCTL_SUPPORT
 				down(&fwctl_mtx);
-				GPS_reference_count(FGGPS_FWCTL_EADY, false, GPS_USER1);
+				fgGps_fwctl_ready = false;
+#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+				/* clean  FWLOG_CTRL_INNER flag in reference_count ,for rst*/
+				GPS_reference_count(FWLOG_CTRL_INNER, false, GPS_DATA_LINK_ID0);
+#endif
 				up(&fwctl_mtx);
 #endif
 				GPS_ctrl_status_change_to(GPS_RESET_START);
@@ -1040,15 +1044,15 @@ static int GPS_open(struct inode *inode, struct file *file)
 	gps_hold_wake_lock(1);
 	GPS_WARN_FUNC("gps_hold_wake_lock(1)\n");
 
-	GPS_reference_count(HANDLE_DESENSE, true, GPS_USER1);
+	GPS_reference_count(HANDLE_DESENSE, true, GPS_DATA_LINK_ID0);
 
 #ifdef GPS_FWCTL_SUPPORT
 	down(&fwctl_mtx);
-	GPS_reference_count(FGGPS_FWCTL_EADY, true, GPS_USER1);
+	GPS_reference_count(GPS_FWCTL_READY, true, GPS_DATA_LINK_ID0);
 #ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
 	if (fgGps_fwlog_on) {
 		/* GPS fw clear log on flag when GPS on, no need to send it if log setting is off */
-		GPS_reference_count(FWLOG_CTRL_INNER, fgGps_fwlog_on, GPS_USER1);
+		GPS_reference_count(FWLOG_CTRL_INNER, fgGps_fwlog_on, GPS_DATA_LINK_ID0);
 	}
 #endif
 	up(&fwctl_mtx);
@@ -1074,7 +1078,11 @@ static int GPS_close(struct inode *inode, struct file *file)
 
 #ifdef GPS_FWCTL_SUPPORT
 	down(&fwctl_mtx);
-	GPS_reference_count(FGGPS_FWCTL_EADY, false, GPS_USER1);
+	GPS_reference_count(GPS_FWCTL_READY, false, GPS_DATA_LINK_ID0);
+#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+	/* GPS fw clear log on flag when GPS on, this just to clear flag in gps_drv reference count */
+	GPS_reference_count(FWLOG_CTRL_INNER, false, GPS_DATA_LINK_ID0);
+#endif
 	up(&fwctl_mtx);
 #endif
 #ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
@@ -1096,7 +1104,7 @@ _out:
 	gps_hold_wake_lock(0);
 	GPS_WARN_FUNC("gps_hold_wake_lock(0)\n");
 
-	GPS_reference_count(HANDLE_DESENSE, false, GPS_USER1);
+	GPS_reference_count(HANDLE_DESENSE, false, GPS_DATA_LINK_ID0);
 
 	GPS_ctrl_status_change_to(GPS_CLOSED);
 	return ret;
@@ -1333,24 +1341,25 @@ module_init(gps_mod_init);
 module_exit(gps_mod_exit);
 
 int reference_count_bitmap[2] = {0};
-void GPS_reference_count(enum gps_reference_count_cmd cmd, bool flag, int user)
+void GPS_reference_count(enum gps_reference_count_cmd cmd, bool flag, enum gps_data_link_id_enum user)
 {
 	bool old_state = false;
 	bool new_state = false;
 
 	old_state = (reference_count_bitmap[0] & (0x01 << (int)cmd))
-	|| (reference_count_bitmap[1] & (0x01 << FWLOG_CTRL_INNER));
+		|| (reference_count_bitmap[1] & (0x01 << (int)cmd));
 	if (flag == true)
-		reference_count_bitmap[user] |= (0x01 << (int)cmd);
+		reference_count_bitmap[(int)user] |= (0x01 << (int)cmd);
 	else
-		reference_count_bitmap[user] &= ~(0x01 << (int)cmd);
+		reference_count_bitmap[(int)user] &= ~(0x01 << (int)cmd);
 	new_state = (reference_count_bitmap[0] & (0x01 << (int)cmd))
-	|| (reference_count_bitmap[1] & (0x01 << FWLOG_CTRL_INNER));
+		|| (reference_count_bitmap[1] & (0x01 << (int)cmd));
 
 	switch (cmd) {
 	case FWLOG_CTRL_INNER:
 #ifdef GPS_FWCTL_SUPPORT
-		if (old_state != new_state)
+		/* (new_state != false) when came to disable,  just need clear flag in reference_count_bitmap , */
+		if ((old_state != new_state) && (new_state != false))
 			GPS_fwlog_ctrl_inner(new_state);
 #endif
 	break;
@@ -1358,7 +1367,7 @@ void GPS_reference_count(enum gps_reference_count_cmd cmd, bool flag, int user)
 		if (old_state != new_state)
 			GPS_handle_desense(new_state);
 	break;
-	case FGGPS_FWCTL_EADY:
+	case GPS_FWCTL_READY:
 #ifdef GPS_FWCTL_SUPPORT
 		if (old_state != new_state)
 			fgGps_fwctl_ready = new_state;

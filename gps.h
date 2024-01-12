@@ -46,7 +46,7 @@ enum gps_ctrl_status_enum {
 enum gps_reference_count_cmd {
 	FWLOG_CTRL_INNER = 0,
 	HANDLE_DESENSE,
-	FGGPS_FWCTL_EADY,
+	GPS_FWCTL_READY,
 };
 
 #ifdef GPS_FWCTL_SUPPORT
@@ -61,11 +61,13 @@ enum gps_reference_count_cmd {
 
 #endif
 
-#define GPS_USER1 0
-#define GPS_USER2 1
+enum gps_data_link_id_enum {
+	GPS_DATA_LINK_ID0	= 0,
+	GPS_DATA_LINK_ID1	= 1,
+	GPS_DATA_LINK_NUM	= 2,
+};
 
-
-extern void GPS_reference_count(enum gps_reference_count_cmd cmd, bool flag, int user);
+extern void GPS_reference_count(enum gps_reference_count_cmd cmd, bool flag, enum gps_data_link_id_enum user);
 
 extern phys_addr_t gConEmiPhyBase;
 

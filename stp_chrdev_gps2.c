@@ -427,7 +427,7 @@ static int GPS2_hw_suspend(void)
 		 * mtk_wcn_wmt_msgcb_unreg(WMTDRV_TYPE_GPSL5);
 		 */
 
-		GPS_reference_count(HANDLE_DESENSE, false, GPS_USER2);
+		GPS_reference_count(HANDLE_DESENSE, false, GPS_DATA_LINK_ID1);
 		gps2_hold_wake_lock(0);
 		GPS2_WARN_FUNC("gps2_hold_wake_lock(0)\n");
 
@@ -445,7 +445,7 @@ static int GPS2_hw_resume(void)
 
 	gps_status = g_gps2_ctrl_status;
 	if (gps_status == GPS_SUSPENDED) {
-	GPS_reference_count(HANDLE_DESENSE, true, GPS_USER2);
+	GPS_reference_count(HANDLE_DESENSE, true, GPS_DATA_LINK_ID1);
 		gps2_hold_wake_lock(1);
 		GPS2_WARN_FUNC("gps2_hold_wake_lock(1)\n");
 
@@ -692,7 +692,11 @@ static void gps2_cdev_rst_cb(ENUM_WMTDRV_TYPE_T src,
 				rstflag2 = 1;
 #ifdef GPS_FWCTL_SUPPORT
 				down(&fwctl_mtx);
-				GPS_reference_count(FGGPS_FWCTL_EADY, false, GPS_USER2);
+				fgGps_fwctl_ready = false;
+#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+				/* clean  FWLOG_CTRL_INNER flag in reference_count ,for rst*/
+				GPS_reference_count(FWLOG_CTRL_INNER, false, GPS_DATA_LINK_ID1);
+#endif
 				up(&fwctl_mtx);
 #endif
 				GPS2_ctrl_status_change_to(GPS_RESET_START);
@@ -761,15 +765,15 @@ static int GPS2_open(struct inode *inode, struct file *file)
 	gps2_hold_wake_lock(1);
 	GPS2_WARN_FUNC("gps2_hold_wake_lock(1)\n");
 
-	GPS_reference_count(HANDLE_DESENSE, true, GPS_USER2);
+	GPS_reference_count(HANDLE_DESENSE, true, GPS_DATA_LINK_ID1);
 
 #ifdef GPS_FWCTL_SUPPORT
 	down(&fwctl_mtx);
-	GPS_reference_count(FGGPS_FWCTL_EADY, true, GPS_USER2);
+	GPS_reference_count(GPS_FWCTL_READY, true, GPS_DATA_LINK_ID1);
 #ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
 	if (fgGps_fwlog_on) {
 		/* GPS fw clear log on flag2 when GPS on, no need to send it if log setting is off */
-		GPS_reference_count(FWLOG_CTRL_INNER, fgGps_fwlog_on, GPS_USER2);
+		GPS_reference_count(FWLOG_CTRL_INNER, fgGps_fwlog_on, GPS_DATA_LINK_ID1);
 	}
 #endif
 	up(&fwctl_mtx);
@@ -796,7 +800,11 @@ static int GPS2_close(struct inode *inode, struct file *file)
 
 #ifdef GPS_FWCTL_SUPPORT
 	down(&fwctl_mtx);
-	GPS_reference_count(FGGPS_FWCTL_EADY, false, GPS_USER2);
+	GPS_reference_count(GPS_FWCTL_READY, false, GPS_DATA_LINK_ID1);
+#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+	/* GPS fw clear log on flag when GPS on, this just to clear flag in gps_drv reference count */
+	GPS_reference_count(FWLOG_CTRL_INNER, false, GPS_DATA_LINK_ID1);
+#endif
 	up(&fwctl_mtx);
 #endif
 #ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
@@ -818,7 +826,7 @@ _out:
 	gps2_hold_wake_lock(0);
 	GPS2_WARN_FUNC("gps2_hold_wake_lock(0)\n");
 
-	GPS_reference_count(HANDLE_DESENSE, false, GPS_USER2);
+	GPS_reference_count(HANDLE_DESENSE, false, GPS_DATA_LINK_ID1);
 
 	GPS2_ctrl_status_change_to(GPS_CLOSED);
 	return ret;

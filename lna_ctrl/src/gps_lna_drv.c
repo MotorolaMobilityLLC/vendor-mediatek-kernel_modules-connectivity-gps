@@ -27,6 +27,7 @@
 #include <linux/platform_device.h>
 #include <linux/pm_wakeup.h>
 #include "gps_lna_drv.h"
+#include "gps.h"
 
 #define PFX                         "[LNA_CTL] "
 #define GPS_LOG_INFO                 2
@@ -108,7 +109,7 @@ void gps_lna_pinctrl_context_init(void)
 	}
 }
 
-void gps_lna_pin_ctrl(enum gps_lna_link_id_enum link_id, bool dsp_is_on, bool force_en)
+void gps_lna_pin_ctrl(enum gps_data_link_id_enum link_id, bool dsp_is_on, bool force_en)
 {
 	struct pinctrl_state *p_state = NULL;
 	int ret;
