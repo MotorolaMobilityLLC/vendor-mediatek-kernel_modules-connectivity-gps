@@ -33,7 +33,7 @@ void gps_dl_emi_remap_set(unsigned int min_addr, unsigned int max_addr)
 	}
 
 	_20msb_of_36bit_phy_addr = aligned_addr >> 16;
-	GDL_LOGI("icap_buf: remap setting = 0x%08x", _20msb_of_36bit_phy_addr);
+	GDL_LOGD("icap_buf: remap setting = 0x%08x", _20msb_of_36bit_phy_addr);
 	gps_dl_hw_set_gps_emi_remapping(_20msb_of_36bit_phy_addr);
 	gps_dl_remap_ctx_get()->gps_emi_phy_high20 = aligned_addr;
 }

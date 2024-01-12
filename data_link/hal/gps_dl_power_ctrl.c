@@ -247,7 +247,8 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 	int ret = 0;
 
 	GDL_LOGXI_ONF(link_id,
-		"op = %d, conn_user = 0x%x,%d, tia_on = %d, dma_irq_en = %d, mcub_cfg = 0x%x",
+		"sid = %d, op = %d, conn_user = 0x%x,%d, tia_on = %d, dma_irq_en = %d, mcub_cfg = 0x%x",
+		gps_each_link_get_session_id(link_id),
 		op, g_conn_user, g_gps_conninfa_on, g_gps_tia_on, gps_dl_hal_get_dma_irq_en_flag(),
 		gps_dl_hw_get_mcub_a2d1_cfg(gps_dl_is_1byte_mode()));
 

@@ -128,7 +128,7 @@ void gps_dl_reserved_mem_show_info(void)
 		g_gps_dl_res_emi.length, min_size);
 
 	offset = (unsigned int)((void *)&p_mem_vir->icap_buf[0] - (void *)p_mem_vir);
-	GDL_LOGI_INI("icap_buf: phy_addr = 0x%08x, vir_addr = 0x%p, size = 0x%x",
+	GDL_LOGD_INI("icap_buf: phy_addr = 0x%08x, vir_addr = 0x%p, size = 0x%x",
 		p_mem_phy + offset, &p_mem_vir->icap_buf[0], GPS_ICAP_MEM_SIZE);
 
 	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {

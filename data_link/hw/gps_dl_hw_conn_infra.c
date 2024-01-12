@@ -221,7 +221,8 @@ bool gps_dl_hw_is_pta_clk_cfg_ready(void)
 		okay = false;
 	}
 
-	GDL_LOGI("pta_clk_cfg = 0x%x", pta_clk_cfg);
+	if (!okay)
+		GDL_LOGE("pta_clk_cfg = 0x%x", pta_clk_cfg);
 	return okay;
 }
 
@@ -233,7 +234,7 @@ bool gps_dl_hw_is_pta_uart_init_done(void)
 
 	pta_uart_en = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_PTA6_RO_PTA_CTRL_ro_uart_apb_hw_en);
 	done = (pta_uart_en == 1);
-	GDL_LOGI("done = %d, pta_uart_en = %d", done, pta_uart_en);
+	GDL_LOGD("done = %d, pta_uart_en = %d", done, pta_uart_en);
 
 	return done;
 }
@@ -346,7 +347,7 @@ bool gps_dl_hw_is_pta_init_done(void)
 	pta_1m_cnt = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_PTA6_PTA_CLK_CFG_r_pta_1m_cnt);
 
 	done = ((pta_en == 1) && (pta_arb_en == 1) && (pta_1m_cnt == PTA_1M_CNT_VALUE));
-	GDL_LOGI("done = %d, pta_en = %d, pta_arb_en = %d, pta_1m_cnt = 0x%x",
+	GDL_LOGD("done = %d, pta_en = %d, pta_arb_en = %d, pta_1m_cnt = 0x%x",
 		done, pta_en, pta_arb_en, pta_1m_cnt);
 
 	return done;
@@ -435,8 +436,10 @@ bool gps_dl_hw_take_conn_coex_hw_sema(unsigned int try_timeout_ms)
 	GDL_HW_POLL_CONN_INFRA_ENTRY(COS_SEMA_COEX_STA_ENTRY_FOR_GPS, 1, POLL_US * 1000 * try_timeout_ms, &okay);
 	gps_dl_set_show_reg_rw_log(show_log);
 
-	GDL_LOGI("okay = %d", okay);
-
+	if (!okay)
+		GDL_LOGW("okay = %d", okay);
+	else
+		GDL_LOGD("okay = %d", okay);
 	return okay;
 }
 
@@ -448,7 +451,7 @@ void gps_dl_hw_give_conn_coex_hw_sema(void)
 	GDL_HW_SET_CONN_INFRA_ENTRY(COS_SEMA_COEX_REL_ENTRY_FOR_GPS, 1);
 	gps_dl_set_show_reg_rw_log(show_log);
 
-	GDL_LOGI("");
+	GDL_LOGD("");
 }
 
 bool gps_dl_hw_take_conn_rfspi_hw_sema(unsigned int try_timeout_ms)
