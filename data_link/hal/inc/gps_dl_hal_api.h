@@ -61,7 +61,7 @@ enum gps_dl_hal_emi_user {
 	GPS_DL_EMI_USER_RX_DMA0 = GPS_DL_DMA_LINK0_D2A,
 	GPS_DL_EMI_USER_TX_DMA1 = GPS_DL_DMA_LINK1_A2D,
 	GPS_DL_EMI_USER_RX_DMA1 = GPS_DL_DMA_LINK1_D2A,
-	GPS_DL_EMI_USER_ICAP,
+	GPS_DL_EMI_USER_ICAP,   /* reserved, driver not use it */
 	GPS_DL_EMI_USER_GPS_ON, /* may remove this user later */
 	GPS_DL_EMI_USER_NUM
 };

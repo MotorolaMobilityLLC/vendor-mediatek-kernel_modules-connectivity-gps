@@ -310,24 +310,28 @@ void gps_dl_hal_emi_usage_init(void)
 	else
 		GDL_LOGD("mask is 0");
 
-	/* may remove it later */
-	gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_GPS_ON, true);
+	/* Not claim/disclaim it for low power
+	 * gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_GPS_ON, true);
+	 */
 }
 
 void gps_dl_hal_emi_usage_deinit(void)
 {
 	unsigned int old_mask;
 
-	/* may remove it later */
-	gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_GPS_ON, false);
+	/* Not claim/disclaim it for low power
+	 * gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_GPS_ON, false);
+	 */
 
 	old_mask = g_gps_dl_hal_emi_usage_bitmask;
 
-	if (old_mask) {
-		gps_dl_hw_gps_sw_request_emi_usage(false);
+	if (old_mask)
 		GDL_LOGW("mask is 0x%x, force to release emi usage", old_mask);
-	} else
+	else
 		GDL_LOGD("mask is 0");
+
+	/* force to release it anyway */
+	gps_dl_hw_gps_sw_request_emi_usage(false);
 }
 
 void gps_dl_hal_emi_usage_claim(enum gps_dl_hal_emi_user user, bool use_emi)
