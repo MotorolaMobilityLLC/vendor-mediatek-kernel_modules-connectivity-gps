@@ -24,7 +24,7 @@ extern "C" {
 /**/
 /******************************************************************************/
 
-#define CONN_WT_SLP_CTL_REG_BASE                               (0x18043000 + CONN_INFRA_REMAPPING_OFFSET)
+#define CONN_WT_SLP_CTL_REG_BASE                               (0x40043000 + CONN_INFRA_REMAPPING_OFFSET)
 
 #define CONN_WT_SLP_CTL_REG_WB_SLP_TRG_ADDR                    (CONN_WT_SLP_CTL_REG_BASE + 0x000)
 #define CONN_WT_SLP_CTL_REG_WB_SLP_CTL_ADDR                    (CONN_WT_SLP_CTL_REG_BASE + 0x004)

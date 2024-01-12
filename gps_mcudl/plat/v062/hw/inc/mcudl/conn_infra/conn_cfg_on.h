@@ -24,7 +24,7 @@ extern "C" {
 /**/
 /******************************************************************************/
 
-#define CONN_CFG_ON_BASE                        (0x18001000 + CONN_INFRA_REMAPPING_OFFSET)
+#define CONN_CFG_ON_BASE                        (0x40001000 + CONN_INFRA_REMAPPING_OFFSET)
 
 #define CONN_CFG_ON_BOOT_ADDR                                  (CONN_CFG_ON_BASE + 0x000)
 #define CONN_CFG_ON_CONN_INFRA_CFG_ON_XTAL_CTL_ADDR            (CONN_CFG_ON_BASE + 0x004)
@@ -106,7 +106,7 @@ extern "C" {
 #define CONN_CFG_ON_CONN_INFRA_GPS2CONN_SLP_CTRL_ADDR          (CONN_CFG_ON_BASE + 0x480)
 #define CONN_CFG_ON_GALS_GPS2CONN_SLP_STATUS_ADDR              (CONN_CFG_ON_BASE + 0x484)
 #define CONN_CFG_ON_CONN_INFRA_AXI_LAYER_GPS2CONN_SLP_CTRL_ADDR (CONN_CFG_ON_BASE + 0x488)
-#define CONN_CFG_ON_GALS_AXI_LAYER_GPS2CONN_SLP_STATUS_ADDR    (CONN_CFG_ON_BASE + 0x48C)
+#define CONN_CFG_ON_GALS_AXI_LAYER_GPS2CONN_SLP_STATUS_ADDR    (CONN_CFG_ON_BASE + 0x490)
 #define CONN_CFG_ON_HOST_CSR_IRQ_EN_ADDR                       (CONN_CFG_ON_BASE + 0x600)
 #define CONN_CFG_ON_CSR_BGF_ON_FW_OWN_IRQ_ADDR                 (CONN_CFG_ON_BASE + 0x604)
 #define CONN_CFG_ON_CSR_MD_ON_IRQ_STATUS_ADDR                  (CONN_CFG_ON_BASE + 0x610)

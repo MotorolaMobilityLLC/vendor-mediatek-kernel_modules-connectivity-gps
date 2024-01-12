@@ -24,7 +24,7 @@ extern "C" {
 /**/
 /******************************************************************************/
 
-#define CONN_CFG_BASE                      (0x18011000 + CONN_INFRA_REMAPPING_OFFSET)
+#define CONN_CFG_BASE                      (0x40011000 + CONN_INFRA_REMAPPING_OFFSET)
 
 #define CONN_CFG_IP_VERSION_ADDR                               (CONN_CFG_BASE + 0x000)
 #define CONN_CFG_CFG_VERSION_ADDR                              (CONN_CFG_BASE + 0x004)

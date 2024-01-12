@@ -6,7 +6,7 @@
 #define __CONN_CFG_REGS_H__
 
 
-#define CONN_CFG_BASE                                          0x18011000
+#define CONN_CFG_BASE                                          0x40011000
 
 #define CONN_CFG_IP_VERSION_ADDR                               (CONN_CFG_BASE + 0x000)
 #define CONN_CFG_EMI_CTL_TOP_ADDR                              (CONN_CFG_BASE + 0x110)

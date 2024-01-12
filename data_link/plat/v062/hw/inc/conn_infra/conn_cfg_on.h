@@ -5,7 +5,7 @@
 #ifndef __CONN_CFG_ON_REGS_H__
 #define __CONN_CFG_ON_REGS_H__
 
-#define CONN_CFG_ON_BASE                                       0x18001000
+#define CONN_CFG_ON_BASE                                       0x40001000
 
 #define CONN_CFG_ON_CONN_INFRA_CFG_GPS_MANUAL_CTRL_ADDR        (CONN_CFG_ON_BASE + 0x10C)
 #define CONN_CFG_ON_CONN_INFRA_CFG_GPS_PWRCTRL0_ADDR           (CONN_CFG_ON_BASE + 0x20C)

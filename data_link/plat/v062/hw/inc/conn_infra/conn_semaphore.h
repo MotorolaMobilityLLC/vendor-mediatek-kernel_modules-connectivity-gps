@@ -5,7 +5,7 @@
 #ifndef __CONN_SEMAPHORE_REGS_H__
 #define __CONN_SEMAPHORE_REGS_H__
 
-#define CONN_SEMAPHORE_BASE                                    0x18070000
+#define CONN_SEMAPHORE_BASE                                    0x40070000
 
 #define CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_STA_ADDR             (CONN_SEMAPHORE_BASE + 0x3014)
 #define CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_STA_ADDR             (CONN_SEMAPHORE_BASE + 0x302C)

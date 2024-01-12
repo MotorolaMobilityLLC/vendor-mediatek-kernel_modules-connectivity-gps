@@ -5,7 +5,7 @@
 #ifndef __CONN_WT_SLP_CTL_REG_REGS_H__
 #define __CONN_WT_SLP_CTL_REG_REGS_H__
 
-#define CONN_WT_SLP_CTL_REG_BASE                               0x18003000
+#define CONN_WT_SLP_CTL_REG_BASE                               0x40003000
 
 #define CONN_WT_SLP_CTL_REG_WB_SLP_TOP_CK_5_ADDR               (CONN_WT_SLP_CTL_REG_BASE + 0x134)
 #define CONN_WT_SLP_CTL_REG_WB_GPS_CTL_ADDR                    (CONN_WT_SLP_CTL_REG_BASE + 0x200)

@@ -5,7 +5,7 @@
 #ifndef __CONN_RF_SPI_MST_REG_REGS_H__
 #define __CONN_RF_SPI_MST_REG_REGS_H__
 
-#define CONN_RF_SPI_MST_REG_BASE                               0x18042000
+#define CONN_RF_SPI_MST_REG_BASE                               0x40042000
 
 #define CONN_RF_SPI_MST_REG_SPI_STA_ADDR                       (CONN_RF_SPI_MST_REG_BASE + 0x000)
 #define CONN_RF_SPI_MST_REG_FM_CTRL_ADDR                       (CONN_RF_SPI_MST_REG_BASE + 0x00C)

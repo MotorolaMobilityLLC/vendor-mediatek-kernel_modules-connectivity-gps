@@ -24,7 +24,7 @@ extern "C" {
 /**/
 /******************************************************************************/
 
-#define BGF2AP_CONN_INFRA_ON_CCIF4_BASE                        (0x1803C000 + CONN_INFRA_REMAPPING_OFFSET)
+#define BGF2AP_CONN_INFRA_ON_CCIF4_BASE                        (0x4003C000 + CONN_INFRA_REMAPPING_OFFSET)
 
 #define BGF2AP_CONN_INFRA_ON_CCIF4_BGF2AP_PCCIF_BUSY_ADDR      (BGF2AP_CONN_INFRA_ON_CCIF4_BASE + 0x0004)
 #define BGF2AP_CONN_INFRA_ON_CCIF4_BGF2AP_PCCIF_START_ADDR     (BGF2AP_CONN_INFRA_ON_CCIF4_BASE + 0x0008)

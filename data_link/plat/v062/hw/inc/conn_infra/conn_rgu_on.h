@@ -6,7 +6,7 @@
 #define __CONN_RGU_ON_REGS_H__
 
 
-#define CONN_RGU_ON_BASE                                       0x18000000
+#define CONN_RGU_ON_BASE                                       0x40000000
 
 #define CONN_RGU_ON_BGFYS_ON_TOP_PWR_CTL_1_ADDR                (CONN_RGU_ON_BASE + 0x028)
 #define CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_ADDR                   (CONN_RGU_ON_BASE + 0x130)

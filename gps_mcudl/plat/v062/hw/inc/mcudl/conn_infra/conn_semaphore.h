@@ -24,7 +24,7 @@ extern "C" {
 /**/
 /******************************************************************************/
 
-#define CONN_SEMAPHORE_BASE                                    (0x18070000 + CONN_INFRA_REMAPPING_OFFSET)
+#define CONN_SEMAPHORE_BASE                                    (0x40070000 + CONN_INFRA_REMAPPING_OFFSET)
 #define CONN_SEMAPHORE_CONN_SEMA00_M0_OWN_STA_ADDR             (CONN_SEMAPHORE_BASE + 0x1000)
 #define CONN_SEMAPHORE_CONN_SEMA01_M0_OWN_STA_ADDR             (CONN_SEMAPHORE_BASE + 0x1004)
 #define CONN_SEMAPHORE_CONN_SEMA02_M0_OWN_STA_ADDR             (CONN_SEMAPHORE_BASE + 0x1008)

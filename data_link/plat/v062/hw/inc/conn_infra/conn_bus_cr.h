@@ -5,7 +5,7 @@
 #ifndef __CONN_BUS_CR_REGS_H__
 #define __CONN_BUS_CR_REGS_H__
 
-#define CONN_BUS_CR_BASE                                       0x1804B000
+#define CONN_BUS_CR_BASE                                       0x4004B000
 
 #define CONN_BUS_CR_CONN2AP_REMAP_GPS_PERI_BASE_ADDR_ADDR      (CONN_BUS_CR_BASE + 0x36C)
 

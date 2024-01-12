@@ -5,7 +5,7 @@
 #ifndef __CONN_BUS_CR_ON_REGS_H__
 #define __CONN_BUS_CR_ON_REGS_H__
 
-#define CONN_BUS_CR_ON_BASE                                    0x1800E000
+#define CONN_BUS_CR_ON_BASE                                    0x4000E000
 
 
 #endif /* __CONN_BUS_CR_ON_REGS_H__*/
