@@ -10,6 +10,7 @@
 #include "gps_mcu_hif_api.h"
 #include "gps_dl_isr.h"
 #include "gps_dl_hal.h"
+#include "gps_dl_subsys_reset.h"
 #include "gps_mcudl_log.h"
 #if GPS_DL_ON_LINUX
 #include "gps_dl_linux_reserved_mem_v2.h"
@@ -30,6 +31,10 @@ bool gps_mcudl_xlink_on(const struct gps_mcudl_fw_list *p_fw_list)
 	if (!is_okay)
 		return false;
 
+	is_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+	if (!is_okay)
+		return false;
+
 	is_okay = gps_mcudl_hal_mcu_do_on(p_fw_list);
 	/*(void)gps_mcudl_hw_conn_force_wake(false);*/
 	MDL_LOGI("ok=%d", is_okay);
@@ -40,7 +45,9 @@ bool gps_mcudl_xlink_off(void)
 {
 	bool is_okay = true;
 
-	/*(void)gps_mcudl_hw_conn_force_wake(true);*/
+	(void)gps_mcudl_hw_conn_force_wake(true);
+	(void)gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+
 	gps_mcudl_hal_mcu_do_off();
 	(void)gps_mcudl_hw_conn_force_wake(false);
 #if GPS_DL_ON_CTP
@@ -125,13 +132,16 @@ bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list)
 	if (!is_okay)
 		return false;
 	/* gps_mcudl_hal_mcu_clr_fw_own();*/
-	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_ISR);
+	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_HAL);
+	gps_mcudl_hal_set_ccif_irq_en_flag(true);
 	return is_okay;
 }
 
 void gps_mcudl_hal_mcu_do_off(void)
 {
-	gps_dl_irq_mask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_ISR);
+	if (gps_mcudl_hal_get_ccif_irq_en_flag())
+		gps_dl_irq_mask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_HAL);
+
 	gps_mcudl_hw_mcu_do_off();
 	gps_mcudl_hw_ccif_clr_tch_busy_bitmask();
 	gps_mcudl_hw_ccif_clr_rch_busy_bitmask();
