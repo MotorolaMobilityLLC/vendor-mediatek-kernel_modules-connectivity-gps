@@ -57,6 +57,8 @@ unsigned int gps_dl_hw_get_mcub_a2d1_cfg(bool is_1byte_mode)
 void gps_dl_hw_usrt_ctrl(enum gps_dl_link_id_enum link_id,
 	bool is_on, bool is_dma_mode, bool is_1byte_mode)
 {
+	bool poll_okay;
+
 	if (is_1byte_mode)
 		GDL_HW_SET_GPS_ENTRY2(link_id, 1, GPS_USRT_APB_APB_CTRL_BYTEN, GPS_L5_USRT_APB_APB_CTRL_BYTEN);
 	else
@@ -86,9 +88,9 @@ void gps_dl_hw_usrt_ctrl(enum gps_dl_link_id_enum link_id,
 
 	/* wait ROM okay flag */
 	if (link_id == GPS_DATA_LINK_ID0)
-		GDL_HW_POLL_GPS_ENTRY(GPS_USRT_APB_MCUB_D2AF_D2AF3, 1, POLL_DEFAULT);
+		GDL_HW_POLL_GPS_ENTRY(GPS_USRT_APB_MCUB_D2AF_D2AF3, 1, POLL_DEFAULT, &poll_okay);
 	else
-		GDL_HW_POLL_GPS_ENTRY(GPS_L5_USRT_APB_MCUB_D2AF_D2AF3, 1, POLL_DEFAULT);
+		GDL_HW_POLL_GPS_ENTRY(GPS_L5_USRT_APB_MCUB_D2AF_D2AF3, 1, POLL_DEFAULT, &poll_okay);
 }
 
 bool gps_dl_hw_usrt_has_set_nodata_flag(enum gps_dl_link_id_enum link_id)

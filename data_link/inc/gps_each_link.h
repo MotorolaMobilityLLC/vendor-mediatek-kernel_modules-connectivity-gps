@@ -160,7 +160,7 @@ void gps_each_link_inc_session_id(enum gps_dl_link_id_enum link_id);
 int gps_each_link_get_session_id(enum gps_dl_link_id_enum link_id);
 
 int gps_each_link_open(enum gps_dl_link_id_enum link_id);
-void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id);
+void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay);
 
 enum gps_each_link_lock_reason {
 	GDL_LOCK_FOR_OPEN,
@@ -208,6 +208,8 @@ int gps_each_link_read(enum gps_dl_link_id_enum link_id,
 	unsigned char *buf, unsigned int len);
 int gps_each_link_read_with_timeout(enum gps_dl_link_id_enum link_id,
 	unsigned char *buf, unsigned int len, int timeout_usec, bool *p_is_nodata);
+
+bool gps_dl_link_start_tx_dma_if_has_data(enum gps_dl_link_id_enum link_id);
 
 void gps_dl_link_waitable_init(struct gps_each_link_waitable *p,
 	enum gps_each_link_waitable_type type);

@@ -193,11 +193,14 @@ int gps_dl_trigger_connsys_reset(void)
 }
 
 #if GPS_DL_HAS_CONNINFRA_DRV
+static bool gps_dl_connsys_is_resetting;
 int gps_dl_on_pre_connsys_reset(enum consys_drv_type drv, char *reason)
 {
 	enum GDL_RET_STATUS ret_status;
 
-	GDL_LOGE("");
+	GDL_LOGE("already in resetting = %d", gps_dl_connsys_is_resetting);
+	gps_dl_connsys_is_resetting = true;
+
 	ret_status = gps_dl_reset_level_set_and_trigger(GPS_DL_RESET_LEVEL_CONNSYS, true);
 
 	if (ret_status != GDL_OKAY) {
@@ -210,7 +213,9 @@ int gps_dl_on_pre_connsys_reset(enum consys_drv_type drv, char *reason)
 
 int gps_dl_on_post_connsys_reset(void)
 {
-	GDL_LOGE("");
+	GDL_LOGE("already in resetting = %d", gps_dl_connsys_is_resetting);
+	gps_dl_connsys_is_resetting = false;
+
 	gps_dl_handle_connsys_reset_done();
 	return 0;
 }

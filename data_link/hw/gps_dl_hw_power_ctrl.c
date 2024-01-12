@@ -24,6 +24,7 @@
 #include "gps_dl_hw_api.h"
 #include "gps_dl_hw_priv_util.h"
 #include "gps_dl_hal_util.h"
+#include "gps_dsp_fsm.h"
 
 #include "conn_infra/conn_infra_rgu.h"
 #include "conn_infra/conn_infra_cfg.h"
@@ -31,50 +32,83 @@
 
 #include "gps/gps_rgu_on.h"
 #include "gps/gps_cfg_on.h"
+#include "gps/gps_aon_top.h"
 #include "gps/bgf_gps_cfg.h"
 
-static void gps_dl_hw_gps_sleep_prot_ctrl(int op)
+static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 {
+	bool poll_okay;
+
 	if (1 == op) {
 		/* disable when on */
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_EN,  0);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_RDY, 0,
-			POLL_DEFAULT);
+			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_disable_gps_slp_prot");
+			goto _fail_disable_gps_slp_prot;
+		}
 
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_EN,  0);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_RDY, 0,
-			POLL_DEFAULT);
+			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_disable_gps_slp_prot");
+			goto _fail_disable_gps_slp_prot;
+		}
 
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_EN,  0);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_RDY, 0,
-			POLL_DEFAULT);
+			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_disable_gps_slp_prot");
+			goto _fail_disable_gps_slp_prot;
+		}
 
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_EN,  0);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_RDY, 0,
-			POLL_DEFAULT);
+			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_disable_gps_slp_prot");
+			goto _fail_disable_gps_slp_prot;
+		}
+		return 0;
 
+_fail_disable_gps_slp_prot:
+#if 0
+		GDL_HW_WR_CONN_INFRA_REG(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_ADDR,
+			CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_EN_MASK |
+			CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_EN_MASK |
+			CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_EN_MASK |
+			CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_EN_MASK);
+#endif
+		return -1;
 	} else if (0 == op) {
 		/* enable when off */
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_EN,  1);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_RDY, 1,
-			POLL_DEFAULT);
+			POLL_DEFAULT, &poll_okay);
 
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_EN,  1);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_RDY, 1,
-			POLL_DEFAULT);
+			POLL_DEFAULT, &poll_okay);
 
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_EN,  1);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_RDY, 1,
-			POLL_DEFAULT);
+			POLL_DEFAULT, &poll_okay);
 
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_EN,  1);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_RDY, 1,
-			POLL_DEFAULT);
+			POLL_DEFAULT, &poll_okay);
 	}
+
+	return 0;
 }
 
-void gps_dl_hw_gps_common_on(void)
+int gps_dl_hw_gps_common_on(void)
 {
+	bool poll_okay;
+
 	/* Conninfra driver will do it
 	 * GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFYS_ON_TOP_PWR_CTL_BGFSYS_ON_TOP_PWR_ON, 1);
 	 */
@@ -84,10 +118,20 @@ void gps_dl_hw_gps_common_on(void)
 
 	/* Wait until sleep prot disabled, 10 times per 1ms */
 	GDL_HW_POLL_CONN_INFRA_ENTRY(
-		CONN_HOST_CSR_TOP_CONN_SLP_PROT_CTRL_CONN_INFRA_ON2OFF_SLP_PROT_ACK, 0, POLL_DEFAULT);
+		CONN_HOST_CSR_TOP_CONN_SLP_PROT_CTRL_CONN_INFRA_ON2OFF_SLP_PROT_ACK, 0,
+		10 * 1000 * POLL_US, &poll_okay);
+	if (!poll_okay) {
+		GDL_LOGE("_fail_conn_slp_prot_not_okay");
+		goto _fail_conn_slp_prot_not_okay;
+	}
 
 	/* Poll conninfra hw version */
-	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_CONN_HW_VER_RO_CONN_HW_VERSION, 0x20010000, POLL_DEFAULT);
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_CONN_HW_VER_RO_CONN_HW_VERSION, 0x20010000,
+		POLL_DEFAULT, &poll_okay);
+	if (!poll_okay) {
+		GDL_LOGE("_fail_conn_hw_ver_not_okay");
+		goto _fail_conn_hw_ver_not_okay;
+	}
 
 	/* GPS SW EMI request */
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 1);
@@ -97,28 +141,57 @@ void gps_dl_hw_gps_common_on(void)
 
 	/* bit24: BGFSYS_ON_TOP primary power ack */
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFSYS_ON_TOP_PWR_ACK_ST_BGFSYS_ON_TOP_PWR_ACK, 1,
-		POLL_DEFAULT);
+		POLL_DEFAULT, &poll_okay);
+	if (!poll_okay) {
+		GDL_LOGE("_fail_bgf_top_1st_pwr_ack_not_okay");
+		goto _fail_bgf_top_1st_pwr_ack_not_okay;
+	}
 
 	/* bit25: BGFSYS_ON_TOP secondary power ack */
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFSYS_ON_TOP_PWR_ACK_ST_AN_BGFSYS_ON_TOP_PWR_ACK_S, 1,
-		POLL_DEFAULT);
+		POLL_DEFAULT, &poll_okay);
+	if (!poll_okay) {
+		GDL_LOGE("_fail_bgf_top_2nd_pwr_ack_not_okay");
+		goto _fail_bgf_top_2nd_pwr_ack_not_okay;
+	}
 
 	GDL_WAIT_US(200);
 
 	/* sleep prot */
-	gps_dl_hw_gps_sleep_prot_ctrl(1);
+	if (gps_dl_hw_gps_sleep_prot_ctrl(1) != 0) {
+		GDL_LOGE("_fail_disable_gps_slp_prot_not_okay");
+		goto _fail_disable_gps_slp_prot_not_okay;
+	}
 
 	/* polling status and version */
 	/* Todo: set GPS host csr flag selection */
 	/* 0x18060240[3:0] == 4h'2 gps_top_off is GPS_ACTIVE state */
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL, 0x80);
-	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG, 2, POLL_DEFAULT);
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG, 2,
+		POLL_DEFAULT, &poll_okay);
+	if (gps_dl_hw_gps_sleep_prot_ctrl(1) != 0) {
+		GDL_LOGE("_fail_gps_top_off_active_not_okay");
+		goto _fail_gps_top_off_active_not_okay;
+	}
 
 	/* 0x18c21010[31:0] bgf ip version */
-	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION, 0x20010000, POLL_DEFAULT);
+	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION, 0x20010000,
+		POLL_DEFAULT, &poll_okay);
+	if (gps_dl_hw_gps_sleep_prot_ctrl(1) != 0) {
+		GDL_LOGE("_fail_bgf_ip_ver_not_okay");
+		goto _fail_bgf_ip_ver_not_okay;
+	}
 
 	/* 0x18c21014[7:0] bgf ip cfg */
-	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_CONFIG_BGFSYS_CONFIG, 0, POLL_DEFAULT);
+	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_CONFIG_BGFSYS_CONFIG, 0,
+		POLL_DEFAULT, &poll_okay);
+	if (gps_dl_hw_gps_sleep_prot_ctrl(1) != 0) {
+		GDL_LOGE("_fail_bgf_ip_cfg_not_okay");
+		goto _fail_bgf_ip_cfg_not_okay;
+	}
+
+	/* host csr gps bus debug mode enable 0x18c60000 = 0x10 */
+	GDL_HW_WR_GPS_REG(0x80060000, 0x10);
 
 	/* Power on A-die top clock */
 #if (GPS_DL_HAS_CONNINFRA_DRV)
@@ -128,6 +201,21 @@ void gps_dl_hw_gps_common_on(void)
 	/* Enable PLL driver */
 	GDL_HW_SET_GPS_ENTRY(GPS_CFG_ON_GPS_CLKGEN1_CTL_CR_GPS_DIGCK_DIV_EN, 1);
 
+	return 0;
+
+_fail_bgf_ip_cfg_not_okay:
+_fail_bgf_ip_ver_not_okay:
+_fail_gps_top_off_active_not_okay:
+_fail_disable_gps_slp_prot_not_okay:
+_fail_bgf_top_2nd_pwr_ack_not_okay:
+_fail_bgf_top_1st_pwr_ack_not_okay:
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, 0);
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
+
+_fail_conn_hw_ver_not_okay:
+_fail_conn_slp_prot_not_okay:
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 0);
+	return -1;
 }
 
 void gps_dl_hw_gps_common_off(void)
@@ -146,35 +234,130 @@ void gps_dl_hw_gps_common_off(void)
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, 0);
 }
 
-void gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
+int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 {
+	bool poll_okay;
+	bool dsp_off_done;
+
 	switch (ctrl) {
 	case GPS_L1_DSP_ON:
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_ON, 1);
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_SOFT_RST_B, 1);
-		GDL_HW_POLL_GPS_ENTRY(GPS_CFG_ON_GPS_L1_SLP_PWR_CTL_GPS_L1_SLP_PWR_CTL_CS, 3, POLL_DEFAULT);
+		GDL_HW_POLL_GPS_ENTRY(GPS_CFG_ON_GPS_L1_SLP_PWR_CTL_GPS_L1_SLP_PWR_CTL_CS, 3,
+			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("ctrl = %d fail", ctrl);
+			return -1;
+		}
 
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_MEM_DLY_CTL_RGU_GPSSYS_L1_MEM_ADJ_DLY_EN, 1);
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DLY_CHAIN_CTL_RGU_GPS_L1_MEM_PDN_DELAY_DUMMY_NUM, 5);
 		break;
+
 	case GPS_L1_DSP_OFF:
+		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_GPS_PWR_STAT, 0);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPPRAM_PDN_EN_RGU_GPS_L1_PRAM_HWCTL_PDN, 0x1FF);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPPRAM_SLP_EN_RGU_GPS_L1_PRAM_HWCTL_SLP, 0);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPXRAM_PDN_EN_RGU_GPS_L1_XRAM_HWCTL_PDN, 0xF);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPXRAM_SLP_EN_RGU_GPS_L1_XRAM_HWCTL_SLP, 0);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPYRAM_PDN_EN_RGU_GPS_L1_YRAM_HWCTL_PDN, 0x1FF);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPYRAM_PDN_EN_RGU_GPS_L1_YRAM_HWCTL_PDN, 0);
+
+		/* poll */
+		dsp_off_done = gps_dl_hw_gps_dsp_is_off_done(GPS_DATA_LINK_ID0);
+
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_SOFT_RST_B, 0);
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_ON, 0);
-		break;
+
+		if (dsp_off_done)
+			return 0;
+		else
+			return -1;
+
 	case GPS_L5_DSP_ON:
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_ON, 1);
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_SOFT_RST_B, 1);
-		GDL_HW_POLL_GPS_ENTRY(GPS_CFG_ON_GPS_L5_SLP_PWR_CTL_GPS_L5_SLP_PWR_CTL_CS, 3, POLL_DEFAULT);
+		GDL_HW_POLL_GPS_ENTRY(GPS_CFG_ON_GPS_L5_SLP_PWR_CTL_GPS_L5_SLP_PWR_CTL_CS, 3,
+			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("ctrl = %d fail", ctrl);
+			return -1;
+		}
 
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_MEM_DLY_CTL_RGU_GPSSYS_L5_MEM_ADJ_DLY_EN, 1);
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DLY_CHAIN_CTL_RGU_GPS_L5_MEM_PDN_DELAY_DUMMY_NUM, 9);
 		break;
+
 	case GPS_L5_DSP_OFF:
+		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_GPS_PWR_STAT, 0);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPPRAM_PDN_EN_RGU_GPS_L5_PRAM_HWCTL_PDN, 0x3FF);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPPRAM_SLP_EN_RGU_GPS_L5_PRAM_HWCTL_SLP, 0);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPXRAM_PDN_EN_RGU_GPS_L5_XRAM_HWCTL_PDN, 0xF);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPXRAM_SLP_EN_RGU_GPS_L5_XRAM_HWCTL_SLP, 0);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPYRAM_PDN_EN_RGU_GPS_L5_YRAM_HWCTL_PDN, 0x3FF);
+		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPYRAM_PDN_EN_RGU_GPS_L5_YRAM_HWCTL_PDN, 0);
+
+		/* poll */
+		dsp_off_done = gps_dl_hw_gps_dsp_is_off_done(GPS_DATA_LINK_ID1);
+
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_SOFT_RST_B, 0);
 		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_ON, 0);
-		break;
+
+		if (dsp_off_done)
+			return 0;
+		else
+			return -1;
+
 	default:
-		break;
+		return -1;
 	}
+
+	return 0;
+}
+
+bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
+{
+	int i;
+	bool done;
+	bool show_log;
+
+	if (GPS_DSP_ST_RESET_DONE == gps_dsp_state_get(link_id)) {
+		GDL_LOGXD(link_id, "1st return, done = 1");
+		return true;
+	}
+
+	i = 0;
+	done = true;
+
+	show_log = gps_dl_set_show_reg_rw_log(true);
+
+	/* MCUB IRQ already mask at this time */
+	gps_dl_hal_mcub_flag_handler(link_id);
+	while (GPS_DSP_ST_RESET_DONE != gps_dsp_state_get(link_id)) {
+		/* poll 10ms */
+		if (i > 10) {
+			done = false;
+			break;
+		}
+		gps_dl_wait_us(1000);
+
+		/* read dummy cr confirm dsp state for debug */
+		if (GPS_DATA_LINK_ID0 == link_id)
+			GDL_HW_RD_GPS_REG(0x80073160);
+		else if (GPS_DATA_LINK_ID1 == link_id)
+			GDL_HW_RD_GPS_REG(0x80073134);
+
+		gps_dl_hal_mcub_flag_handler(link_id);
+		i++;
+	}
+	gps_dl_set_show_reg_rw_log(show_log);
+
+	GDL_LOGXW(link_id, "2nd return, done = %d", done);
+	return done;
+}
+
+void gps_dl_hw_gps_adie_force_off(void)
+{
+	/* TODO */
 }
 

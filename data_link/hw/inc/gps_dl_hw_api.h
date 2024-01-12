@@ -36,9 +36,11 @@ enum dsp_ctrl_enum {
 	GPS_L5_DSP_OFF,
 	GPS_DSP_CTRL_MAX
 };
-void gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl);
+int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl);
+bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id);
+void gps_dl_hw_gps_adie_force_off(void);
 
-void gps_dl_hw_gps_common_on(void);
+int gps_dl_hw_gps_common_on(void);
 void gps_dl_hw_gps_common_off(void);
 
 enum GDL_HW_RET gps_dl_hw_get_mcub_info(

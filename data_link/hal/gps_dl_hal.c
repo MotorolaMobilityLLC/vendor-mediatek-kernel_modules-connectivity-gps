@@ -210,12 +210,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 
 		/* wakeup writer if it's pending on it */
 		gps_dl_link_wake_up(&p_link->waitables[GPS_DL_WAIT_WRITE]);
-
-		gdl_ret = gdl_dma_buf_get_data_entry(&p_link->tx_dma_buf, &dma_buf_entry);
-		if (gdl_ret == GDL_OKAY)
-			gps_dl_hal_a2d_tx_dma_start(link_id, &dma_buf_entry);
-		else
-			GDL_LOGD("gdl_dma_buf_get_data_entry ret = %s", gdl_ret_to_name(gdl_ret));
+		gps_dl_link_start_tx_dma_if_has_data(link_id);
 		break;
 
 	case GPS_DL_HAL_EVT_MCUB_HAS_IRQ:
