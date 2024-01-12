@@ -122,7 +122,7 @@ void gps_dl_hw_gps_common_on(void)
 
 	/* Power on A-die top clock */
 #if (GPS_DL_HAS_CONNINFRA_DRV)
-	/* conninfra_adie_top_ck_en_on(CONNSYS_ADIE_CTL_HOST_GPS); */
+	conninfra_adie_top_ck_en_on(CONNSYS_ADIE_CTL_HOST_GPS);
 #endif
 
 	/* Enable PLL driver */
@@ -134,7 +134,7 @@ void gps_dl_hw_gps_common_off(void)
 {
 	/* Power off A-die top clock */
 #if (GPS_DL_HAS_CONNINFRA_DRV)
-	/* conninfra_adie_top_ck_en_off(CONNSYS_ADIE_CTL_HOST_GPS); */
+	conninfra_adie_top_ck_en_off(CONNSYS_ADIE_CTL_HOST_GPS);
 #endif
 
 	gps_dl_hw_gps_sleep_prot_ctrl(0);
