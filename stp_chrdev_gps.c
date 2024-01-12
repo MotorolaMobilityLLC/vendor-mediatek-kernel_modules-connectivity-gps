@@ -493,7 +493,9 @@ void GPS_fwlog_ctrl(bool on)
 long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	int retval = 0;
+	#if 0
 	ENUM_WMTHWVER_TYPE_T hw_ver_sym = WMTHWVER_INVALID;
+	#endif
 	UINT32 hw_version = 0;
 	UINT32 fw_version = 0;
 	UINT32 gps_lna_pin = 0;
@@ -516,6 +518,7 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		retval = -EINVAL;
 		break;
 
+	#if 0
 	case COMBO_IOC_GPS_HWVER:
 		/*get combo hw version */
 		hw_ver_sym = mtk_wcn_wmt_hwver_get();
@@ -526,6 +529,7 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			retval = -EFAULT;
 
 		break;
+	#endif
 	case COMBO_IOC_GPS_IC_HW_VERSION:
 		/*get combo hw version from ic,  without wmt mapping */
 		hw_version = mtk_wcn_wmt_ic_info_get(WMTCHIN_HWVER);
