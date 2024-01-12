@@ -435,34 +435,26 @@ int gps_dl_linux_plat_drv_unregister(void)
 	return 0;
 }
 
-#if 0
 static struct wakeup_source g_gps_dl_wake_lock;
-#endif
 void gps_dl_wake_lock_init(void)
 {
-#if 0
 	GDL_LOGD("");
 	wakeup_source_init(&g_gps_dl_wake_lock, "gpsdl_wakelock");
-#endif
 }
 
 void gps_dl_wake_lock_deinit(void)
 {
-#if 0
 	GDL_LOGD("");
 	wakeup_source_trash(&g_gps_dl_wake_lock);
-#endif
 }
 
 void gps_dl_wake_lock_hold(bool hold)
 {
-#if 0
 	GDL_LOGD("hold = %d", hold);
 	if (hold)
 		__pm_stay_awake(&g_gps_dl_wake_lock);
 	else
 		__pm_relax(&g_gps_dl_wake_lock);
-#endif
 }
 
 #endif /* GPS_DL_HAS_PLAT_DRV */
