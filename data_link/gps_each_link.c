@@ -147,7 +147,7 @@ void gps_each_link_inc_session_id(enum gps_dl_link_id_enum link_id)
 	sid = p->session_id;
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
-	GDL_LOGXD(link_id, "new sid = %d", sid);
+	GDL_LOGXI(link_id, "new sid = %d, 1byte_mode = %d", sid, gps_dl_is_1byte_mode());
 }
 
 int gps_each_link_get_session_id(enum gps_dl_link_id_enum link_id)
@@ -680,6 +680,10 @@ int gps_each_link_check(enum gps_dl_link_id_enum link_id)
 
 	case LINK_OPENED:
 		gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, link_id);
+
+		/* if L1 trigger it, also print L5 status */
+		if (link_id == GPS_DATA_LINK_ID0)
+			gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, GPS_DATA_LINK_ID1);
 		break;
 
 	default:
@@ -994,7 +998,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	unsigned long j0, j1;
 
 	j0 = jiffies;
-	GDL_LOGXI(link_id, "evt = %s", gps_dl_link_event_name(evt));
+	GDL_LOGXD(link_id, "evt = %s", gps_dl_link_event_name(evt));
 
 	switch (evt) {
 	case GPS_DL_EVT_LINK_OPEN:
@@ -1153,7 +1157,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	}
 
 	j1 = jiffies;
-	GDL_LOGXD(link_id, "evt2 = %s, dj = %u", gps_dl_link_event_name(evt), j1 - j0);
+	GDL_LOGXI(link_id, "evt = %s, dj = %u", gps_dl_link_event_name(evt), j1 - j0);
 }
 
 int gps_each_link_send_data(char *buffer, unsigned int len, unsigned int data_link_num)

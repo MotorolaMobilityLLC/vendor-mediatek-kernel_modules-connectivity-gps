@@ -417,6 +417,18 @@ void gps_dma_buf_memcpy_to_tx(void *p_dst, const void *p_src, unsigned int len)
 #endif
 }
 
+void gps_dma_buf_memset_io(void *p_dst, unsigned char val, unsigned int len)
+{
+	memset_io(p_dst, val, len);
+#if GPS_DL_ON_LINUX
+	/* Use mb to make sure memcpy is done by CPU, and then DMA can be started.  */
+	mb();
+	/* TODO:
+	 * __dma_flush_area((void *)p_dst, len);
+	 * dma_sync_single_for_device(DMA_TO_DEVICE);
+	 */
+#endif
+}
 
 enum GDL_RET_STATUS gdl_dma_buf_entry_to_buf(const struct gdl_dma_buf_entry *p_entry,
 	unsigned char *p_buf, unsigned int buf_len, unsigned int *p_data_len)
@@ -514,17 +526,19 @@ enum GDL_RET_STATUS gdl_dma_buf_buf_to_entry(const struct gdl_dma_buf_entry *p_e
 	if (fill_zero_len >= 0) {
 		wrap_len = p_entry->buf_length - write_index;
 		if (wrap_len >= fill_zero_len) {
-			memset(((unsigned char *)p_entry->vir_addr) + write_index,
-				0, fill_zero_len);
+			p_dst = ((unsigned char *)p_entry->vir_addr) + write_index;
+			gps_dma_buf_memset_io(p_dst, 0, fill_zero_len);
 
 			write_index += fill_zero_len;
 			if (write_index >= p_entry->buf_length)
 				write_index = 0;
 		} else {
-			memset(((unsigned char *)p_entry->vir_addr) + write_index,
-				0, wrap_len);
-			memset(((unsigned char *)p_entry->vir_addr) + 0,
-				0, fill_zero_len - wrap_len);
+			/* impossible case when buf_len is an integral multiple of 4byte */
+			p_dst = ((unsigned char *)p_entry->vir_addr) + write_index;
+			gps_dma_buf_memset_io(p_dst, 0, wrap_len);
+
+			p_dst = ((unsigned char *)p_entry->vir_addr) + 0;
+			gps_dma_buf_memset_io(p_dst, 0, fill_zero_len - wrap_len);
 
 			write_index = fill_zero_len - wrap_len;
 		}

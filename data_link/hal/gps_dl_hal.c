@@ -118,7 +118,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		GDL_LOGXW(link_id, "curr_sid = %d, evt = %s, on_sid = %d, out of range",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
 	} else {
-		GDL_LOGXI(link_id, "curr_sid = %d, evt = %s, on_sid = %d",
+		GDL_LOGXD(link_id, "curr_sid = %d, evt = %s, on_sid = %d",
 			curr_sid, gps_dl_hal_event_name(evt), sid_on_evt);
 	}
 
@@ -247,7 +247,8 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	}
 
 	j1 = jiffies;
-	GDL_LOGXD(link_id, "evt2 = %s, dj = %u", gps_dl_hal_event_name(evt), j1 - j0);
+	GDL_LOGXI(link_id, "evt = %s, on_sid = %d, dj = %u",
+		gps_dl_hal_event_name(evt), sid_on_evt, j1 - j0);
 }
 
 void gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
