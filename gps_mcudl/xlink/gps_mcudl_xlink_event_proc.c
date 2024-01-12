@@ -234,30 +234,7 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 		gps_mcudl_each_link_set_active(link_id, false);
 #endif
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE && !g_gps_mcudl_ever_do_coredump) {
-			/*dump tia status*/
-			gps_dl_tia_gps_ctrl(false);
-
-			/* dump ydata status */
-			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
-			gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);
-			gps_mcu_hif_host_trans_hist_dump();
-			gps_mcudl_mcu2ap_rec_dump();
-			gps_mcudl_xlink_dump_all_rec();
-			gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_NORMAL, true);
-			gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_NORMAL);
-			gps_mcudl_host_sta_hist_dump(GPS_MDLY_NORMAL);
-			gps_mcudl_host_sta_hist_dump(GPS_MDLY_URGENT);
-			gps_mcudl_mcu2ap_ydata_sta_may_do_dump(GPS_MDLY_URGENT, true);
-			gps_mcudl_flowctrl_dump_host_sta(GPS_MDLY_URGENT);
-			gps_mcudl_hal_user_fw_own_status_dump();
-
-			if (gps_mcudl_coredump_is_readable()) {
-				gps_mcudl_hal_mcu_show_status();
-				gps_mcudl_hal_ccif_show_status();
-			} else
-				MDL_LOGE("readable=0");
-
-			gps_mcudl_connsys_coredump_start();
+			gps_mcudl_connsys_coredump_start_wrapper();
 			g_gps_mcudl_ever_do_coredump = true;
 		}
 
