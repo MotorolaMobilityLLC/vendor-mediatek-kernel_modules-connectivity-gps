@@ -227,6 +227,7 @@ static void __exit gps_fw_log_exit(void)
 	device_destroy(logdevobj->cls, logdevobj->devno);
 	class_destroy(logdevobj->cls);
 	kfree(logdevobj);
+	logdevobj = NULL;
 	pr_info("Done\n");
 }
 
