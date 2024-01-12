@@ -80,6 +80,8 @@ static struct gps_dl_runtime_cfg s_gps_rt_cfg = {
 	.show_reg_rw_log = false,
 	.show_reg_wait_log = true,
 	.only_show_wait_done_log = false,
+	.log_level = GPS_DL_LOG_LEVEL_DEFAULT,
+	.log_mod_bitmask = (1UL << GPS_DL_LOG_MOD_DEFAULT),
 };
 
 struct gps_each_link *gps_dl_link_get(enum gps_dl_link_id_enum link_id)
@@ -197,5 +199,35 @@ int gps_dl_set_tx_transfer_max(enum gps_dl_link_id_enum link_id, int max)
 	}
 
 	return old_max;
+}
+
+enum gps_dl_log_level_enum gps_dl_log_level_get(void)
+{
+	return s_gps_rt_cfg.log_level;
+}
+
+void gps_dl_log_level_set(enum gps_dl_log_level_enum level)
+{
+	s_gps_rt_cfg.log_level = level;
+}
+
+bool gps_dl_log_mod_is_on(enum gps_dl_log_module_enum mod)
+{
+	return (bool)(s_gps_rt_cfg.log_mod_bitmask & (1UL << mod));
+}
+
+void gps_dl_log_mod_bitmask_set(unsigned int bitmask)
+{
+	s_gps_rt_cfg.log_mod_bitmask = bitmask;
+}
+
+unsigned int gps_dl_log_mod_bitmask_get(void)
+{
+	return s_gps_rt_cfg.log_mod_bitmask;
+}
+
+void gps_dl_log_info_show(void)
+{
+	GDL_LOGE("level = %d, bitmask = 0x%08x", s_gps_rt_cfg.log_level, s_gps_rt_cfg.log_mod_bitmask);
 }
 
