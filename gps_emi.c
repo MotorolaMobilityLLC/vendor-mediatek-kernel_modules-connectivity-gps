@@ -29,7 +29,7 @@
 #include <linux/printk.h>
 #include <linux/version.h>
 #include <asm/memblock.h>
-#define EMI_MPU_PROTECTION_IS_READY  1
+#define EMI_MPU_PROTECTION_IS_READY  0
 #if EMI_MPU_PROTECTION_IS_READY
 #include <mt_emi_api.h>
 #endif
