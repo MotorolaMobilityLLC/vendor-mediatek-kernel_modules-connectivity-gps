@@ -67,12 +67,18 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id)
 	GDL_HW_RD_GPS_REG(0x80073134); /* DL1 */
 
 	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_STA_ADDR);
-	gps_dl_hw_gps_dump_rf_cr();
-
 	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_ADDR_ADDR);
 	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_WDAT_ADDR);
 	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_RDAT_ADDR);
 	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_STA_ADDR);
+
+	gps_dl_hw_gps_dump_top_rf_cr();
+	gps_dl_hw_gps_dump_gps_rf_cr();
+
+	if (GPS_DATA_LINK_ID0 == link_id) {
+		GDL_HW_WR_GPS_REG(0x80073120, 1); /* enable A2Z */
+		GDL_HW_RD_GPS_REG(0x800706C0);
+	}
 }
 
 void gps_dl_hw_dump_sleep_prot_status(void)
@@ -513,7 +519,7 @@ static void gps_dl_hw_gps_fmspi_state_restore(unsigned int rd_ext_en_bk, unsigne
 /* note: must be protect by gps_dl_hw_take_conn_rfspi_hw_sema */
 static bool gps_dl_hw_gps_fmspi_read_rfcr(unsigned int addr, unsigned int *p_val)
 {
-	int val;
+	unsigned int val;
 	bool okay;
 	bool poll_okay;
 	unsigned int tmp;
@@ -546,7 +552,33 @@ static bool gps_dl_hw_gps_fmspi_read_rfcr(unsigned int addr, unsigned int *p_val
 	return okay;
 }
 
-void gps_dl_hw_gps_dump_rf_cr(void)
+static bool gps_dl_hw_gps_fmspi_write_rfcr(unsigned int addr, unsigned int val)
+{
+	bool okay;
+	bool poll_okay;
+	unsigned int tmp;
+
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_SPI_STA_FM_BUSY, 0,
+		GPS_DL_RFSPI_BUSY_POLL_MAX, &poll_okay);
+	if (!poll_okay)
+		return false;
+
+	tmp = ((addr & 0xFFF) | (0 << 12UL) | (4 << 13UL) | (0 << 16UL));
+	GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_ADDR_ADDR, tmp);
+	GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_WDAT_ADDR, val);
+
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_SPI_STA_FM_BUSY, 0,
+		GPS_DL_RFSPI_BUSY_POLL_MAX, &poll_okay);
+	if (!poll_okay) {
+		GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_RDAT_ADDR);
+		return false;
+	}
+
+	okay = true;
+	return okay;
+}
+
+void gps_dl_hw_gps_dump_gps_rf_cr(void)
 {
 	bool show_log, backup_okay;
 	unsigned int addr, val;
@@ -555,12 +587,31 @@ void gps_dl_hw_gps_dump_rf_cr(void)
 	gps_dl_hw_take_conn_rfspi_hw_sema(100);
 	show_log = gps_dl_set_show_reg_rw_log(true);
 	backup_okay = gps_dl_hw_gps_fmspi_state_backup(&rd_ext_en_bk, &rd_ext_cnt_bk);
+
+	/* read: 0x500 ~ 0x51b */
 	for (addr = 0x500; addr <= 0x51B; addr++) {
 		if (gps_dl_hw_gps_fmspi_read_rfcr(addr, &val))
-			GDL_LOGW("addr = 0x%x, val = 0x%x", addr, val);
+			GDL_LOGW("rd: addr = 0x%x, val = 0x%x", addr, val);
 		else
-			GDL_LOGW("addr = 0x%x, read fail", addr);
+			GDL_LOGW("rd: addr = 0x%x, fail", addr);
 	}
+
+	/* write: 0x51a = 1 */
+	addr = 0x51A;
+	val = 1;
+	if (gps_dl_hw_gps_fmspi_write_rfcr(addr, val))
+		GDL_LOGW("wr: addr = 0x%x, val = 0x%x, okay", addr, val);
+	else
+		GDL_LOGW("wr: addr = 0x%x, val = 0x%x, fail", addr, val);
+
+	/* read: 0x51a & 0x51b */
+	for (addr = 0x51A; addr <= 0x51B; addr++) {
+		if (gps_dl_hw_gps_fmspi_read_rfcr(addr, &val))
+			GDL_LOGW("rd: addr = 0x%x, val = 0x%x", addr, val);
+		else
+			GDL_LOGW("rd: addr = 0x%x, fail", addr);
+	}
+
 	if (backup_okay)
 		gps_dl_hw_gps_fmspi_state_restore(rd_ext_en_bk, rd_ext_cnt_bk);
 	else
