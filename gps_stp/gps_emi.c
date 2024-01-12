@@ -513,7 +513,11 @@ static int gps_emi_mod_init(void)
 		GPS_ERR("cdev_add fail: %d\n", err);
 		goto err_out;
 	}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+	devobj->cls = class_create("gpsemi");
+#else
 	devobj->cls = class_create(THIS_MODULE, "gpsemi");
+#endif
 	if (IS_ERR(devobj->cls)) {
 		GPS_ERR("Unable to create class, err = %d\n", (int)PTR_ERR(devobj->cls));
 	goto err_out;

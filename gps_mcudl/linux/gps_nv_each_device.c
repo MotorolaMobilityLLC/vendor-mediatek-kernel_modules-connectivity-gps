@@ -433,7 +433,11 @@ int  gps_nv_cdev_setup(struct gps_nv_each_device *dev, enum gps_mcusys_nv_data_i
 	}
 
 	GDL_LOGD("nv_id=%d, class_create: %s", nv_id, dev->cfg.dev_name);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+	dev->cls = class_create(dev->cfg.dev_name);
+#else
 	dev->cls = class_create(THIS_MODULE, dev->cfg.dev_name);
+#endif
 	if (IS_ERR(dev->cls)) {
 		GDL_LOGE("nv_id=%d, class_create: %s, failed", nv_id, dev->cfg.dev_name);
 		return -1;

@@ -548,7 +548,11 @@ int gps_mcudl_cdev_setup(struct gps_mcudl_each_device *dev, enum gps_mcudl_xid x
 	}
 
 	MDL_LOGD("class_create: %s, xid = %d", dev->cfg.dev_name, dev->cfg.xid);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+	dev->cls = class_create(dev->cfg.dev_name);
+#else
 	dev->cls = class_create(THIS_MODULE, dev->cfg.dev_name);
+#endif
 	if (IS_ERR(dev->cls)) {
 		MDL_LOGE("class_create fail on %s", dev->cfg.dev_name);
 		return -1;

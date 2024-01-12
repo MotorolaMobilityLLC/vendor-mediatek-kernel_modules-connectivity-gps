@@ -559,7 +559,11 @@ static int gps2scp_test_init(void)
 		pr_info("cdev_add fail: %d\n", err);
 		goto err_out;
 	}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+	gps2scp_devobj_test->cls = class_create("gps2scp_test");
+#else
 	gps2scp_devobj_test->cls = class_create(THIS_MODULE, "gps2scp_test");
+#endif
 	if (IS_ERR(gps2scp_devobj_test->cls)) {
 		pr_info("Unable to create class, err = %d\n", (int)PTR_ERR(gps2scp_devobj_test->cls));
 	goto err_out;
@@ -619,7 +623,11 @@ static int gps2scp_init(void)
 		pr_info("cdev_add fail: %d\n", err);
 		goto err_out;
 	}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+	gps2scp_devobj->cls = class_create("gps2scp");
+#else
 	gps2scp_devobj->cls = class_create(THIS_MODULE, "gps2scp");
+#endif
 	if (IS_ERR(gps2scp_devobj->cls)) {
 		pr_info("Unable to create class, err = %d\n", (int)PTR_ERR(gps2scp_devobj->cls));
 	goto err_out;

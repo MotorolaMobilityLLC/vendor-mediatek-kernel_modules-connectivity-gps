@@ -192,7 +192,11 @@ static int gps_pwr_init(void)
 		pr_info("cdev_add fail: %d\n", err);
 		goto err_out;
 	}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+	gps_pwr_devobj->cls = class_create("gps_pwr");
+#else
 	gps_pwr_devobj->cls = class_create(THIS_MODULE, "gps_pwr");
+#endif
 	if (IS_ERR(gps_pwr_devobj->cls)) {
 		pr_info("Unable to create class, err = %d\n", (int)PTR_ERR(gps_pwr_devobj->cls));
 	goto err_out;
