@@ -35,6 +35,25 @@ void gps_dl_hw_usrt_rx_irq_enable(enum gps_dl_link_id_enum link_id, bool enable)
 		GDL_HW_SET_GPS_ENTRY2(link_id, 0, GPS_USRT_APB_APB_INTEN_TXIEN, GPS_L5_USRT_APB_APB_INTEN_TXIEN);
 }
 
+#define GPS_DSP_CFG_BITMASK_ADIE_IS_MT6631              (1UL << 0)
+#define GPS_DSP_CFG_BITMASK_MVCD_SPEED_UP               (1UL << 1)
+#define GPS_DSP_CFG_BITMASK_ADIE_IS_MT6635_E2_OR_AFTER  (1UL << 2)
+#define GPS_DSP_CFG_BITMASK_USRT_4BYTE_MODE             (1UL << 3)
+#define GPS_DSP_CFG_BITMASK_COLOCK_USE_TIA              (1UL << 6)
+
+unsigned int gps_dl_hw_get_mcub_a2d1_cfg(bool is_1byte_mode)
+{
+	unsigned int cfg = 0;
+
+	cfg |= GPS_DSP_CFG_BITMASK_MVCD_SPEED_UP;
+	cfg |= GPS_DSP_CFG_BITMASK_ADIE_IS_MT6635_E2_OR_AFTER;
+	if (!is_1byte_mode)
+		cfg |= GPS_DSP_CFG_BITMASK_USRT_4BYTE_MODE;
+	cfg |= GPS_DSP_CFG_BITMASK_COLOCK_USE_TIA;
+
+	return cfg;
+}
+
 void gps_dl_hw_usrt_ctrl(enum gps_dl_link_id_enum link_id,
 	bool is_on, bool is_dma_mode, bool is_1byte_mode)
 {
@@ -60,11 +79,8 @@ void gps_dl_hw_usrt_ctrl(enum gps_dl_link_id_enum link_id,
 		GDL_HW_SET_GPS_ENTRY2(link_id, 0, GPS_USRT_APB_APB_INTEN_NODAIEN, GPS_L5_USRT_APB_APB_INTEN_NODAIEN);
 	}
 
-	/* not speed up */
-	if (is_1byte_mode)
-		GDL_HW_SET_GPS_ENTRY2(link_id, 0x4, GPS_USRT_APB_MCU_A2D1_A2D_1, GPS_L5_USRT_APB_MCU_A2D1_A2D_1);
-	else
-		GDL_HW_SET_GPS_ENTRY2(link_id, 0x6, GPS_USRT_APB_MCU_A2D1_A2D_1, GPS_L5_USRT_APB_MCU_A2D1_A2D_1);
+	GDL_HW_SET_GPS_ENTRY2(link_id, gps_dl_hw_get_mcub_a2d1_cfg(is_1byte_mode),
+		GPS_USRT_APB_MCU_A2D1_A2D_1, GPS_L5_USRT_APB_MCU_A2D1_A2D_1);
 
 	GDL_HW_SET_GPS_ENTRY2(link_id, 1, GPS_USRT_APB_MCUB_A2DF_A2DF3, GPS_L5_USRT_APB_MCUB_A2DF_A2DF3);
 
