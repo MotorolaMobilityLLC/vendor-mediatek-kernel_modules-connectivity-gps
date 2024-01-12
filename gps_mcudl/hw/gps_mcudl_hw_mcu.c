@@ -431,6 +431,7 @@ void gps_mcudl_hw_mcu_show_status(void)
 
 void gps_mcudl_hw_mcu_show_pc_log(void)
 {
+#if 0
 	unsigned int flag;
 
 	for (flag = 0xC0040104; flag <= 0xC0040113; flag++) {
@@ -449,6 +450,10 @@ void gps_mcudl_hw_mcu_show_pc_log(void)
 			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
 			BMASK_RW_FORCE_PRINT);
 	}
+#else
+	gps_dl_hw_dep_dump_host_csr_range(0xC0040104, 0x10);
+	gps_dl_hw_dep_dump_host_csr_range(0xC0040D00, 0x32);
+#endif
 }
 
 bool gps_mcudl_hw_bg_is_readable(void)

@@ -3,6 +3,7 @@
  * Copyright (c) 2022 MediaTek Inc.
  */
 
+#include "gps_dl_context.h"
 #include "gps_mcudl_reset.h"
 #include "gps_mcudl_context.h"
 #include "gps_mcudl_xlink.h"
@@ -309,6 +310,9 @@ void gps_mcudl_connsys_coredump_start(void)
 
 void gps_mcudl_connsys_coredump_start_wrapper(void)
 {
+	bool show_log = false;
+
+	show_log = gps_dl_set_show_reg_rw_log(false);
 #if GPS_DL_HAS_PLAT_DRV
 	/*dump tia status*/
 	gps_dl_tia_gps_ctrl(false);
@@ -340,6 +344,7 @@ void gps_mcudl_connsys_coredump_start_wrapper(void)
 		MDL_LOGE("readable=0");
 
 	gps_mcudl_connsys_coredump_start();
+	gps_dl_set_show_reg_rw_log(show_log);
 }
 #endif
 

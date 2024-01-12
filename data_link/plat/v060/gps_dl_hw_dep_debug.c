@@ -4,10 +4,10 @@
  */
 #include "gps_dl_config.h"
 
+#include "gps_dl_osal.h"
 #include "gps_dl_hw_ver.h"
 #include "gps_dl_hw_dep_api.h"
 #include "gps_dl_hw_dep_macro.h"
-
 #include "../gps_dl_hw_priv_util.h"
 #include "mcudl/mcu_sys/conn_mcu_confg_on.h"
 
@@ -18,11 +18,46 @@ void gps_dl_hw_dep_dump_gps_pos_info(enum gps_dl_link_id_enum link_id)
 
 void gps_dl_hw_dep_dump_host_csr_range(unsigned int flag_start, unsigned int len)
 {
-	/* TODO */
+	unsigned int flag, out;
+	#define HOST_CSR_PRINT_LINE_MAX (8)
+	unsigned int print_list[HOST_CSR_PRINT_LINE_MAX];
+	unsigned int print_flag;
+	unsigned int non_print_cnt;
+
+	non_print_cnt = 0;
+	gps_dl_osal_memset(&print_list[0], 0, sizeof(print_list));
+
+	for (flag = flag_start; flag < (flag_start + len); flag++) {
+		if (non_print_cnt >= HOST_CSR_PRINT_LINE_MAX) {
+			GDL_LOGW("flag=0x%x,cnt=%d,out=0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x",
+				print_flag, non_print_cnt,
+				print_list[0], print_list[1], print_list[2], print_list[3],
+				print_list[4], print_list[5], print_list[6], print_list[7]);
+			non_print_cnt = 0;
+			gps_dl_osal_memset(&print_list[0], 0, sizeof(print_list));
+		}
+
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, flag, 0);
+		out = gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR, 0);
+
+		if (non_print_cnt == 0)
+			print_flag = flag;
+		print_list[non_print_cnt++] = out;
+	}
+
+	if (non_print_cnt != 0) {
+		GDL_LOGW("flag=0x%x,cnt=%d,out=0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x",
+			print_flag, non_print_cnt,
+			print_list[0], print_list[1], print_list[2], print_list[3],
+			print_list[4], print_list[5], print_list[6], print_list[7]);
+	}
 }
 
 void gps_dl_hw_dep_dump_host_csr_gps_info(void)
 {
+#if 0
 	unsigned int flag;
 	const struct gps_dl_hw_host_csr_dump_range *p_range;
 	int i, j;
@@ -46,6 +81,15 @@ void gps_dl_hw_dep_dump_host_csr_gps_info(void)
 				BMASK_RW_FORCE_PRINT);
 		}
 	}
+#else
+	int i;
+	const struct gps_dl_hw_host_csr_dump_range *p_range;
+
+	for (i = 0; i < g_gps_v06x_host_csr_dump_range_num; i++) {
+		p_range = &g_gps_v06x_host_csr_dump_range_ptr[i];
+		gps_dl_hw_dep_dump_host_csr_range(p_range->flag_start, p_range->len);
+	}
+#endif
 }
 
 void gps_dl_hw_dep_dump_host_csr_conninfra_info(void)

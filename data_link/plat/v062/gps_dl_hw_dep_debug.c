@@ -19,15 +19,14 @@ void gps_dl_hw_dep_dump_gps_pos_info(enum gps_dl_link_id_enum link_id)
 
 void gps_dl_hw_dep_dump_host_csr_range(unsigned int flag_start, unsigned int len)
 {
-	struct arm_smccc_res res;
-	unsigned int flag, atf_ret, flag2, out;
-	#define HOST_CSR_PRINT_LINE_MAX (8)
+	unsigned int flag, out;
+#define HOST_CSR_PRINT_LINE_MAX (8)
 	unsigned int print_list[HOST_CSR_PRINT_LINE_MAX];
 	unsigned int print_flag;
 	unsigned int non_print_cnt;
 
 	non_print_cnt = 0;
-	memset(&print_list[0], 0, sizeof(print_list));
+	gps_dl_osal_memset(&print_list[0], 0, sizeof(print_list));
 
 	for (flag = flag_start; flag < (flag_start + len); flag++) {
 		if (non_print_cnt >= HOST_CSR_PRINT_LINE_MAX) {
@@ -36,16 +35,13 @@ void gps_dl_hw_dep_dump_host_csr_range(unsigned int flag_start, unsigned int len
 				print_list[0], print_list[1], print_list[2], print_list[3],
 				print_list[4], print_list[5], print_list[6], print_list[7]);
 			non_print_cnt = 0;
-			memset(&print_list[0], 0, sizeof(print_list));
+			gps_dl_osal_memset(&print_list[0], 0, sizeof(print_list));
 		}
 
-		arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_DEP_SET_HOST_CSR_GPS_DBG_SEL_OPID,
-			flag, 0, 0, 0, 0, 0, &res);
-		atf_ret = res.a0;
-		flag2 = res.a1;
-		out = res.a2;
-		if (flag != flag2 || atf_ret != 0)
-			GDL_LOGW("atf_ret=%d, flag=0x%08x,0x%08x, out=0x%08x", atf_ret, flag, flag2, out);
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, flag, 0);
+		out = gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR, 0);
 
 		if (non_print_cnt == 0)
 			print_flag = flag;
@@ -86,20 +82,6 @@ void gps_dl_hw_gps_dump_gps_rf_temp_cr(void)
 	/* TODO */
 }
 
-static void gps_dl_hw_dep_set_bgf_on_dbg_sel(unsigned int flag_value)
-{
-	struct arm_smccc_res res;
-	unsigned int atf_ret, flag2;
-
-	memset(&res, 0, sizeof(res));
-	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_DEP_SET_HOST_CSR2BGF_DBG_SEL_OPID,
-		flag_value, 0, 0, 0, 0, 0, &res);
-	atf_ret = res.a0;
-	flag2 = res.a1;
-	if (flag_value != flag2 || atf_ret != 0)
-		GDL_LOGW("atf_ret=%d, flag=0x%08x,0x%08x", atf_ret, flag_value, flag2);
-}
-
 void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 {
 #define BGF_LP_DBG_DUMP_LEN (5)
@@ -123,19 +105,19 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	clock_det = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_CLOCK_DETECT_ADDR);
 	conn_pwr_st = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONNSYS_PWR_STATES_ADDR);
 
-	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x200c00);
+	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x200c00);
 	bgf_dummy = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 	GDL_HW_WR_CONN_INFRA_REG(
 		CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, 0x80040000);
 	bgf_dummy2 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
 
 	for (i = 0; i < BGF_LP_DBG_DUMP_LEN; i++) {
-		gps_dl_hw_dep_set_bgf_on_dbg_sel((0x300040 + i));
+		GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, (0x300040 + i));
 		bgf_dbg_300040[i] = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 	}
-	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x30004a);
+	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x30004a);
 	bgf_dbg_30004a = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
-	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x30004b);
+	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x30004b);
 	bgf_dbg_30004b = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 
 	GDL_LOGI(
@@ -157,7 +139,7 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	 * reading from host_csr can avoid this.
 	 * lp_status = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
 	 */
-	gps_dl_hw_dep_set_bgf_on_dbg_sel(0x300d43);
+	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x300d43);
 	lp_status = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 	lp_status2 = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
 
