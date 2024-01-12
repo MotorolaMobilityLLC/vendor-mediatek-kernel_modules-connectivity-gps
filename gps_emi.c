@@ -171,6 +171,7 @@ INT32 gps_emi_patch_get(PUINT8 pPatchName, osal_firmware **ppPatch)
 	iRet = request_firmware((const struct firmware **)&fw, pPatchName, NULL);
 	if (iRet != 0) {
 		GPS_DBG("failed to open or read!(%s)\n", pPatchName);
+		release_firmware(fw);
 		return -1;
 	}
 	GPS_DBG("loader firmware %s  ok!!\n", pPatchName);

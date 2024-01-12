@@ -123,6 +123,7 @@ module_param(GPS_major, uint, 0);
 static struct cdev GPS_cdev;
 
 static struct wakeup_source *gps_wake_lock_ptr;
+const char gps_wake_lock_name[] = "gpswakelock";
 static unsigned char wake_lock_acquired;   /* default: 0 */
 
 #if (defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) && !defined(CONFIG_MTK_ENG_BUILD))
@@ -492,6 +493,21 @@ long GPS_fwctl(struct gps_fwctl_data *user_ptr)
 #endif /* GPS_FWCTL_IOCTL_SUPPORT */
 
 #define GPS_FWLOG_CTRL_BUF_MAX  (20)
+
+#define GPS_NSEC_IN_MSEC (1000000)
+UINT64 GPS_get_local_clock_ms(void)
+{
+	UINT64 tmp;
+
+	/* tmp is ns */
+	tmp = local_clock();
+
+	/* tmp is changed to ms after */
+	do_div(tmp, GPS_NSEC_IN_MSEC);
+
+	return tmp;
+}
+
 void GPS_fwlog_ctrl_inner(bool on)
 {
 	UINT8 tx_buf[GPS_FWLOG_CTRL_BUF_MAX];
@@ -504,12 +520,11 @@ void GPS_fwlog_ctrl_inner(bool on)
 	UINT32 fw_tick = 0;
 	UINT32 local_ms0, local_ms1;
 	struct timeval tv;
-	UINT64 tmp;
 
 	do_gettimeofday(&tv);
-	tmp = local_clock();
-	do_div(tmp, 1e6);
-	local_ms0 = (UINT32)tmp; /* overflow almost 4.9 days */
+
+	/* 32bit ms overflow almost 4.9 days, it's enough here */
+	local_ms0 = (UINT32)GPS_get_local_clock_ms();
 
 	tx_buf[0]  = GPS_FWCTL_OPCODE_LOG_CFG;
 	tx_buf[1]  = (UINT8)on;
@@ -533,10 +548,7 @@ void GPS_fwlog_ctrl_inner(bool on)
 	status = mtk_wmt_gps_mcu_ctrl(&tx_buf[0], tx_len, &rx_buf[0], GPS_FWLOG_CTRL_BUF_MAX, &rx_len);
 
 	/* local_ms1 = jiffies_to_msecs(jiffies); */
-	tmp = local_clock();
-	do_div(tmp, 1e6);
-	local_ms1 = (UINT32)tmp;
-
+	local_ms1 = (UINT32)GPS_get_local_clock_ms();
 
 	if (status == 0) {
 		if (rx_len >= 2) {
@@ -572,12 +584,11 @@ static int GPS_hw_suspend_ctrl(bool to_suspend, UINT8 mode)
 	INT32 wmt_status;
 	UINT32 local_ms0, local_ms1;
 	struct timeval tv;
-	UINT64 tmp;
 
 	do_gettimeofday(&tv);
-	tmp = local_clock();
-	do_div(tmp, 1e6);
-	local_ms0 = (UINT32)tmp; /* overflow almost 4.9 days */
+
+	/* 32bit ms overflow almost 4.9 days, it's enough here */
+	local_ms0 = (UINT32)GPS_get_local_clock_ms();
 
 	tx_buf[0] = to_suspend ? GPS_FWCTL_OPCODE_ENTER_STOP_MODE :
 		GPS_FWCTL_OPCODE_EXIT_STOP_MODE;
@@ -588,9 +599,7 @@ static int GPS_hw_suspend_ctrl(bool to_suspend, UINT8 mode)
 		&rx_buf[0], HW_SUSPEND_CTRL_RX_LEN, &rx_len);
 
 	/* local_ms1 = jiffies_to_msecs(jiffies); */
-	tmp = local_clock();
-	do_div(tmp, 1e6);
-	local_ms1 = (UINT32)tmp;
+	local_ms1 = (UINT32)GPS_get_local_clock_ms();
 
 	if (wmt_status == 0) { /* 0 is okay */
 		if (rx_len >= 2) {
@@ -1164,9 +1173,9 @@ static int GPS_init(void)
 #endif
 	pr_warn("%s driver(major %d) installed.\n", GPS_DRIVER_NAME, GPS_major);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 149)
-	gps_wake_lock_ptr = wakeup_source_register(NULL, "gpswakelock");
+	gps_wake_lock_ptr = wakeup_source_register(NULL, gps_wake_lock_name);
 #else
-	gps_wake_lock_ptr = wakeup_source_register("gpswakelock");
+	gps_wake_lock_ptr = wakeup_source_register(gps_wake_lock_name);
 #endif
 	if (!gps_wake_lock_ptr) {
 		pr_info("%s %d: init wakeup source fail!", __func__, __LINE__);

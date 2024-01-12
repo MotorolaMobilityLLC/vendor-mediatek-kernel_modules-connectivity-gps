@@ -430,10 +430,11 @@ int gps_dl_linux_plat_drv_unregister(void)
 }
 
 static struct wakeup_source g_gps_dl_wake_lock;
+const char c_gps_dl_wake_lock_name[] = "gpsdl_wakelock";
 void gps_dl_wake_lock_init(void)
 {
 	GDL_LOGD_INI("");
-	wakeup_source_init(&g_gps_dl_wake_lock, "gpsdl_wakelock");
+	wakeup_source_init(&g_gps_dl_wake_lock, c_gps_dl_wake_lock_name);
 }
 
 void gps_dl_wake_lock_deinit(void)
