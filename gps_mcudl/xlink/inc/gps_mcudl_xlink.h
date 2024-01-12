@@ -72,6 +72,7 @@ void gps_mcudl_xlink_trigger_print_hw_status(void);
 void gps_mcudl_xlink_test_fw_own_ctrl(bool to_set);
 void gps_mcudl_xlink_test_toggle_ccif(unsigned int ch);
 void gps_mcudl_xlink_test_toggle_reset_by_gps_hif(void);
+void gps_mcudl_xlink_test_read_mcu_reg(unsigned int addr, unsigned int bytes);
 
 extern int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op);
 extern int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op);
