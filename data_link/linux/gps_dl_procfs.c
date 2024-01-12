@@ -114,6 +114,10 @@ ssize_t gps_dl_procfs_write(struct file *filp, const char __user *buffer, size_t
 	buf[len] = '\0';
 	pBuf = buf;
 	do {
+		if (!pBuf) {
+			GDL_LOGW("x,y,z use default value - case0");
+			break;
+		}
 		res = 0;
 		sub_len = strlen(pBuf);
 		GDL_LOGD("write parameter data = %s, len = %ld", pBuf, sub_len);

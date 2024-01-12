@@ -618,7 +618,7 @@ enum GDL_RET_STATUS gdl_dma_buf_buf_to_entry(const struct gdl_dma_buf_entry *p_e
 	}
 
 	/* fill it to allignment */
-	if (fill_zero_len >= 0) {
+	if (fill_zero_len > 0) {
 		wrap_len = p_entry->buf_length - write_index;
 		if (wrap_len >= fill_zero_len) {
 			p_dst = ((unsigned char *)p_entry->vir_addr) + write_index;
