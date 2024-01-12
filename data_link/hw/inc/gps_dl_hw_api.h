@@ -50,6 +50,7 @@ void gps_dl_hw_gps_adie_force_off(void);
 
 int gps_dl_hw_gps_common_on(void);
 void gps_dl_hw_gps_common_off(void);
+void gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable);
 
 enum GDL_HW_RET gps_dl_hw_get_mcub_info(
 	enum gps_dl_link_id_enum link_id, struct gps_dl_hal_mcub_info *p);

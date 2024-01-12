@@ -26,7 +26,6 @@
 
 void gps_dma_buf_reset(struct gps_dl_dma_buf *p_dma)
 {
-	int i;
 	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 	p_dma->read_index = 0;
 	p_dma->reader_working = 0;

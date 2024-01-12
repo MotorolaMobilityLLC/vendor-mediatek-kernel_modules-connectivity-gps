@@ -82,6 +82,7 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			dsp_ctrl_ret = gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_ON);
 		else
 			dsp_ctrl_ret = -1;
+		gps_dl_hw_gps_force_wakeup_conninfra_top_off(false);
 
 		if (dsp_ctrl_ret == 0) {
 			/* USRT setting */
