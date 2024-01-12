@@ -83,8 +83,10 @@ struct gps_each_link_waitable {
 #if GPS_DL_ON_LINUX
 	/* TODO: use completion */
 	wait_queue_head_t wq;
-#endif
+	unsigned long fired;
+#else
 	bool fired;
+#endif
 	bool waiting;
 	enum gps_each_link_wait_status status;
 	enum gps_each_link_waitable_type type;
