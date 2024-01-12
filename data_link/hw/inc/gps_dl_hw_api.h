@@ -131,6 +131,7 @@ void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log);
 void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_print_usrt_status(enum gps_dl_link_id_enum link_id);
 bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id);
+void gps_dl_hw_gps_dump_rf_cr(void);
 
 void gps_dl_hw_switch_dsp_jtag(void);
 
@@ -156,8 +157,10 @@ void gps_dl_hw_claim_pta_used_by_gps(void);
 void gps_dl_hw_disclaim_pta_used_by_gps(void);
 void gps_dl_hw_set_pta_blanking_parameter(void);
 
-bool gps_dl_hw_take_conn_hw_sema(unsigned int timeout_ms);
-void gps_dl_hw_give_conn_hw_sema(void);
+bool gps_dl_hw_take_conn_coex_hw_sema(unsigned int timeout_ms);
+void gps_dl_hw_give_conn_coex_hw_sema(void);
+bool gps_dl_hw_take_conn_rfspi_hw_sema(unsigned int timeout_ms);
+void gps_dl_hw_give_conn_rfspi_hw_sema(void);
 
 unsigned int gps_dl_hw_get_mcub_a2d1_cfg(bool is_1byte_mode);
 

@@ -169,6 +169,13 @@ int gps_dl_trigger_gps_subsys_reset(bool wait_reset_done)
 	return 0;
 }
 
+void gps_dl_trigger_gps_print_hw_status(void)
+{
+	GDL_LOGE("");
+	gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, GPS_DATA_LINK_ID0);
+	gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, GPS_DATA_LINK_ID1);
+}
+
 void gps_dl_handle_connsys_reset_done(void)
 {
 	enum gps_dl_link_id_enum link_id;

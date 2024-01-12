@@ -21,6 +21,7 @@
 #include "conn_infra/conn_uart_pta.h"
 #include "conn_infra/conn_pta6.h"
 #include "conn_infra/conn_semaphore.h"
+#include "conn_infra/conn_rf_spi_mst_reg.h"
 
 void gps_dl_hw_set_gps_emi_remapping(unsigned int _20msb_of_36bit_phy_addr)
 {
@@ -40,7 +41,6 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id)
 	struct gps_dl_hw_dma_status_struct a2d_dma_status, d2a_dma_status;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
 	enum gps_dl_hal_dma_ch_index a2d_dma_ch, d2a_dma_ch;
-	unsigned int value;
 
 	if (gps_dl_show_reg_wait_log())
 		GDL_LOGXD(link_id, "");
@@ -63,8 +63,16 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id)
 	gps_dl_hw_save_dma_status_struct(d2a_dma_ch, &d2a_dma_status);
 	gps_dl_hw_print_dma_status_struct(d2a_dma_ch, &d2a_dma_status);
 
-	value = GDL_HW_RD_GPS_REG(0x80073160); /* DL0 */
-	value = GDL_HW_RD_GPS_REG(0x80073134); /* DL1 */
+	GDL_HW_RD_GPS_REG(0x80073160); /* DL0 */
+	GDL_HW_RD_GPS_REG(0x80073134); /* DL1 */
+
+	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_STA_ADDR);
+	gps_dl_hw_gps_dump_rf_cr();
+
+	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_ADDR_ADDR);
+	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_WDAT_ADDR);
+	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_GPS_GPS_RDAT_ADDR);
+	GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_STA_ADDR);
 }
 
 void gps_dl_hw_dump_host_csr_gps_info(bool force_show_log)
@@ -382,8 +390,9 @@ void gps_dl_hw_set_pta_blanking_parameter(void)
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_PTA6_GPS_BLANK_CFG_r_gps_blank_src, 0);
 }
 
-/* TODO: confirm SEMA05 and M3
- * Use COS_SEMA_COEX_INDEX, the value is 5
+/*
+ * COS_SEMA_COEX_INDEX = 5(see conninfra/platform/include/consys_hw.h)
+ * GPS use M3
  */
 #define COS_SEMA_COEX_STA_ENTRY_FOR_GPS \
 	CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_STA_CONN_SEMA05_M3_OWN_STA
@@ -391,7 +400,18 @@ void gps_dl_hw_set_pta_blanking_parameter(void)
 #define COS_SEMA_COEX_REL_ENTRY_FOR_GPS \
 	CONN_SEMAPHORE_CONN_SEMA05_M3_OWN_REL_CONN_SEMA05_M3_OWN_REL
 
-bool gps_dl_hw_take_conn_hw_sema(unsigned int try_timeout_ms)
+/*
+ * COS_SEMA_RFSPI_INDEX = 11(see conninfra/platform/include/consys_hw.h)
+ * GPS use M3
+ */
+#define COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_STA_CONN_SEMA11_M3_OWN_STA
+
+#define COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS \
+	CONN_SEMAPHORE_CONN_SEMA11_M3_OWN_REL_CONN_SEMA11_M3_OWN_REL
+
+
+bool gps_dl_hw_take_conn_coex_hw_sema(unsigned int try_timeout_ms)
 {
 	bool okay;
 	bool show_log;
@@ -406,7 +426,7 @@ bool gps_dl_hw_take_conn_hw_sema(unsigned int try_timeout_ms)
 	return okay;
 }
 
-void gps_dl_hw_give_conn_hw_sema(void)
+void gps_dl_hw_give_conn_coex_hw_sema(void)
 {
 	bool show_log;
 
@@ -415,5 +435,120 @@ void gps_dl_hw_give_conn_hw_sema(void)
 	gps_dl_set_show_reg_rw_log(show_log);
 
 	GDL_LOGI("");
+}
+
+bool gps_dl_hw_take_conn_rfspi_hw_sema(unsigned int try_timeout_ms)
+{
+	bool okay;
+	bool show_log;
+
+	show_log = gps_dl_set_show_reg_rw_log(true);
+	/* poll until value is expected or timeout */
+	GDL_HW_POLL_CONN_INFRA_ENTRY(COS_SEMA_RFSPI_STA_ENTRY_FOR_GPS, 1,
+		POLL_US * 1000 * try_timeout_ms, &okay);
+	gps_dl_set_show_reg_rw_log(show_log);
+
+	GDL_LOGI("okay = %d", okay);
+
+	return okay;
+}
+
+void gps_dl_hw_give_conn_rfspi_hw_sema(void)
+{
+	bool show_log;
+
+	show_log = gps_dl_set_show_reg_rw_log(true);
+	GDL_HW_SET_CONN_INFRA_ENTRY(COS_SEMA_RFSPI_REL_ENTRY_FOR_GPS, 1);
+	gps_dl_set_show_reg_rw_log(show_log);
+
+	GDL_LOGI("");
+}
+
+
+#define GPS_DL_RFSPI_BUSY_POLL_MAX (10*1000*POLL_US) /* 10ms */
+
+/* note: must be protect by gps_dl_hw_take_conn_rfspi_hw_sema */
+static bool gps_dl_hw_gps_fmspi_state_backup(unsigned int *p_rd_ext_en_bk, unsigned int *p_rd_ext_cnt_bk)
+{
+	bool okay = true;
+	bool poll_okay;
+
+	if (p_rd_ext_en_bk == NULL || p_rd_ext_cnt_bk == NULL)
+		return false;
+
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_SPI_STA_FM_BUSY, 0,
+		GPS_DL_RFSPI_BUSY_POLL_MAX, &poll_okay);
+	if (!poll_okay)
+		return false;
+
+	*p_rd_ext_en_bk = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_FM_CTRL_FM_RD_EXT_EN);
+	*p_rd_ext_cnt_bk = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_FM_CTRL_FM_RD_EXT_CNT);
+	return okay;
+}
+
+/* note: must be protect by gps_dl_hw_take_conn_rfspi_hw_sema */
+static void gps_dl_hw_gps_fmspi_state_restore(unsigned int rd_ext_en_bk, unsigned int rd_ext_cnt_bk)
+{
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_FM_CTRL_FM_RD_EXT_EN, rd_ext_en_bk);
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_FM_CTRL_FM_RD_EXT_CNT, rd_ext_cnt_bk);
+}
+
+/* note: must be protect by gps_dl_hw_take_conn_rfspi_hw_sema */
+static bool gps_dl_hw_gps_fmspi_read_rfcr(unsigned int addr, unsigned int *p_val)
+{
+	int val;
+	bool okay;
+	bool poll_okay;
+	unsigned int tmp;
+
+	if (p_val == NULL)
+		return false;
+
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_SPI_STA_FM_BUSY, 0,
+		GPS_DL_RFSPI_BUSY_POLL_MAX, &poll_okay);
+	if (!poll_okay)
+		return false;
+
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_FM_CTRL_FM_RD_EXT_EN, 0);
+	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_FM_CTRL_FM_RD_EXT_CNT, 0);
+
+	tmp = ((addr & 0xFFF) | (1 << 12UL) | (4 << 13UL) | (0 << 16UL));
+	GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_ADDR_ADDR, tmp);
+	GDL_HW_WR_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_WDAT_ADDR, 0);
+
+	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_RF_SPI_MST_REG_SPI_STA_FM_BUSY, 0,
+		GPS_DL_RFSPI_BUSY_POLL_MAX, &poll_okay);
+	if (!poll_okay) {
+		GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_RDAT_ADDR);
+		return false;
+	}
+
+	val = GDL_HW_RD_CONN_INFRA_REG(CONN_RF_SPI_MST_ADDR_SPI_FM_RDAT_ADDR);
+	*p_val = val;
+	okay = true;
+	return okay;
+}
+
+void gps_dl_hw_gps_dump_rf_cr(void)
+{
+	bool show_log, backup_okay;
+	unsigned int addr, val;
+	unsigned int rd_ext_en_bk, rd_ext_cnt_bk;
+
+	gps_dl_hw_take_conn_rfspi_hw_sema(100);
+	show_log = gps_dl_set_show_reg_rw_log(true);
+	backup_okay = gps_dl_hw_gps_fmspi_state_backup(&rd_ext_en_bk, &rd_ext_cnt_bk);
+	for (addr = 0x500; addr <= 0x51B; addr++) {
+		if (gps_dl_hw_gps_fmspi_read_rfcr(addr, &val))
+			GDL_LOGW("addr = 0x%x, val = 0x%x", addr, val);
+		else
+			GDL_LOGW("addr = 0x%x, read fail", addr);
+	}
+	if (backup_okay)
+		gps_dl_hw_gps_fmspi_state_restore(rd_ext_en_bk, rd_ext_cnt_bk);
+	else
+		GDL_LOGW("not do gps_dl_hw_gps_fmspi_state_restore due to backup failed!");
+	gps_dl_set_show_reg_rw_log(show_log);
+	gps_dl_hw_give_conn_rfspi_hw_sema();
 }
 
