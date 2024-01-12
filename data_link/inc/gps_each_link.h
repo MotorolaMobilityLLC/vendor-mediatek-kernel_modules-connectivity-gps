@@ -165,6 +165,7 @@ int gps_each_link_give_big_lock(enum gps_dl_link_id_enum link_id);
 
 int gps_each_link_reset(enum gps_dl_link_id_enum link_id);
 void gps_dl_link_reset_ack(enum gps_dl_link_id_enum link_id);
+int gps_dl_whole_chip_reset(void);
 
 int gps_each_link_enter_dsleep(enum gps_dl_link_id_enum link_id);
 int gps_each_link_leave_dsleep(enum gps_dl_link_id_enum link_id);
