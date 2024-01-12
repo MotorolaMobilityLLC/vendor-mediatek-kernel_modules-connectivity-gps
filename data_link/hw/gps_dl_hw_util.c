@@ -13,6 +13,7 @@
 #include "gps_dl_config.h"
 #include "gps_dl_context.h"
 #include "gps_dl_hw_priv_util.h"
+#include "gps_dl_hw_dep_api.h"
 #include "gps_dl_subsys_reset.h"
 
 #if GPS_DL_ON_LINUX
@@ -82,7 +83,7 @@ void gps_dl_bus_wr_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsig
 
 	if (do_check) {
 		/* gps_dl_conninfra_not_readable_show_warning(host_addr); */
-		gps_dl_bus_check_and_print(host_addr);
+		gps_dl_hw_dep_may_do_bus_check_and_print(host_addr);
 	}
 #endif /* GPS_DL_ON_LINUX */
 
@@ -181,7 +182,7 @@ unsigned int gps_dl_bus_rd_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_add
 
 	if (do_check) {
 		/* gps_dl_conninfra_not_readable_show_warning(host_addr); */
-		gps_dl_bus_check_and_print(host_addr);
+		gps_dl_hw_dep_may_do_bus_check_and_print(host_addr);
 	}
 #endif /* GPS_DL_ON_LINUX */
 

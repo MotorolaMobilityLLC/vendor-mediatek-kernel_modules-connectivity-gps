@@ -13,39 +13,18 @@
 #include "gps_dl_config.h"
 #include "gps_dl_log.h"
 #include "gps_dl_hw_api.h"
+#include "gps_dl_hw_dep_macro.h"
 #include "gps_dsp_fsm.h"
 
-#define GPS_DSP_REG_POLL_MAX (11)
 const unsigned int c_gps_dsp_reg_list[GPS_DATA_LINK_NUM][GPS_DSP_REG_POLL_MAX] = {
-	/* 8: HW TICK H/L, BG tick H/L, TX_END/TX_RD, RX_END/RX_WR
-	 * 3: PC, GALMAN CNT, WRHOST CNT
-	 */
-	{
-		0x5028, 0x5029, 0x0100, 0x0101, 0x4882, 0x4883, 0x4886, 0x4887,
-		0xEF00, 0xEF01, 0xEF02,
-	},
-	{
-		0x5014, 0x5015, 0x0100, 0x0101, 0x4882, 0x4883, 0x4886, 0x4887,
-		0xEF00, 0xEF01, 0xEF02,
-	}
+	GPS_L1_REG_POLL_LIST,
+	GPS_L5_REG_POLL_LIST
 };
 
-#define GPS_DSP_REG_DBG_POLL_MAX (20)
 const unsigned int c_gps_dsp_reg_dbg_list[GPS_DATA_LINK_NUM][GPS_DSP_REG_DBG_POLL_MAX] = {
-	/* 9: PC, GALMAN CNT, WRHOST CNT, DBTT CNT, NEXT CNT, BG TICK H/L, HW TICK H/L
-	 * 11: USRT CTL, STA, TX_END/RD/MAX, RX_MAX/END/WR, TX_CNT, RX_CNT, MISC
-	 */
-	{
-		0xEF00, 0xEF01, 0xEF02, 0xEF03, 0xEF04, 0x0100, 0x0101, 0x5028, 0x5029,
-		0x4880, 0x4881, 0x4882, 0x4883, 0x4884, 0x4885, 0x4886, 0x4887, 0x4888, 0x4889, 0x488a,
-	},
-	{
-		0xEF00, 0xEF01, 0xEF02, 0xEF03, 0xEF04, 0x0100, 0x0101, 0x5014, 0x5015,
-		0x4880, 0x4881, 0x4882, 0x4883, 0x4884, 0x4885, 0x4886, 0x4887, 0x4888, 0x4889, 0x488a,
-	}
+	GPS_L1_REG_DBG_POLL_LIST,
+	GPS_L5_REG_DBG_POLL_LIST
 };
-
-
 
 struct gps_each_dsp_reg_read_context {
 	bool poll_ongoing;

@@ -50,8 +50,6 @@ u32  gps_dl_bus_rd32(u32 bus_addr);
 void gps_dl_bus_write(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsigned int val);
 void gps_dl_bus_write_no_rb(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsigned int val);
 unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr);
-void gps_dl_bus_check_and_print(unsigned int host_addr);
-
 
 /* provide function/macro declaration for c files under hal folder */
 

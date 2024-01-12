@@ -10,7 +10,7 @@
 #define GDL_HW_CONN_INFRA_VER_MT6893 (0x20010101)
 
 
-#define GDL_HW_BGF_VER (0x20010000)
+#define GDL_HW_BGF_VER_CONNAC2_0     (0x20010000)
 
 
 #endif /* _GPS_DL_HW_VER_H */

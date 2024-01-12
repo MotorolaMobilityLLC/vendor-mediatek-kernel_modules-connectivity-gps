@@ -1,14 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2019 MediaTek Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
+ * Copyright (c) 2019-2021 MediaTek Inc.
  */
 #include "gps_dl_config.h"
 #include "gps_dl_context.h"
@@ -26,20 +18,17 @@
 #endif
 
 #include "gps_dl_hw_api.h"
-#include "gps_dl_hw_dep_api.h"
+#include "gps_dl_hw_dep_macro.h"
 #include "gps_dl_hw_priv_util.h"
 #include "gps_dl_hal_util.h"
 #include "gps_dsp_fsm.h"
 #include "gps_dl_subsys_reset.h"
 
-#include "conn_infra/conn_infra_rgu.h"
 #include "conn_infra/conn_infra_cfg.h"
 #include "conn_infra/conn_host_csr_top.h"
 
-#include "gps/gps_rgu_on.h"
-#include "gps/gps_cfg_on.h"
-#include "gps/gps_aon_top.h"
 #include "gps/bgf_gps_cfg.h"
+#include "gps/gps_aon_top.h"
 
 static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 {
@@ -179,7 +168,6 @@ int gps_dl_hw_gps_common_on(void)
 {
 	bool poll_okay;
 	unsigned int poll_ver;
-	int i;
 
 	/* Enable Conninfra BGF */
 	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
@@ -203,24 +191,9 @@ int gps_dl_hw_gps_common_on(void)
 	 */
 	gps_dl_hal_emi_usage_init();
 
-	/* Enable GPS function */
-	GDL_HW_SET_GPS_FUNC_EN(1);
-
-	/* bit24: BGFSYS_ON_TOP primary power ack */
-	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFSYS_ON_TOP_PWR_ACK_ST_BGFSYS_ON_TOP_PWR_ACK, 1,
-		POLL_DEFAULT, &poll_okay);
-	if (!poll_okay) {
-		GDL_LOGE("_fail_bgf_top_1st_pwr_ack_not_okay");
-		goto _fail_bgf_top_1st_pwr_ack_not_okay;
-	}
-
-	/* bit25: BGFSYS_ON_TOP secondary power ack */
-	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFSYS_ON_TOP_PWR_ACK_ST_AN_BGFSYS_ON_TOP_PWR_ACK_S, 1,
-		POLL_DEFAULT, &poll_okay);
-	if (!poll_okay) {
-		GDL_LOGE("_fail_bgf_top_2nd_pwr_ack_not_okay");
-		goto _fail_bgf_top_2nd_pwr_ack_not_okay;
-	}
+	poll_okay = gps_dl_hw_dep_en_gps_func_and_poll_bgf_ack();
+	if (!poll_okay)
+		goto _fail_bgf_top_pwr_ack_not_okay;
 
 	GDL_WAIT_US(200);
 
@@ -231,69 +204,28 @@ int gps_dl_hw_gps_common_on(void)
 	}
 
 	/* polling status and version */
-	/* Todo: set GPS host csr flag selection */
-	/* 0x18060240[3:0] == 4h'2 gps_top_off is GPS_ACTIVE state */
-	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL, 0x80);
-	for (i = 0; i < 3; i++) {
-		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG, 2,
-			POLL_DEFAULT, &poll_okay);
-		if (poll_okay)
-			break;
-		/*
-		 * TODO:
-		 * if (!gps_dl_reset_level_is_none()) break;
-		 */
-		if (i > 0)
-			GDL_LOGW("_poll_gps_top_off_active, cnt = %d", i + 1);
-	}
-	if (!poll_okay) {
-		GDL_LOGE("_fail_gps_top_off_active_not_okay");
-		goto _fail_gps_top_off_active_not_okay;
-	}
+	poll_okay = gps_dl_hw_dep_poll_bgf_bus_and_gps_top_ack();
+	if (!poll_okay)
+		goto _fail_bgf_bus_or_gps_top_pwr_ack_not_okay;
 
-	/* 0x18c21010[31:0] bgf ip version */
-	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION,
-		GDL_HW_BGF_VER, POLL_DEFAULT, &poll_okay);
-	if (!poll_okay) {
-		GDL_LOGE("_fail_bgf_ip_ver_not_okay");
-		goto _fail_bgf_ip_ver_not_okay;
-	}
-
-	/* 0x18c21014[7:0] bgf ip cfg */
-	GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_BGF_IP_CONFIG_BGFSYS_CONFIG, 0,
-		POLL_DEFAULT, &poll_okay);
-	if (!poll_okay) {
-		GDL_LOGE("_fail_bgf_ip_cfg_not_okay");
-		goto _fail_bgf_ip_cfg_not_okay;
-	}
-
-#if (GPS_DL_HAS_CONNINFRA_DRV)
-	/* conninfra driver add an API to do bellow step */
-	conninfra_config_setup();
-#else
-	/* Enable conninfra bus hung detection */
-	GDL_HW_WR_CONN_INFRA_REG(0x1800F000, 0xF000001C);
-#endif
-
-	/* host csr gps bus debug mode enable 0x18c60000 = 0x10 */
-	GDL_HW_WR_GPS_REG(0x80060000, 0x10);
+	gps_dl_hw_dep_may_set_bus_debug_flag();
 
 	/* Power on A-die top clock */
-#if (GPS_DL_HAS_CONNINFRA_DRV)
-	conninfra_adie_top_ck_en_on(CONNSYS_ADIE_CTL_HOST_GPS);
-#endif
+	GDL_HW_ADIE_TOP_CLK_EN(1, &poll_okay);
+	if (!poll_okay) {
+		GDL_LOGE("_fail_adie_top_clk_en_not_okay");
+		goto _fail_adie_top_clk_en_not_okay;
+	}
 
 	/* Enable PLL driver */
 	GDL_HW_SET_GPS_ENTRY(GPS_CFG_ON_GPS_CLKGEN1_CTL_CR_GPS_DIGCK_DIV_EN, 1);
 
 	return 0;
 
-_fail_bgf_ip_cfg_not_okay:
-_fail_bgf_ip_ver_not_okay:
-_fail_gps_top_off_active_not_okay:
+_fail_adie_top_clk_en_not_okay:
+_fail_bgf_bus_or_gps_top_pwr_ack_not_okay:
 _fail_disable_gps_slp_prot_not_okay:
-_fail_bgf_top_2nd_pwr_ack_not_okay:
-_fail_bgf_top_1st_pwr_ack_not_okay:
+_fail_bgf_top_pwr_ack_not_okay:
 	GDL_HW_SET_GPS_FUNC_EN(0);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_EMI_CTL_GPS_EMI_REQ_GPS, 0);
 
@@ -303,10 +235,14 @@ _fail_conn_hw_ver_not_okay:
 
 int gps_dl_hw_gps_common_off(void)
 {
+	bool poll_okay;
+
 	/* Power off A-die top clock */
-#if (GPS_DL_HAS_CONNINFRA_DRV)
-	conninfra_adie_top_ck_en_off(CONNSYS_ADIE_CTL_HOST_GPS);
-#endif
+	GDL_HW_ADIE_TOP_CLK_EN(0, &poll_okay);
+	if (!poll_okay) {
+		/* Just show log */
+		GDL_LOGE("_fail_adie_top_clk_dis_not_okay");
+	}
 
 	if (gps_dl_hw_gps_sleep_prot_ctrl(0) != 0) {
 		GDL_LOGE("enable sleep prot fail, trigger connsys reset");
@@ -403,17 +339,12 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 	case GPS_L1_DSP_EXIT_DSTOP:
 	case GPS_L1_DSP_EXIT_DSLEEP:
 		gps_dl_hw_gps_pwr_stat_ctrl(ctrl);
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_ON, 1);
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_SOFT_RST_B, 1);
-		GDL_HW_POLL_GPS_ENTRY(GPS_CFG_ON_GPS_L1_SLP_PWR_CTL_GPS_L1_SLP_PWR_CTL_CS, 3,
-			POLL_DEFAULT, &poll_okay);
+		poll_okay = gps_dl_hw_dep_set_dsp_on_and_poll_ack(GPS_DATA_LINK_ID0);
 		if (!poll_okay) {
 			GDL_LOGE("ctrl = %d fail", ctrl);
 			return -1;
 		}
 
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_MEM_DLY_CTL_RGU_GPSSYS_L1_MEM_ADJ_DLY_EN, 1);
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DLY_CHAIN_CTL_RGU_GPS_L1_MEM_PDN_DELAY_DUMMY_NUM, 5);
 		gps_dl_wait_us(100); /* 3 x 32k clk ~= 100us */
 		gps_dl_hw_usrt_ctrl(GPS_DATA_LINK_ID0,
 			true, gps_dl_is_dma_enabled(), gps_dl_is_1byte_mode());
@@ -431,34 +362,9 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 
 		/* poll */
 		dsp_off_done = gps_dl_hw_gps_dsp_is_off_done(GPS_DATA_LINK_ID0);
-
 		gps_dl_hw_gps_pwr_stat_ctrl(ctrl);
-		if (ctrl == GPS_L1_DSP_ENTER_DSLEEP) {
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPPRAM_PDN_EN_RGU_GPS_L1_PRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPPRAM_SLP_EN_RGU_GPS_L1_PRAM_HWCTL_SLP, 0x1FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPXRAM_PDN_EN_RGU_GPS_L1_XRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPXRAM_SLP_EN_RGU_GPS_L1_XRAM_HWCTL_SLP, 0xF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPYRAM_PDN_EN_RGU_GPS_L1_YRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPYRAM_SLP_EN_RGU_GPS_L1_YRAM_HWCTL_SLP, 0x1FF);
-		} else if (ctrl == GPS_L1_DSP_ENTER_DSTOP) {
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPPRAM_PDN_EN_RGU_GPS_L1_PRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPPRAM_SLP_EN_RGU_GPS_L1_PRAM_HWCTL_SLP, 0x1FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPXRAM_PDN_EN_RGU_GPS_L1_XRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPXRAM_SLP_EN_RGU_GPS_L1_XRAM_HWCTL_SLP, 0xF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPYRAM_PDN_EN_RGU_GPS_L1_YRAM_HWCTL_PDN, 0x1FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPYRAM_SLP_EN_RGU_GPS_L1_YRAM_HWCTL_SLP, 0);
-		} else {
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPPRAM_PDN_EN_RGU_GPS_L1_PRAM_HWCTL_PDN, 0x1FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPPRAM_SLP_EN_RGU_GPS_L1_PRAM_HWCTL_SLP, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPXRAM_PDN_EN_RGU_GPS_L1_XRAM_HWCTL_PDN, 0xF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPXRAM_SLP_EN_RGU_GPS_L1_XRAM_HWCTL_SLP, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPYRAM_PDN_EN_RGU_GPS_L1_YRAM_HWCTL_PDN, 0x1FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_DSPYRAM_SLP_EN_RGU_GPS_L1_YRAM_HWCTL_SLP, 0);
-		}
-
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_SOFT_RST_B, 0);
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_ON, 0);
-
+		gps_dl_hw_dep_cfg_dsp_mem(ctrl);
+		gps_dl_hw_dep_set_dsp_off(GPS_DATA_LINK_ID0);
 		if (dsp_off_done)
 			return 0;
 		else
@@ -468,18 +374,12 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 	case GPS_L5_DSP_EXIT_DSTOP:
 	case GPS_L5_DSP_EXIT_DSLEEP:
 		gps_dl_hw_gps_pwr_stat_ctrl(ctrl);
-
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_ON, 1);
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_SOFT_RST_B, 1);
-		GDL_HW_POLL_GPS_ENTRY(GPS_CFG_ON_GPS_L5_SLP_PWR_CTL_GPS_L5_SLP_PWR_CTL_CS, 3,
-			POLL_DEFAULT, &poll_okay);
+		poll_okay = gps_dl_hw_dep_set_dsp_on_and_poll_ack(GPS_DATA_LINK_ID1);
 		if (!poll_okay) {
 			GDL_LOGE("ctrl = %d fail", ctrl);
 			return -1;
 		}
 
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_MEM_DLY_CTL_RGU_GPSSYS_L5_MEM_ADJ_DLY_EN, 1);
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DLY_CHAIN_CTL_RGU_GPS_L5_MEM_PDN_DELAY_DUMMY_NUM, 9);
 		gps_dl_wait_us(100); /* 3 x 32k clk ~= 1ms */
 		gps_dl_hw_usrt_ctrl(GPS_DATA_LINK_ID1,
 			true, gps_dl_is_dma_enabled(), gps_dl_is_1byte_mode());
@@ -497,34 +397,9 @@ int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
 
 		/* poll */
 		dsp_off_done = gps_dl_hw_gps_dsp_is_off_done(GPS_DATA_LINK_ID1);
-
 		gps_dl_hw_gps_pwr_stat_ctrl(ctrl);
-		if (ctrl == GPS_L5_DSP_ENTER_DSLEEP) {
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPPRAM_PDN_EN_RGU_GPS_L5_PRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPPRAM_SLP_EN_RGU_GPS_L5_PRAM_HWCTL_SLP, 0x3FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPXRAM_PDN_EN_RGU_GPS_L5_XRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPXRAM_SLP_EN_RGU_GPS_L5_XRAM_HWCTL_SLP, 0xF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPYRAM_PDN_EN_RGU_GPS_L5_YRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPYRAM_SLP_EN_RGU_GPS_L5_YRAM_HWCTL_SLP, 0x3FF);
-		} else if (ctrl == GPS_L5_DSP_ENTER_DSTOP) {
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPPRAM_PDN_EN_RGU_GPS_L5_PRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPPRAM_SLP_EN_RGU_GPS_L5_PRAM_HWCTL_SLP, 0x3FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPXRAM_PDN_EN_RGU_GPS_L5_XRAM_HWCTL_PDN, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPXRAM_SLP_EN_RGU_GPS_L5_XRAM_HWCTL_SLP, 0xF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPYRAM_PDN_EN_RGU_GPS_L5_YRAM_HWCTL_PDN, 0x3FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPYRAM_SLP_EN_RGU_GPS_L5_YRAM_HWCTL_SLP, 0);
-		} else {
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPPRAM_PDN_EN_RGU_GPS_L5_PRAM_HWCTL_PDN, 0x3FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPPRAM_SLP_EN_RGU_GPS_L5_PRAM_HWCTL_SLP, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPXRAM_PDN_EN_RGU_GPS_L5_XRAM_HWCTL_PDN, 0xF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPXRAM_SLP_EN_RGU_GPS_L5_XRAM_HWCTL_SLP, 0);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPYRAM_PDN_EN_RGU_GPS_L5_YRAM_HWCTL_PDN, 0x3FF);
-			GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_DSPYRAM_SLP_EN_RGU_GPS_L5_YRAM_HWCTL_SLP, 0);
-		}
-
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_SOFT_RST_B, 0);
-		GDL_HW_SET_GPS_ENTRY(GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_ON, 0);
-
+		gps_dl_hw_dep_cfg_dsp_mem(ctrl);
+		gps_dl_hw_dep_set_dsp_off(GPS_DATA_LINK_ID1);
 		if (dsp_off_done)
 			return 0;
 		else
