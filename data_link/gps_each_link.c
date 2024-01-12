@@ -200,23 +200,21 @@ void gps_each_link_deinit(enum gps_dl_link_id_enum link_id)
 void gps_each_link_context_init(enum gps_dl_link_id_enum link_id)
 {
 	enum gps_each_link_waitable_type j;
-	struct gps_each_link *p_link = gps_dl_link_get(link_id);
 
 	for (j = 0; j < GPS_DL_WAIT_NUM; j++)
-		gps_dl_link_waitable_reset(&p_link->waitables[j], j);
+		gps_dl_link_waitable_reset(link_id, j);
 }
 
 void gps_each_link_context_clear(enum gps_dl_link_id_enum link_id)
 {
-	struct gps_each_link *p_link = gps_dl_link_get(link_id);
-
-	gps_dl_link_waitable_reset(&p_link->waitables[GPS_DL_WAIT_WRITE], GPS_DL_WAIT_WRITE);
-	gps_dl_link_waitable_reset(&p_link->waitables[GPS_DL_WAIT_READ], GPS_DL_WAIT_READ);
+	gps_dl_link_waitable_reset(link_id, GPS_DL_WAIT_WRITE);
+	gps_dl_link_waitable_reset(link_id, GPS_DL_WAIT_READ);
 }
 
 int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 {
-	enum gps_each_link_state_enum state;
+	enum gps_each_link_state_enum state, state2;
+	enum GDL_RET_STATUS gdl_ret;
 	long sigval = 0;
 	bool okay;
 	int retval;
@@ -267,16 +265,44 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 		gps_each_link_set_bool_flag(link_id, LINK_TO_BE_CLOSED, false);
 		gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, true);
 
+		gps_dl_link_waitable_reset(link_id, GPS_DL_WAIT_OPEN_CLOSE);
 		gps_dl_link_event_send(GPS_DL_EVT_LINK_OPEN, link_id);
 		gps_dl_link_open_wait(link_id, &sigval);
 
 		/* TODO: Check this mutex can be removed?
-		 * the possible purepos is make it's atomic from LINK_USER_OPEN and LINK_OPEN_RESULT_OKAY.
+		 * the possible purpose is make it's atomic from LINK_USER_OPEN and LINK_OPEN_RESULT_OKAY.
 		 */
 		gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_OPEN);
 		if (sigval != 0) {
 			gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
+
+			gdl_ret = gps_dl_link_try_wait_on(link_id, GPS_DL_WAIT_OPEN_CLOSE);
+			if (gdl_ret == GDL_OKAY) {
+				okay = gps_each_link_change_state_from(link_id, LINK_OPENED, LINK_CLOSING);
+
+				/* Change okay, need to send event to trigger close */
+				if (okay) {
+					gps_each_link_give_big_lock(link_id);
+					gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
+					GDL_LOGXW(link_id, "sigval = %d, corner case 1: close it", sigval);
+					retval = -EBUSY;
+					break;
+				}
+
+				/* Not change okay, state maybe RESETTING or RESET_DONE */
+				state2 = gps_each_link_get_state(link_id);
+				if (state2 == LINK_RESET_DONE)
+					gps_each_link_set_state(link_id, LINK_CLOSED);
+
+				gps_each_link_give_big_lock(link_id);
+				GDL_LOGXW(link_id, "sigval = %d, corner case 2: %s",
+					sigval, gps_dl_link_state_name(state2));
+				retval = -EBUSY;
+				break;
+			}
+
 			gps_each_link_give_big_lock(link_id);
+			GDL_LOGXW(link_id, "sigval = %d, normal case", sigval);
 			retval = -EINVAL;
 			break;
 		}
@@ -347,6 +373,7 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 		/* no need to wait reset ack
 		 * TODO: make sure message send okay
 		 */
+		gps_dl_link_waitable_reset(link_id, GPS_DL_WAIT_RESET);
 		gps_dl_link_event_send(GPS_DL_EVT_LINK_RESET_DSP, link_id);
 		retval = 0;
 		break;
@@ -442,14 +469,16 @@ void gps_dl_link_close_ack(enum gps_dl_link_id_enum link_id)
 
 	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_CLOSE_DONE);
 
-	gps_each_link_set_state(link_id, LINK_CLOSED);
+	/* gps_each_link_set_state(link_id, LINK_CLOSED); */
+	/* For case of reset_done */
+	gps_each_link_change_state_from(link_id, LINK_CLOSING, LINK_CLOSED);
 
 	gps_each_link_give_big_lock(link_id);
 }
 
 int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 {
-	enum gps_each_link_state_enum state;
+	enum gps_each_link_state_enum state, state2;
 	long sigval = 0;
 	bool okay;
 	int retval;
@@ -477,31 +506,38 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 		break;
 
 	case LINK_OPENED:
+		gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_CLOSE);
 		okay = gps_each_link_change_state_from(link_id, LINK_OPENED, LINK_CLOSING);
+		gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
 		if (!okay) {
+			state2 = gps_each_link_get_state(link_id);
+			if (state2 == LINK_RESET_DONE)
+				gps_each_link_set_state(link_id, LINK_CLOSED);
+
+			gps_each_link_give_big_lock(link_id);
+			GDL_LOGXW(link_id, "close fail due to %s is not LINK_OPENED",
+				gps_dl_link_state_name(state2));
 			retval = -EBUSY;
 			break;
 		}
+		gps_each_link_give_big_lock(link_id);
 
 		/* set this status, hal proc will by pass the message from the link
 		 * it can make LINK_CLOSE be processed faster
 		 */
 		gps_each_link_set_bool_flag(link_id, LINK_TO_BE_CLOSED, true);
 
+		/* clean the done(fired) flag before send and wait */
+		gps_dl_link_waitable_reset(link_id, GPS_DL_WAIT_OPEN_CLOSE);
 		gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
 		gps_dl_link_close_wait(link_id, &sigval);
 
-		gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_CLOSE);
 		if (sigval) {
-			gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
-			gps_each_link_give_big_lock(link_id);
 			retval = -EINVAL;
 			break;
 		}
 
 		retval = 0;
-		gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
-		gps_each_link_give_big_lock(link_id);
 		break;
 	default:
 		retval = -EINVAL;
@@ -594,10 +630,12 @@ void gps_dl_link_waitable_init(struct gps_each_link_waitable *p,
 #endif
 }
 
-void gps_dl_link_waitable_reset(struct gps_each_link_waitable *p,
-	enum gps_each_link_waitable_type type)
+void gps_dl_link_waitable_reset(enum gps_dl_link_id_enum link_id, enum gps_each_link_waitable_type type)
 {
-	p->fired = false;
+	struct gps_each_link *p_link = gps_dl_link_get(link_id);
+
+	/* TOOD: check NULL and boundary */
+	p_link->waitables[type].fired = false;
 }
 
 #define GDL_TEST_TRUE_AND_SET_FALSE(x, x_old) \
@@ -650,6 +688,26 @@ enum GDL_RET_STATUS gps_dl_link_wait_on(struct gps_each_link_waitable *p, long *
 #endif
 }
 
+enum GDL_RET_STATUS gps_dl_link_try_wait_on(enum gps_dl_link_id_enum link_id,
+	enum gps_each_link_waitable_type type)
+{
+	struct gps_each_link *p_link;
+	struct gps_each_link_waitable *p;
+	bool is_fired;
+
+	p_link = gps_dl_link_get(link_id);
+	p = &p_link->waitables[type];
+
+	GDL_TEST_TRUE_AND_SET_FALSE(p->fired, is_fired);
+	if (is_fired) {
+		GDL_LOGD("waitable = %s, okay", gps_dl_waitable_type_name(p->type));
+		p->waiting = false;
+		return GDL_OKAY;
+	}
+
+	return GDL_FAIL;
+}
+
 void gps_dl_link_wake_up(struct gps_each_link_waitable *p)
 {
 	bool is_fired;
@@ -657,8 +715,11 @@ void gps_dl_link_wake_up(struct gps_each_link_waitable *p)
 	ASSERT_NOT_NULL(p, GDL_VOIDF());
 
 	if (!p->waiting) {
-		GDL_LOGD("waitable = %s, nobody waiting", gps_dl_waitable_type_name(p->type));
-		return;
+		GDL_LOGW("waitable = %s, nobody waiting", gps_dl_waitable_type_name(p->type));
+
+		/* return;
+		 * not return, just show warning
+		 */
 	}
 
 	GDL_TEST_FALSE_AND_SET_TRUE(p->fired, is_fired);
