@@ -51,6 +51,7 @@ struct gps_dl_runtime_cfg {
 	bool only_show_wait_done_log;
 	enum gps_dl_log_level_enum log_level;
 	unsigned int log_mod_bitmask;
+	unsigned int log_reg_rw_bitmask;
 };
 
 bool gps_dl_is_1byte_mode(void);

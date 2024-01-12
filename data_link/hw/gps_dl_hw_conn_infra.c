@@ -228,6 +228,7 @@ bool gps_dl_hw_init_pta_uart(void)
 #endif
 	bool show_log;
 	bool poll_okay;
+	bool reg_rw_log = gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_HOST_CSR_PTA_INIT);
 
 	/* 20191008 after DE checking, bellow steps are no need */
 #if 0
@@ -245,8 +246,10 @@ bool gps_dl_hw_init_pta_uart(void)
 	}
 #endif
 
-	gps_dl_hw_dump_host_csr_conninfra_info(true);
-	show_log = gps_dl_set_show_reg_rw_log(true);
+	if (reg_rw_log) {
+		gps_dl_hw_dump_host_csr_conninfra_info(true);
+		show_log = gps_dl_set_show_reg_rw_log(true);
+	}
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_UART_PTA_HIGHSPEED_SPEED, 3);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_UART_PTA_SAMPLE_COUNT_SAMPLE_COUNT, 5);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_UART_PTA_SAMPLE_POINT_SAMPLE_POINT, 2);
@@ -293,7 +296,10 @@ bool gps_dl_hw_init_pta_uart(void)
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_PTA6_WFSET_PTA_CTRL_r_wfset_lte_pta_en, 1);
 
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_PTA6_TMR_CTRL_1_r_idc_2nd_byte_tmout, 4); /* us */
-	gps_dl_set_show_reg_rw_log(show_log);
+
+	if (reg_rw_log)
+		gps_dl_set_show_reg_rw_log(show_log);
+
 	return true;
 }
 

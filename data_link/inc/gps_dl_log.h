@@ -37,17 +37,31 @@ enum gps_dl_log_module_enum {
 	GPS_DL_LOG_MOD_MAX        = 32
 };
 
+enum gps_dl_log_reg_rw_ctrl_enum {
+	GPS_DL_REG_RW_HOST_CSR_PTA_INIT,
+	GPS_DL_REG_RW_HOST_CSR_GPS_OFF,
+	GPS_DL_REG_RW_EMI_SW_REQ_CTRL,
+	GPS_DL_REG_RW_MCUB_IRQ_HANDLER,
+
+	GPS_DL_REG_RW_MAX = 32
+};
+
 #define GPS_DL_LOG_DEF_SETTING_LEVEL   GPS_DL_LOG_LEVEL_INFO
 #define GPS_DL_LOG_DEF_SETTING_MODULES (             \
 		(1UL << GPS_DL_LOG_MOD_DEFAULT)    | \
 		(1UL << GPS_DL_LOG_MOD_OPEN_CLOSE) | \
-		(1UL << GPS_DL_LOG_MOD_READ_WRITE) | \
+		(0UL << GPS_DL_LOG_MOD_READ_WRITE) | \
 		(1UL << GPS_DL_LOG_MOD_REG_RW)     | \
 		(1UL << GPS_DL_LOG_MOD_STATUS)     | \
-		(1UL << GPS_DL_LOG_MOD_EVENT)      | \
+		(0UL << GPS_DL_LOG_MOD_EVENT)      | \
 		(1UL << GPS_DL_LOG_MOD_INIT)       | \
 	0)
-
+#define GPS_DL_LOG_REG_RW_BITMASK (                       \
+		(0UL << GPS_DL_REG_RW_HOST_CSR_PTA_INIT) |\
+		(0UL << GPS_DL_REG_RW_HOST_CSR_GPS_OFF)  |\
+		(0UL << GPS_DL_REG_RW_EMI_SW_REQ_CTRL)   |\
+		(0UL << GPS_DL_REG_RW_MCUB_IRQ_HANDLER)  |\
+	0)
 
 enum gps_dl_log_level_enum gps_dl_log_level_get(void);
 void gps_dl_log_level_set(enum gps_dl_log_level_enum level);
@@ -57,6 +71,8 @@ void gps_dl_log_mod_bitmask_set(unsigned int bitmask);
 bool gps_dl_log_mod_is_on(enum gps_dl_log_module_enum mod);
 void gps_dl_log_mod_on(enum gps_dl_log_module_enum mod);
 void gps_dl_log_mod_off(enum gps_dl_log_module_enum mod);
+
+bool gps_dl_log_reg_rw_is_on(enum gps_dl_log_reg_rw_ctrl_enum log_reg_rw);
 
 void gps_dl_log_info_show(void);
 
