@@ -4,6 +4,7 @@
  */
 
 #include "gps_mcudl_data_pkt_rbuf.h"
+#include "gps_mcudl_data_pkt_slot.h"
 
 #define GFNS_RBUF_DBG(...)
 #define GFNS_RBUF_TRC(fmt, ...)
@@ -45,16 +46,20 @@ bool gfns_rbuf_try_to_set_full_flag(struct gps_mcudl_data_rbuf_plus_t *p)
 {
 	gpsmdl_u32 rri_tmp;
 
+	gps_mcudl_slot_protect();
 	GFNS_ATOM_OP(p->cursor.wff_bak) = true;
 	DSB();
 
 	rri_tmp = GFNS_ATOM_OP(p->cursor.rri_bak);
 	DSB();
+	gps_mcudl_slot_unprotect();
 
 	if (p->cursor.wri != rri_tmp) {
 		/* reader has updated read pointer, full flag should not be set*/
+		gps_mcudl_slot_protect();
 		GFNS_ATOM_OP(p->cursor.wff_bak) = false;
 		DSB();
+		gps_mcudl_slot_unprotect();
 
 		return false;
 	}
@@ -66,8 +71,10 @@ bool gps_mcudl_data_rbuf_is_full(struct gps_mcudl_data_rbuf_plus_t *p_rbuf)
 {
 	gpsmdl_u32 wff_tmp;
 
+	gps_mcudl_slot_protect();
 	wff_tmp = GFNS_ATOM_OP(p_rbuf->cursor.wff_bak);
 	DSB();
+	gps_mcudl_slot_unprotect();
 
 	if (wff_tmp)
 		p_rbuf->cursor.wff = true;
@@ -78,14 +85,18 @@ bool gps_mcudl_data_rbuf_is_full(struct gps_mcudl_data_rbuf_plus_t *p_rbuf)
 void gps_mcudl_data_rbuf_clear_full_flag(struct gps_mcudl_data_rbuf_plus_t *p)
 {
 	/* if need twice, call this api twice*/
+	gps_mcudl_slot_protect();
 	GFNS_ATOM_OP(p->cursor.wff_bak) = false;
 	DSB();
+	gps_mcudl_slot_unprotect();
 }
 
 void gps_mcudl_data_rbuf_writer_update_write_idx(struct gps_mcudl_data_rbuf_plus_t *p)
 {
+	gps_mcudl_slot_protect();
 	GFNS_ATOM_OP(p->cursor.wwi_bak) = p->cursor.wwi;
 	DSB();
+	gps_mcudl_slot_unprotect();
 
 	/* no need to proc wff due to it already handled*/
 	GFNS_RBUF_TRC("r=%d, w=%d, f=%d, l=%d", p->cursor.rri, p->cursor.wwi, p->cursor.wff, p->cfg.rbuf_len);
@@ -96,11 +107,13 @@ bool gps_mcudl_data_rbuf_writer_sync_read_idx(struct gps_mcudl_data_rbuf_plus_t 
 	gpsmdl_u32 wff_tmp;
 	gpsmdl_u32 rri_tmp;
 
+	gps_mcudl_slot_protect();
 	wff_tmp = GFNS_ATOM_OP(p->cursor.wff_bak);
 	DSB();
 
 	rri_tmp = GFNS_ATOM_OP(p->cursor.rri_bak);
 	DSB();
+	gps_mcudl_slot_unprotect();
 
 	GFNS_RBUF_TRC("r=%d, w=%d, f=%d, l=%d", p->cursor.rri, p->cursor.wwi, p->cursor.wff, p->cfg.rbuf_len);
 	if (p->cursor.wff) {
@@ -126,6 +139,7 @@ bool gps_mcudl_data_rbuf_writer_sync_read_idx(struct gps_mcudl_data_rbuf_plus_t 
 
 void gps_mcudl_data_rbuf_reader_update_read_idx(struct gps_mcudl_data_rbuf_plus_t *p)
 {
+	gps_mcudl_slot_protect();
 	if (p->cursor.rri == p->cursor.rri_bak) {
 		/* rri not changed, need to check rff*/
 		GFNS_ATOM_OP(p->cursor.wff_bak) = p->cursor.rff;
@@ -138,6 +152,7 @@ void gps_mcudl_data_rbuf_reader_update_read_idx(struct gps_mcudl_data_rbuf_plus_
 		GFNS_ATOM_OP(p->cursor.wff_bak) = false; /* no twice write*/
 		DSB();
 	}
+	gps_mcudl_slot_unprotect();
 	GFNS_RBUF_TRC("r=%d, w=%d, f=%d, l=%d", p->cursor.rri, p->cursor.wwi, p->cursor.wff, p->cfg.rbuf_len);
 }
 
@@ -146,8 +161,10 @@ bool gps_mcudl_data_rbuf_reader_sync_write_idx(struct gps_mcudl_data_rbuf_plus_t
 	/* gfns_atomic wwi_tmp;*/
 	gpsmdl_u32 wwi_tmp;
 
+	gps_mcudl_slot_protect();
 	wwi_tmp = GFNS_ATOM_OP(p->cursor.wwi_bak);
 	DSB();
+	gps_mcudl_slot_unprotect();
 
 	GFNS_RBUF_TRC("r=%d, w=%d, f=%d, l=%d", p->cursor.rri, p->cursor.wwi, p->cursor.wff, p->cfg.rbuf_len);
 	if (p->cursor.rwi != wwi_tmp) {
@@ -161,8 +178,10 @@ bool gps_mcudl_data_rbuf_reader_sync_write_idx(struct gps_mcudl_data_rbuf_plus_t
 	if (p->cursor.rwi == p->cursor.rri) {
 		/* At the time write and read pointer are equal, wff_bak has alreay*/
 		/*  been set, it's safe to read or write it in reader task.*/
+		gps_mcudl_slot_protect();
 		p->cursor.rff = GFNS_ATOM_OP(p->cursor.wff_bak);
 		DSB();
+		gps_mcudl_slot_unprotect();
 	}
 
 	if (p->cursor.rff)

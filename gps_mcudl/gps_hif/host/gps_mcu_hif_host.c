@@ -242,7 +242,8 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 	gps_mcu_hif_get_trans_end_desc(trans_id, &end_desc);
 	if (start_desc.id != end_desc.id) {
 		/* bad one */
-		MDL_LOGW("trans_id=%d, %d, mismatch", start_desc.id, end_desc.id);
+		MDL_LOGW("ch=%d, trans_id=%d, desc_id=(%d, %d), mismatch",
+			hif_ch, trans_id, start_desc.id, end_desc.id);
 		return;
 	}
 
