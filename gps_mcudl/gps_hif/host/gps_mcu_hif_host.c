@@ -5,6 +5,7 @@
 
 #include "gps_dl_config.h"
 #include "gps_dl_time_tick.h"
+#include "gps_dl_isr.h"
 #include "gps_mcudl_log.h"
 #include "gps_mcudl_data_pkt_slot.h"
 #include "gps_mcudl_data_pkt_host_api.h"
@@ -129,6 +130,7 @@ bool gps_mcu_hif_send_v2(enum gps_mcu_hif_ch hif_ch,
 		if (NULL == send_status) {
 			MDL_LOGW("hif_ch=%d, len=%d, send fail due to last one not finished",
 				hif_ch, data_len);
+			gps_mcu_hif_host_dump_ch(hif_ch);
 		} else {
 			MDL_LOGD("hif_ch=%d, len=%d, send fail due to last one not finished",
 				hif_ch, data_len);
@@ -151,17 +153,30 @@ bool gps_mcu_hif_send_v2(enum gps_mcu_hif_ch hif_ch,
 		return false;
 	}
 	if (gps_mcudl_hal_ccif_tx_is_busy(GPS_MCUDL_CCIF_CH4)) {
-		if (NULL == send_status) {
-			MDL_LOGW("hif_ch=%d, len=%d, send fail due to ccif busy",
-				hif_ch, data_len);
-		} else {
-			MDL_LOGD("hif_ch=%d, len=%d, send fail due to ccif busy",
-				hif_ch, data_len);
+		MDL_LOGW("hif_ch=%d, len=%d, send fail due to ccif busy",
+			hif_ch, data_len);
+		gps_mcudl_hal_ccif_show_status();
+		gps_mcu_hif_host_dump_all_ch();
+		if (NULL != send_status)
 			*send_status = GPS_MCU_HIF_SEND_FAIL_DUE_TO_CCIF_BUSY;
-		}
 		(void)gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_HIF_SEND);
 		return false;
 	}
+	/* TODO: portable check:
+	 * If double-mask is only counted as once, there might be an issue for mulit-core,
+	 * due to isr and thread have chance to mask simultanceously.
+	 *
+	 * In single-core and preemptive OS case,
+	 * it should be safe due to double mask doesn't happen.
+	 */
+	/* Mask irq to avoid the case that gps_mcu_hif_recv_start in isr,
+	 * which has a higher priority, wait gps_mcudl_hal_ccif_tx_is_busy after
+	 * gps_mcudl_hal_ccif_tx_prepare here.
+	 *
+	 * If the case happens, there is nobody to call gps_mcu_hif_recv_start again,
+	 * causing that mcu2ap cannot be deliveried once more.
+	 */
+	gps_dl_irq_mask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_THREAD);
 	gps_mcudl_hal_ccif_tx_prepare(GPS_MCUDL_CCIF_CH4);
 #endif
 	gps_mcu_hif_host_clr_trans_req_sent(trans_id);
@@ -176,6 +191,7 @@ bool gps_mcu_hif_send_v2(enum gps_mcu_hif_ch hif_ch,
 	gps_mcu_hif_host_set_trans_req_sent(trans_id);
 #if GPS_DL_HAS_MCUDL_HAL
 	gps_mcudl_hal_ccif_tx_trigger(GPS_MCUDL_CCIF_CH4);
+	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_THREAD);
 	(void)gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_HIF_SEND);
 #endif
 	return true;
@@ -196,6 +212,7 @@ void gps_mcu_hif_recv_start(enum gps_mcu_hif_ch hif_ch)
 	trans_id = gps_mcu_hif_get_mcu2ap_trans(hif_ch);
 	if (gps_mcu_hif_is_trans_req_sent(trans_id)) {
 		MDL_LOGW("hif_ch=%d, trans_id=%d, rx_ongoing", hif_ch, trans_id);
+		gps_mcu_hif_host_dump_ch(hif_ch);
 		return;
 	}
 	p_buf = gps_mcu_hif_get_mcu2ap_emi_buf_addr(hif_ch);
@@ -205,6 +222,8 @@ void gps_mcu_hif_recv_start(enum gps_mcu_hif_ch hif_ch)
 		gps_mcu_hif_set_mcu2ap_recv_fail_flag(hif_ch, true);
 		MDL_LOGW("hif_ch=%d, recv fail due to ccif busy, mcu2ap recv flag %d",
 			hif_ch, gps_mcu_hif_get_mcu2ap_recv_fail_flag(hif_ch));
+		gps_mcudl_hal_ccif_show_status();
+		gps_mcu_hif_host_dump_all_ch();
 		return;
 	}
 	gps_mcudl_hal_ccif_tx_prepare(GPS_MCUDL_CCIF_CH4);
@@ -378,6 +397,7 @@ void gps_mcu_hif_host_ccif_irq_handler_in_isr(void)
 {
 	enum gps_mcu_hif_trans trans_id;
 	enum gps_mcu_hif_ch hif_ch;
+	bool is_okay = false;
 
 	for (trans_id = 0; trans_id < GPS_MCU_HIF_TRANS_NUM; trans_id++) {
 		if (!gps_mcu_hif_is_trans_req_sent(trans_id))
@@ -398,10 +418,22 @@ void gps_mcu_hif_host_ccif_irq_handler_in_isr(void)
 			MDL_LOGW("ch %d hif_recv fail, retry", hif_ch);
 			gps_mcu_hif_set_mcu2ap_recv_fail_flag(hif_ch, false);
 			gps_mcu_hif_recv_start(hif_ch);
+			is_okay = gps_mcu_hif_get_mcu2ap_recv_fail_flag(hif_ch);
+			if (!is_okay) {
+				MDL_LOGW("ch %d hif_recv fail again", hif_ch);
+				/* TODO: notify kctrld to recv again */
+			}
 		}
 	}
 }
 
+void gps_mcu_hif_host_dump_all_ch(void)
+{
+	enum gps_mcu_hif_ch hif_ch;
+
+	for (hif_ch = 0; hif_ch < GPS_MCU_HIF_CH_NUM; hif_ch++)
+		gps_mcu_hif_host_dump_ch(hif_ch);
+}
 
 void gps_mcu_hif_host_dump_ch(enum gps_mcu_hif_ch hif_ch)
 {
