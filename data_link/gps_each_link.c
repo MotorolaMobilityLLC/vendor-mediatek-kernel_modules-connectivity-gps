@@ -25,8 +25,9 @@
 #include "gps_dl_name_list.h"
 
 #include "linux/errno.h"
-
-
+#if GPS_DL_HAS_PLAT_DRV
+#include "gps_dl_linux_plat_drv.h"
+#endif
 
 void gps_each_link_set_bool_flag(enum gps_dl_link_id_enum link_id,
 	enum gps_each_link_bool_state name, bool value)
@@ -969,6 +970,9 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_each_dsp_reg_gourp_read_init(link_id);
 		gps_each_link_inc_session_id(link_id);
 		gps_each_link_set_active(link_id, true);
+#if GPS_DL_HAS_PLAT_DRV
+		gps_dl_lna_pin_ctrl(link_id, true, false);
+#endif
 		gps_dl_hal_conn_power_ctrl(link_id, 1);
 		gps_dl_hal_link_power_ctrl(link_id, 1);
 		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
@@ -1026,6 +1030,9 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		/* Note: the order to mask might be important */
 		/* TODO: avoid twice mask need to be handled */
 		gps_each_link_set_active(link_id, false);
+#if GPS_DL_HAS_PLAT_DRV
+		gps_dl_lna_pin_ctrl(link_id, false, false);
+#endif
 		gps_dl_link_set_ready_to_write(link_id, false);
 		gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
 
