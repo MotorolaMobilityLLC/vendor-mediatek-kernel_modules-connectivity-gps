@@ -18,6 +18,9 @@
 #include "gps_mcudl_each_link.h"
 #include "gps_mcudl_link_state.h"
 #include "gps_mcudl_log.h"
+#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
+#include "gps_dl_linux_clock_mng.h"
+#endif
 
 
 static bool gps_mcudl_xdevice_should_be_less_log(enum gps_mcudl_xid x_id)
@@ -279,6 +282,10 @@ static int gps_mcudl_each_device_hw_suspend(enum gps_mcudl_xid link_id, bool nee
 #define GPSDL_IOC_GPS_GET_MD_STATUS    21
 #define GPSDL_IOC_GPS_CTRL_L5_LNA      27
 #define GPSDL_IOC_GPS_GET_BOOT_TIME    28
+#if 0
+#define GPSDL_IOC_GPS_EAP_SAP_TIMESYNC 29
+#endif
+#define GPSDL_IOC_GET_PLATFORM_CLOCK_FREQ   30
 
 static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
 {
@@ -482,6 +489,11 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 			"GPSDL_IOC_GPS_GET_BOOT_TIME now_time = %lld,arch_counter = %lld",
 			gps_boot_time.now_time, gps_boot_time.arch_counter);
 		break;
+#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
+		case GPSDL_IOC_GET_PLATFORM_CLOCK_FREQ:
+			retval = gps_dl_clock_mng_get_platform_clock();
+			break;
+#endif
 	default:
 		retval = -EFAULT;
 		MDL_LOGXI_DRW(dev->index, "cmd = %d, not support", cmd);
