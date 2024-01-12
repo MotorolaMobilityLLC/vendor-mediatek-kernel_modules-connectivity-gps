@@ -634,7 +634,7 @@ void gps_mcudl_hw_mcu_show_status(void)
 void gps_mcudl_hw_mcu_show_pc_log(void)
 {
 	gps_dl_hw_dep_dump_host_csr_range(0xC0040109, 0xA);
-	gps_dl_hw_dep_dump_host_csr_range(0xC0040D01, 0x31);
+	gps_dl_hw_dep_dump_host_csr_range(0xC0040D00, 0x32);
 }
 
 bool gps_mcudl_hw_bg_is_readable(void)
