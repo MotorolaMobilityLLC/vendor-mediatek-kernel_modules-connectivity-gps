@@ -107,3 +107,9 @@ bool gps_dl_hal_conn_infra_ver_is_mt6885(void)
 	return (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6885);
 }
 
+bool gps_dl_hal_conn_infra_ver_is_mt6893(void)
+{
+	/* is_mt6893 valid after gps_dl_hw_gps_common_on */
+	return (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6893);
+}
+

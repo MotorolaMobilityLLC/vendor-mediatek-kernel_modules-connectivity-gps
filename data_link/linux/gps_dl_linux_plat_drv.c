@@ -45,7 +45,7 @@
 /* #ifdef CONFIG_OF */
 const struct of_device_id gps_dl_of_ids[] = {
 	{ .compatible = "mediatek,mt6885-gps", },
-	{}
+	{ .compatible = "mediatek,mt6877-gps", },
 };
 /* #endif */
 #define GPS_DL_IOMEM_NUM 2
@@ -347,6 +347,8 @@ static int gps_dl_probe(struct platform_device *pdev)
 	struct gps_each_device *p_each_dev1 = gps_dl_device_get(GPS_DATA_LINK_ID1);
 	int i;
 	bool okay;
+
+	GDL_LOGW_INI("compatible = %s", pdev->dev.of_node->properties->value);
 
 #if (GPS_DL_GET_RSV_MEM_IN_MODULE)
 	gps_dl_get_reserved_memory(&pdev->dev);
