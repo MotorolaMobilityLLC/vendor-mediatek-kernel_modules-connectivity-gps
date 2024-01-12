@@ -116,7 +116,7 @@ ssize_t gps_dl_procfs_write(struct file *filp, const char __user *buffer, size_t
 	do {
 		res = 0;
 		sub_len = strlen(pBuf);
-		GDL_LOGD("write parameter data = %s, len = %d", pBuf, sub_len);
+		GDL_LOGD("write parameter data = %s, len = %ld", pBuf, sub_len);
 		if (sub_len != 0)
 			pToken = osal_strsep(&pBuf, "\t\n\r ");
 		if (sub_len != 0 && pToken != NULL) {
@@ -133,7 +133,7 @@ ssize_t gps_dl_procfs_write(struct file *filp, const char __user *buffer, size_t
 		}
 		res = 0;
 		sub_len = strlen(pBuf);
-		GDL_LOGD("write parameter data = %s, len = %d", pBuf, sub_len);
+		GDL_LOGD("write parameter data = %s, len = %ld", pBuf, sub_len);
 		if (sub_len != 0)
 			pToken = osal_strsep(&pBuf, "\t\n\r ");
 		if (sub_len != 0 && pToken != NULL) {
@@ -150,7 +150,7 @@ ssize_t gps_dl_procfs_write(struct file *filp, const char __user *buffer, size_t
 		}
 		res = 0;
 		sub_len = strlen(pBuf);
-		GDL_LOGD("write parameter data = %s, len = %d", pBuf, sub_len);
+		GDL_LOGD("write parameter data = %s, len = %ld", pBuf, sub_len);
 		if (sub_len != 0)
 			pToken = osal_strsep(&pBuf, "\t\n\r ");
 		if (sub_len != 0 && pToken != NULL) {

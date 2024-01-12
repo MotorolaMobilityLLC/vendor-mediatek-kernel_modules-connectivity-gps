@@ -357,7 +357,7 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 					gps_each_link_give_big_lock(link_id);
 					gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
 					GDL_LOGXW_ONF(link_id,
-						"sigval = %d, corner case 1: close it", sigval);
+						"sigval = %ld, corner case 1: close it", sigval);
 					retval = -EBUSY;
 					break;
 				}
@@ -368,14 +368,14 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 					gps_each_link_set_state(link_id, LINK_CLOSED);
 
 				gps_each_link_give_big_lock(link_id);
-				GDL_LOGXW_ONF(link_id, "sigval = %d, corner case 2: %s",
+				GDL_LOGXW_ONF(link_id, "sigval = %ld, corner case 2: %s",
 					sigval, gps_dl_link_state_name(state2));
 				retval = -EBUSY;
 				break;
 			}
 
 			gps_each_link_give_big_lock(link_id);
-			GDL_LOGXW_ONF(link_id, "sigval = %d, normal case", sigval);
+			GDL_LOGXW_ONF(link_id, "sigval = %ld, normal case", sigval);
 			retval = -EINVAL;
 			break;
 		}
@@ -909,7 +909,7 @@ int gps_each_link_hw_resume(enum gps_dl_link_id_enum link_id)
 		gps_dl_link_event_send(GPS_DL_EVT_LINK_LEAVE_DPSTOP, link_id);
 		gps_dl_link_open_wait(link_id, &sigval);
 		if (sigval != 0) {
-			GDL_LOGXW_ONF(link_id, "sigval = %d", sigval);
+			GDL_LOGXW_ONF(link_id, "sigval = %ld", sigval);
 			retval = -EBUSY;
 			break;
 		}
@@ -1524,7 +1524,7 @@ _close_or_reset_ack:
 	}
 
 	j1 = jiffies;
-	GDL_LOGXI_EVT(link_id, "evt = %s, dj = %u", gps_dl_link_event_name(evt), j1 - j0);
+	GDL_LOGXI_EVT(link_id, "evt = %s, dj = %lu", gps_dl_link_event_name(evt), j1 - j0);
 }
 
 void gps_each_link_mutexes_init(struct gps_each_link *p)

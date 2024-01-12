@@ -149,7 +149,7 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_data(
 	tick0 = gps_dl_tick_get();
 
 	if (gps_dl_show_reg_wait_log())
-		GDL_LOGXD(link_id, "timeout = %d", link_id, timeout_usec);
+		GDL_LOGXD(link_id, "timeout = %d", timeout_usec);
 
 	while (1) {
 		gps_dl_hw_save_usrt_status_struct(link_id, &usrt_status);
@@ -352,7 +352,7 @@ enum GDL_RET_STATUS gps_dl_hal_poll_event(
 		if (L1_evt_out || L5_evt_out)
 			break;
 
-		GDL_LOGD("tick0 = %d, tick1 = %d, usec = %d/%d",
+		GDL_LOGD("tick0 = %ld, tick1 = %ld, usec = %d/%d",
 			tick0, tick1, take_usec, timeout_usec);
 
 		if (take_usec >= timeout_usec) {

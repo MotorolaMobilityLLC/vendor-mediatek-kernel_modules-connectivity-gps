@@ -86,8 +86,8 @@ void gps_dl_reserved_mem_init(void)
 void gps_dl_reserved_mem_deinit(void)
 {
 	GDL_LOGI_INI("phy_addr = 0x%08x, vir_addr = 0x%p, size = 0x%x",
-		g_gps_dl_res_emi.host_virt_addr,
 		g_gps_dl_res_emi.host_phys_addr,
+		g_gps_dl_res_emi.host_virt_addr,
 		g_gps_dl_res_emi.length);
 
 	if (g_gps_dl_res_emi.host_virt_addr != NULL)

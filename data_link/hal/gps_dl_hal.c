@@ -266,7 +266,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	}
 
 	j1 = jiffies;
-	GDL_LOGXI_EVT(link_id, "evt = %s, on_sid = %d, dj = %u",
+	GDL_LOGXI_EVT(link_id, "evt = %s, on_sid = %d, dj = %lu",
 		gps_dl_hal_event_name(evt), sid_on_evt, j1 - j0);
 }
 
