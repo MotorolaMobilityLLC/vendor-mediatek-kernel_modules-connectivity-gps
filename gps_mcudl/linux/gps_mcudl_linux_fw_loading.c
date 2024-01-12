@@ -53,7 +53,7 @@ void gps_mcudl_load_single_firmware(unsigned char *p_src_file, void __iomem *p_d
 
 	/*get full name patch success*/
 	MDL_LOGW("get full patch name(%s) buf(0x%p) size(0x%x)",
-		p_src_file, (pPatch)->data, (pPatch)->size, dst_len);
+		p_src_file, (pPatch)->data, (pPatch)->size);
 	MDL_LOGW("AF get patch, pPatch(0x%p), dst addr(0x%p) len(0x%x)",
 		pPatch, p_dst_addr, dst_len);
 
