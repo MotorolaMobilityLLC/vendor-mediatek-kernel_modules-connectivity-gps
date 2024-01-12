@@ -48,6 +48,7 @@ enum gps_dl_link_id_enum {
 #endif
 
 #define GPS_DL_HAS_PLAT_DRV   (1)
+#define GPS_DL_HAS_PTA        (1)
 #define GPS_DL_USE_TIA        (0)
 
 #define GPS_DL_IS_MODULE      (1)
