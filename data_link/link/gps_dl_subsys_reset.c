@@ -2,6 +2,7 @@
 
 #include "gps_dl_subsys_reset.h"
 #include "gps_each_link.h"
+#include "gps_dl_name_list.h"
 
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"

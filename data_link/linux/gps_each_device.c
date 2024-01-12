@@ -16,8 +16,7 @@ static ssize_t gps_each_device_read(struct file *filp,
 
 	dev = (struct gps_each_device *)filp->private_data;
 
-	GDL_LOGXW(dev->index, "%s: count %d, pid %d", __func__, count,
-		current->pid);
+	GDL_LOGXW(dev->index, "buf_len = %d, pid = %d", count, current->pid);
 
 #if GPS_DL_HAS_LINK_LAYER
 	i_len = gps_each_link_read((enum gps_dl_link_id_enum)dev->index,
@@ -58,7 +57,7 @@ static ssize_t gps_each_device_read(struct file *filp,
 	if (retval)
 		return -EFAULT;
 
-	GDL_LOGXI(dev->index, "gps_each_device_read return = %d", i_len);
+	GDL_LOGXI(dev->index, "ret_len = %d", i_len);
 	return i_len;
 }
 
@@ -71,8 +70,7 @@ static ssize_t gps_each_device_write(struct file *filp,
 
 	dev = (struct gps_each_device *)filp->private_data;
 
-	GDL_LOGXW(dev->index, "%s: count %d, pid %d", __func__, count,
-		current->pid);
+	GDL_LOGXW(dev->index, "len = %d, pid = %d", count, current->pid);
 
 	if (count > 0) {
 		/* TODO: this size GPS_DATA_PATH_BUF_MAX for what? */
@@ -132,7 +130,7 @@ static int gps_each_device_open(struct inode *inode, struct file *filp)
 	dev = container_of(inode->i_cdev, struct gps_each_device, cdev);
 	filp->private_data = dev; /* for other methods */
 
-	GDL_LOGXW(dev->index, "%s: major %d, minor %d, pid %d", __func__,
+	GDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d",
 		imajor(inode), iminor(inode), current->pid);
 
 	if (!dev->is_open) {
@@ -154,7 +152,7 @@ static int gps_each_device_release(struct inode *inode, struct file *filp)
 	dev = (struct gps_each_device *)filp->private_data;
 	dev->is_open = false;
 
-	GDL_LOGXW(dev->index, "%s: major %d, minor %d, pid %d\n", __func__,
+	GDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d",
 		imajor(inode), iminor(inode), current->pid);
 
 	gps_each_link_close((enum gps_dl_link_id_enum)dev->index);
@@ -301,7 +299,7 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 #endif
 	default:
 		retval = -EFAULT;
-		GDL_LOGXW(dev->index, "cmd = %d -> unknown", cmd);
+		GDL_LOGXW(dev->index, "cmd = %d, not support", cmd);
 		break;
 	}
 
