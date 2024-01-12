@@ -43,6 +43,7 @@ int gps_dl_hw_gps_common_on(void);
 int gps_dl_hw_gps_common_off(void);
 bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable);
 void gps_dl_hw_gps_sw_request_emi_usage(bool request);
+void gps_dl_hw_gps_sw_request_peri_usage(bool request);
 
 enum GDL_HW_RET gps_dl_hw_get_mcub_info(
 	enum gps_dl_link_id_enum link_id, struct gps_dl_hal_mcub_info *p);
