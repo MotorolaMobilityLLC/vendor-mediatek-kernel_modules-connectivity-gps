@@ -43,7 +43,7 @@ static int gps_dl_linux_irq_index_to_id(enum gps_dl_irq_index_enum index)
 int gps_dl_linux_irqs_register(struct gps_each_irq *p_irqs, int irq_num)
 {
 	int irq_id, i_ret, i;
-	unsigned int sys_irq_trig_type;
+	unsigned long sys_irq_flags;
 
 	for (i = 0; i < irq_num; i++) {
 		irq_id = gps_dl_linux_irq_index_to_id(p_irqs[i].cfg.index);
@@ -55,9 +55,9 @@ int gps_dl_linux_irqs_register(struct gps_each_irq *p_irqs, int irq_num)
 		}
 
 		if (p_irqs[i].cfg.trig_type == GPS_DL_IRQ_TRIG_LEVEL_HIGH)
-			sys_irq_trig_type = IRQF_TRIGGER_HIGH;
+			sys_irq_flags = IRQF_TRIGGER_HIGH;
 		else if (p_irqs[i].cfg.trig_type == GPS_DL_IRQ_TRIG_EDGE_RISING)
-			sys_irq_trig_type = IRQF_TRIGGER_RISING;
+			sys_irq_flags = IRQF_TRIGGER_RISING;
 		else
 			return -1;
 
@@ -65,27 +65,25 @@ int gps_dl_linux_irqs_register(struct gps_each_irq *p_irqs, int irq_num)
 		/* TODO: Use the dts to auto request the irqs */
 #if GPS_DL_USE_THREADED_IRQ
 		/* IRQF_ONESHOT is required for threaded irq */
+		sys_irq_flags |= IRQF_ONESHOT;
 		i_ret = request_threaded_irq(irq_id, NULL,
 			(irq_handler_t)p_irqs[i].cfg.isr,
-			sys_irq_trig_type | IRQF_ONESHOT,
-			p_irqs[i].cfg.name, &p_irqs[i]);
+			sys_irq_flags, p_irqs[i].cfg.name, &p_irqs[i]);
 #else
 		i_ret = request_irq(irq_id,
 			(irq_handler_t)p_irqs[i].cfg.isr, /* gps_dl_linux_irq_dispatcher */
-			sys_irq_trig_type, p_irqs[i].cfg.name, &p_irqs[i]);
+			sys_irq_flags, p_irqs[i].cfg.name, &p_irqs[i]);
 #endif
-		/* The init status is unmask, mask them here */
-		gps_dl_irq_mask(irq_id, GPS_DL_IRQ_CTRL_FROM_THREAD);
-
-		GDL_LOGE("i = %d, irq_id = %d, name = %s, ret = %d",
-			i, irq_id, p_irqs[i].cfg.name, i_ret);
-
+		GDL_LOGE("i = %d, irq_id = %d, name = %s, flags = 0x%x, ret = %d",
+			i, irq_id, p_irqs[i].cfg.name, sys_irq_flags, i_ret);
 		if (i_ret) {
 			/* show error log */
 			/* return i_ret; */
 			continue; /* not stop even fail */
 		}
 
+		/* The init status is unmask, mask them here */
+		gps_dl_irq_mask(irq_id, GPS_DL_IRQ_CTRL_FROM_THREAD);
 		p_irqs[i].register_done = true;
 		p_irqs[i].reg_irq_id = irq_id;
 	}
