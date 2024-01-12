@@ -11,7 +11,7 @@
 
 ###############################################################################
 # Necessary Check
-
+MTK_PLATFORM := $(subst ",,$(CONFIG_MTK_PLATFORM))
 ifeq ($(CONFIG_MTK_GPS_SUPPORT), y)
 
 ifeq ($(AUTOCONF_H),)
