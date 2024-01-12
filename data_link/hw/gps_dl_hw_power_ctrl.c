@@ -50,7 +50,7 @@ static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_RDY, 0,
 			POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
-			GDL_LOGE("_fail_disable_gps_slp_prot");
+			GDL_LOGE("_fail_disable_gps_slp_prot - conn2gps rx");
 			goto _fail_disable_gps_slp_prot;
 		}
 
@@ -58,7 +58,7 @@ static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_RDY, 0,
 			POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
-			GDL_LOGE("_fail_disable_gps_slp_prot");
+			GDL_LOGE("_fail_disable_gps_slp_prot - conn2gps tx");
 			goto _fail_disable_gps_slp_prot;
 		}
 
@@ -66,7 +66,7 @@ static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_RDY, 0,
 			POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
-			GDL_LOGE("_fail_disable_gps_slp_prot");
+			GDL_LOGE("_fail_disable_gps_slp_prot - gps2conn rx");
 			goto _fail_disable_gps_slp_prot;
 		}
 
@@ -74,7 +74,7 @@ static int gps_dl_hw_gps_sleep_prot_ctrl(int op)
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_RDY, 0,
 			POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
-			GDL_LOGE("_fail_disable_gps_slp_prot");
+			GDL_LOGE("_fail_disable_gps_slp_prot - gps2conn tx");
 			goto _fail_disable_gps_slp_prot;
 		}
 		return 0;
@@ -93,18 +93,45 @@ _fail_disable_gps_slp_prot:
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_EN,  1);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_TX_RDY, 1,
 			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			/* From DE: need to trigger connsys reset */
+			GDL_LOGE("_fail_enable_gps_slp_prot - conn2gps tx");
+			goto _fail_enable_gps_slp_prot;
+		}
 
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_EN,  1);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_CONN2GPS_SLP_CTRL_R_CONN2GPS_SLP_PROT_RX_RDY, 1,
 			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			/* not handle it, just show warning */
+			GDL_LOGE("_fail_enable_gps_slp_prot - conn2gps rx");
+		}
 
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_EN,  1);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_RDY, 1,
 			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			/* not handle it, just show warning */
+			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn tx");
+		}
 
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_EN,  1);
 		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_RX_RDY, 1,
 			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			/* From DE: need to trigger connsys reset */
+			GDL_LOGE("_fail_enable_gps_slp_prot - gps2conn rx");
+			goto _fail_enable_gps_slp_prot;
+		}
+
+		return 0;
+
+_fail_enable_gps_slp_prot:
+		/* trigger reset on outer function */
+#if 0
+		gps_dl_trigger_connsys_reset();
+#endif
+		return -1;
 	}
 
 	return 0;
@@ -269,14 +296,18 @@ _fail_conn_slp_prot_not_okay:
 	return -1;
 }
 
-void gps_dl_hw_gps_common_off(void)
+int gps_dl_hw_gps_common_off(void)
 {
 	/* Power off A-die top clock */
 #if (GPS_DL_HAS_CONNINFRA_DRV)
 	conninfra_adie_top_ck_en_off(CONNSYS_ADIE_CTL_HOST_GPS);
 #endif
 
-	gps_dl_hw_gps_sleep_prot_ctrl(0);
+	if (gps_dl_hw_gps_sleep_prot_ctrl(0) != 0) {
+		GDL_LOGE("enable sleep prot fail, trigger connsys reset");
+		gps_dl_trigger_connsys_reset();
+		return -1;
+	}
 
 	/* GPS SW EMI request
 	 * gps_dl_hw_gps_sw_request_emi_usage(false);
@@ -288,6 +319,7 @@ void gps_dl_hw_gps_common_off(void)
 
 	/* Disable GPS function */
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, 0);
+	return 0;
 }
 
 int gps_dl_hw_gps_dsp_ctrl(enum dsp_ctrl_enum ctrl)
@@ -470,6 +502,79 @@ bool gps_dl_hw_gps_dsp_is_off_done(enum gps_dl_link_id_enum link_id)
 
 void gps_dl_hw_gps_adie_force_off(void)
 {
-	/* TODO */
+#if GPS_DL_HAS_CONNINFRA_DRV
+	unsigned int spi_data;
+	int rd_status;
+	int wr_status;
+
+	/* TOP: 0xFC[1:0] = 2'b11 */
+	spi_data = 0;
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xFC, &spi_data);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+	GDL_LOGW("spi_data = 0x%x", spi_data);
+	wr_status = conninfra_spi_write(SYS_SPI_TOP, 0xFC, spi_data | 3UL);
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+
+	/* TOP: 0xA0C[31:0] = 0xFFFFFFFF; 0xAFC[31:0] = 0xFFFFFFFF */
+	wr_status = conninfra_spi_write(SYS_SPI_TOP, 0xA0C, 0xFFFFFFFF);
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+	wr_status = conninfra_spi_write(SYS_SPI_TOP, 0xAFC, 0xFFFFFFFF);
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+
+	/* TOP: 0xF8[0] = 1'b0 */
+	spi_data = 0;
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xF8, &spi_data);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+	GDL_LOGW("spi_data = 0x%x", spi_data);
+	wr_status = conninfra_spi_write(SYS_SPI_TOP, 0xF8, spi_data & (~1UL));
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+
+	/* GPS: 0x0[15] = 1'b1 */
+	spi_data = 0;
+	rd_status = conninfra_spi_read(SYS_SPI_GPS, 0x0, &spi_data);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+	GDL_LOGW("spi_data = 0x%x", spi_data);
+	wr_status = conninfra_spi_write(SYS_SPI_GPS, 0x0, spi_data & (1UL << 15));
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+
+	/* TOP: 0xF8[0] = 1'b1 */
+	spi_data = 0;
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xF8, &spi_data);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+	GDL_LOGW("spi_data = 0x%x", spi_data);
+	wr_status = conninfra_spi_write(SYS_SPI_TOP, 0xF8, spi_data | 1UL);
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+
+	/* GPS: 0x0[15] = 1'b1 */
+	spi_data = 0;
+	rd_status = conninfra_spi_read(SYS_SPI_GPS, 0x0, &spi_data);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+	GDL_LOGW("spi_data = 0x%x", spi_data);
+	wr_status = conninfra_spi_write(SYS_SPI_GPS, 0x0, spi_data & (1UL << 15));
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+
+	/* TOP: 0xF8[0] = 1'b0 */
+	spi_data = 0;
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xF8, &spi_data);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+	GDL_LOGW("spi_data = 0x%x", spi_data);
+	wr_status = conninfra_spi_write(SYS_SPI_TOP, 0xF8, spi_data & (~1UL));
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+
+	/* TOP: 0xA0C[31:0] = 0; 0xAFC[31:0] = 0 */
+	wr_status = conninfra_spi_write(SYS_SPI_TOP, 0xA0C, 0);
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+	wr_status = conninfra_spi_write(SYS_SPI_TOP, 0xAFC, 0);
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+
+	/* TOP: 0xFC[1:0] = 2'b00 */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xFC, &spi_data);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+	GDL_LOGW("spi_data = 0x%x", spi_data);
+	wr_status = conninfra_spi_write(SYS_SPI_TOP, 0xFC, spi_data & (~3UL));
+	ASSERT_ZERO(wr_status, GDL_VOIDF());
+#else
+	GDL_LOGE("no conninfra driver");
+#endif
 }
 
