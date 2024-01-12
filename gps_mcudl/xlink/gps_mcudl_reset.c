@@ -98,8 +98,8 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 			gps_mcudl_each_link_waitable_reset(x_id, GPS_DL_WAIT_RESET);
 			if (level == GPS_DL_RESET_LEVEL_CONNSYS)
 				gps_mcudl_xlink_event_send(x_id, GPS_MCUDL_EVT_LINK_PRE_CONN_RESET);
-			/*lse*/
-			/*	gps_mcudl_xlink_event_send(x_id, GPS_MCUDL_EVT_LINK_RESET_GPS);*/
+			else
+				gps_mcudl_xlink_event_send(x_id, GPS_MCUDL_EVT_LINK_RESET);
 		}
 
 		MDL_LOGXE_STA(x_id,
@@ -133,6 +133,31 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 		; /* TODO: take mutex to allow pending more waiter */
 
 	return GDL_OKAY;
+}
+
+#define MDL_RST_REASON_MAX (32)
+char g_gps_mcudl_subsys_reset_reason[MDL_RST_REASON_MAX];
+int gps_mcudl_trigger_gps_subsys_reset(bool wait_reset_done, const char *p_reason)
+{
+	enum GDL_RET_STATUS ret_status;
+	int i;
+
+	if (p_reason != NULL) {
+		for (i = 0; i < MDL_RST_REASON_MAX - 1; i++) {
+			if (p_reason[i] == '\0')
+				break;
+			g_gps_mcudl_subsys_reset_reason[i] = p_reason[i];
+		}
+		g_gps_mcudl_subsys_reset_reason[i] = '\0';
+		MDL_LOGE("reason=%s", &g_gps_mcudl_subsys_reset_reason[0]);
+	}
+	ret_status = gps_mcudl_reset_level_set_and_trigger(
+		GPS_DL_RESET_LEVEL_GPS_SUBSYS, wait_reset_done);
+	if (ret_status != GDL_OKAY) {
+		MDL_LOGE("status %s is not okay, return -1", gdl_ret_to_name(ret_status));
+		return -1;
+	}
+	return 0;
 }
 
 void gps_mcudl_handle_connsys_reset_done(void)
@@ -211,8 +236,10 @@ void gps_mcudl_connsys_coredump_deinit(void)
 void gps_mcudl_connsys_coredump_start(void)
 {
 #if GPS_DL_HAS_CONNINFRA_DRV
-	GDL_LOGI("gps_mcudl_connsys_coredump_start");
-	connsys_coredump_start(g_gps_coredump_handler, 0, CONNDRV_TYPE_GPS, "GPS");
+	GDL_LOGI("gps_mcudl_connsys_coredump_start, reason=%s",
+		&g_gps_mcudl_subsys_reset_reason[0]);
+	connsys_coredump_start(g_gps_coredump_handler, 0, CONNDRV_TYPE_GPS,
+		&g_gps_mcudl_subsys_reset_reason[0]);
 	connsys_coredump_clean(g_gps_coredump_handler);
 #endif
 }

@@ -151,6 +151,8 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 		(void)gps_mcudl_xlink_test_toggle_reset_by_gps_hif((unsigned int)z);
 	else if (y == 0x11)
 		gps_mcudl_xlink_test_bypass_mcu2ap_data(z != 0);
+	else if (y == 0x12)
+		gps_mcudl_trigger_gps_subsys_reset(true, "GNSS intended for testing");
 #endif
 	return 0;
 }
