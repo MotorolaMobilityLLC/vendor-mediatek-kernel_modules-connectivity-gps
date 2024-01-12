@@ -56,7 +56,7 @@ enum GDL_RET_STATUS gps_dl_emi_remap_phy_to_bus_addr(unsigned int phy_addr, unsi
 void gps_dl_emi_remap_calc_and_set(void)
 {
 	enum gps_dl_link_id_enum  i;
-	struct gps_each_link *p_link;
+	struct gps_each_link *p_link = NULL;
 
 	unsigned int min_addr = 0xFFFFFFFF;
 	unsigned int max_addr = 0;

@@ -173,6 +173,7 @@ static int __init gps_fw_log_init(void)
 		ret = -ENOMEM;
 		goto err_out;
 	}
+	init_waitqueue_head(&GPS_log_wq);
 
 	pr_info("Registering chardev\n");
 	ret = alloc_chrdev_region(&logdevobj->devno, 0, 1, GPSFWLOG_DEVNAME);
@@ -198,7 +199,6 @@ static int __init gps_fw_log_init(void)
 	logdevobj->dev = device_create(logdevobj->cls, NULL, logdevobj->devno, logdevobj, "fw_log_gps");
 
 	connsys_log_init(CONNLOG_TYPE_GPS);
-	init_waitqueue_head(&GPS_log_wq);
 	connsys_log_register_event_cb(CONNLOG_TYPE_GPS, log_event_cb);
 
 	pr_info("GPS FW LOG device init Done\n");

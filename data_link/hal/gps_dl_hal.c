@@ -66,8 +66,10 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	int curr_sid;
 	bool last_session_msg = false;
 	unsigned long j0, j1;
-	bool show_log, reg_rw_log;
-	bool conninfra_okay, dma_irq_en;
+	bool show_log = false;
+	bool reg_rw_log = false;
+	bool conninfra_okay = false;
+	bool dma_irq_en = false;
 
 	j0 =  gps_dl_tick_get();
 	curr_sid = gps_each_link_get_session_id(link_id);
@@ -284,7 +286,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 {
 	struct gps_dl_hal_mcub_info d2a;
-	bool conninfra_okay;
+	bool conninfra_okay = false;
 
 	/* Todo: while condition make sure DSP is on and session ID */
 	while (1) {

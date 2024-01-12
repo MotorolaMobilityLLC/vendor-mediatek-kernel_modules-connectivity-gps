@@ -65,7 +65,7 @@ void gps_each_dsp_reg_gourp_read_next(enum gps_dl_link_id_enum link_id, bool res
 {
 	unsigned int reg_addr;
 	enum GDL_RET_STATUS ret;
-	struct gps_each_dsp_reg_read_context *p_read_context;
+	struct gps_each_dsp_reg_read_context *p_read_context = NULL;
 	int i;
 
 	ASSERT_LINK_ID(link_id, GDL_VOIDF());

@@ -64,7 +64,7 @@ unsigned int gps_dl_hw_get_mcub_a2d1_cfg(enum gps_dl_link_id_enum link_id, bool 
 void gps_dl_hw_usrt_ctrl(enum gps_dl_link_id_enum link_id,
 	bool is_on, bool is_dma_mode, bool is_1byte_mode)
 {
-	bool poll_okay;
+	bool poll_okay = false;
 
 	if (is_1byte_mode)
 		GDL_HW_SET_GPS_ENTRY2(link_id, 1, GPS_USRT_APB_APB_CTRL_BYTEN, GPS_L5_USRT_APB_APB_CTRL_BYTEN);
@@ -147,7 +147,7 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_data(
 	enum gps_dl_link_id_enum link_id, int timeout_usec)
 {
 	struct gps_dl_hw_usrt_status_struct usrt_status;
-	bool last_rw_log_on;
+	bool last_rw_log_on = false;
 	unsigned long tick0, tick1;
 
 	tick0 = gps_dl_tick_get();
@@ -191,7 +191,7 @@ enum GDL_RET_STATUS gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_d
 	struct gps_dl_hw_dma_status_struct dma_status;
 	struct gps_dl_hw_usrt_status_struct usrt_status;
 	enum gps_dl_hal_dma_ch_index dma_ch;
-	bool last_rw_log_on;
+	bool last_rw_log_on = false;
 	unsigned long tick0, tick1;
 	bool conninfra_okay = true;
 	bool do_stop = true;

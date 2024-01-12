@@ -64,7 +64,7 @@ const char *const gps_dl_ret_name_list[GDL_RET_NUM + 1] = {
 
 const char *gdl_ret_to_name(enum GDL_RET_STATUS gdl_ret)
 {
-	const char *retval;
+	const char *retval = NULL;
 
 	RETURN_NAME_IN_LIST(gps_dl_ret_name_list, GDL_RET_NUM, gdl_ret, retval);
 	return retval;
@@ -84,7 +84,7 @@ const char *const gps_dl_dsp_state_name_list[GPS_DSP_ST_MAX + 1] = {
 
 const char *gps_dl_dsp_state_name(enum gps_dsp_state_t state)
 {
-	const char *retval;
+	const char *retval = NULL;
 
 	RETURN_NAME_IN_LIST(gps_dl_dsp_state_name_list, GPS_DSP_ST_MAX, state, retval);
 	return retval;
@@ -106,7 +106,7 @@ const char *const gps_dl_dsp_event_name_list[GPS_DSP_EVT_MAX + 1] = {
 
 const char *gps_dl_dsp_event_name(enum gps_dsp_event_t event)
 {
-	const char *retval;
+	const char *retval = NULL;
 
 	RETURN_NAME_IN_LIST(gps_dl_dsp_event_name_list, GPS_DSP_EVT_MAX, event, retval);
 	return retval;
@@ -131,7 +131,7 @@ const char * const gps_dl_link_state_name_list[LINK_STATE_NUM + 1] = {
 
 const char *gps_dl_link_state_name(enum gps_each_link_state_enum state)
 {
-	const char *retval;
+	const char *retval = NULL;
 
 	RETURN_NAME_IN_LIST(gps_dl_link_state_name_list, LINK_STATE_NUM, state, retval);
 	return retval;
@@ -161,7 +161,7 @@ const char *const gps_dl_link_event_name_list[GPS_DL_LINK_EVT_NUM + 1] = {
 
 const char *gps_dl_link_event_name(enum gps_dl_link_event_id event)
 {
-	const char *retval;
+	const char *retval = NULL;
 
 	RETURN_NAME_IN_LIST(gps_dl_link_event_name_list, GPS_DL_LINK_EVT_NUM, event, retval);
 	return retval;
@@ -179,7 +179,7 @@ const char *gps_dl_hal_event_name_list[GPD_DL_HAL_EVT_NUM + 1] = {
 
 const char *gps_dl_hal_event_name(enum gps_dl_hal_event_id event)
 {
-	const char *retval;
+	const char *retval = NULL;
 
 	RETURN_NAME_IN_LIST(gps_dl_hal_event_name_list, GPD_DL_HAL_EVT_NUM, event, retval);
 	return retval;
@@ -195,7 +195,7 @@ const char *const gps_dl_waitable_name_list[GPS_DL_WAIT_NUM + 1] = {
 
 const char *gps_dl_waitable_type_name(enum gps_each_link_waitable_type type)
 {
-	const char *retval;
+	const char *retval = NULL;
 
 	RETURN_NAME_IN_LIST(gps_dl_waitable_name_list, GPS_DL_WAIT_NUM, type, retval);
 	return retval;
