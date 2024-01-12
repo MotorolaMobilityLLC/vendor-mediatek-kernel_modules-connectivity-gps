@@ -1,16 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
-* Copyright (C) 2011-2014 MediaTek Inc.
-*
-* This program is free software: you can redistribute it and/or modify it under the terms of the
-* GNU General Public License version 2 as published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along with this program.
-* If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (c) 2020 MediaTek Inc.
+ */
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/types.h>
@@ -46,6 +37,9 @@
 #endif
 #include <linux/version.h>
 
+#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
+#include "gps_lna_drv.h"
+#endif
 MODULE_LICENSE("GPL");
 
 #define GPS_DRIVER_NAME "mtk_stp_GPS_chrdev"
@@ -1014,7 +1008,9 @@ static int GPS_open(struct inode *inode, struct file *file)
 
 #if 1				/* GeorgeKuo: turn on function before check stp ready */
 	/* turn on BT */
-
+#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
+	gps_lna_pin_ctrl(GPS_DATA_LINK_ID0, true, false);
+#endif
 	if (mtk_wcn_wmt_func_on(WMTDRV_TYPE_GPS) == MTK_WCN_BOOL_FALSE) {
 		GPS_WARN_FUNC("WMT turn on GPS fail!\n");
 		return -ENODEV;
@@ -1081,7 +1077,9 @@ static int GPS_close(struct inode *inode, struct file *file)
 	GPS_reference_count(FGGPS_FWCTL_EADY, false, GPS_USER1);
 	up(&fwctl_mtx);
 #endif
-
+#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
+	gps_lna_pin_ctrl(GPS_DATA_LINK_ID0, false, false);
+#endif
 	if (mtk_wcn_wmt_func_off(WMTDRV_TYPE_GPS) == MTK_WCN_BOOL_FALSE) {
 		GPS_WARN_FUNC("WMT turn off GPS fail!\n");
 		ret = -EIO;	/* mostly, native programer does not care this return vlaue, */
@@ -1220,6 +1218,9 @@ static int GPS_init(void)
 	/* init_MUTEX(&rd_mtx); */
 	sema_init(&rd_mtx2, 1);
 #endif
+#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
+	gps_lna_linux_plat_drv_register();
+#endif
 	return 0;
 
 error:
@@ -1281,6 +1282,10 @@ static void GPS_exit(void)
 	cdev_del(&GPS2_cdev);
 	unregister_chrdev_region(dev2, GPS2_devs);
 	pr_info("%s driver removed.\n", GPS2_DRIVER_NAME);
+
+#endif
+#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
+	gps_lna_linux_plat_drv_unregister();
 #endif
 	wakeup_source_unregister(gps_wake_lock_ptr);
 }

@@ -34,6 +34,9 @@
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761)
 #include <helio-dvfsrc.h>
 #endif
+#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
+#include "gps_lna_drv.h"
+#endif
 
 #define GPS2_DEBUG_TRACE_GPIO         0
 #define GPS2_DEBUG_DUMP               0
@@ -726,7 +729,9 @@ static int GPS2_open(struct inode *inode, struct file *file)
 
 #if 1				/* GeorgeKuo: turn on function before check stp ready */
 	/* turn on BT */
-
+#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
+	gps_lna_pin_ctrl(GPS_DATA_LINK_ID1, true, false);
+#endif
 	if (mtk_wcn_wmt_func_on(WMTDRV_TYPE_GPSL5) == MTK_WCN_BOOL_FALSE) {
 		GPS2_WARN_FUNC("WMT turn on GPS2 fail!\n");
 		return -ENODEV;
@@ -794,7 +799,9 @@ static int GPS2_close(struct inode *inode, struct file *file)
 	GPS_reference_count(FGGPS_FWCTL_EADY, false, GPS_USER2);
 	up(&fwctl_mtx);
 #endif
-
+#ifdef CONFIG_GPS_CTRL_LNA_SUPPORT
+	gps_lna_pin_ctrl(GPS_DATA_LINK_ID1, false, false);
+#endif
 	if (mtk_wcn_wmt_func_off(WMTDRV_TYPE_GPSL5) == MTK_WCN_BOOL_FALSE) {
 		GPS2_WARN_FUNC("WMT turn off GPS2 fail!\n");
 		ret = -EIO;
