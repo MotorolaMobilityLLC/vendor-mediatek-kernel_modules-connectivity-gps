@@ -172,6 +172,7 @@ int gps_each_link_give_big_lock(enum gps_dl_link_id_enum link_id);
 int gps_each_link_reset(enum gps_dl_link_id_enum link_id);
 void gps_dl_link_reset_ack(enum gps_dl_link_id_enum link_id);
 void gps_dl_link_on_post_conn_reset(enum gps_dl_link_id_enum link_id);
+bool gps_dl_link_try_to_clear_both_resetting_status(void);
 
 int gps_each_link_enter_dsleep(enum gps_dl_link_id_enum link_id);
 int gps_each_link_leave_dsleep(enum gps_dl_link_id_enum link_id);

@@ -151,13 +151,17 @@ void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id)
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 
 	GDL_LOGXD(link_id, "");
+
+	/* TODO: open fail case */
 	gps_each_link_set_bool_flag(link_id, LINK_OPEN_RESULT_OKAY, true);
 	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
 
 	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_OPEN_DONE);
 	if (gps_each_link_get_bool_flag(link_id, LINK_USER_OPEN)) {
-		GDL_LOGXW(link_id, "user still online, change to opened");
-		gps_each_link_set_state(link_id, LINK_OPENED);
+		GDL_LOGXW(link_id, "user still online, try to change to opened");
+
+		/* Note: if pre_status not OPENING, it might be RESETTING, not handle it here */
+		gps_each_link_change_state_from(link_id, LINK_OPENING, LINK_OPENED);
 
 		/* TODO: ack on DSP reset done */
 #if 0
@@ -167,10 +171,13 @@ void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id)
 			gps_dl_hal_a2d_tx_dma_start(link_id, &dma_buf_entry);
 #endif
 	} else {
-		GDL_LOGXW(link_id, "user already offline, change to closing");
-		gps_each_link_set_state(link_id, LINK_CLOSING);
-		gps_each_link_set_bool_flag(link_id, LINK_TO_BE_CLOSED, true);
-		gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
+		GDL_LOGXW(link_id, "user already offline, try to change to closing");
+
+		/* Note: if pre_status not OPENING, it might be RESETTING, not handle it here */
+		if (gps_each_link_change_state_from(link_id, LINK_OPENING, LINK_CLOSING)) {
+			gps_each_link_set_bool_flag(link_id, LINK_TO_BE_CLOSED, true);
+			gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
+		}
 	}
 	gps_each_link_give_big_lock(link_id);
 }
@@ -359,8 +366,7 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 			state2 = gps_each_link_get_state(link_id);
 
 			/* Already reset or close, not trigger reseeting again */
-			GDL_LOGXW(link_id, "state changed: %s -> %s",
-				gps_dl_link_state_name(state), gps_dl_link_state_name(state2));
+			GDL_LOGXW(link_id, "state flip to %s - corner case", gps_dl_link_state_name(state2));
 			if (state2 == LINK_RESETTING || state2 == LINK_RESET_DONE)
 				retval = 0;
 			else
@@ -398,50 +404,95 @@ void gps_dl_ctrld_set_resest_status(void)
 	gps_each_link_set_active(GPS_DATA_LINK_ID1, false);
 }
 
-void gps_dl_link_reset_ack(enum gps_dl_link_id_enum link_id)
+void gps_dl_link_reset_ack_inner(enum gps_dl_link_id_enum link_id, bool post_conn_reset)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
-
-	GDL_LOGXD(link_id, "");
-
-	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_RESET]);
+	enum gps_each_link_state_enum old_state, new_state;
+	enum gps_each_link_reset_level old_level, new_level;
+	bool user_still_open;
+	bool both_clear_done = false;
 
 	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_RESET_DONE);
-
 	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
-	if (p->reset_level != GPS_DL_RESET_LEVEL_CONNSYS) {
+	old_state = p->state_for_user;
+	old_level = p->reset_level;
+	user_still_open = p->sub_states.user_open;
+
+	switch (old_level) {
+	case GPS_DL_RESET_LEVEL_GPS_SINGLE_LINK:
+		p->reset_level = GPS_DL_RESET_LEVEL_NONE;
 		if (p->sub_states.user_open)
 			p->state_for_user = LINK_RESET_DONE;
 		else
 			p->state_for_user = LINK_CLOSED;
+		break;
+
+	case GPS_DL_RESET_LEVEL_CONNSYS:
+		if (!post_conn_reset)
+			break;
 		p->reset_level = GPS_DL_RESET_LEVEL_NONE;
+		both_clear_done = gps_dl_link_try_to_clear_both_resetting_status();
+		break;
+
+	case GPS_DL_RESET_LEVEL_GPS_SUBSYS:
+		p->reset_level = GPS_DL_RESET_LEVEL_NONE;
+		both_clear_done = gps_dl_link_try_to_clear_both_resetting_status();
+		break;
+
+	default:
+		break;
 	}
+
+	new_state = p->state_for_user;
+	new_level = p->reset_level;
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+
+	/* TODO: if both clear, show another link's log */
+	GDL_LOGXE(link_id,
+		"state change: %s -> %s, level: %d -> %d, user = %d, post_reset = %d, both_clear = %d",
+		gps_dl_link_state_name(old_state), gps_dl_link_state_name(new_state),
+		old_level, new_level,
+		user_still_open, post_conn_reset, both_clear_done);
+
 	gps_each_link_give_big_lock(link_id);
 
-	/* TODO */
-#if 0
-	if (has_someone_wait_reset_done)
-		wait until the one to wakeup and clear it
-#endif
+	/* Note: for CONNSYS or GPS_SUBSYS RESET, here might be still RESETTING,
+	 * if any other link not reset done (see both_clear_done print).
+	 */
+	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_RESET]);
+}
+
+bool gps_dl_link_try_to_clear_both_resetting_status(void)
+{
+	enum gps_dl_link_id_enum link_id;
+	struct gps_each_link *p;
+
+	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
+		p = gps_dl_link_get(link_id);
+		if (p->reset_level != GPS_DL_RESET_LEVEL_NONE)
+			return false;
+	}
+
+	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
+		p = gps_dl_link_get(link_id);
+
+		if (p->sub_states.user_open)
+			p->state_for_user = LINK_RESET_DONE;
+		else
+			p->state_for_user = LINK_CLOSED;
+	}
+
+	return true;
+}
+
+void gps_dl_link_reset_ack(enum gps_dl_link_id_enum link_id)
+{
+	gps_dl_link_reset_ack_inner(link_id, false);
 }
 
 void gps_dl_link_on_post_conn_reset(enum gps_dl_link_id_enum link_id)
 {
-
-	struct gps_each_link *p = gps_dl_link_get(link_id);
-
-	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_RESET_DONE);
-	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
-	if (p->reset_level == GPS_DL_RESET_LEVEL_CONNSYS) {
-		if (p->sub_states.user_open)
-			p->state_for_user = LINK_RESET_DONE;
-		else
-			p->state_for_user = LINK_CLOSED;
-		p->reset_level = GPS_DL_RESET_LEVEL_NONE;
-	}
-	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
-	gps_each_link_give_big_lock(link_id);
+	gps_dl_link_reset_ack_inner(link_id, true);
 }
 
 void gps_dl_link_close_wait(enum gps_dl_link_id_enum link_id, long *p_sigval)
@@ -491,12 +542,15 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 	case LINK_CLOSED:
 	case LINK_DISABLED:
 		/* twice close */
+		/* TODO: show user open flag */
 		retval = -EINVAL;
 		break;
 
 	case LINK_RESETTING:
-		/* TODO */
-		retval = -EAGAIN;
+		gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
+		GDL_LOGXE(link_id, "state check: %s, return close ok", gps_dl_link_state_name(state));
+		/* return okay to avoid twice close */
+		retval = 0;
 		break;
 
 	case LINK_RESET_DONE:
@@ -513,11 +567,13 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 			state2 = gps_each_link_get_state(link_id);
 			if (state2 == LINK_RESET_DONE)
 				gps_each_link_set_state(link_id, LINK_CLOSED);
-
+			else {
+				gps_each_link_give_big_lock(link_id);
+				GDL_LOGXW(link_id, "state check: %s, return close ok",
+					gps_dl_link_state_name(state2));
+			}
 			gps_each_link_give_big_lock(link_id);
-			GDL_LOGXW(link_id, "close fail due to %s is not LINK_OPENED",
-				gps_dl_link_state_name(state2));
-			retval = -EBUSY;
+			retval = 0;
 			break;
 		}
 		gps_each_link_give_big_lock(link_id);
@@ -934,6 +990,18 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	case GPS_DL_EVT_LINK_PRE_CONN_RESET:
 		/* TODO: avoid twice enter */
 
+		if (GPS_DSP_ST_OFF == gps_dsp_state_get(link_id)) {
+			GDL_LOGXD(link_id, "dsp state is off, do nothing for %s",
+				gps_dl_link_event_name(evt));
+
+			if (GPS_DL_EVT_LINK_CLOSE == evt)
+				gps_dl_link_close_ack(link_id); /* TODO: check fired race */
+			else
+				gps_dl_link_reset_ack(link_id);
+
+			break;
+		}
+
 		/* TODO: Corresponding DMA must be stopped before turn off L1 or L5 power */
 		/* 1. New DMA transfer can not be started */
 		/* 2. Mask DMA interrupt if possible, when another DSP not working */
@@ -1198,7 +1266,8 @@ void gps_each_link_set_state(enum gps_dl_link_id_enum link_id, enum gps_each_lin
 	p->state_for_user = state;
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
-	GDL_LOGXD(link_id, "%s -> %s", gps_dl_link_state_name(pre_state), gps_dl_link_state_name(state));
+	GDL_LOGXD(link_id, "state change: %s -> %s",
+		gps_dl_link_state_name(pre_state), gps_dl_link_state_name(state));
 }
 
 bool gps_each_link_change_state_from(enum gps_dl_link_id_enum link_id,
@@ -1216,11 +1285,14 @@ bool gps_each_link_change_state_from(enum gps_dl_link_id_enum link_id,
 	}
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
-	if (is_okay)
-		GDL_LOGXD(link_id, "%s -> %s, okay", gps_dl_link_state_name(from), gps_dl_link_state_name(to));
-	else
-		GDL_LOGXW(link_id, "%s -> %s, fail, pre_state = %s",
-			gps_dl_link_state_name(from), gps_dl_link_state_name(to), gps_dl_link_state_name(pre_state));
+	if (is_okay) {
+		GDL_LOGXD(link_id, "state change: %s -> %s, okay",
+			gps_dl_link_state_name(from), gps_dl_link_state_name(to));
+	} else {
+		GDL_LOGXW(link_id, "state change: %s -> %s, fail on pre_state = %s",
+			gps_dl_link_state_name(from), gps_dl_link_state_name(to),
+			gps_dl_link_state_name(pre_state));
+	}
 
 	return is_okay;
 }
