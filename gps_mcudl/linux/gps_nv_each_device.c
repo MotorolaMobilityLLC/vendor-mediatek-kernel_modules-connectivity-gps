@@ -143,7 +143,7 @@ static ssize_t gps_nv_each_device_read(struct file *filp,
 	bool data_ready_flag = false;
 	enum GDL_RET_STATUS try_wait_status;
 	struct gps_each_link_waitable *p_rd_waitable;
-	long l_offset;
+	long l_offset = 0;
 	gpsmdl_u32 u32_offset;
 
 	p_dev = (struct gps_nv_each_device *)filp->private_data;

@@ -40,6 +40,7 @@ void gps_mcu_hif_host_init_ch(enum gps_mcu_hif_ch hif_ch)
 	start_desc.addr = 0;
 	start_desc.len = 0;
 	start_desc.id = 0;
+	start_desc.zero = 0;
 	gps_mcu_hif_set_ap2mcu_trans_start_desc(hif_ch, &start_desc);
 
 	p_buf = gps_mcu_hif_get_mcu2ap_emi_buf_addr(hif_ch);
@@ -51,6 +52,7 @@ void gps_mcu_hif_host_init_ch(enum gps_mcu_hif_ch hif_ch)
 	start_desc.addr = 0;
 	start_desc.len = 0;
 	start_desc.id = 0;
+	start_desc.zero = 0;
 	gps_mcu_hif_set_mcu2ap_trans_start_desc(hif_ch, &start_desc);
 }
 
