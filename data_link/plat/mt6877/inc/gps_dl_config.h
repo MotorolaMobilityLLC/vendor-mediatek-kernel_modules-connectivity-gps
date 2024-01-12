@@ -63,6 +63,18 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_EMI_MPU_DOMAIN_CONN    (2)
 #define GPS_DL_EMI_MPU_REGION_NUM     (29)
 
+
+/*MET2.0 feature depends on:
+*1. conninfra api
+*2. linux platform based api
+*/
+#if GPS_DL_HAS_PLAT_DRV
+#if GPS_DL_HAS_CONNINFRA_DRV
+#define GPS_DL_ENABLE_MET             (1)
+#endif
+#endif
+
+
 #include "gps_dl_log.h"
 
 #endif /* _GPS_DL_CONFIG_H */

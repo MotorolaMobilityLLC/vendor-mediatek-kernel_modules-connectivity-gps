@@ -35,6 +35,19 @@ void gps_dl_hw_dep_dump_host_csr_conninfra_info(void);
 /* Only need when BMASK_RW_DO_CHECK active for debug purpose */
 void gps_dl_hw_dep_may_do_bus_check_and_print(unsigned int host_addr);
 
-
+/*
+ * MET2.0
+ */
+void gps_dl_hw_dep_set_emi_write_range(unsigned int bus_emi_met_phy_addr);
+void gps_dl_hw_dep_set_ringbuffer_mode(unsigned int mode);
+void gps_dl_hw_dep_set_sampling_rate(unsigned int rate);
+void gps_dl_hw_dep_set_mask_signal(unsigned int mask_signal);
+void gps_dl_hw_dep_set_edge_detection(unsigned int edge);
+void gps_dl_hw_dep_set_event_signal(unsigned int event_signal);
+void gps_dl_hw_dep_set_event_select(unsigned int event_select);
+void gps_dl_hw_dep_enable_met(void);
+void gps_dl_hw_dep_disable_met(void);
+unsigned int gps_dl_hw_dep_get_met_read_ptr_addr(void);
+unsigned int gps_dl_hw_dep_get_met_write_ptr_addr(void);
 #endif
 

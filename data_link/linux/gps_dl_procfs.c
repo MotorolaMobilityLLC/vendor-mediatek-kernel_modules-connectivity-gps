@@ -13,12 +13,46 @@
 #include "gps_dl_context.h"
 #include "gps_each_link.h"
 #include "gps_dl_subsys_reset.h"
+#include "gps_dl_hal_met2_0.h"
 
 int gps_dl_procfs_dummy_op(int y, int z)
 {
 	GDL_LOGW("do nothing: y = %d, z = %d", y, z);
 	return 0;
 }
+
+#ifdef GPS_DL_ENABLE_MET
+int gps_dl_procfs_set_met(int y, int z)
+{
+	int ret = 0;
+
+	GDL_LOGW("gps_dl_procfs_set_met: y = %d, z = %d", y, z);
+	switch (y) {
+	case GPS_DEBUG_OP_START:
+		ret = gps_debug_met_start(&g_gps_debug_met_contex);
+		break;
+	case GPS_DEBUG_OP_STOP:
+		ret = gps_debug_met_stop(&g_gps_debug_met_contex);
+		break;
+	case GPS_DEBUG_OP_CLEAR:
+		gps_debug_met_clear(&g_gps_debug_met_contex);
+		break;
+	case GPS_DEBUG_OP_SET_BUFFER_MODE:
+	case GPS_DEBUG_OP_SET_SAMPLE_RATE:
+	case GPS_DEBUG_OP_SET_MASK_SIGNAL:
+	case GPS_DEBUG_OP_SET_EVENT_SIGNAL:
+	case GPS_DEBUG_OP_SET_EDGE_DETECTION:
+	case GPS_DEBUG_OP_SET_EVENT_SELECT:
+		ret = gps_debug_met_set_parameter(&g_gps_debug_met_contex, y, z);
+		break;
+	default:
+		ret = -1;
+		GDL_LOGE("gps_dl_procfs_set_met,ERROR input y = %d, z = %d", y, z);
+		break;
+	}
+	return ret;
+}
+#endif
 
 int gps_dl_procfs_set_opt(int y, int z)
 {
@@ -89,9 +123,20 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 gps_dl_procfs_test_func_type g_gps_dl_proc_test_func_list[] = {
 	[0x00] = gps_dl_procfs_dummy_op,
 	/* [0x01] = TODO: reg read */
+	[0x01] = NULL,
 	/* [0x02] = TODO: reg write */
+	[0x02] = NULL,
 	[0x03] = gps_dl_procfs_set_opt,
 	[0x04] = gps_dl_procfs_trigger_reset,
+	/* [0x05] = gps_dl_procfs_show_pmic_efuse_reg: corgin efuse read */
+	[0x05] = NULL,
+	/* [0x06] = gps_dl_procfs_set_vcore_power: corgin vcore setting */
+	[0x06] = NULL,
+	#ifdef GPS_DL_ENABLE_MET
+	[0x07] = gps_dl_procfs_set_met,
+	#else
+	[0x07] = NULL,
+	#endif
 };
 
 #define UNLOCK_MAGIC 0xDB9DB9
