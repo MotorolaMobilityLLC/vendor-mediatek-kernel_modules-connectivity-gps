@@ -68,7 +68,8 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	j0 = jiffies;
 	curr_sid = gps_each_link_get_session_id(link_id);
 
-	if (gps_each_link_get_bool_flag(link_id, LINK_IS_RESETTING)) {
+	if (!gps_dl_reset_level_is_none(link_id) ||
+		gps_each_link_get_bool_flag(link_id, LINK_IS_RESETTING)) {
 		/* ack the reset status */
 		last_session_msg = true;
 	} else if (sid_on_evt != curr_sid && sid_on_evt != GPS_EACH_LINK_SID_NO_CHECK) {

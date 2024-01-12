@@ -26,7 +26,7 @@ enum gps_each_link_reset_level {
 enum GDL_RET_STATUS gps_dl_reset_level_set_and_trigger(
 	enum gps_each_link_reset_level level, bool wait_reset_done);
 
-bool gps_dl_reset_level_is_none(void);
+bool gps_dl_reset_level_is_none(enum gps_dl_link_id_enum link_id);
 bool gps_dl_reset_level_is_single(void);
 bool gps_dl_reset_level_gt_single(void);
 
