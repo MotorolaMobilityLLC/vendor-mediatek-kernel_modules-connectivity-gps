@@ -1070,10 +1070,10 @@ int gps_each_link_write_with_opt(enum gps_dl_link_id_enum link_id,
 	long sigval = 0;
 
 	if (NULL == p)
-		return -1;
+		return -EINVAL;
 
 	if (len > p->tx_dma_buf.len)
-		return -1;
+		return -EINVAL;
 
 	if (gps_each_link_get_state(link_id) != LINK_OPENED) {
 		GDL_LOGXW_DRW(link_id, "not opened, drop the write data len = %d", len);
@@ -1113,7 +1113,7 @@ int gps_each_link_write_with_opt(enum gps_dl_link_id_enum link_id,
 				"wait due to gdl_dma_buf_put ret = %s", gdl_ret_to_name(gdl_ret));
 			gdl_ret = gps_dl_link_wait_on(&p->waitables[GPS_DL_WAIT_WRITE], &sigval);
 			if (gdl_ret == GDL_FAIL_SIGNALED)
-				break;
+				return -ERESTARTSYS;
 		} else {
 			gps_dma_buf_show(&p->tx_dma_buf, true);
 			GDL_LOGXW(link_id,
@@ -1122,7 +1122,7 @@ int gps_each_link_write_with_opt(enum gps_dl_link_id_enum link_id,
 		}
 	}
 
-	return -1;
+	return -EFAULT;
 }
 
 int gps_each_link_read(enum gps_dl_link_id_enum link_id,
@@ -1141,7 +1141,7 @@ int gps_each_link_read_with_timeout(enum gps_dl_link_id_enum link_id,
 	unsigned int data_len;
 
 	if (NULL == p)
-		return -1;
+		return -EINVAL;
 
 	while (1) {
 		gdl_ret = gdl_dma_buf_get(&p->rx_dma_buf, buf, len, &data_len, p_is_nodata);
@@ -1169,21 +1169,23 @@ int gps_each_link_read_with_timeout(enum gps_dl_link_id_enum link_id,
 			gdl_ret = gps_dl_hal_wait_and_handle_until_usrt_has_data(
 				link_id, timeout_usec);
 			if (gdl_ret == GDL_FAIL_TIMEOUT)
-				return -1;
+				return -EAGAIN;
 
 			gdl_ret = gps_dl_hal_wait_and_handle_until_usrt_has_nodata_or_rx_dma_done(
 				link_id, timeout_usec, true);
 			if (gdl_ret == GDL_FAIL_TIMEOUT)
-				return -1;
+				return -EAGAIN;
 			continue;
 #else
 			gdl_ret = gps_dl_link_wait_on(&p->waitables[GPS_DL_WAIT_READ], &sigval);
-			if (gdl_ret == GDL_FAIL_SIGNALED || gdl_ret == GDL_FAIL_NOT_SUPPORT)
-				return -1;
+			if (gdl_ret == GDL_FAIL_SIGNALED)
+				return -ERESTARTSYS;
+			else if (gdl_ret == GDL_FAIL_NOT_SUPPORT)
+				return -EFAULT;
 #endif
 		} else {
 			GDL_LOGXW_DRW(link_id, "gdl_dma_buf_get fail %s", gdl_ret_to_name(gdl_ret));
-			return -1;
+			return -EFAULT;
 		}
 	}
 
