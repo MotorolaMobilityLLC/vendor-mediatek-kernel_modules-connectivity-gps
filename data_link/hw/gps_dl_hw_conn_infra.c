@@ -283,7 +283,8 @@ bool gps_dl_hw_init_pta_uart(void)
 	/* dump value after setting and poll until bit7 become 1 or timeout */
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_UART_PTA_FCR_RFTL_HIGH_BIT, 1, POLL_DEFAULT, &poll_okay);
 	if (!poll_okay) {
-		gps_dl_set_show_reg_rw_log(show_log);
+		if (reg_rw_log)
+			gps_dl_set_show_reg_rw_log(show_log);
 		GDL_LOGE("CONN_UART_PTA_FCR bit7 not become 1, fail");
 		return false;
 	}
