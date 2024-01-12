@@ -18,45 +18,41 @@
 #include "gps_dl_context.h"
 #include "gps_dl_name_list.h"
 #include "gps_dl_subsys_reset.h"
+#include "gps_dl_time_tick.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
 #endif
 
-#include "linux/jiffies.h"
-
 
 static bool s_gps_has_data_irq_masked[GPS_DATA_LINK_NUM];
-
 
 void gps_dl_hal_event_send(enum gps_dl_hal_event_id evt,
 	enum gps_dl_link_id_enum link_id)
 {
-#if (GPS_DL_HAS_CTRLD == 0)
-	gps_dl_hal_event_proc(evt, link_id, gps_each_link_get_session_id(link_id));
-#else
-	{
-		struct gps_dl_osal_lxop *pOp;
-		struct gps_dl_osal_signal *pSignal;
-		int iRet;
+#if GPS_DL_HAS_CTRLD
+	struct gps_dl_osal_lxop *pOp = NULL;
+	struct gps_dl_osal_signal *pSignal = NULL;
+	int iRet;
 
-		pOp = gps_dl_get_free_op();
-		if (!pOp)
-			return;
+	pOp = gps_dl_get_free_op();
+	if (!pOp)
+		return;
 
-		pSignal = &pOp->signal;
-		pSignal->timeoutValue = 0;/* send data need to wait ?ms */
-		if (link_id < GPS_DATA_LINK_NUM) {
-			pOp->op.opId = GPS_DL_OPID_HAL_EVENT_PROC;
-			pOp->op.au4OpData[0] = link_id;
-			pOp->op.au4OpData[1] = evt;
-			pOp->op.au4OpData[2] = gps_each_link_get_session_id(link_id);
-			iRet = gps_dl_put_act_op(pOp);
-		} else {
-			gps_dl_put_op_to_free_queue(pOp);
-			/*printf error msg*/
-			return;
-		}
+	pSignal = &pOp->signal;
+	pSignal->timeoutValue = 0;/* send data need to wait ?ms */
+	if (link_id < GPS_DATA_LINK_NUM) {
+		pOp->op.opId = GPS_DL_OPID_HAL_EVENT_PROC;
+		pOp->op.au4OpData[0] = link_id;
+		pOp->op.au4OpData[1] = evt;
+		pOp->op.au4OpData[2] = gps_each_link_get_session_id(link_id);
+		iRet = gps_dl_put_act_op(pOp);
+	} else {
+		gps_dl_put_op_to_free_queue(pOp);
+		/*printf error msg*/
+		return;
 	}
+#else
+	gps_dl_hal_event_proc(evt, link_id, gps_each_link_get_session_id(link_id));
 #endif
 }
 
@@ -73,7 +69,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	bool show_log, reg_rw_log;
 	bool conninfra_okay, dma_irq_en;
 
-	j0 = jiffies;
+	j0 =  gps_dl_tick_get();
 	curr_sid = gps_each_link_get_session_id(link_id);
 
 	if (!gps_dl_reset_level_is_none(link_id) ||
@@ -280,7 +276,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		break;
 	}
 
-	j1 = jiffies;
+	j1 =  gps_dl_tick_get();
 	GDL_LOGXI_EVT(link_id, "evt = %s, on_sid = %d, dj = %lu",
 		gps_dl_hal_event_name(evt), sid_on_evt, j1 - j0);
 }

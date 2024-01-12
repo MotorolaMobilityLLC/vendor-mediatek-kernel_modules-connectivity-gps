@@ -150,6 +150,12 @@ $(MODULE_NAME)-objs += data_link/hal/gps_dl_mcub.o
 $(MODULE_NAME)-objs += data_link/hal/gps_dl_zbus.o
 $(MODULE_NAME)-objs += data_link/hal/gps_dl_conn_infra.o
 
+$(MODULE_NAME)-objs += data_link/link/gps_dl_link_event_proc.o
+$(MODULE_NAME)-objs += data_link/link/gps_dl_link_hal_ctrl.o
+$(MODULE_NAME)-objs += data_link/link/gps_dl_link_irq_ctrl.o
+$(MODULE_NAME)-objs += data_link/link/gps_dl_link_state.o
+$(MODULE_NAME)-objs += data_link/link/gps_dl_link_sync.o
+$(MODULE_NAME)-objs += data_link/link/gps_dl_link_util.o
 $(MODULE_NAME)-objs += data_link/link/gps_dl_subsys_reset.o
 $(MODULE_NAME)-objs += data_link/gps_each_link.o
 

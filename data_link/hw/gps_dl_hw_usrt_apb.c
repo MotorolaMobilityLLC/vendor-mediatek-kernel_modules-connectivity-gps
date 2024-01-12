@@ -133,9 +133,11 @@ bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id)
 	else if (link_id == GPS_DATA_LINK_ID1)
 		GDL_HW_POLL_GPS_ENTRY(GPS_L5_USRT_APB_APB_STA_RX_EMP, 1, 10000 * POLL_US, &poll_okay);
 
+
+#if GPS_DL_ON_LINUX
 	if (!poll_okay)
 		GDL_LOGXE_DRW(link_id, "okay = %d", poll_okay);
-
+#endif
 	return poll_okay;
 }
 
