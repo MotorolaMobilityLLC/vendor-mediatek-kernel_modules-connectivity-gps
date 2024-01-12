@@ -482,7 +482,8 @@ void gps_dl_hal_conn_infra_driver_debug_dump(void)
 #if GPS_DL_HAS_PTA
 bool gps_dl_hal_md_blanking_init_pta_idc_mode(void)
 {
-	bool okay, done;
+	bool okay = false;
+	bool done = false;
 
 	/* do pta uart init firstly */
 	done = gps_dl_hw_is_pta_uart_init_done();
