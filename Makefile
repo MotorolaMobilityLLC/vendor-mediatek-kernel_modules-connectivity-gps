@@ -76,7 +76,7 @@ else
         ccflags-y += -DREMOVE_MK_NODE=1
 endif
 
-ifneq ($(filter "CONSYS_6771" "CONSYS_6775",$(CONFIG_MTK_COMBO_CHIP)),)
+ifneq ($(filter "CONSYS_6771" "CONSYS_6775" "CONSYS_6779",$(CONFIG_MTK_COMBO_CHIP)),)
         ccflags-y += -DEMI_MPU_PROTECTION_IS_READY=1
 endif
 
