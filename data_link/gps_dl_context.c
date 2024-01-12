@@ -244,6 +244,9 @@ bool gps_dl_log_reg_rw_is_on(enum gps_dl_log_reg_rw_ctrl_enum log_reg_rw)
 
 void gps_dl_log_info_show(void)
 {
-	GDL_LOGE("level = %d, bitmask = 0x%08x", s_gps_rt_cfg.log_level, s_gps_rt_cfg.log_mod_bitmask);
+	bool show_reg_rw_log = gps_dl_show_reg_rw_log();
+
+	GDL_LOGE("level = %d, bitmask = 0x%08x, rrw = %d",
+		s_gps_rt_cfg.log_level, s_gps_rt_cfg.log_mod_bitmask, show_reg_rw_log);
 }
 
