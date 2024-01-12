@@ -33,7 +33,7 @@
 #define GDL_HW_CHECK_BGF_IP_VER(p_poll_okay, p_poll_ver)             \
 	GDL_HW_POLL_ENTRY_VERBOSE(GPS_DL_GPS_BUS,                 \
 		BG_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION,                    \
-		p_poll_okay, p_poll_ver, POLL_DEFAULT, (                 \
+		p_poll_okay, p_poll_ver, (10 * POLL_DEFAULT2), (                 \
 			(*p_poll_ver == GDL_HW_BGF_VER_MT6991))   \
 	)
 

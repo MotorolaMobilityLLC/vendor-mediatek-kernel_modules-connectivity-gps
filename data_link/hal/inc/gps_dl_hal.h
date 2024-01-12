@@ -26,6 +26,13 @@ enum gps_dl_hal_power_ctrl_op_enum {
 	GPS_DL_HAL_POWER_OP_MAX
 };
 
+enum gps_dl_hal_power_ctrl_res_enum {
+	GPS_DUAL_COMMON_LEAVE_DPSTOP_DPSLEEP = 0,
+	GPS_DUAL_SET_HW_WAKEUP_SRC = 1,
+	GPS_DUAL_RES_MAX = 31,
+	GPS_DUAL_RES_LIMIT = 32 /* use u_int32 bitmask*/
+};
+
 struct gps_each_dsp_reg_read_value {
 	unsigned int record_d2a_index;
 	/* g_gps_rec_dsp_value include d2a0 history value and last d2a1 value */
@@ -127,5 +134,8 @@ struct gps_dl_gps_awake_status {
 };
 void gps_dl_hal_set_gps_awake_status(bool is_gps_awake);
 void gps_dl_hal_get_gps_awake_status(struct gps_dl_gps_awake_status *p_awake);
+
+void gps_dl_set_res_enable(enum gps_dl_link_id_enum link_id, enum gps_dl_hal_power_ctrl_res_enum res,
+	int enable, bool bypass_op);
 
 #endif /* _GPS_DL_HAL_H */
