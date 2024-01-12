@@ -45,10 +45,19 @@ enum gps_dl_link_id_enum {
 
 #define GPS_DL_IS_MODULE      (1)
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+#define GPS_DL_USE_MTK_SYNC_WRITE    (0)
+#define GPS_DL_SET_EMI_MPU_CFG       (0)
+#define GPS_DL_GET_RSV_MEM_IN_MODULE (1)
+#else
 #define GPS_DL_USE_MTK_SYNC_WRITE    (1)
 #define GPS_DL_SET_EMI_MPU_CFG       (1)
 #define GPS_DL_GET_RSV_MEM_IN_MODULE (0)
+#endif
 
+#define GPS_DL_EMI_MPU_DOMAIN_AP      (0)
+#define GPS_DL_EMI_MPU_DOMAIN_CONN    (2)
+#define GPS_DL_EMI_MPU_REGION_NUM     (29)
 
 #include "gps_dl_log.h"
 
