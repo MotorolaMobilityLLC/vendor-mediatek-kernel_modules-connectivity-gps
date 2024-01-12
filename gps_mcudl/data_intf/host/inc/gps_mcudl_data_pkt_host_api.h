@@ -14,6 +14,13 @@
 #include "gps_mcudl_data_pkt_parser.h"
 #include "gps_dl_dma_buf.h"
 
+struct geofence_pkt_host_sta_s {
+	struct gps_mcudl_data_pkt_mcu_sta pkt_sta;
+	gpsmdl_u64 last_ack_recv_len;
+	bool reset_flag;
+	bool is_enable;
+};
+
 bool gps_mcudl_xid2ypl_type(enum gps_mcudl_xid x_id, enum gps_mcudl_pkt_type *p_type);
 bool gps_mcudl_ypl_type2xid(enum gps_mcudl_pkt_type type, enum gps_mcudl_xid *p_xid);
 
@@ -41,6 +48,10 @@ void gps_mcudl_mcu_ch1_proc_func(enum gps_mcudl_pkt_type type,
 
 int gps_mcudl_mcu_ch1_send_func(const gpsmdl_u8 *p_data, gpsmdl_u32 data_len);
 
+void gps_mcudl_host_sta_hist_init(void);
+void gps_mcudl_host_sta_hist_rec(enum gps_mcudl_yid yid, struct geofence_pkt_host_sta_s *host_sta);
+void gps_mcudl_host_sta_hist_dump_rec(unsigned long index, struct geofence_pkt_host_sta_s *host_sta);
+void gps_mcudl_host_sta_hist_dump(enum gps_mcudl_yid yid);
 
 bool gps_mcudl_mcu2ap_get_wait_read_flag(enum gps_mcudl_yid y_id);
 void gps_mcudl_mcu2ap_set_wait_read_flag(enum gps_mcudl_yid y_id, bool flag);
