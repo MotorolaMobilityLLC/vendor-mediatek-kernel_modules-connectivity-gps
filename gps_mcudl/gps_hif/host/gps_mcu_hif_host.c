@@ -195,29 +195,30 @@ void gps_mcu_hif_recv_listen_stop(enum gps_mcu_hif_ch hif_ch)
 	p_ctx->custom_cb = NULL;
 }
 
-void gps_mcu_hif_host_on_tx_finished(enum gps_mcu_hif_ch ch)
+void gps_mcu_hif_host_on_tx_finished(enum gps_mcu_hif_ch hif_ch)
 {
-	MDL_LOGI("ch=%d", ch);
+	MDL_LOGI("ch=%d", hif_ch);
 }
 
 unsigned char gps_mcu_hif_on_recv_dispatcher_buf[GPS_MCU_HIF_EMI_BUF_SIZE];
-void gps_mcu_hif_on_recv_dispatcher(enum gps_mcu_hif_ch hif_ch,
-	const unsigned char *p_data, unsigned int data_len)
+void gps_mcu_hif_host_on_rx_finished(enum gps_mcu_hif_ch hif_ch, unsigned int data_len)
 {
 	struct gps_mcu_hif_recv_ch_context *p_ctx;
+	const unsigned char *p_data;
 
 	MDL_LOGI("ch=%d", hif_ch);
+
+	p_data = gps_mcu_hif_get_mcu2ap_emi_buf_addr(hif_ch);
 	p_ctx = &g_gps_mcu_hif_recv_contexts[hif_ch];
 	if (!p_ctx->is_listening)
 		return;
 
-	memcpy(&gps_mcu_hif_on_recv_dispatcher_buf[0], p_data, data_len);
-
+	memcpy(&gps_mcu_hif_on_recv_dispatcher_buf[hif_ch], p_data, data_len);
 	gps_mcu_hif_recv_start(hif_ch);
 	if (!p_ctx->custom_cb)
 		return;
 
-	(*p_ctx->custom_cb)(&gps_mcu_hif_on_recv_dispatcher_buf[0], data_len);
+	(*p_ctx->custom_cb)(&gps_mcu_hif_on_recv_dispatcher_buf[hif_ch], data_len);
 }
 
 void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
@@ -243,8 +244,7 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 	case GPS_MCU_HIF_TRANS_MCU2AP_DMALESS_MGMT:
 	case GPS_MCU_HIF_TRANS_MCU2AP_DMA_NORMAL:
 	case GPS_MCU_HIF_TRANS_MCU2AP_DMA_URGENT:
-		gps_mcu_hif_on_recv_dispatcher(hif_ch,
-			gps_mcu_hif_get_mcu2ap_emi_buf_addr(hif_ch), end_desc.len);
+		gps_mcu_hif_host_on_rx_finished(hif_ch, end_desc.len);
 		break;
 
 	default:
@@ -252,7 +252,7 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 	}
 }
 
-void gps_mcu_hif_host_ccif_irq_handler_in_task(void)
+void gps_mcu_hif_host_ccif_irq_handler_in_isr(void)
 {
 	enum gps_mcu_hif_trans trans_id;
 
@@ -269,5 +269,5 @@ void gps_mcu_hif_host_ccif_irq_handler_in_task(void)
 
 void gps_mcu_hif_host_ccif_isr(void)
 {
-	gps_mcu_hif_host_ccif_irq_handler_in_task();
+	gps_mcu_hif_host_ccif_irq_handler_in_isr();
 }
