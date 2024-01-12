@@ -208,6 +208,7 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 				release_firmware(pPatch);
 				pPatch = NULL;
 			}
+			iounmap(pGpsEmibaseaddr);
 		} else {
 			GPS_DBG("EMI mapping fail\n");
 		}
@@ -227,7 +228,9 @@ long gps_emi_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long a
 
 	switch (cmd) {
 	case IOCTL_MNL_IMAGE_FILE_TO_MEM:
+	#ifdef SUPPORT_GPS_OFFLOAD
 		retval = mtk_wcn_consys_gps_emi_init();
+	#endif
 		GPS_DBG("IOCTL_MNL_IMAGE_FILE_TO_MEM\n");
 		break;
 
