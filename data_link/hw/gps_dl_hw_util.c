@@ -19,7 +19,7 @@
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <asm/io.h>
-#include <sync_write.h>
+#include "gps_dl_linux.h"
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
 #endif
@@ -88,7 +88,7 @@ void gps_dl_bus_wr_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsig
 #if GPS_DL_HW_IS_MOCK
 	/* do nothing if it's mock */
 #elif GPS_DL_ON_LINUX
-	mt_reg_sync_writel(val, host_vir_addr);
+	gps_dl_linux_sync_writel(val, host_vir_addr);
 #else
 	GPS_DL_HOST_REG_WR(host_addr, val);
 #endif

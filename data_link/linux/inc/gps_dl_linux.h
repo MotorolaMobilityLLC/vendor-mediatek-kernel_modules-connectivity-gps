@@ -13,7 +13,25 @@
 #ifndef _GPS_DL_LINUX_H
 #define _GPS_DL_LINUX_H
 
-#include "linux/interrupt.h"
+#include "gps_dl_config.h"
+
+#include <linux/io.h>
+#include <linux/interrupt.h>
+
+#define USE_MTK_SYNC_WRITE (1)
+#if USE_MTK_SYNC_WRITE
+#include <sync_write.h>
+#define gps_dl_linux_sync_writel(v, a) mt_reg_sync_writel(v, a)
+#else
+/* Add mb after writel to make sure it takes effect before next operation */
+#define gps_dl_mb() mb()
+#define gps_dl_linux_sync_writel(v, a)                          \
+	do {                                                    \
+		writel((v), (void __force __iomem *)((a)));     \
+		gps_dl_mb();                                    \
+	} while (0)
+#endif
+
 #include "gps_dl_isr.h"
 #include "gps_each_link.h"
 
