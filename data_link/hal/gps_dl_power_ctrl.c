@@ -60,7 +60,9 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 		if (!g_gps_common_on) {
 			if (gps_dl_hw_gps_common_on() != 0)
 				return -1;
+#if GPS_DL_ON_LINUX
 			gps_dl_hal_md_blanking_init_pta();
+#endif
 			g_gps_common_on = true;
 		}
 
@@ -157,7 +159,9 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			}
 
 			if (g_gps_common_on) {
+#if GPS_DL_ON_LINUX
 				gps_dl_hal_md_blanking_deinit_pta();
+#endif
 				gps_dl_hw_gps_common_off();
 				g_gps_common_on = false;
 			}
@@ -171,7 +175,7 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 
 int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 {
-	int ret;
+	int ret = 0;
 
 	GDL_LOGXD(link_id,
 		"op = %d, conn_user = 0x%x, infra_on = %d, tia_on = %d, dma_irq_en = %d",
@@ -181,7 +185,11 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 		if (g_conn_user == 0) {
 			gps_dl_log_info_show();
 #if GPS_DL_HAS_CONNINFRA_DRV
+#if GPS_DL_ON_LINUX
 			ret = conninfra_pwr_on(CONNDRV_TYPE_GPS);
+#elif GPS_DL_ON_CTP
+			ret = conninfra_power_on(CONNDRV_TYPE_GPS);
+#endif
 			if (ret != 0) {
 				GDL_LOGXE(link_id, "conninfra_pwr_on fail, ret = %d", ret);
 				return -1;
@@ -224,6 +232,32 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 	return 0;
 }
 
+void gps_dl_hal_conn_infra_driver_off(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	int ret;
+
+	if (g_gps_conninfa_on) {
+#if GPS_DL_ON_LINUX
+		ret = conninfra_pwr_off(CONNDRV_TYPE_GPS);
+#elif GPS_DL_ON_CTP
+		ret = conninfra_power_off(CONNDRV_TYPE_GPS);
+#endif
+		if (ret != 0) {
+			GDL_LOGE("conninfra_pwr_off fail, ret = %d", ret);
+
+			/* TODO: trigger whole chip reset? */
+			return;
+		}
+
+		GDL_LOGW("conninfra_pwr_off okay");
+		g_gps_conninfa_on = false;
+	} else
+		GDL_LOGW("conninfra_pwr_off already done");
+#endif
+}
+
+#if GPS_DL_ON_LINUX
 bool gps_dl_hal_md_blanking_init_pta(void)
 {
 	bool okay, done;
@@ -315,25 +349,4 @@ void gps_dl_hal_md_blanking_deinit_pta(void)
 
 	gps_dl_hw_give_conn_hw_sema();
 }
-
-void gps_dl_hal_conn_infra_driver_off(void)
-{
-#if GPS_DL_HAS_CONNINFRA_DRV
-	int ret;
-
-	if (g_gps_conninfa_on) {
-		ret = conninfra_pwr_off(CONNDRV_TYPE_GPS);
-		if (ret != 0) {
-			GDL_LOGE("conninfra_pwr_off fail, ret = %d", ret);
-
-			/* TODO: trigger whole chip reset? */
-			return;
-		}
-
-		GDL_LOGW("conninfra_pwr_off okay");
-		g_gps_conninfa_on = false;
-	} else
-		GDL_LOGW("conninfra_pwr_off already done");
-#endif
-}
-
+#endif /* GPS_DL_ON_LINUX */

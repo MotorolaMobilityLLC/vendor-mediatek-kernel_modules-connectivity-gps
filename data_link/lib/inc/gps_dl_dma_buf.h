@@ -61,7 +61,12 @@ struct gdl_dma_buf_entry {
 	bool is_nodata;
 };
 
-#define GPS_DL_DMA_BUF_ENTRY_MAX (2) /* if set to 2, it likes not use multi entry */
+#if GPS_DL_ON_LINUX
+/* if set to 2, it likes not use multi entry */
+#define GPS_DL_DMA_BUF_ENTRY_MAX (2)
+#else
+#define GPS_DL_DMA_BUF_ENTRY_MAX (8)
+#endif
 struct gps_dl_dma_buf {
 	int dev_index;
 	enum gps_dl_dma_dir dir;
