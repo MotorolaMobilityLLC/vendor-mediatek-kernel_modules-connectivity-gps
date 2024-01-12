@@ -6,7 +6,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := gps_drv_stp.ko
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := mtk
-LOCAL_INIT_RC := ../init.gps_drv.rc
+LOCAL_INIT_RC := init.gps_drv.rc
 
 ifeq ($(MTK_COMBO_SUPPORT),yes)
 LOCAL_REQUIRED_MODULES := wmt_drv.ko
