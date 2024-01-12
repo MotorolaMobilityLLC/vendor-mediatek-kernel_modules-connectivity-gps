@@ -67,6 +67,8 @@ enum GDL_RET_STATUS gps_each_dsp_reg_read_request(
 	enum gps_dl_link_id_enum link_id, unsigned int reg_addr);
 void gps_each_dsp_reg_gourp_read_next(enum gps_dl_link_id_enum link_id, bool restart);
 
+bool gps_dl_hal_get_dma_irq_en_flag(void);
+void gps_dl_hal_set_dma_irq_en_flag(bool enable);
 
 #endif /* _GPS_DL_HAL_H */
 

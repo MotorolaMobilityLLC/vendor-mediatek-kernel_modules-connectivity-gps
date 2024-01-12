@@ -45,14 +45,50 @@ bool g_gps_dma_irq_en;
 
 unsigned int g_conn_user;
 
+bool gps_dl_hal_get_dma_irq_en_flag(void)
+{
+	bool enable;
+
+	/* spin lock protection between gps_dl_isr_dma_done and gps_kctrld
+	 * both link 0 & 1 spin lock can be used, use 0's.
+	 */
+	gps_each_link_spin_lock_take(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	enable = g_gps_dma_irq_en;
+	gps_each_link_spin_lock_give(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	return enable;
+}
+
+void gps_dl_hal_set_dma_irq_en_flag(bool enable)
+{
+	gps_each_link_spin_lock_take(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+	g_gps_dma_irq_en = enable;
+	gps_each_link_spin_lock_give(GPS_DATA_LINK_ID0, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+}
+
 int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 {
 	int dsp_ctrl_ret;
+	bool conninfra_okay;
+	int hung_value;
 
-	GDL_LOGXI(link_id, "op = %d, curr = gps_common = %d, l1 = %d, l5 = %d",
-		op, g_gps_common_on,
+	conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(&hung_value, (op == 0));
+	GDL_LOGXI(link_id, "op = %d, conn_okay = %d, gps_common = %d, L1 = %d, L5 = %d",
+		op, conninfra_okay, g_gps_common_on,
 		g_gps_dsp_on_array[GPS_DATA_LINK_ID0],
 		g_gps_dsp_on_array[GPS_DATA_LINK_ID1]);
+
+	if (!conninfra_okay) {
+		GDL_LOGXE(link_id, "conninfra_okay = %d, hung_value = %d",
+			conninfra_okay, hung_value);
+		if (hung_value == 0) {
+			/* for this excepition, trigger connsys reset to make GPS power okay */
+			/*
+			 * TODO: no care it now
+			 * gps_dl_trigger_connsys_reset();
+			 */
+		} else
+			return -1;
+	}
 
 	/* fill it by datasheet */
 	if (1 == op) {
@@ -185,10 +221,11 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 {
 	int ret = 0;
+	int hung_value;
 
 	GDL_LOGXD(link_id,
 		"op = %d, conn_user = 0x%x, infra_on = %d, tia_on = %d, dma_irq_en = %d",
-		op, g_conn_user, g_gps_conninfa_on, g_gps_tia_on, g_gps_dma_irq_en);
+		op, g_conn_user, g_gps_conninfa_on, g_gps_tia_on, gps_dl_hal_get_dma_irq_en_flag());
 
 	if (1 == op) {
 		if (g_conn_user == 0) {
@@ -205,6 +242,12 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			}
 			g_gps_conninfa_on = true;
 #endif
+			/* check conninfra okay is suggest after conninfra_pwr_on */
+			if (!gps_dl_conninfra_is_okay_or_handle_it(&hung_value, false)) {
+				if (hung_value != 0)
+					return -1;
+			}
+
 			gps_dl_emi_remap_calc_and_set();
 
 #if GPS_DL_HAS_PLAT_DRV
@@ -214,17 +257,26 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			g_gps_tia_on = true;
 #endif
 			gps_dl_irq_unmask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
-			g_gps_dma_irq_en = true;
+			gps_dl_hal_set_dma_irq_en_flag(true);
 		}
 		g_conn_user |= (1UL << link_id);
 	} else if (0 == op) {
 		g_conn_user &= ~(1UL << link_id);
 		if (g_conn_user == 0) {
-			if (g_gps_dma_irq_en) {
-				/* Note: currently, twice mask should not happen here, */
-				/* due to ISR does mask/unmask pair operations */
+			if (gps_dl_hal_get_dma_irq_en_flag()) {
+				/* Note1: currently, twice mask should not happen here,
+				 * due to ISR does mask/unmask pair operations,
+				 * except one case, please see Note2
+				 */
 				gps_dl_irq_mask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
-				g_gps_dma_irq_en = false;
+
+				/* Note2: double-get to check race condition, if en_flag changed
+				 * it must gps_dl_isr_dma_done change it, need to unmask to make balance
+				 */
+				if (!gps_dl_hal_get_dma_irq_en_flag())
+					gps_dl_irq_unmask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
+				else
+					gps_dl_hal_set_dma_irq_en_flag(false);
 			}
 #if GPS_DL_HAS_PLAT_DRV
 			if (g_gps_tia_on) {
@@ -247,6 +299,10 @@ void gps_dl_hal_conn_infra_driver_off(void)
 	int ret;
 
 	if (g_gps_conninfa_on) {
+		if (!gps_dl_conninfra_is_okay_or_handle_it(NULL, false)) {
+			GDL_LOGE("conninfra is not okay");
+			/* just show warnning, not return here */
+		}
 #if GPS_DL_ON_LINUX
 		ret = conninfra_pwr_off(CONNDRV_TYPE_GPS);
 #elif GPS_DL_ON_CTP

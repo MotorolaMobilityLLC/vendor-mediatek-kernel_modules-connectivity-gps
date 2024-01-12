@@ -239,7 +239,16 @@ void gps_dl_isr_dma_done(void)
 
 	gps_dl_irq_mask_dma_intr(GPS_DL_IRQ_CTRL_POSSIBLE_FROM_ISR);
 
-	/* DONE?: dma isr must copy the data and restore the intr
+	if (!gps_dl_conninfra_is_readable()) {
+		/* set it for gps_ctrld to check, avoiding twice mask */
+		gps_dl_hal_set_dma_irq_en_flag(false);
+		gps_dl_hal_event_send(GPS_DL_HAL_EVT_DMA_ISR_PENDING, GPS_DATA_LINK_ID0);
+		gps_dl_hal_event_send(GPS_DL_HAL_EVT_DMA_ISR_PENDING, GPS_DATA_LINK_ID1);
+		GDL_LOGE("pending due to readable check fail");
+		return;
+	}
+
+	/* dma isr must copy the data and restore the intr flag
 	 * no need to copy data, the data is copied in ctrld thread
 	 */
 

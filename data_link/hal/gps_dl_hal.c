@@ -16,24 +16,9 @@
 #include "gps_each_link.h"
 #include "gps_dl_isr.h"
 #include "gps_dl_context.h"
+#include "gps_dl_name_list.h"
+
 #include "linux/jiffies.h"
-
-char *hal_event_name[GPD_DL_HAL_EVT_NUM + 1] = {
-	[GPS_DL_HAL_EVT_A2D_TX_DMA_DONE]   = "HAL_TX_DMA_DONE",
-	[GPS_DL_HAL_EVT_D2A_RX_HAS_DATA]   = "HAL_RX_HAS_DATA",
-	[GPS_DL_HAL_EVT_D2A_RX_HAS_NODATA] = "HAL_RX_HAS_NODATA",
-	[GPS_DL_HAL_EVT_D2A_RX_DMA_DONE]   = "HAL_RX_DMA_DONE",
-	[GPS_DL_HAL_EVT_MCUB_HAS_IRQ]      = "HAL_MCUB_HAS_FLAG",
-	[GPD_DL_HAL_EVT_NUM] = "HAL_INVALID_EVT",
-};
-
-char *gps_dl_hal_event_name(enum gps_dl_hal_event_id evt)
-{
-	if (evt >= 0 && evt < GPD_DL_HAL_EVT_NUM)
-		return hal_event_name[evt];
-	else
-		return hal_event_name[GPD_DL_HAL_EVT_NUM];
-}
 
 void gps_dl_hal_event_send(enum gps_dl_hal_event_id evt,
 	enum gps_dl_link_id_enum link_id)
@@ -78,6 +63,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	bool last_session_msg = false;
 	unsigned long j0, j1;
 	bool show_log;
+	bool conninfra_okay, dma_irq_en;
 
 	j0 = jiffies;
 	curr_sid = gps_each_link_get_session_id(link_id);
@@ -107,6 +93,10 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		} else if (evt == GPS_DL_HAL_EVT_MCUB_HAS_IRQ) {
 			gps_dl_irq_each_link_unmask(link_id,
 				GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_HAL);
+		} else if (evt == GPS_DL_HAL_EVT_DMA_ISR_PENDING) {
+			/*
+			 * do nothing if last_session_msg
+			 */
 		}
 		return;
 	}
@@ -213,6 +203,17 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		/* wakeup writer if it's pending on it */
 		gps_dl_link_wake_up(&p_link->waitables[GPS_DL_WAIT_WRITE]);
 		gps_dl_link_start_tx_dma_if_has_data(link_id);
+		break;
+
+	case GPS_DL_HAL_EVT_DMA_ISR_PENDING:
+		conninfra_okay = gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
+		dma_irq_en = gps_dl_hal_get_dma_irq_en_flag();
+
+		GDL_LOGXE(link_id, "conninfra_okay = %d, dma_irq_en = %d", conninfra_okay, dma_irq_en);
+		if (conninfra_okay && !dma_irq_en) {
+			gps_dl_irq_unmask_dma_intr(GPS_DL_IRQ_CTRL_FROM_HAL);
+			gps_dl_hal_set_dma_irq_en_flag(true);
+		}
 		break;
 
 	case GPS_DL_HAL_EVT_MCUB_HAS_IRQ:
