@@ -109,7 +109,8 @@ void gps_dl_tia_gps_ctrl(bool gps_is_on)
 		 * 0x1001C01C[12] = 1 (enable TSX)
 		 * 0x1001C01C[13] = 1 (enable DCXO)
 		 */
-		mt_reg_sync_writel((100UL | (1UL << 12) | (1UL << 13)), p + 4);
+		/* 20190923 period changed to 196 (0xC4, 6ms) */
+		mt_reg_sync_writel((196UL | (1UL << 12) | (1UL << 13)), p + 4);
 	} else {
 		/* 0x1001C018[0] = 0 (GPS off) */
 		mt_reg_sync_writel(tia_gps_on & ~1UL, p);
@@ -119,7 +120,7 @@ void gps_dl_tia_gps_ctrl(bool gps_is_on)
 	tia_gps_ctrl1 = __raw_readl(p + 4);
 	tia_temp1 = __raw_readl(p + 8);
 
-	GDL_LOGD("on = %d, tia_gps_on = 0x%08x/0x%08x, ctrl = 0x%08x/0x%08x, temp = 0x%08x/0x%08x",
+	GDL_LOGI("on = %d, tia_gps_on = 0x%08x/0x%08x, ctrl = 0x%08x/0x%08x, temp = 0x%08x/0x%08x",
 		gps_is_on, tia_gps_on, tia_gps_on1,
 		tia_gps_ctrl, tia_gps_ctrl1,
 		tia_temp, tia_temp1);
