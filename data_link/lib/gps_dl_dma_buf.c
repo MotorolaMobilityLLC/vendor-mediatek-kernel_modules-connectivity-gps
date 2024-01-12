@@ -50,7 +50,7 @@ void gps_dma_buf_show(struct gps_dl_dma_buf *p_dma, bool is_warning)
 	r_working = p_dma->reader_working;
 	wi = p_dma->write_index;
 	w_working = p_dma->writer_working;
-	fl = GDL_COUNT_FREE(p_dma->read_index, p_dma->writer_working, p_dma->len);
+	fl = GDL_COUNT_FREE(p_dma->read_index, p_dma->write_index, p_dma->len);
 	re = p_dma->entry_r;
 	we = p_dma->entry_w;
 	fe = GDL_COUNT_FREE(p_dma->entry_r, p_dma->entry_w, GPS_DL_DMA_BUF_ENTRY_MAX);
@@ -679,7 +679,7 @@ enum GDL_RET_STATUS gdl_dma_buf_entry_to_transfer(
 
 	GDL_LOGD("r=%u, w=%u, l=%u, is_tx=%d, transfer: ba=0x%08x, ta=0x%08x, wl=%d, tl=%d",
 		p_entry->read_index, p_entry->write_index, p_entry->buf_length, is_tx,
-		p_transfer->buf_start_addr, p_transfer->buf_start_addr,
+		p_transfer->buf_start_addr, p_transfer->transfer_start_addr,
 		p_transfer->len_to_wrap, p_transfer->transfer_max_len);
 
 	ASSERT_NOT_ZERO(p_transfer->buf_start_addr, GDL_FAIL_ASSERT);
