@@ -82,9 +82,6 @@ ccflags-y += -DCONFIG_GPSL5_SUPPORT
 ccflags-y += -DCONFIG_GPS_CTRL_LNA_SUPPORT
 GPS_DRV_CONTROL_LNA := y
 endif
-ifeq ($(CONFIG_MACH_MT6833),y)
-ccflags-y += -DCONFIG_GPSL5_SUPPORT
-endif
 
 ifeq ($(CONFIG_MACH_MT6885),y)
 SELECT_GPS_DL_DRV := y
