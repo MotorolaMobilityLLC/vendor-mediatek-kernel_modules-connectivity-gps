@@ -509,9 +509,11 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 	bool okay, done;
 	bool is_mt6885;
 	bool clk_is_ready;
+	bool use_direct_path;
 
 	is_mt6885 = gps_dl_hal_conn_infra_ver_is_mt6885();
-	GDL_LOGW("is_mt6885 = %d", is_mt6885);
+	use_direct_path = true;
+	GDL_LOGW("is_mt6885 = %d, use_direct_path = %d", is_mt6885, use_direct_path);
 
 	if (g_gps_pta_init_done) {
 		GDL_LOGW("already init done, do nothing return");
@@ -539,7 +541,7 @@ bool gps_dl_hal_md_blanking_init_pta(void)
 		}
 	}
 
-	if (is_mt6885) {
+	if (!use_direct_path) {
 		/* idc mode */
 		okay = gps_dl_hal_md_blanking_init_pta_idc_mode();
 		if (!okay) {
