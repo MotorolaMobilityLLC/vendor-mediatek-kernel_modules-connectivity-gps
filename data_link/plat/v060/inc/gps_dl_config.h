@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2020 MediaTek Inc.
+ * Copyright (c) 2020 - 2022 MediaTek Inc.
  */
 #ifndef _GPS_DL_CONFIG_H
 #define _GPS_DL_CONFIG_H
@@ -35,10 +35,24 @@ enum gps_dl_link_id_enum {
 
 #define GPS_DL_CONNAC3 (1)
 #define GPS_DL_CONNAC2 (0)
+#define GPS_DL_CONN_EMI_MERGED (1)
 
 #define GPS_DL_HAS_CTRLD      (1)
 #define GPS_DL_NO_USE_IRQ     (0)
 #define GPS_DL_USE_THREADED_IRQ (1)
+
+#ifndef GPS_DL_HAS_MCUDL
+#define GPS_DL_HAS_MCUDL      (0)
+#endif
+#ifndef GPS_DL_HAS_MCUDL_HAL
+#define GPS_DL_HAS_MCUDL_HAL  (0)
+#endif
+#ifndef GPS_DL_HAS_MCUDL_HW
+#define GPS_DL_HAS_MCUDL_HW   (0)
+#endif
+#ifndef GPS_DL_HAS_MCUDL_FW
+#define GPS_DL_HAS_MCUDL_FW   (0)
+#endif
 
 #ifndef GPS_DL_HAS_CONNINFRA_DRV
 #define GPS_DL_HAS_CONNINFRA_DRV (0)
@@ -72,8 +86,7 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_EMI_MPU_DOMAIN_CONN    (2)
 #define GPS_DL_EMI_MPU_REGION_NUM     (29)
 
-#include "gps_dl_log.h"
-
+#define GPS_DL_USE_POLLING     (0)
 /*MET2.0 feature depends on:
 *1. conninfra api
 *2. linux platform based api
@@ -83,6 +96,9 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_ENABLE_MET             (1)
 #endif
 #endif
+
+
+#include "gps_dl_log.h"
 
 #endif /* _GPS_DL_CONFIG_H */
 

@@ -713,4 +713,3 @@ void gps_dl_hal_set_deep_stop_mode_revert_for_mvcd(enum gps_dl_link_id_enum link
 	ASSERT_LINK_ID(link_id, GDL_VOIDF());
 	g_gps_need_revert_for_mvcd[link_id] = revert_for_mvcd;
 }
-
