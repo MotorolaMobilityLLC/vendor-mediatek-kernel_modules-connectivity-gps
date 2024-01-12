@@ -61,7 +61,6 @@ int gps_dl_linux_irqs_register(struct gps_each_irq *p_irqs, int irq_num)
 		else
 			return -1;
 
-		/* TODO: Need to mask the irq here? */
 		/* TODO: Use the dts to auto request the irqs */
 #if GPS_DL_USE_THREADED_IRQ
 		/* IRQF_ONESHOT is required for threaded irq */

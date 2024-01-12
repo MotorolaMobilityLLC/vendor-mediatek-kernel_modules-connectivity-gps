@@ -118,9 +118,10 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		gdl_ret = gdl_dma_buf_get_free_entry(
 			&p_link->rx_dma_buf, &dma_buf_entry, true);
 
-		if (gdl_ret == GDL_OKAY)
+		if (gdl_ret == GDL_OKAY) {
+			gps_dl_hal_d2a_rx_dma_claim_emi_usage(link_id, true);
 			gps_dl_hal_d2a_rx_dma_start(link_id, &dma_buf_entry);
-		else {
+		} else {
 
 			/* TODO: has pending rx: GDL_FAIL_NOSPACE_PENDING_RX */
 			GDL_LOGXW(link_id, "rx dma not start due to %s", gdl_ret_to_name(gdl_ret));
@@ -152,6 +153,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 			gps_dl_link_wake_up(&p_link->waitables[GPS_DL_WAIT_READ]);
 		}
 
+		gps_dl_hal_d2a_rx_dma_claim_emi_usage(link_id, false);
 		/* mask data irq */
 		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_HAL);
 		break;
@@ -182,6 +184,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 			gps_dl_link_wake_up(&p_link->waitables[GPS_DL_WAIT_READ]);
 		}
 
+		gps_dl_hal_d2a_rx_dma_claim_emi_usage(link_id, false);
 		gps_dl_hw_usrt_clear_nodata_irq(link_id);
 		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_NODATA, GPS_DL_IRQ_CTRL_FROM_HAL);
 		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_HAL);
@@ -203,6 +206,7 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 
 		/* wakeup writer if it's pending on it */
 		gps_dl_link_wake_up(&p_link->waitables[GPS_DL_WAIT_WRITE]);
+		gps_dl_hal_a2d_tx_dma_claim_emi_usage(link_id, false);
 		gps_dl_link_start_tx_dma_if_has_data(link_id);
 		break;
 
@@ -288,5 +292,90 @@ void gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 			gps_each_dsp_reg_read_ack(link_id, &d2a);
 
 	}
+}
+
+
+unsigned int g_gps_dl_hal_emi_usage_bitmask;
+
+void gps_dl_hal_emi_usage_init(void)
+{
+	unsigned int old_mask;
+
+	old_mask = g_gps_dl_hal_emi_usage_bitmask;
+	g_gps_dl_hal_emi_usage_bitmask = 0;
+
+	if (old_mask)
+		GDL_LOGW("mask is 0x%x, force it to 0", old_mask);
+	else
+		GDL_LOGD("mask is 0");
+
+	/* may remove it later */
+	gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_GPS_ON, true);
+}
+
+void gps_dl_hal_emi_usage_deinit(void)
+{
+	unsigned int old_mask;
+
+	/* may remove it later */
+	gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_GPS_ON, false);
+
+	old_mask = g_gps_dl_hal_emi_usage_bitmask;
+
+	if (old_mask) {
+		gps_dl_hw_gps_sw_request_emi_usage(false);
+		GDL_LOGW("mask is 0x%x, force to release emi usage", old_mask);
+	} else
+		GDL_LOGD("mask is 0");
+}
+
+void gps_dl_hal_emi_usage_claim(enum gps_dl_hal_emi_user user, bool use_emi)
+{
+	unsigned int old_mask, new_mask;
+	bool changed = false, usage = false;
+
+	/* TODO: protect them using spin lock to make it more safe,
+	 *       currently only one thread call me, no racing.
+	 */
+	old_mask = g_gps_dl_hal_emi_usage_bitmask;
+	if (use_emi)
+		g_gps_dl_hal_emi_usage_bitmask = old_mask | (1UL << user);
+	else
+		g_gps_dl_hal_emi_usage_bitmask = old_mask & ~(1UL << user);
+	new_mask = g_gps_dl_hal_emi_usage_bitmask;
+
+	if (old_mask == 0 && new_mask != 0) {
+		gps_dl_hw_gps_sw_request_emi_usage(true);
+		changed = true;
+		usage = true;
+	} else if (old_mask != 0 && new_mask == 0) {
+		gps_dl_hw_gps_sw_request_emi_usage(false);
+		changed = true;
+		usage = false;
+	}
+
+	if (changed) {
+		GDL_LOGI("user = %d, use = %d, old_mask = 0x%x, new_mask = 0x%x, change = %d/%d",
+			user, use_emi, old_mask, new_mask, changed, usage);
+	} else {
+		GDL_LOGD("user = %d, use = %d, old_mask = 0x%x, new_mask = 0x%x, change = %d",
+			user, use_emi, old_mask, new_mask, changed);
+	}
+}
+
+void gps_dl_hal_a2d_tx_dma_claim_emi_usage(enum gps_dl_link_id_enum link_id, bool use_emi)
+{
+	if (link_id == GPS_DATA_LINK_ID0)
+		gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_TX_DMA0, use_emi);
+	else if (link_id == GPS_DATA_LINK_ID1)
+		gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_TX_DMA1, use_emi);
+}
+
+void gps_dl_hal_d2a_rx_dma_claim_emi_usage(enum gps_dl_link_id_enum link_id, bool use_emi)
+{
+	if (link_id == GPS_DATA_LINK_ID0)
+		gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_RX_DMA0, use_emi);
+	else if (link_id == GPS_DATA_LINK_ID1)
+		gps_dl_hal_emi_usage_claim(GPS_DL_EMI_USER_RX_DMA1, use_emi);
 }
 
