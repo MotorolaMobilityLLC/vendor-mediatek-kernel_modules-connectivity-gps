@@ -69,7 +69,7 @@ bool gps_dl_hw_dep_poll_bgf_bus_and_gps_top_ack(void)
 
 	/* 0x18C0102C[3:0] == 4h'2 gps_top_off is GPS_ACTIVE state */
 	for (i = 0; i < 3; i++) {
-		GDL_HW_POLL_CONN_INFRA_ENTRY(BGF_GPS_CFG_ON_GPS_TOP_OFF_PWR_CTL_GPS_TOP_OFF_PWR_CTL_CS, 2,
+		GDL_HW_POLL_GPS_ENTRY(BGF_GPS_CFG_ON_GPS_TOP_OFF_PWR_CTL_GPS_TOP_OFF_PWR_CTL_CS, 2,
 			POLL_DEFAULT, &poll_okay);
 		if (poll_okay)
 			break;
