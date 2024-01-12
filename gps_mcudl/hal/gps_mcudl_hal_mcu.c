@@ -7,6 +7,7 @@
 #include "gps_mcudl_hw_mcu.h"
 #include "gps_mcudl_hw_ccif.h"
 #include "gps_mcudl_hal_mcu.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcu_hif_api.h"
 #include "gps_dl_isr.h"
 #include "gps_dl_hal.h"
@@ -21,6 +22,7 @@
 bool gps_mcudl_xlink_on(const struct gps_mcudl_fw_list *p_fw_list)
 {
 	bool is_okay = true;
+	bool ntf_set_fw_own = false;
 
 #if GPS_DL_ON_CTP
 	is_okay = gps_dl_hal_conn_infra_driver_on();
@@ -35,9 +37,11 @@ bool gps_mcudl_xlink_on(const struct gps_mcudl_fw_list *p_fw_list)
 	if (!is_okay)
 		return false;
 
+	gps_mcudl_hal_user_fw_own_init(GMDL_FW_OWN_CTRL_BY_POS);
 	is_okay = gps_mcudl_hal_mcu_do_on(p_fw_list);
-	/*(void)gps_mcudl_hw_conn_force_wake(false);*/
-	MDL_LOGI("ok=%d", is_okay);
+	(void)gps_mcudl_hw_conn_force_wake(false);
+	ntf_set_fw_own = gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_POS);
+	MDL_LOGI("ok=%d, ntf=%d", is_okay, ntf_set_fw_own);
 	return is_okay;
 }
 
@@ -45,10 +49,12 @@ bool gps_mcudl_xlink_off(void)
 {
 	bool is_okay = true;
 
+	(void)gps_mcudl_hal_user_clr_fw_own(GMDL_FW_OWN_CTRL_BY_POS);
 	(void)gps_mcudl_hw_conn_force_wake(true);
 	(void)gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
 
 	gps_mcudl_hal_mcu_do_off();
+	gps_mcudl_hal_user_fw_own_deinit(GMDL_FW_OWN_CTRL_BY_POS);
 	(void)gps_mcudl_hw_conn_force_wake(false);
 #if GPS_DL_ON_CTP
 	gps_dl_hal_conn_infra_driver_off();
@@ -133,8 +139,8 @@ bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list)
 	if (!is_okay)
 		return false;
 	/* gps_mcudl_hal_mcu_clr_fw_own();*/
-	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_HAL);
 	gps_mcudl_hal_set_ccif_irq_en_flag(true);
+	gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_HAL);
 	return is_okay;
 }
 
@@ -153,6 +159,7 @@ bool gps_mcudl_hal_mcu_set_fw_own(void)
 	bool is_okay;
 
 	is_okay = gps_mcudl_hw_mcu_set_or_clr_fw_own(true);
+	(void)gps_mcudl_hw_conn_force_wake(false);
 	return is_okay;
 }
 
@@ -160,6 +167,11 @@ bool gps_mcudl_hal_mcu_clr_fw_own(void)
 {
 	bool is_okay;
 
+	is_okay = gps_mcudl_hw_conn_force_wake(true);
+	if (!is_okay) {
+		MDL_LOGW("force wake fail!");
+		return false;
+	}
 	is_okay = gps_mcudl_hw_mcu_set_or_clr_fw_own(false);
 	return is_okay;
 }
@@ -168,3 +180,4 @@ void gps_mcudl_hal_mcu_show_status(void)
 {
 	gps_mcudl_hw_mcu_show_status();
 }
+
