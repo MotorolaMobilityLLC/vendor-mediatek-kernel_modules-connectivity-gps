@@ -925,7 +925,9 @@ static int __init gps_mod_init(void)
 	#ifdef CONFIG_MTK_GPS_EMI
 	mtk_gps_emi_init();
 	#endif
-
+	#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+	mtk_gps_fw_log_init();
+	#endif
 	return ret;
 }
 
@@ -935,6 +937,9 @@ static void __exit gps_mod_exit(void)
 	mtk_wcn_stpgps_drv_exit();
 	#ifdef CONFIG_MTK_GPS_EMI
 	mtk_gps_emi_exit();
+	#endif
+	#ifdef CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH
+	mtk_gps_fw_log_exit();
 	#endif
 }
 
