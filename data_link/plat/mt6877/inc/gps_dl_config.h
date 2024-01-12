@@ -5,6 +5,8 @@
 #ifndef _GPS_DL_CONFIG_H
 #define _GPS_DL_CONFIG_H
 
+#include <linux/version.h>
+
 enum gps_dl_link_id_enum {
 	GPS_DATA_LINK_ID0	= 0,
 	GPS_DATA_LINK_ID1	= 1,
