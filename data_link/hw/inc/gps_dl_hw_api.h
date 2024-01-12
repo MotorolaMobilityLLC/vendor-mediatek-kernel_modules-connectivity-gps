@@ -159,6 +159,7 @@ void gps_dl_hw_set_pta_blanking_parameter(void);
 bool gps_dl_hw_take_conn_hw_sema(unsigned int timeout_ms);
 void gps_dl_hw_give_conn_hw_sema(void);
 
+unsigned int gps_dl_hw_get_mcub_a2d1_cfg(bool is_1byte_mode);
 
 #endif /* _GPS_DL_HW_API_H */
 
