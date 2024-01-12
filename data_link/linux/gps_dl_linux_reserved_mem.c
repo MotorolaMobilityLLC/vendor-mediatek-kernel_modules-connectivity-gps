@@ -12,10 +12,9 @@
 
 #include <linux/of_reserved_mem.h>
 
-#define GPS_DL_SET_EMI_MPU_CFG (1)
-#if GPS_DL_SET_EMI_MPU_CFG
+#if (GPS_DL_SET_EMI_MPU_CFG)
 #include <memory/mediatek/emi.h>
-#if defined(CONFIG_MACH_MT6885)
+#if (defined(CONFIG_MACH_MT6885) || defined(CONFIG_MACH_MT6893))
 #define GPS_DL_EMI_MPU_DOMAIN_AP      0
 #define GPS_DL_EMI_MPU_DOMAIN_CONN    2
 #define GPS_DL_EMI_MPU_REGION_NUM     29
@@ -37,7 +36,7 @@ struct gps_dl_iomem_addr_map_entry g_gps_dl_res_emi;
 void gps_dl_reserved_mem_init(void)
 {
 	void __iomem *host_virt_addr = NULL;
-#if GPS_DL_SET_EMI_MPU_CFG
+#if (GPS_DL_SET_EMI_MPU_CFG)
 	struct emimpu_region_t region;
 	int emimpu_ret1, emimpu_ret2, emimpu_ret3, emimpu_ret4, emimpu_ret5, emimpu_ret6;
 #endif
@@ -58,7 +57,7 @@ void gps_dl_reserved_mem_init(void)
 	}
 
 	/* Set EMI MPU permission */
-#if GPS_DL_SET_EMI_MPU_CFG
+#if (GPS_DL_SET_EMI_MPU_CFG)
 	GDL_LOGI_INI("emi mpu cfg: region = %d, no protection domain = %d, %d",
 		GPS_DL_EMI_MPU_REGION_NUM, GPS_DL_EMI_MPU_DOMAIN_AP, GPS_DL_EMI_MPU_DOMAIN_CONN);
 	emimpu_ret1 = mtk_emimpu_init_region(&region, GPS_DL_EMI_MPU_REGION_NUM);

@@ -46,9 +46,17 @@
 		CONN_INFRA_CFG_GALS_GPS2CONN_SLP_CTRL_R_GPS2CONN_SLP_PROT_TX_RDY, \
 		val, timeout, p_is_okay)
 
-
-#define GDL_HW_SET_CONN_INFRA_BGF_EN(val) \
+#if (GPS_DL_HAS_CONNINFRA_DRV)
+/*
+ * For MT6885, conninfra driver do it due to GPS/BT share same bit,
+ * so do nothing here if conninfra driver ready.
+ */
+#define GDL_HW_SET_CONN_INFRA_BGF_EN_MT6885(val)
+#else
+#define GDL_HW_SET_CONN_INFRA_BGF_EN_MT6885(val) \
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFYS_ON_TOP_PWR_CTL_BGFSYS_ON_TOP_PWR_ON, val)
+#endif
+#define GDL_HW_SET_CONN_INFRA_BGF_EN(val) GDL_HW_SET_CONN_INFRA_BGF_EN_MT6885(val)
 
 #define GDL_HW_SET_GPS_FUNC_EN(val) \
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_CFG_GPS_PWRCTRL0_GP_FUNCTION_EN, val)

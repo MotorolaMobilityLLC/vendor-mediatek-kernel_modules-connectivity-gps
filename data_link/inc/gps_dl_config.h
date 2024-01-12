@@ -52,7 +52,11 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_USE_TIA        (0)
 
 #define GPS_DL_IS_MODULE      (1)
+
+#define GPS_DL_USE_MTK_SYNC_WRITE    (1)
+#define GPS_DL_SET_EMI_MPU_CFG       (1)
 #define GPS_DL_GET_RSV_MEM_IN_MODULE (0)
+
 
 #include "gps_dl_log.h"
 

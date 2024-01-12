@@ -188,11 +188,8 @@ int gps_dl_hw_gps_common_on(void)
 	bool poll_okay;
 	int i;
 
-#if ((GPS_DL_HAS_CONNINFRA_DRV) && (GDL_HW_BGF_VER == 0x20010000))
-	/* Conninfra driver alreay do it */
-#else
+	/* Enable Conninfra BGF */
 	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
-#endif
 
 	/* Poll conninfra hw version */
 	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_INFRA_CFG_CONN_HW_VER_RO_CONN_HW_VERSION,
@@ -328,11 +325,9 @@ int gps_dl_hw_gps_common_off(void)
 	/* Disable GPS function */
 	GDL_HW_SET_GPS_FUNC_EN(0);
 
-#if ((GPS_DL_HAS_CONNINFRA_DRV) && (GDL_HW_BGF_VER == 0x20010000))
-	/* Conninfra driver will do it */
-#else
+	/* Disable Conninfra BGF */
 	GDL_HW_SET_CONN_INFRA_BGF_EN(0);
-#endif
+
 	return 0;
 }
 

@@ -18,8 +18,7 @@
 #include <linux/io.h>
 #include <linux/interrupt.h>
 
-#define USE_MTK_SYNC_WRITE (1)
-#if USE_MTK_SYNC_WRITE
+#if (GPS_DL_USE_MTK_SYNC_WRITE)
 #include <sync_write.h>
 #define gps_dl_linux_sync_writel(v, a) mt_reg_sync_writel(v, a)
 #else
