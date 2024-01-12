@@ -59,16 +59,20 @@ void gps_dl_bus_wr_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, unsig
 
 	unsigned int read_back_val = 0;
 	unsigned int host_addr = gps_dl_bus_to_host_addr(bus_id, bus_addr);
-
-	/*
-	 * For linux preparation and checking
-	 */
 #if GPS_DL_ON_LINUX
 #if GPS_DL_HAS_PLAT_DRV
 	void __iomem *host_vir_addr = gps_dl_host_addr_to_virt(host_addr);
 #else
 	void __iomem *host_vir_addr = phys_to_virt(host_addr);
 #endif
+#else
+	void *host_vir_addr = NULL;
+#endif
+
+	/*
+	 * For linux preparation and checking
+	 */
+#if GPS_DL_ON_LINUX
 	if (host_vir_addr == NULL) {
 		GDL_LOGW_RRW("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, NULL!",
 			bus_id, host_vir_addr, host_addr, bus_addr);
@@ -154,17 +158,20 @@ unsigned int gps_dl_bus_rd_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_add
 
 	unsigned int val = 0;
 	unsigned int host_addr = gps_dl_bus_to_host_addr(bus_id, bus_addr);
-
-
-	/*
-	 * For linux preparation and checking
-	 */
 #if GPS_DL_ON_LINUX
 #if GPS_DL_HAS_PLAT_DRV
 	void __iomem *host_vir_addr = gps_dl_host_addr_to_virt(host_addr);
 #else
 	void __iomem *host_vir_addr = phys_to_virt(host_addr);
 #endif
+#else
+	void *host_vir_addr = NULL;
+#endif
+
+	/*
+	 * For linux preparation and checking
+	 */
+#if GPS_DL_ON_LINUX
 	if (host_vir_addr == NULL) {
 		GDL_LOGW_RRW("bus_id = %d, addr = 0x%p/0x%08x/0x%08x, NULL!",
 			bus_id, host_vir_addr, host_addr, bus_addr);

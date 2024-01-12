@@ -61,7 +61,7 @@ struct gps_each_device {
 
 int gps_dl_cdev_setup(struct gps_each_device *dev, int index);
 void gps_dl_cdev_cleanup(struct gps_each_device *dev, int index);
-struct gps_each_device *gps_dl_device_get(int index);
+struct gps_each_device *gps_dl_device_get(enum gps_dl_link_id_enum link_id);
 
 void gps_each_device_data_submit(unsigned char *buf, unsigned int len, int index);
 

@@ -16,6 +16,8 @@
 #include "gps_dl_config.h"
 #if GPS_DL_ON_LINUX
 #include <linux/printk.h>
+#elif GPS_DL_ON_CTP
+#include "gps_dl_ctp_log.h"
 #endif
 
 enum gps_dl_log_level_enum {
@@ -98,8 +100,6 @@ void gps_dl_log_info_show(void);
 
 #define __GDL_LOGXD(mod, link_id, fmt, ...) pr_info("GDL-%d[D:%d] [%s:%d]: "fmt, \
 	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
-#elif GPS_DL_ON_CTP
-#include "gps_dl_ctp_log.h"
 #endif /* GPS_DL_ON_XX */
 
 

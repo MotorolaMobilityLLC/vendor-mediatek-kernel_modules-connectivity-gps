@@ -102,10 +102,10 @@ struct gps_each_irq *gps_dl_irq_get(enum gps_dl_irq_index_enum irq_idx)
 }
 
 #if GPS_DL_ON_LINUX
-struct gps_each_device *gps_dl_device_get(int index)
+struct gps_each_device *gps_dl_device_get(enum gps_dl_link_id_enum link_id)
 {
-	if (index >= 0 && index < GPS_DATA_LINK_NUM)
-		return &s_gps_dl_ctx.devices[index];
+	if (link_id >= 0 && link_id < GPS_DATA_LINK_NUM)
+		return &s_gps_dl_ctx.devices[link_id];
 
 	return NULL;
 }

@@ -19,6 +19,10 @@
 #include <linux/wait.h>
 #endif
 
+#if GPS_DL_ON_CTP
+#include "gps_dl_ctp_osal.h"
+#endif
+
 #if GPS_DL_HAS_CTRLD
 #include "gps_dl_ctrld.h"
 #endif

@@ -20,6 +20,7 @@
 #include "linux/dma-mapping.h"
 #elif GPS_DL_ON_CTP
 #include "kernel_to_ctp.h"
+#include "gps_dl_ctp_osal.h"
 #endif
 
 #include "gps_dl_base.h"
@@ -65,7 +66,7 @@ struct gdl_dma_buf_entry {
 /* if set to 2, it likes not use multi entry */
 #define GPS_DL_DMA_BUF_ENTRY_MAX (2)
 #else
-#define GPS_DL_DMA_BUF_ENTRY_MAX (8)
+#define GPS_DL_DMA_BUF_ENTRY_MAX (4)
 #endif
 struct gps_dl_dma_buf {
 	int dev_index;
@@ -107,7 +108,7 @@ struct gdl_hw_dma_transfer {
 	unsigned int transfer_max_len;
 };
 
-int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, int dev_index,
+int gps_dl_dma_buf_alloc(struct gps_dl_dma_buf *p_dma_buf, enum gps_dl_link_id_enum link_id,
 	enum gps_dl_dma_dir dir, unsigned int len);
 void gps_dma_buf_reset(struct gps_dl_dma_buf *p_dma);
 void gps_dma_buf_show(struct gps_dl_dma_buf *p_dma, bool is_warning);
