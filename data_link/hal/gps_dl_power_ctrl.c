@@ -8,6 +8,9 @@
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
 #endif
+#if GPS_DL_HAS_PLAT_DRV
+#include "gps_dl_linux_plat_drv.h"
+#endif
 
 /* TODO: move them into a single structure */
 bool g_gps_common_on;
@@ -88,6 +91,9 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			/* TODO: handling fail case */
 			conninfra_pwr_on(CONNDRV_TYPE_GPS);
 #endif
+#if GPS_DL_HAS_PLAT_DRV
+			gps_dl_update_status_for_md_blanking(true);
+#endif
 			gps_dl_irq_unmask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
 		}
 		g_conn_user |= (1UL << link_id);
@@ -98,6 +104,9 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			/* Note: currently, twice mask should not happen here, */
 			/* due to ISR does mask/unmask pair operations */
 			gps_dl_irq_mask_dma_intr(GPS_DL_IRQ_CTRL_FROM_THREAD);
+#if GPS_DL_HAS_PLAT_DRV
+			gps_dl_update_status_for_md_blanking(false);
+#endif
 #if GPS_DL_HAS_CONNINFRA_DRV
 			conninfra_pwr_off(CONNDRV_TYPE_GPS);
 #endif

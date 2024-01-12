@@ -13,6 +13,9 @@
 #include <linux/poll.h>
 
 #include <linux/io.h>
+#include <asm/io.h>
+#include <sync_write.h>
+
 #include <linux/module.h>
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
@@ -36,6 +39,7 @@ struct gps_dl_iomem_addr_map_entry {
 };
 
 struct gps_dl_iomem_addr_map_entry g_gps_dl_iomem_arrary[GPS_DL_IOMEM_NUM];
+struct gps_dl_iomem_addr_map_entry g_gps_dl_status_dummy_cr;
 
 void __iomem *gps_dl_host_addr_to_virt(unsigned int host_addr)
 {
@@ -57,6 +61,22 @@ void __iomem *gps_dl_host_addr_to_virt(unsigned int host_addr)
 	return (void __iomem *)0;
 }
 
+void gps_dl_update_status_for_md_blanking(bool gps_is_on)
+{
+	void __iomem *p = g_gps_dl_status_dummy_cr.host_virt_addr;
+	unsigned int val = (gps_is_on ? 1 : 0);
+	unsigned int val_old, val_new;
+
+	if (p != NULL) {
+		val_old = __raw_readl(p);
+		mt_reg_sync_writel(val, p);
+		val_new = __raw_readl(p);
+		GDL_LOGI("dummy cr updated: %d -> %d, due to on = %d",
+			val_old, val_new, gps_is_on);
+	} else
+		GDL_LOGW("dummy cr addr is invalid, can not update (on = %d)", gps_is_on);
+}
+
 static int gps_dl_probe(struct platform_device *pdev)
 {
 	struct resource *regs;
@@ -65,6 +85,25 @@ static int gps_dl_probe(struct platform_device *pdev)
 	struct gps_each_device *p_each_dev1 = gps_dl_device_get(1);
 	void __iomem *p_base;
 	int i;
+	unsigned int of_ret, status_dummy_cr;
+
+	of_ret = of_property_read_u32(pdev->dev.of_node, "status-dummy-cr", &status_dummy_cr);
+	if (of_ret == 0) {
+		g_gps_dl_status_dummy_cr.length = 4;
+		g_gps_dl_status_dummy_cr.host_phys_addr = status_dummy_cr;
+		g_gps_dl_status_dummy_cr.host_virt_addr = devm_ioremap(&pdev->dev,
+			status_dummy_cr, g_gps_dl_status_dummy_cr.length);
+		gps_dl_update_status_for_md_blanking(false);
+	} else {
+		g_gps_dl_status_dummy_cr.length = 0;
+		g_gps_dl_status_dummy_cr.host_phys_addr = 0;
+		g_gps_dl_status_dummy_cr.host_virt_addr = 0;
+	}
+
+	GDL_LOGE("status_dummy_cr, of_ret = %d, phy_addr = 0x%08x, size = 0x%x, vir_addr = 0x%p",
+		of_ret, g_gps_dl_status_dummy_cr.host_phys_addr,
+		g_gps_dl_status_dummy_cr.length, g_gps_dl_status_dummy_cr.host_virt_addr);
+
 
 	for (i = 0; i < GPS_DL_IOMEM_NUM; i++) {
 		regs = platform_get_resource(pdev, IORESOURCE_MEM, i);
