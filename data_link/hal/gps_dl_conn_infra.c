@@ -5,6 +5,7 @@
 #include "gps_dl_config.h"
 
 #include "gps_dl_context.h"
+#include "gps_dl_hw_ver.h"
 #include "gps_dl_hw_api.h"
 #include "gps_dl_hal_api.h"
 #if GPS_DL_HAS_PLAT_DRV
@@ -90,13 +91,19 @@ void gps_dl_emi_remap_calc_and_set(void)
 
 unsigned int g_gps_dl_hal_conn_infra_poll_ok_ver;
 
-void gps_dl_hw_gps_set_conn_infra_ver(unsigned int ver)
+void gps_dl_hal_set_conn_infra_ver(unsigned int ver)
 {
 	g_gps_dl_hal_conn_infra_poll_ok_ver = ver;
 }
 
-unsigned int gps_dl_hw_gps_get_conn_infra_ver(void)
+unsigned int gps_dl_hal_get_conn_infra_ver(void)
 {
 	return g_gps_dl_hal_conn_infra_poll_ok_ver;
+}
+
+bool gps_dl_hal_conn_infra_ver_is_mt6885(void)
+{
+	/* is_mt6885 valid after gps_dl_hw_gps_common_on */
+	return (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6885);
 }
 
