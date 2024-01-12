@@ -506,7 +506,7 @@ void gps_dl_hal_md_blanking_init_pta_direct_path(void)
 
 bool gps_dl_hal_md_blanking_init_pta(void)
 {
-	bool okay, done;
+	bool okay;
 	bool is_mt6885;
 	bool clk_is_ready;
 	bool use_direct_path;

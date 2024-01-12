@@ -13,7 +13,11 @@
 #include <linux/of_reserved_mem.h>
 
 #if (GPS_DL_SET_EMI_MPU_CFG)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+#include <soc/mediatek/emi.h>
+#else
 #include <memory/mediatek/emi.h>
+#endif
 #if (defined(CONFIG_MACH_MT6885) || defined(CONFIG_MACH_MT6893))
 #define GPS_DL_EMI_MPU_DOMAIN_AP      0
 #define GPS_DL_EMI_MPU_DOMAIN_CONN    2

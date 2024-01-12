@@ -95,7 +95,7 @@ GPS_DL_HAS_CONNINFRA_DRV := y
 endif
 endif
 
-ifeq ($(CONFIG_MACH_MT6893),y)
+ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6893),y)
 SELECT_GPS_DL_DRV := y
 # For MT6893, the CODA is same as connac2_0
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc/connac2_0
