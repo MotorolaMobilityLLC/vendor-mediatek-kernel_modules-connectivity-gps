@@ -73,17 +73,14 @@ MODULE_LICENSE("GPL");
 #define COMBO_IOC_GPS_LISTEN_RST_EVT 20
 
 #if defined(CONFIG_MACH_MT6765) || defined(CONFIG_MACH_MT6761) || defined(CONFIG_MACH_MT6779) \
-|| defined(CONFIG_MACH_MT6768)
+|| defined(CONFIG_MACH_MT6768) || defined(CONFIG_MACH_MT6785) || defined(CONFIG_MACH_MT6873)
 #define GPS_FWCTL_SUPPORT
 #endif
 
 #ifdef GPS_FWCTL_SUPPORT
 /* Disable: #define GPS_FWCTL_IOCTL_SUPPORT */
 
-#if defined(CONFIG_MACH_MT6768)
 #define GPS_HW_SUSPEND_SUPPORT
-#endif
-
 #endif /* GPS_FWCTL_SUPPORT */
 
 static UINT32 gDbgLevel = GPS_LOG_DBG;
