@@ -23,8 +23,8 @@
 #include "gps_dl_ctrld.h"
 #endif
 
-#define GPS_DL_TX_BUF_SIZE	(4 * 1024)
-#define GPS_DL_RX_BUF_SIZE	(4 * 1024)
+#define GPS_DL_TX_BUF_SIZE	(8 * 1024)
+#define GPS_DL_RX_BUF_SIZE	(8 * 1024)
 
 struct gps_dl_remap_ctx {
 	unsigned int gps_emi_phy_high20;
