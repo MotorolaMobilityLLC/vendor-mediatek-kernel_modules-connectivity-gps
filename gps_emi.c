@@ -92,7 +92,7 @@
 #define GPS_EMI_MPU_SIZE             (0xFFFFF)
 #define GPS_DL_EMI_MPU_DOMAIN_AP      0
 #define GPS_DL_EMI_MPU_DOMAIN_CONN    2
-#define EMI_MPU_PROTECTION_IS_READY  1
+#define EMI_MPU_PROTECTION_IS_READY  0
 #if EMI_MPU_PROTECTION_IS_READY
 #include <memory/mediatek/emi.h>
 #endif
