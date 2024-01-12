@@ -23,6 +23,7 @@
 #include "gps_dsp_fsm.h"
 #include "gps_dl_osal.h"
 #include "gps_dl_name_list.h"
+#include "linux/jiffies.h"
 
 #include "linux/errno.h"
 #if GPS_DL_HAS_PLAT_DRV
@@ -37,6 +38,7 @@ void gps_each_link_set_bool_flag(enum gps_dl_link_id_enum link_id,
 	if (!p)
 		return;
 
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	switch (name) {
 	case LINK_TO_BE_CLOSED:
 		p->sub_states.to_be_closed = value;
@@ -50,6 +52,7 @@ void gps_each_link_set_bool_flag(enum gps_dl_link_id_enum link_id,
 	default:
 		break; /* do nothing */
 	}
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 }
 
 bool gps_each_link_get_bool_flag(enum gps_dl_link_id_enum link_id,
@@ -61,16 +64,21 @@ bool gps_each_link_get_bool_flag(enum gps_dl_link_id_enum link_id,
 	if (!p)
 		return false;
 
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	switch (name) {
 	case LINK_TO_BE_CLOSED:
-		return p->sub_states.to_be_closed;
+		value = p->sub_states.to_be_closed;
+		break;
 	case LINK_USER_OPEN:
-		return p->sub_states.user_open;
+		value = p->sub_states.user_open;
+		break;
 	case LINK_OPEN_RESULT_OKAY:
-		return p->sub_states.open_result_okay;
+		value = p->sub_states.open_result_okay;
+		break;
 	default:
 		break; /* TODO: warning it */
 	}
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
 	return value;
 }
@@ -79,36 +87,50 @@ void gps_dl_link_set_ready_to_write(enum gps_dl_link_id_enum link_id, bool is_re
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	if (p)
 		p->sub_states.is_ready_to_write = is_ready;
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 }
 
 bool gps_dl_link_is_ready_to_write(enum gps_dl_link_id_enum link_id)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
+	bool ready;
 
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	if (p)
-		return p->sub_states.is_ready_to_write;
+		ready = p->sub_states.is_ready_to_write;
 	else
-		return false;
+		ready = false;
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+
+	return ready;
 }
 
 void gps_each_link_set_active(enum gps_dl_link_id_enum link_id, bool is_active)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	if (p)
 		p->sub_states.is_active = is_active;
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 }
 
 bool gps_each_link_is_active(enum gps_dl_link_id_enum link_id)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
+	bool ready;
 
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	if (p)
-		return p->sub_states.is_active;
+		ready = p->sub_states.is_active;
 	else
-		return false;
+		ready = false;
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
+
+	return ready;
 }
 
 void gps_each_link_inc_session_id(enum gps_dl_link_id_enum link_id)
@@ -116,13 +138,13 @@ void gps_each_link_inc_session_id(enum gps_dl_link_id_enum link_id)
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 	int sid;
 
-	/* TODO: lock */
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	if (p->session_id >= GPS_EACH_LINK_SID_MAX)
 		p->session_id = 1;
 	else
 		p->session_id++;
 	sid = p->session_id;
-	/* TODO: unlock */
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
 	GDL_LOGXD(link_id, "new sid = %d", sid);
 }
@@ -132,9 +154,9 @@ int gps_each_link_get_session_id(enum gps_dl_link_id_enum link_id)
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 	int sid;
 
-	/* TODO: lock */
+	gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 	sid = p->session_id;
-	/* TODO: unlock */
+	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
 	return sid;
 }
@@ -966,7 +988,10 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	struct gps_each_link *p_link = gps_dl_link_get(link_id);
 	struct gdl_dma_buf_entry dma_buf_entry;
 	enum GDL_RET_STATUS gdl_ret;
+	bool dma_working, pending_rx;
+	unsigned long j0, j1;
 
+	j0 = jiffies;
 	GDL_LOGXD(link_id, "evt = %s", gps_dl_link_event_name(evt));
 
 	switch (evt) {
@@ -1041,13 +1066,17 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
 
 		gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
-		if (p_link->rx_dma_buf.has_pending_rx) {
+		dma_working = p_link->rx_dma_buf.dma_working_entry.is_valid;
+		pending_rx = p_link->rx_dma_buf.has_pending_rx;
+		if (dma_working || pending_rx) {
 			p_link->rx_dma_buf.has_pending_rx = false;
 			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 
 			/* It means this irq has already masked, */
 			/* DON'T mask again, otherwise twice unmask might be needed */
-			GDL_LOGXD(link_id, "has pending rx, by pass mask the this IRQ");
+			GDL_LOGXD(link_id,
+				"has dma_working = %d, pending rx = %d, by pass mask the this IRQ",
+				dma_working, pending_rx);
 		} else {
 			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 			gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
@@ -1112,6 +1141,9 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	default:
 		break;
 	}
+
+	j1 = jiffies;
+	GDL_LOGXD(link_id, "evt2 = %s, dj = %u", gps_dl_link_event_name(evt), j1 - j0);
 }
 
 int gps_each_link_send_data(char *buffer, unsigned int len, unsigned int data_link_num)
