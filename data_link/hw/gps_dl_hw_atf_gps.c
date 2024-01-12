@@ -28,6 +28,40 @@ static const struct gps_dl_addr_map_entry g_gps_addr_table[GPS_ADDR_ENTRY_NUM] =
 	/* BGF_GPS_CFG_BASE */
 	{0x18C00000, 0x80000000, 0x90000},
 };
+#elif GPS_DL_NEW_AP_BASE
+static const struct gps_dl_addr_map_entry g_gps_addr_table[] = {
+	/* Put base list here: */
+	{0x40C00000, 0x80000000, 0x10000}, /* MCU_CONFG  */
+	{0x40C10000, 0x80010000,  0x1000}, /* DMA */
+	{0x40C11000, 0x80020000,  0x1000}, /* BG_GPS_RGU */
+	{0x40C12000, 0x80021000,  0x1000}, /* BG_GPS_CFG */
+	{0x40C13000, 0x80022000,  0x1000}, /* BG_GPS_MISC_CTL */
+	{0x40C14000, 0x80023000,  0x1000}, /* BG_GPS_MET_TOP */
+	{0x40C15000, 0x80030000,  0x1000}, /* BUS_MON */
+	{0x40C16000, 0x80050000,  0x1000}, /* BG_mcu_bus_cr_off */
+	{0x40C19000, 0x80090000,  0x1000}, /* BG_MCU_UART0 */
+	{0x40C1D000, 0x800D0000,  0x1000}, /* BG_MCU_UART1 */
+	{0x40C1E000, 0x80100000,  0x1000}, /* BG_BUS_BCRM */
+	{0x40C1F000, 0x80101000,  0x1000}, /* BG_BUS_DEBUG */
+	{0x40C20000, 0x81020000,  0x1000}, /* BG_GPS_RGU_ON */
+	{0x40C21000, 0x81021000,  0x1000}, /* BG_GPS_CFG_ON */
+	{0x40C22000, 0x81022000,  0x1000}, /* BG_GPS_VLP_TOP */
+	{0x40C23000, 0x81023000,  0x1000}, /* BG_MCU_BUS_CR_ON */
+	{0x40C24000, 0x81024000,  0x1000}, /* BG_MCU_DEVAPC_AON */
+	{0x40C25000, 0x81025000,  0x1000}, /* BG_MCU_CONFG_ON */
+	{0x40C26000, 0x81026000,  0x1000}, /* BG_MCU_WDT */
+	{0x40C27000, 0x81027000,  0x1000}, /* BG_MCU_GPT */
+	{0x40C28000, 0x81028000,  0x1000}, /* BG_MCU_CIRQ/BG_MCU_DBG_CIRQ */
+	{0x40C2B000, 0x80102000,  0x1000}, /* DEV_APC */
+	{0x40C30000, 0x00900000, 0x40000}, /* ILM RAM */
+	{0x40C70000, 0x80070000, 0x10000}, /* GPS_L1 */
+	{0x40C80000, 0x80080000, 0x10000}, /* GPS_L5 */
+	{0x40C90000, 0x00400000, 0x20000}, /* SYSRAM */
+	{0x40CB0000, 0x80040000, 0x10000}, /* AES */
+	{0x40CC0000, 0x02200000, 0x40000}, /* DLM RAM */
+};
+#define GPS_ADDR_ENTRY_NUM \
+	(sizeof(g_gps_addr_table)/sizeof(struct gps_dl_addr_map_entry))
 #elif GPS_DL_CONNAC3
 static const struct gps_dl_addr_map_entry g_gps_addr_table[] = {
 	/* Put base list here: */

@@ -200,6 +200,7 @@ _fail_enable_gps_slp_prot:
 bool gps_mcudl_hw_mcu_do_on_with_rst_held(void)
 {
 	bool poll_okay = false;
+	unsigned int poll_ver_v06x;
 	/*unsigned int poll_ver, adie_ver = 0;*/
 
 	/* Set MCU mode */
@@ -243,9 +244,7 @@ bool gps_mcudl_hw_mcu_do_on_with_rst_held(void)
 	}
 
 	/* Poll 0x18c12010[31:0] bgf ip version */
-	GDL_HW_POLL_GPS_ENTRY(
-		BG_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION, GDL_HW_BGF_VER_MT6985,
-		POLL_DEFAULT, &poll_okay);
+	GDL_HW_CHECK_BGF_IP_VER(&poll_okay, &poll_ver_v06x);
 	if (!poll_okay) {
 		GDL_LOGE("_fail_bgf_ip_ver_not_okay");
 		goto _fail_bgf_ip_ver_not_okay;

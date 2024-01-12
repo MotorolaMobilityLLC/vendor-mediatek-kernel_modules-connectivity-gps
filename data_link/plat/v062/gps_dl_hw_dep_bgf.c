@@ -68,10 +68,10 @@ bool gps_dl_hw_dep_poll_bgf_bus_and_gps_top_ack(void)
 {
 	bool poll_okay = false;
 	/*int i;*/
+	unsigned int poll_ver_v061;
 
 	/* 0x18c21010[31:0] bgf ip version */
-	GDL_HW_POLL_GPS_ENTRY(BG_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION,
-		GDL_HW_BGF_VER_MT6985, POLL_DEFAULT, &poll_okay);
+	GDL_HW_CHECK_BGF_IP_VER(&poll_okay, &poll_ver_v061);
 	if (!poll_okay) {
 		GDL_LOGE("_fail_bgf_ip_ver_not_okay");
 		goto _fail_bgf_ip_ver_not_okay;
@@ -399,10 +399,8 @@ bool gps_dl_hw_dep_gps_control_adie_on(void)
 	unsigned int conn_ver = 0;
 
 	conn_ver = gps_dl_hal_get_conn_infra_ver();
-	if (GDL_HW_CONN_INFRA_VER_MT6985 == conn_ver)
-		return gps_dl_hw_dep_gps_control_adie_on_6985();
-	else if (GDL_HW_CONN_INFRA_VER_MT6989 == conn_ver)
-		return gps_dl_hw_dep_gps_control_adie_on_6989();
+	if (GDL_HW_CONN_INFRA_VER_MT6991 == conn_ver)
+		return gps_dl_hw_dep_gps_control_adie_on_6991();
 
 	GDL_LOGW("unknown conn ver 0x%08x, do not open adie", conn_ver);
 	return false;
@@ -437,10 +435,8 @@ void gps_dl_hw_dep_gps_control_adie_off(void)
 
 	conn_ver = gps_dl_hal_get_conn_infra_ver();
 
-	if (GDL_HW_CONN_INFRA_VER_MT6985 == conn_ver)
-		gps_dl_hw_dep_gps_control_adie_off_6985();
-	else if (GDL_HW_CONN_INFRA_VER_MT6989 == conn_ver)
-		gps_dl_hw_dep_gps_control_adie_off_6989();
+	if (GDL_HW_CONN_INFRA_VER_MT6991 == conn_ver)
+		gps_dl_hw_dep_gps_control_adie_off_6991();
 	else
 		GDL_LOGW("unknown conn ver 0x%08x, do not close adie", conn_ver);
 }

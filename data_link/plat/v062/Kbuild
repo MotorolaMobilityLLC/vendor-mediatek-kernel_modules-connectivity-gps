@@ -184,8 +184,8 @@ endif
 ifeq ($(GPSMDL_HW),y)
 ccflags-y += -DGPS_DL_HAS_MCUDL_HW=1
 ccflags-y += -I$(GPS_MDL_INC_ROOT)/hw/inc
-$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hw/gps_mcudl_hw_atf_ccif.o
-$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hw/gps_mcudl_hw_atf_mcu.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hw/gps_mcudl_hw_ccif.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hw/gps_mcudl_hw_mcu.o
 else
 ccflags-y += -DGPS_DL_HAS_MCUDL_HW=0
 endif
@@ -261,8 +261,7 @@ $(MODULE_NAME)-objs += gps_dl_hw_dep_gps.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_debug.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_dma.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_met2_0.o
-$(MODULE_NAME)-objs += gps_dl_hw_dep_adie_ctrl_v061_1.o
-$(MODULE_NAME)-objs += gps_dl_hw_dep_adie_ctrl_v061_3.o
+$(MODULE_NAME)-objs += gps_dl_hw_dep_adie_ctrl_v062_1.o
 
 ifeq ($(GPS_DL_HAS_MOCK),y)
 $(MODULE_NAME)-objs += data_link_mock/mock/gps_mock_mvcd.o

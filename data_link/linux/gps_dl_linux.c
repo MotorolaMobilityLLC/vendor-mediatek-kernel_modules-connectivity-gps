@@ -114,7 +114,8 @@ irqreturn_t gps_dl_linux_irq_dispatcher(int irq, void *data)
 
 #if GPS_DL_CONNAC3
 	/*irq_latency is exists from mt6989, do irq_check from mt6989*/
-	if (GDL_HW_CONN_INFRA_VER_MT6989 == gps_dl_hal_get_conn_infra_ver()) {
+	if (GDL_HW_CONN_INFRA_VER_MT6989 == gps_dl_hal_get_conn_infra_ver() ||
+		GDL_HW_CONN_INFRA_VER_MT6991 == gps_dl_hal_get_conn_infra_ver()) {
 		irq_is_triggerd = gps_dl_hw_is_gps_irq_triggerd(p_irq->cfg.index);
 
 		if (!irq_is_triggerd)
