@@ -75,10 +75,14 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id)
 	gps_dl_hw_gps_dump_top_rf_cr();
 	gps_dl_hw_gps_dump_gps_rf_cr();
 
-	if (GPS_DATA_LINK_ID0 == link_id) {
-		GDL_HW_WR_GPS_REG(0x80073120, 1); /* enable A2Z */
-		GDL_HW_RD_GPS_REG(0x800706C0);
-	}
+	/* only need for L1 */
+	gps_each_link_set_bool_flag(GPS_DATA_LINK_ID0, LINK_NEED_A2Z_DUMP, true);
+}
+
+void gps_dl_hw_do_gps_a2z_dump(void)
+{
+	GDL_HW_WR_GPS_REG(0x80073120, 1); /* enable A2Z */
+	GDL_HW_RD_GPS_REG(0x800706C0);
 }
 
 void gps_dl_hw_dump_sleep_prot_status(void)

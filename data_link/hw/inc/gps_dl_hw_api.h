@@ -131,6 +131,7 @@ void gps_dl_hw_dump_sleep_prot_status(void);
 void gps_dl_hw_dump_host_csr_gps_info(bool force_show_log);
 void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log);
 void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id);
+void gps_dl_hw_do_gps_a2z_dump(void);
 void gps_dl_hw_print_usrt_status(enum gps_dl_link_id_enum link_id);
 bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id);
 void gps_dl_hw_gps_dump_gps_rf_cr(void);

@@ -52,6 +52,9 @@ void gps_each_link_set_bool_flag(enum gps_dl_link_id_enum link_id,
 	case LINK_OPEN_RESULT_OKAY:
 		p->sub_states.open_result_okay = value;
 		break;
+	case LINK_NEED_A2Z_DUMP:
+		p->sub_states.need_a2z_dump = value;
+		break;
 	default:
 		break; /* do nothing */
 	}
@@ -77,6 +80,9 @@ bool gps_each_link_get_bool_flag(enum gps_dl_link_id_enum link_id,
 		break;
 	case LINK_OPEN_RESULT_OKAY:
 		value = p->sub_states.open_result_okay;
+		break;
+	case LINK_NEED_A2Z_DUMP:
+		value = p->sub_states.need_a2z_dump;
 		break;
 	default:
 		break; /* TODO: warning it */
@@ -710,9 +716,7 @@ int gps_each_link_check(enum gps_dl_link_id_enum link_id)
 
 	case LINK_OPENED:
 		/* if L1 trigger it, also print L5 status
-		 * for this case, dump L5 firstly,
-		 * due to L1 dump might enable A2Z to dump more information.
-		 * see last part of gps_dl_hw_print_hw_status
+		 * for this case, dump L5 firstly.
 		 */
 		if (link_id == GPS_DATA_LINK_ID0)
 			gps_dl_link_event_send(GPS_DL_EVT_LINK_PRINT_HW_STATUS, GPS_DATA_LINK_ID1);
@@ -1134,6 +1138,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_each_dsp_reg_gourp_read_init(link_id);
 		gps_each_link_inc_session_id(link_id);
 		gps_each_link_set_active(link_id, true);
+		gps_each_link_set_bool_flag(link_id, LINK_NEED_A2Z_DUMP, false);
 
 		ret = gps_dl_hal_conn_power_ctrl(link_id, 1);
 		if (ret != 0) {
@@ -1230,6 +1235,12 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 			/* try to dump host csr info if not normal close operation */
 			if (gps_dl_conninfra_is_okay_or_handle_it(NULL, true))
 				gps_dl_hw_dump_host_csr_gps_info(true);
+		}
+
+		if (gps_each_link_get_bool_flag(link_id, LINK_NEED_A2Z_DUMP)) {
+			show_log = gps_dl_set_show_reg_rw_log(true);
+			gps_dl_hw_do_gps_a2z_dump();
+			gps_dl_set_show_reg_rw_log(show_log);
 		}
 
 		gps_dl_hal_link_power_ctrl(link_id, 0);
