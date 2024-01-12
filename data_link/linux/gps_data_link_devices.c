@@ -17,6 +17,7 @@
 #include "gps_mock_hal.h"
 #endif
 #include "gps_dl_procfs.h"
+#include "gps_dl_subsys_reset.h"
 
 #define GPS_DATA_LINK_DEV_NAME "gps_data_link_cdev"
 int gps_dl_devno_major;
@@ -169,6 +170,8 @@ void gps_dl_device_context_deinit(void)
 {
 	gps_dl_procfs_remove();
 
+	gps_dl_unregister_conninfra_reset_cb();
+
 	gps_dl_irq_deinit();
 
 #if GPS_DL_HAS_CTRLD
@@ -276,6 +279,7 @@ void gps_dl_device_context_init(void)
 	/* must after gps_dl_ctx_links_init */
 	gps_dl_irq_init();
 #endif
+	gps_dl_register_conninfra_reset_cb();
 
 	gps_dl_procfs_setup();
 }

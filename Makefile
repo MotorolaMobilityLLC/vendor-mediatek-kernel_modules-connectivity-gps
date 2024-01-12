@@ -76,6 +76,7 @@ endif
 GPS_SRC_FOLDER := $(TOP)/vendor/mediatek/kernel_modules/connectivity/gps
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/linux/inc
+ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/link/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/lib/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hal/inc
 ccflags-y += -I$(GPS_SRC_FOLDER)/data_link/hw/inc
@@ -105,6 +106,7 @@ $(MODULE_NAME)-objs += data_link/hal/gps_dl_dma.o
 $(MODULE_NAME)-objs += data_link/hal/gps_dl_mcub.o
 $(MODULE_NAME)-objs += data_link/hal/gps_dl_zbus.o
 
+$(MODULE_NAME)-objs += data_link/link/gps_dl_subsys_reset.o
 $(MODULE_NAME)-objs += data_link/gps_each_link.o
 
 $(MODULE_NAME)-objs += data_link/linux/gps_data_link_devices.o
