@@ -328,7 +328,6 @@ int gps_dl_hal_conn_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 				return -1;
 
 			gps_dl_hal_load_clock_flag();
-			gps_dl_emi_remap_calc_and_set();
 #if GPS_DL_HAS_PLAT_DRV
 			gps_dl_wake_lock_hold(true);
 #if GPS_DL_USE_TIA
