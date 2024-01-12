@@ -66,6 +66,12 @@ enum gps_dl_hal_dma_ch_index {
 #define DMA_CH_IS_RX(ch) \
 	((ch) == GPS_DL_DMA_LINK0_D2A || (ch) == GPS_DL_DMA_LINK1_D2A)
 
+#define GET_TX_DMA_CH_OF(link_id) \
+	CHOOSE_BY_LINK_ID(link_id, GPS_DL_DMA_LINK0_A2D, GPS_DL_DMA_LINK1_A2D, 0xFF)
+
+#define GET_RX_DMA_CH_OF(link_id) \
+	CHOOSE_BY_LINK_ID(link_id, GPS_DL_DMA_LINK0_D2A, GPS_DL_DMA_LINK1_D2A, 0xFF)
+
 void gps_dl_hal_dma_init(void);
 
 void gps_dl_hal_dma_config(enum gps_dl_hal_dma_ch_index ch);

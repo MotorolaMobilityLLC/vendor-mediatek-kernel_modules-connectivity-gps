@@ -196,7 +196,8 @@ void gps_dl_isr_usrt_has_data(enum gps_dl_link_id_enum link_id)
 
 void gps_dl_isr_usrt_has_nodata(enum gps_dl_link_id_enum link_id)
 {
-	GDL_LOGXD(link_id, "start");
+	GDL_LOGXD(link_id, "ch = %d", GET_RX_DMA_CH_OF(link_id));
+
 	gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_HAS_NODATA, GPS_DL_IRQ_CTRL_POSSIBLE_FROM_ISR);
 
 	if (gps_each_link_is_active(link_id))
@@ -210,7 +211,7 @@ void gps_dl_isr_usrt_has_nodata(enum gps_dl_link_id_enum link_id)
 
 void gps_dl_isr_d2a_rx_dma_done(enum gps_dl_link_id_enum link_id)
 {
-	GDL_LOGXD(link_id, "start");
+	GDL_LOGXD(link_id, "ch = %d", GET_RX_DMA_CH_OF(link_id));
 
 	/* gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_MCUB); */
 	gps_dl_hal_d2a_rx_dma_stop(link_id);
@@ -220,7 +221,7 @@ void gps_dl_isr_d2a_rx_dma_done(enum gps_dl_link_id_enum link_id)
 
 void gps_dl_isr_a2d_tx_dma_done(enum gps_dl_link_id_enum link_id)
 {
-	GDL_LOGXD(link_id, "start");
+	GDL_LOGXD(link_id, "ch = %d", GET_TX_DMA_CH_OF(link_id));
 
 	/* gps_dl_irq_mask_dma_intr(); */
 	gps_dl_hal_a2d_tx_dma_stop(link_id);

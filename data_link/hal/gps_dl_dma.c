@@ -193,10 +193,10 @@ void gps_dl_real_dma_start(enum gps_dl_hal_dma_ch_index ch,
 void gps_dl_hal_dma_start(enum gps_dl_hal_dma_ch_index ch,
 	struct gdl_dma_buf_entry *p_entry)
 {
+	gps_dl_real_dma_start(ch, p_entry);
 #if GPS_DL_MOCK_HAL
 	gps_dl_mock_dma_start(ch, p_entry);
 #endif
-	gps_dl_real_dma_start(ch, p_entry);
 }
 
 void gps_dl_hal_dma_stop(enum gps_dl_hal_dma_ch_index ch)
