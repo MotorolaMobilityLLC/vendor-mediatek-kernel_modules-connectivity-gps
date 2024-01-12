@@ -33,6 +33,7 @@
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
+#include <linux/pm_wakeup.h>
 
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_dl_isr.h"
@@ -420,6 +421,7 @@ static DRIVER_ATTR(flag, 0644, driver_flag_read, driver_flag_set);
 int gps_dl_linux_plat_drv_register(void)
 {
 	int result;
+	gps_dl_wake_lock_init();
 
 	result = platform_driver_register(&gps_dl_dev_drv);
 	/* if (result) */
@@ -436,6 +438,7 @@ int gps_dl_linux_plat_drv_unregister(void)
 {
 	driver_remove_file(&gps_dl_dev_drv.driver, &driver_attr_flag);
 	platform_driver_unregister(&gps_dl_dev_drv);
+	gps_dl_wake_lock_deinit();
 
 	return 0;
 }
@@ -447,6 +450,35 @@ void gps_dl_reserved_mem_show_info(void)
 {
 	GDL_LOGE("base = 0x%llx, size = 0x%llx",
 		(unsigned long long)g_gps_emi_mem_base, (unsigned long long)g_gps_emi_mem_size);
+}
+
+
+static struct wakeup_source g_gps_dl_wake_lock;
+void gps_dl_wake_lock_init(void)
+{
+#if 0
+	GDL_LOGD("");
+	wakeup_source_init(&g_gps_dl_wake_lock, "gpsdl_wakelock");
+#endif
+}
+
+void gps_dl_wake_lock_deinit(void)
+{
+#if 0
+	GDL_LOGD("");
+	wakeup_source_trash(&g_gps_dl_wake_lock);
+#endif
+}
+
+void gps_dl_wake_lock_hold(bool hold)
+{
+#if 0
+	GDL_LOGD("hold = %d", hold);
+	if (hold)
+		__pm_stay_awake(&g_gps_dl_wake_lock);
+	else
+		__pm_relax(&g_gps_dl_wake_lock);
+#endif
 }
 
 #endif /* GPS_DL_HAS_PLAT_DRV */

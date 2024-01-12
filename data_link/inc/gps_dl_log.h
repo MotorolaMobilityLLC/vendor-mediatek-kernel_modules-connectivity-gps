@@ -20,7 +20,11 @@
 #define GDL_LOGE(fmt, ...) pr_notice("GDL[E] [%s: %d]: "fmt, __func__, __LINE__, ##__VA_ARGS__)
 #define GDL_LOGW(fmt, ...) pr_notice("GDL[W] [%s: %d]: "fmt, __func__, __LINE__, ##__VA_ARGS__)
 #define GDL_LOGI(fmt, ...) pr_info("GDL[I] [%s: %d]: "fmt, __func__, __LINE__, ##__VA_ARGS__)
+#if 0
 #define GDL_LOGD(fmt, ...) pr_info("GDL[D] [%s: %d]: "fmt, __func__, __LINE__, ##__VA_ARGS__)
+#else
+#define GDL_LOGD(fmt, ...)
+#endif
 
 #define GDL_LOGXE(link_id, fmt, ...) pr_notice("GDL-%d[E] [%s: %d]: "fmt, \
 	link_id, __func__, __LINE__, ##__VA_ARGS__)
@@ -31,8 +35,12 @@
 #define GDL_LOGXI(link_id, fmt, ...) pr_info("GDL-%d[I] [%s: %d]: "fmt, \
 	link_id, __func__, __LINE__, ##__VA_ARGS__)
 
+#if 0
 #define GDL_LOGXD(link_id, fmt, ...) pr_info("GDL-%d[D] [%s: %d]: "fmt, \
 	link_id, __func__, __LINE__, ##__VA_ARGS__)
+#else
+#define GDL_LOGXD(link_id, fmt, ...)
+#endif
 #elif GPS_DL_ON_CTP
 #include "gps_dl_ctp_log.h"
 #endif /* GPS_DL_ON_XX */

@@ -23,6 +23,7 @@
 #include "gps_dsp_fsm.h"
 #include "gps_dl_osal.h"
 #include "gps_dl_name_list.h"
+#include "gps_dl_context.h"
 #include "linux/jiffies.h"
 
 #include "linux/errno.h"
@@ -989,13 +990,15 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	struct gdl_dma_buf_entry dma_buf_entry;
 	enum GDL_RET_STATUS gdl_ret;
 	bool dma_working, pending_rx;
+	bool show_log;
 	unsigned long j0, j1;
 
 	j0 = jiffies;
-	GDL_LOGXD(link_id, "evt = %s", gps_dl_link_event_name(evt));
+	GDL_LOGXI(link_id, "evt = %s", gps_dl_link_event_name(evt));
 
 	switch (evt) {
 	case GPS_DL_EVT_LINK_OPEN:
+		show_log = gps_dl_set_show_reg_rw_log(true);
 		gps_each_dsp_reg_gourp_read_init(link_id);
 		gps_each_link_inc_session_id(link_id);
 		gps_each_link_set_active(link_id, true);
@@ -1016,6 +1019,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 #endif
 		gps_dl_link_open_ack(link_id); /* TODO: ack on DSP reset done */
 		gps_dl_link_set_ready_to_write(link_id, true); /* TODO: make it writable on DSP reset done */
+		gps_dl_set_show_reg_rw_log(show_log);
 		break;
 
 	case GPS_DL_EVT_LINK_DSP_ROM_READY_TIMEOUT:
@@ -1034,6 +1038,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	case GPS_DL_EVT_LINK_RESET_GPS:
 	case GPS_DL_EVT_LINK_PRE_CONN_RESET:
 		/* TODO: avoid twice enter */
+		show_log = gps_dl_set_show_reg_rw_log(true);
 
 		if (GPS_DSP_ST_OFF == gps_dsp_state_get(link_id)) {
 			GDL_LOGXD(link_id, "dsp state is off, do nothing for %s",
@@ -1095,6 +1100,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_dma_buf_reset(&p_link->tx_dma_buf);
 		gps_dma_buf_reset(&p_link->rx_dma_buf);
 #endif
+		gps_dl_set_show_reg_rw_log(show_log);
 
 		if (GPS_DL_EVT_LINK_CLOSE == evt)
 			gps_dl_link_close_ack(link_id); /* TODO: check fired race */
@@ -1118,8 +1124,10 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		break;
 
 	case GPS_DL_EVT_LINK_PRINT_HW_STATUS:
+		show_log = gps_dl_set_show_reg_rw_log(true);
 		gps_dl_hw_print_hw_status(link_id);
 		gps_each_dsp_reg_gourp_read_start(link_id);
+		gps_dl_set_show_reg_rw_log(show_log);
 		break;
 
 	case GPS_DL_EVT_LINK_DSP_FSM_TIMEOUT:

@@ -258,7 +258,7 @@ _last_check:
 	/* GPS_TRC("gps_dsp_fsm: old_st=%d, evt=%d, new_st=%d, ab=%d, clk=%d, screen=%d", */
 	/* last_state, evt, gps_dsp_state_get(), abnormal_flag, */
 	/* g_mcu_real_clock_rate, cos_get_host_screen_on_state()); */
-	GDL_LOGXD(link_id, "gps_dsp_fsm: old_st=%s, evt=%s, new_st=%s, is_err=%d",
+	GDL_LOGXI(link_id, "gps_dsp_fsm: old_st=%s, evt=%s, new_st=%s, is_err=%d",
 		gps_dl_dsp_state_name(last_state), gps_dl_dsp_event_name(evt),
 		gps_dl_dsp_state_name(gps_dsp_state_get(link_id)), abnormal_flag);
 	return;

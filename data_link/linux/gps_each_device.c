@@ -29,7 +29,7 @@ static ssize_t gps_each_device_read(struct file *filp,
 
 	dev = (struct gps_each_device *)filp->private_data;
 
-	GDL_LOGXW(dev->index, "buf_len = %d, pid = %d", count, current->pid);
+	GDL_LOGXI(dev->index, "buf_len = %d, pid = %d", count, current->pid);
 
 #if GPS_DL_HAS_LINK_LAYER
 	i_len = gps_each_link_read((enum gps_dl_link_id_enum)dev->index,
@@ -83,7 +83,7 @@ static ssize_t gps_each_device_write(struct file *filp,
 
 	dev = (struct gps_each_device *)filp->private_data;
 
-	GDL_LOGXW(dev->index, "len = %d, pid = %d", count, current->pid);
+	GDL_LOGXI(dev->index, "len = %d, pid = %d", count, current->pid);
 
 	if (count > 0) {
 		/* TODO: this size GPS_DATA_PATH_BUF_MAX for what? */
