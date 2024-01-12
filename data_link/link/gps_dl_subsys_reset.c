@@ -310,6 +310,9 @@ bool gps_dl_conninfra_is_okay_or_handle_it(int *p_hung_value, bool dump_on_hung_
 	 * hung_value = 0, connsys may not in proper status (such as conn_top_off is in sleep)
 	 */
 	if (hung_value > 0) {
+		/* it's safe to cump gps host csr even hang value > 0 */
+		gps_dl_hw_dump_host_csr_gps_info(true);
+
 		trigger = true;
 		trigger_ret = conninfra_trigger_whole_chip_rst(CONNDRV_TYPE_GPS, "GPS detect hung");
 	} else if (hung_value == 0) {
