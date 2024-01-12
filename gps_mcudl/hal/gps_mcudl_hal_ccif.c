@@ -12,6 +12,7 @@
 #include "gps_mcudl_log.h"
 #include "gps_mcudl_ylink.h"
 #include "gps_mcudl_data_pkt_slot.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
 #include "connsyslog.h"
@@ -66,12 +67,21 @@ void gps_mcudl_hal_ccif_rx_isr(void)
 	enum gps_mcudl_ccif_ch ch;
 	unsigned long tick_us0, tick_us1, dt_us;
 	unsigned int recheck_cnt = 0;
+	bool already_wakeup = false;
 
 	gps_dl_irq_mask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_ISR);
 	g_gps_ccif_irq_cnt++;
 	tick_us0 = gps_dl_tick_get_us();
 
 recheck_rch:
+	already_wakeup = gps_mcudl_hal_user_add_if_fw_own_is_clear(GMDL_FW_OWN_CTRL_BY_CCIF);
+	if (!already_wakeup) {
+		GDL_LOGD("ntf to clr_fw_own, ccif_irq_cnt=%d", g_gps_ccif_irq_cnt);
+		gps_mcudl_hal_set_ccif_irq_en_flag(false);
+		gps_mcudl_ylink_event_send(GPS_MDLY_NORMAL, GPS_MCUDL_YLINK_EVT_ID_CCIF_CLR_FW_OWN);
+		return;
+	}
+
 	if (!gps_dl_conninfra_is_readable()) {
 		GDL_LOGE("readable check fail, ccif_irq_cnt=%d", g_gps_ccif_irq_cnt);
 		gps_mcudl_hal_set_ccif_irq_en_flag(false);
@@ -90,6 +100,7 @@ recheck_rch:
 
 	if (rch_mask == 0) {
 		gps_dl_irq_unmask(gps_dl_irq_index_to_id(GPS_DL_IRQ_CCIF), GPS_DL_IRQ_CTRL_FROM_ISR);
+		gps_mcudl_hal_user_set_fw_own_may_notify(GMDL_FW_OWN_CTRL_BY_CCIF);
 		return;
 	}
 
