@@ -1144,6 +1144,7 @@ _close_or_reset_ack:
 		break;
 
 	case GPS_DL_EVT_LINK_WRITE:
+		/* gps_dl_hw_print_usrt_status(link_id); */
 		if (gps_dl_link_is_ready_to_write(link_id))
 			gps_dl_link_start_tx_dma_if_has_data(link_id);
 		else
@@ -1402,6 +1403,10 @@ bool gps_dl_link_start_tx_dma_if_has_data(enum gps_dl_link_id_enum link_id)
 	gdl_ret = gdl_dma_buf_get_data_entry(&p_link->tx_dma_buf, &dma_buf_entry);
 
 	if (gdl_ret == GDL_OKAY) {
+		/* wait until dsp recevie last data done or timeout(10ms)
+		 * TODO: handle timeout case
+		 */
+		gps_dl_hw_poll_usrt_dsp_rx_empty(link_id);
 		gps_dl_hal_a2d_tx_dma_start(link_id, &dma_buf_entry);
 		tx_dma_started = true;
 	} else {

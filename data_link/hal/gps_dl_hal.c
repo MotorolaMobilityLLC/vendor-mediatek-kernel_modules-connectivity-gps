@@ -197,6 +197,8 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		break;
 
 	case GPS_DL_HAL_EVT_A2D_TX_DMA_DONE:
+		/* gps_dl_hw_print_usrt_status(link_id); */
+
 		/* data tx finished */
 		gdl_ret = gdl_dma_buf_set_data_entry(&p_link->tx_dma_buf,
 			&p_link->tx_dma_buf.dma_working_entry);

@@ -117,6 +117,8 @@ void gps_dl_hw_print_usrt_status_struct(
 	enum gps_dl_link_id_enum link_id, struct gps_dl_hw_usrt_status_struct *p);
 
 void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id);
+void gps_dl_hw_print_usrt_status(enum gps_dl_link_id_enum link_id);
+bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id);
 
 void gps_dl_hw_switch_dsp_jtag(void);
 
