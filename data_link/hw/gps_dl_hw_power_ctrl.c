@@ -188,7 +188,7 @@ int gps_dl_hw_gps_common_on(void)
 	bool poll_okay;
 	int i;
 
-#if (GPS_DL_HAS_CONNINFRA_DRV)
+#if ((GPS_DL_HAS_CONNINFRA_DRV) && (GDL_HW_BGF_VER == 0x20010000))
 	/* Conninfra driver alreay do it */
 #else
 	GDL_HW_SET_CONN_INFRA_BGF_EN(1);
@@ -328,7 +328,7 @@ int gps_dl_hw_gps_common_off(void)
 	/* Disable GPS function */
 	GDL_HW_SET_GPS_FUNC_EN(0);
 
-#if (GPS_DL_HAS_CONNINFRA_DRV)
+#if ((GPS_DL_HAS_CONNINFRA_DRV) && (GDL_HW_BGF_VER == 0x20010000))
 	/* Conninfra driver will do it */
 #else
 	GDL_HW_SET_CONN_INFRA_BGF_EN(0);
