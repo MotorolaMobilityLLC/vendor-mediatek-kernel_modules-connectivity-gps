@@ -64,7 +64,7 @@ void gps_dl_hw_give_conn_bgf_sel_hw_sema(void)
 	bool show_log;
 
 	show_log = gps_dl_set_show_reg_rw_log(true);
-	GDL_HW_SET_CONN_INFRA_ENTRY(COS_SEMA_BGF_SEL_STA_ENTRY_FOR_GPS, 1);
+	GDL_HW_SET_CONN_INFRA_ENTRY(COS_SEMA_BGF_SEL_REL_ENTRY_FOR_GPS, 1);
 	gps_dl_set_show_reg_rw_log(show_log);
 
 	GDL_LOGD("");
@@ -77,7 +77,7 @@ void gps_dl_hw_dep_dump_host_csr_gps_info(void)
 
 	okay = gps_dl_hw_take_conn_bgf_sel_hw_sema(100);
 	if (!okay) {
-		GDL_LOGE("gps_dl_hw_take_conn_coex_hw_sema fail");
+		GDL_LOGE("gps_dl_hw_take_conn_bgf_sel_hw_sema fail");
 		return;
 	}
 
