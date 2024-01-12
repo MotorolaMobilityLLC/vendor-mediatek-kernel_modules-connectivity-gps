@@ -35,7 +35,8 @@ bool gps_dl_hw_is_gps_irq_triggerd(enum gps_dl_irq_index_enum irq_id)
 	if (irq_id >= GPS_DL_IRQ_NUM)
 		return false;
 
-	if (GDL_HW_CONN_INFRA_VER_MT6989 == gps_dl_hal_get_conn_infra_ver())
+	if (GDL_HW_CONN_INFRA_VER_MT6989 == gps_dl_hal_get_conn_infra_ver() ||
+		GDL_HW_CONN_INFRA_VER_MT6991 == gps_dl_hal_get_conn_infra_ver())
 		irq_status_bit_shfit = gps_dl_irq_status_bit_shift_mt6989[irq_id];
 	else
 		irq_status_bit_shfit = 0xff;
