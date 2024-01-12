@@ -8,7 +8,6 @@
 #define GPS_RGU_ON_BASE                                        0x80000000
 
 #define GPS_RGU_ON_GPS_L1_CR_ADDR                              (GPS_RGU_ON_BASE + 0x0014)
-#define GPS_RGU_ON_GPS_L1_CR_ADDR                              (GPS_RGU_ON_BASE + 0x0014)
 #define GPS_RGU_ON_GPS_L1_DSPPRAM_PDN_EN_ADDR                  (GPS_RGU_ON_BASE + 0x0048)
 #define GPS_RGU_ON_GPS_L1_DSPPRAM_SLP_EN_ADDR                  (GPS_RGU_ON_BASE + 0x004C)
 #define GPS_RGU_ON_GPS_L1_DSPXRAM_PDN_EN_ADDR                  (GPS_RGU_ON_BASE + 0x0050)
@@ -17,7 +16,6 @@
 #define GPS_RGU_ON_GPS_L1_DSPYRAM_SLP_EN_ADDR                  (GPS_RGU_ON_BASE + 0x005C)
 #define GPS_RGU_ON_GPS_L1_DLY_CHAIN_CTL_ADDR                   (GPS_RGU_ON_BASE + 0x0160)
 #define GPS_RGU_ON_GPS_L1_MEM_DLY_CTL_ADDR                     (GPS_RGU_ON_BASE + 0x0164)
-#define GPS_RGU_ON_GPS_L5_CR_ADDR                              (GPS_RGU_ON_BASE + 0x0214)
 #define GPS_RGU_ON_GPS_L5_CR_ADDR                              (GPS_RGU_ON_BASE + 0x0214)
 #define GPS_RGU_ON_GPS_L5_DSPPRAM_PDN_EN_ADDR                  (GPS_RGU_ON_BASE + 0x0248)
 #define GPS_RGU_ON_GPS_L5_DSPPRAM_SLP_EN_ADDR                  (GPS_RGU_ON_BASE + 0x024C)

@@ -8,19 +8,11 @@
 #define CONN_PTA6_BASE                                         0x1800C000
 
 #define CONN_PTA6_WFSET_PTA_CTRL_ADDR                          (CONN_PTA6_BASE + 0x0000)
-#define CONN_PTA6_WFSET_PTA_CTRL_ADDR                          (CONN_PTA6_BASE + 0x0000)
-#define CONN_PTA6_WFSET_PTA_CTRL_ADDR                          (CONN_PTA6_BASE + 0x0000)
-#define CONN_PTA6_WFSET_PTA_CTRL_ADDR                          (CONN_PTA6_BASE + 0x0000)
 #define CONN_PTA6_PTA_CLK_CFG_ADDR                             (CONN_PTA6_BASE + 0x0004)
 #define CONN_PTA6_BTSET_PTA_CTRL_ADDR                          (CONN_PTA6_BASE + 0x0008)
 #define CONN_PTA6_RO_PTA_CTRL_ADDR                             (CONN_PTA6_BASE + 0x000C)
-#define CONN_PTA6_RO_PTA_CTRL_ADDR                             (CONN_PTA6_BASE + 0x000C)
-#define CONN_PTA6_RO_PTA_CTRL_ADDR                             (CONN_PTA6_BASE + 0x000C)
-#define CONN_PTA6_GPS_BLANK_CFG_ADDR                           (CONN_PTA6_BASE + 0x0240)
-#define CONN_PTA6_GPS_BLANK_CFG_ADDR                           (CONN_PTA6_BASE + 0x0240)
 #define CONN_PTA6_GPS_BLANK_CFG_ADDR                           (CONN_PTA6_BASE + 0x0240)
 #define CONN_PTA6_TMR_CTRL_1_ADDR                              (CONN_PTA6_BASE + 0x02C4)
-#define CONN_PTA6_TMR_CTRL_3_ADDR                              (CONN_PTA6_BASE + 0x02CC)
 #define CONN_PTA6_TMR_CTRL_3_ADDR                              (CONN_PTA6_BASE + 0x02CC)
 
 
