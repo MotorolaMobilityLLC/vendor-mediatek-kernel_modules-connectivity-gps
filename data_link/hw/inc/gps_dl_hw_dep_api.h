@@ -18,6 +18,8 @@ void gps_dl_hw_dep_may_set_bus_debug_flag(void);
 bool gps_dl_hw_dep_may_enable_bpll(void);
 void gps_dl_hw_dep_may_disable_bpll(void);
 void gps_dl_hw_dep_may_remap_conn2ap_gps_peri(void);
+bool gps_dl_hw_dep_may_check_conn_infra_restore_done(void);
+void gps_dl_hw_dep_may_set_conn_infra_l1_request(bool request);
 
 /*
  * GPS

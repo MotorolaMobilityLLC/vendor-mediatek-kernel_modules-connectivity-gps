@@ -133,3 +133,13 @@ void gps_dl_hw_dep_may_remap_conn2ap_gps_peri(void)
 	/*mt6885 mt6893 do nothing*/
 }
 
+bool gps_dl_hw_dep_may_check_conn_infra_restore_done(void)
+{
+	/*mt6885 mt6893 do nothing*/
+	return true;
+}
+
+void gps_dl_hw_dep_may_set_conn_infra_l1_request(bool request)
+{
+	/*mt6885 mt6893 do nothing*/
+}
