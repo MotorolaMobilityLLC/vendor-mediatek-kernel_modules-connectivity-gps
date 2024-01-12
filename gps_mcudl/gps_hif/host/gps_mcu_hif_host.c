@@ -4,8 +4,10 @@
  */
 
 #include "gps_dl_config.h"
+#include "gps_dl_time_tick.h"
 #include "gps_mcudl_log.h"
 #include "gps_mcudl_data_pkt_slot.h"
+#include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcu_hif_host.h"
 #if GPS_DL_HAS_MCUDL_HAL
 #include "gps_mcudl_hal_ccif.h"
@@ -243,10 +245,12 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 {
 	struct gps_mcu_hif_trans_start_desc start_desc;
 	struct gps_mcu_hif_trans_end_desc end_desc;
+	struct gps_mcu_hif_trans_rec trans_rec;
 	enum gps_mcu_hif_ch hif_ch;
 
 	memset(&start_desc, 0, sizeof(start_desc));
 	memset(&end_desc, 0, sizeof(end_desc));
+	memset(&trans_rec, 0, sizeof(trans_rec));
 	hif_ch = gps_mcu_hif_get_trans_hif_ch(trans_id);
 	gps_mcu_hif_get_trans_start_desc(trans_id, &start_desc);
 	gps_mcu_hif_get_trans_end_desc(trans_id, &end_desc);
@@ -258,12 +262,18 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 	}
 
 	gps_mcu_hif_host_clr_trans_req_sent(trans_id);
+	trans_rec.trans_id = trans_id;
+	trans_rec.id = end_desc.id;
+	trans_rec.len = end_desc.len;
+	trans_rec.dticks = end_desc.dticks;
+	trans_rec.host_us = gps_dl_tick_get_us();
 	switch (trans_id) {
 	case GPS_MCU_HIF_TRANS_AP2MCU_DMALESS_MGMT:
 	case GPS_MCU_HIF_TRANS_AP2MCU_DMA_NORMAL:
 	case GPS_MCU_HIF_TRANS_AP2MCU_DMA_URGENT:
 		MDL_LOGD("tx_done, ch=%d, id=%d, len=%d, dt_32k=%d",
 			hif_ch, end_desc.id, end_desc.len, end_desc.dticks);
+		gps_mcu_hif_host_trans_hist_rec(&trans_rec);
 		gps_mcu_hif_host_on_tx_finished(hif_ch);
 		break;
 
@@ -272,6 +282,14 @@ void gps_mcu_hif_host_trans_finished(enum gps_mcu_hif_trans trans_id)
 	case GPS_MCU_HIF_TRANS_MCU2AP_DMA_URGENT:
 		MDL_LOGD("rx_done, ch=%d, id=%d, len=%d, dt_32k=%d",
 			hif_ch, end_desc.id, end_desc.len, end_desc.dticks);
+		if (trans_id == GPS_MCU_HIF_TRANS_MCU2AP_DMA_NORMAL) {
+			trans_rec.total_trans_last =
+				gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(GPS_MDLY_NORMAL);
+		} else if (trans_id == GPS_MCU_HIF_TRANS_MCU2AP_DMA_URGENT) {
+			trans_rec.total_trans_last =
+				gps_mcudl_mcu2ap_ydata_sta_get_recv_byte_cnt(GPS_MDLY_URGENT);
+		}
+		gps_mcu_hif_host_trans_hist_rec(&trans_rec);
 		gps_mcu_hif_host_on_rx_finished(hif_ch, end_desc.len);
 		break;
 
@@ -329,5 +347,84 @@ void gps_mcu_hif_host_dump_trans(enum gps_mcu_hif_trans trans_id)
 		trans_id, sent, recv, fin,
 		start_desc.id, start_desc.len,
 		end_desc.id, end_desc.len, end_desc.dticks);
+}
+
+
+#define GPS_MCU_HIF_TRANS_REC_MAX (48)
+struct gps_mcu_hif_trans_rec g_gps_mcu_hif_trans_rec_array[GPS_MCU_HIF_TRANS_REC_MAX];
+unsigned long g_gps_mcu_hif_trans_rec_cnt;
+bool g_gps_mcu_hif_trans_rec_in_dump;
+
+void gps_mcu_hif_host_trans_hist_init(void)
+{
+	gps_mcudl_slot_protect();
+	memset(&g_gps_mcu_hif_trans_rec_array[0], 0, sizeof(g_gps_mcu_hif_trans_rec_array));
+	g_gps_mcu_hif_trans_rec_cnt = 0;
+	g_gps_mcu_hif_trans_rec_in_dump = false;
+	gps_mcudl_slot_unprotect();
+}
+
+void gps_mcu_hif_host_trans_hist_rec(struct gps_mcu_hif_trans_rec *p_rec)
+{
+	bool in_dump;
+	unsigned long index;
+
+	gps_mcudl_slot_protect();
+	index = g_gps_mcu_hif_trans_rec_cnt;
+	in_dump = g_gps_mcu_hif_trans_rec_in_dump;
+
+	/* Skip record and dump immediately if im_dump */
+	if (in_dump) {
+		MDL_LOGW("in_dump=1, cnt=%lu, trans_id=%d, id=%u, len=%d, dt_32k=%d, ttrans_last=%lu",
+			index, p_rec->trans_id, p_rec->id, p_rec->len, p_rec->dticks,
+			p_rec->total_trans_last);
+		gps_mcudl_slot_unprotect();
+		return;
+	}
+
+	/* Add a record */
+	index = (g_gps_mcu_hif_trans_rec_cnt % GPS_MCU_HIF_TRANS_REC_MAX);
+	g_gps_mcu_hif_trans_rec_array[index] = *p_rec;
+	g_gps_mcu_hif_trans_rec_cnt++;
+	gps_mcudl_slot_unprotect();
+}
+
+void gps_mcu_hif_host_trans_hist_dump_rec(unsigned long index, struct gps_mcu_hif_trans_rec *p_rec)
+{
+	MDL_LOGW("i=%lu, trans_id=%d, id=%u, len=%d, dt_32k=%d, ttr_last=%lu, ts=%lu",
+		index, p_rec->trans_id, p_rec->id, p_rec->len, p_rec->dticks,
+		p_rec->total_trans_last, p_rec->host_us);
+}
+
+void gps_mcu_hif_host_trans_hist_dump(void)
+{
+	unsigned long index;
+
+	gps_mcudl_slot_protect();
+	index = g_gps_mcu_hif_trans_rec_cnt;
+	if (g_gps_mcu_hif_trans_rec_in_dump || index == 0) {
+		gps_mcudl_slot_unprotect();
+		MDL_LOGW("in_dump=1, cnt=%lu, skip", index);
+		return;
+	}
+	g_gps_mcu_hif_trans_rec_in_dump = true;
+	gps_mcudl_slot_unprotect();
+
+	if (g_gps_mcu_hif_trans_rec_cnt <= GPS_MCU_HIF_TRANS_REC_MAX) {
+		for (index = 0; index < g_gps_mcu_hif_trans_rec_cnt; index++) {
+			gps_mcu_hif_host_trans_hist_dump_rec(index,
+				&g_gps_mcu_hif_trans_rec_array[index]);
+		}
+	} else {
+		index = g_gps_mcu_hif_trans_rec_cnt - GPS_MCU_HIF_TRANS_REC_MAX + 1;
+		for (; index < g_gps_mcu_hif_trans_rec_cnt; index++) {
+			gps_mcu_hif_host_trans_hist_dump_rec(index,
+				&g_gps_mcu_hif_trans_rec_array[index % GPS_MCU_HIF_TRANS_REC_MAX]);
+		}
+	}
+
+	gps_mcudl_slot_protect();
+	g_gps_mcu_hif_trans_rec_in_dump = false;
+	gps_mcudl_slot_unprotect();
 }
 
