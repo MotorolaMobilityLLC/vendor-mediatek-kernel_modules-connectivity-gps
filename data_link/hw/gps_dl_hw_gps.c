@@ -431,14 +431,12 @@ enum GDL_RET_STATUS gps_dl_hw_mcub_dsp_read_request(enum gps_dl_link_id_enum lin
 		GDL_HW_WR_GPS_REG(GPS_USRT_APB_MCU_A2D0_ADDR, (dsp_addr & 0xFFFF));
 		GDL_HW_WR_GPS_REG(GPS_USRT_APB_MCUB_A2DF_ADDR,
 			GPS_MCUB_A2DF_MASK_DSP_REG_READ_REQ);
-		return GDL_OKAY;
 	} else if (link_id == GPS_DATA_LINK_ID1) {
 		GDL_HW_WR_GPS_REG(GPS_L5_USRT_APB_MCU_A2D0_ADDR, (dsp_addr & 0xFFFF));
 		GDL_HW_WR_GPS_REG(GPS_L5_USRT_APB_MCUB_A2DF_ADDR,
 			GPS_MCUB_A2DF_MASK_DSP_REG_READ_REQ);
-		return GDL_OKAY;
 	}
 
-	return GDL_FAIL_INVAL;
+	return GDL_OKAY;
 }
 

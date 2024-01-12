@@ -104,8 +104,11 @@ void gps_dl_hal_show_buf(unsigned char *tag,
 			line_len = left_len;
 
 		switch (line_len) {
+#if 0
+		/* case 0 is impossible */
 		case 0:
 			SHOW_BUF_ARG0; break;
+#endif
 		case 1:
 			SHOW_BUF_ARG1; break;
 		case 2:
