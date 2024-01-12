@@ -79,8 +79,17 @@ enum gps_each_link_mutex {
 void gps_each_link_mutex_take(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id);
 void gps_each_link_mutex_give(enum gps_dl_link_id_enum link_id, enum gps_each_link_mutex mtx_id);
 
+enum gps_each_link_spinlock {
+	GPS_DL_SPINLOCK_FOR_LINK_STATE,
+	GPS_DL_SPINLOCK_NUM
+};
+
+void gps_each_link_spin_lock_take(enum gps_dl_link_id_enum link_id, enum gps_each_link_spinlock spin_lock_id);
+void gps_each_link_spin_lock_give(enum gps_dl_link_id_enum link_id, enum gps_each_link_spinlock spin_lock_id);
+
 
 enum gps_each_link_state_enum {
+	LINK_UNINIT,
 	LINK_CLOSED,
 	LINK_OPENING,
 	LINK_OPENED,
@@ -89,6 +98,7 @@ enum gps_each_link_state_enum {
 	LINK_RESET_DONE,
 	/* LINK_RESETTING_DSP, */
 	/* LINK_RESETTING_CONNSYS */
+	LINK_STATE_NUM
 };
 
 
@@ -101,6 +111,7 @@ struct gps_each_link {
 	struct gps_dl_dma_buf rx_dma_buf;
 	struct gps_each_link_waitable waitables[GPS_DL_WAIT_NUM];
 	struct gps_dl_osal_sleepable_lock mutexes[GPS_DL_MTX_NUM];
+	struct gps_dl_osal_unsleepable_lock spin_locks[GPS_DL_SPINLOCK_NUM];
 	struct gps_each_link_state_list sub_states;
 	enum gps_each_link_state_enum state_for_user;
 	int session_id;
@@ -108,6 +119,8 @@ struct gps_each_link {
 
 void gps_each_link_mutexes_init(struct gps_each_link *p);
 void gps_each_link_mutexes_deinit(struct gps_each_link *p);
+void gps_each_link_spin_locks_init(struct gps_each_link *p);
+void gps_each_link_spin_locks_deinit(struct gps_each_link *p);
 
 
 struct gps_common_context {
@@ -142,8 +155,8 @@ enum gps_each_link_lock_reason {
 
 enum gps_each_link_state_enum gps_each_link_get_state(enum gps_dl_link_id_enum link_id);
 void gps_each_link_set_state(enum gps_dl_link_id_enum link_id, enum gps_each_link_state_enum state);
-bool gps_each_link_change_state(enum gps_dl_link_id_enum link_id, enum gps_each_link_state_enum from,
-	enum gps_each_link_state_enum to);
+bool gps_each_link_change_state_from(enum gps_dl_link_id_enum link_id,
+	enum gps_each_link_state_enum from, enum gps_each_link_state_enum to);
 
 
 int gps_each_link_take_big_lock(enum gps_dl_link_id_enum link_id,
