@@ -148,7 +148,7 @@ void gps_each_link_inc_session_id(enum gps_dl_link_id_enum link_id)
 	sid = p->session_id;
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
-	GDL_LOGXI(link_id, "new sid = %d, 1byte_mode = %d", sid, gps_dl_is_1byte_mode());
+	GDL_LOGXW_STA(link_id, "new sid = %d, 1byte_mode = %d", sid, gps_dl_is_1byte_mode());
 }
 
 int gps_each_link_get_session_id(enum gps_dl_link_id_enum link_id)
@@ -188,7 +188,7 @@ void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay)
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 	bool send_msg = false;
 
-	GDL_LOGXD(link_id, "");
+	GDL_LOGXD_ONF(link_id, "");
 
 	/* TODO: open fail case */
 	gps_each_link_set_bool_flag(link_id, LINK_OPEN_RESULT_OKAY, okay);
@@ -196,7 +196,8 @@ void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay)
 
 	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_OPEN_DONE);
 	if (gps_each_link_get_bool_flag(link_id, LINK_USER_OPEN) && okay) {
-		GDL_LOGXW(link_id, "user still online, try to change to opened");
+		GDL_LOGXW_ONF(link_id,
+			"user still online, try to change to opened");
 
 		/* Note: if pre_status not OPENING, it might be RESETTING, not handle it here */
 		gps_each_link_change_state_from(link_id, LINK_OPENING, LINK_OPENED);
@@ -209,7 +210,8 @@ void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay)
 			gps_dl_hal_a2d_tx_dma_start(link_id, &dma_buf_entry);
 #endif
 	} else {
-		GDL_LOGXW(link_id, "okay = %d or user already offline, try to change to closing", okay);
+		GDL_LOGXW_ONF(link_id,
+			"okay = %d or user already offline, try to change to closing", okay);
 
 		/* Note: if pre_status not OPENING, it might be RESETTING, not handle it here */
 		if (gps_each_link_change_state_from(link_id, LINK_OPENING, LINK_CLOSING))
@@ -332,7 +334,8 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 				if (okay) {
 					gps_each_link_give_big_lock(link_id);
 					gps_dl_link_event_send(GPS_DL_EVT_LINK_CLOSE, link_id);
-					GDL_LOGXW(link_id, "sigval = %d, corner case 1: close it", sigval);
+					GDL_LOGXW_ONF(link_id,
+						"sigval = %d, corner case 1: close it", sigval);
 					retval = -EBUSY;
 					break;
 				}
@@ -343,14 +346,14 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 					gps_each_link_set_state(link_id, LINK_CLOSED);
 
 				gps_each_link_give_big_lock(link_id);
-				GDL_LOGXW(link_id, "sigval = %d, corner case 2: %s",
+				GDL_LOGXW_ONF(link_id, "sigval = %d, corner case 2: %s",
 					sigval, gps_dl_link_state_name(state2));
 				retval = -EBUSY;
 				break;
 			}
 
 			gps_each_link_give_big_lock(link_id);
-			GDL_LOGXW(link_id, "sigval = %d, normal case", sigval);
+			GDL_LOGXW_ONF(link_id, "sigval = %d, normal case", sigval);
 			retval = -EINVAL;
 			break;
 		}
@@ -371,10 +374,13 @@ int gps_each_link_open(enum gps_dl_link_id_enum link_id)
 		break;
 	}
 
-	if (retval == 0)
-		GDL_LOGXD(link_id, "prev_state = %s, retval = %d", gps_dl_link_state_name(state), retval);
-	else
-		GDL_LOGXW(link_id, "prev_state = %s, retval = %d", gps_dl_link_state_name(state), retval);
+	if (retval == 0) {
+		GDL_LOGXD_ONF(link_id, "prev_state = %s, retval = %d",
+			gps_dl_link_state_name(state), retval);
+	} else {
+		GDL_LOGXW_ONF(link_id, "prev_state = %s, retval = %d",
+			gps_dl_link_state_name(state), retval);
+	}
 
 	return retval;
 }
@@ -409,7 +415,8 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 			state2 = gps_each_link_get_state(link_id);
 
 			/* Already reset or close, not trigger reseeting again */
-			GDL_LOGXW(link_id, "state flip to %s - corner case", gps_dl_link_state_name(state2));
+			GDL_LOGXW_ONF(link_id, "state flip to %s - corner case",
+				gps_dl_link_state_name(state2));
 			if (state2 == LINK_RESETTING || state2 == LINK_RESET_DONE)
 				retval = 0;
 			else
@@ -433,10 +440,13 @@ int gps_each_link_reset(enum gps_dl_link_id_enum link_id)
 	}
 
 	/* wait until cttld thread ack the status */
-	if (retval == 0)
-		GDL_LOGXD(link_id, "prev_state = %s, retval = %d", gps_dl_link_state_name(state), retval);
-	else
-		GDL_LOGXW(link_id, "prev_state = %s, retval = %d", gps_dl_link_state_name(state), retval);
+	if (retval == 0) {
+		GDL_LOGXD_ONF(link_id, "prev_state = %s, retval = %d",
+			gps_dl_link_state_name(state), retval);
+	} else {
+		GDL_LOGXW_ONF(link_id, "prev_state = %s, retval = %d",
+			gps_dl_link_state_name(state), retval);
+	}
 
 	return retval;
 }
@@ -500,7 +510,7 @@ void gps_dl_link_reset_ack_inner(enum gps_dl_link_id_enum link_id, bool post_con
 	}
 
 	/* TODO: if both clear, show another link's log */
-	GDL_LOGXE(link_id,
+	GDL_LOGXE_STA(link_id,
 		"state change: %s -> %s, level: %d -> %d, user = %d, post_reset = %d, both_clear = %d",
 		gps_dl_link_state_name(old_state), gps_dl_link_state_name(new_state),
 		old_level, new_level,
@@ -567,7 +577,7 @@ void gps_dl_link_close_ack(enum gps_dl_link_id_enum link_id)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 
-	GDL_LOGXD(link_id, "");
+	GDL_LOGXD_ONF(link_id, "");
 	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
 
 	gps_each_link_take_big_lock(link_id, GDL_LOCK_FOR_CLOSE_DONE);
@@ -600,7 +610,7 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 
 	case LINK_RESETTING:
 		gps_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
-		GDL_LOGXE(link_id, "state check: %s, return close ok", gps_dl_link_state_name(state));
+		GDL_LOGXE_ONF(link_id, "state check: %s, return close ok", gps_dl_link_state_name(state));
 		/* return okay to avoid twice close */
 		retval = 0;
 		break;
@@ -621,7 +631,7 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 				gps_each_link_set_state(link_id, LINK_CLOSED);
 			else {
 				gps_each_link_give_big_lock(link_id);
-				GDL_LOGXW(link_id, "state check: %s, return close ok",
+				GDL_LOGXW_ONF(link_id, "state check: %s, return close ok",
 					gps_dl_link_state_name(state2));
 			}
 			gps_each_link_give_big_lock(link_id);
@@ -652,10 +662,13 @@ int gps_each_link_close(enum gps_dl_link_id_enum link_id)
 		break;
 	}
 
-	if (retval == 0)
-		GDL_LOGXD(link_id, "prev_state = %s, retval = %d", gps_dl_link_state_name(state), retval);
-	else
-		GDL_LOGXW(link_id, "prev_state = %s, retval = %d", gps_dl_link_state_name(state), retval);
+	if (retval == 0) {
+		GDL_LOGXD_ONF(link_id, "prev_state = %s, retval = %d",
+			gps_dl_link_state_name(state), retval);
+	} else {
+		GDL_LOGXW_ONF(link_id, "prev_state = %s, retval = %d",
+			gps_dl_link_state_name(state), retval);
+	}
 
 	return retval;
 }
@@ -706,7 +719,7 @@ int gps_each_link_check(enum gps_dl_link_id_enum link_id)
 		break;
 	}
 
-	GDL_LOGXW(link_id, "prev_state = %s, retval = %d", gps_dl_link_state_name(state), retval);
+	GDL_LOGXW_ONF(link_id, "prev_state = %s, retval = %d", gps_dl_link_state_name(state), retval);
 
 	return retval;
 }
@@ -851,11 +864,15 @@ void gps_dl_link_wake_up(struct gps_each_link_waitable *p)
 	ASSERT_NOT_NULL(p, GDL_VOIDF());
 
 	if (!p->waiting) {
-		GDL_LOGW("waitable = %s, nobody waiting", gps_dl_waitable_type_name(p->type));
-
-		/* return;
-		 * not return, just show warning
-		 */
+		if (p->type == GPS_DL_WAIT_WRITE || p->type == GPS_DL_WAIT_READ) {
+			/* normal case for read/write, not show warning */
+			GDL_LOGD("waitable = %s, nobody waiting",
+				gps_dl_waitable_type_name(p->type));
+		} else {
+			/* not return, just show warning */
+			GDL_LOGW("waitable = %s, nobody waiting",
+				gps_dl_waitable_type_name(p->type));
+		}
 	}
 
 	GDL_TEST_FALSE_AND_SET_TRUE(p->fired, is_fired);
@@ -890,7 +907,7 @@ int gps_each_link_write_with_opt(enum gps_dl_link_id_enum link_id,
 		return -1;
 
 	if (gps_each_link_get_state(link_id) != LINK_OPENED) {
-		GDL_LOGXW(link_id, "not opened, drop the write data len = %d", len);
+		GDL_LOGXW_DRW(link_id, "not opened, drop the write data len = %d", len);
 		return -EBUSY;
 	}
 
@@ -960,21 +977,21 @@ int gps_each_link_read_with_timeout(enum gps_dl_link_id_enum link_id,
 			if (data_len <= GPS_DL_READ_SHOW_BUF_MAX_LEN)
 				gps_dl_hal_show_buf("read buf", buf, data_len);
 			else
-				GDL_LOGD("read buf, len = %d", data_len);
+				GDL_LOGXD_DRW(link_id, "read buf, len = %d", data_len);
 
 			gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 			if (p->rx_dma_buf.has_pending_rx) {
 				p->rx_dma_buf.has_pending_rx = false;
 				gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 
-				GDL_LOGW("has pending rx, trigger again");
+				GDL_LOGXI_DRW(link_id, "has pending rx, trigger again");
 				gps_dl_hal_event_send(GPS_DL_HAL_EVT_D2A_RX_HAS_DATA, link_id);
 			} else
 				gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 
 			return data_len;
 		} else if (gdl_ret == GDL_FAIL_NODATA) {
-			GDL_LOGI("gdl_dma_buf_get no data and wait");
+			GDL_LOGXD_DRW(link_id, "gdl_dma_buf_get no data and wait");
 #if (GPS_DL_NO_USE_IRQ == 1)
 			gdl_ret = gps_dl_hal_wait_and_handle_until_usrt_has_data(
 				link_id, timeout_usec);
@@ -992,7 +1009,7 @@ int gps_each_link_read_with_timeout(enum gps_dl_link_id_enum link_id,
 				return -1;
 #endif
 		} else {
-			GDL_LOGI("gdl_dma_buf_get fail %s", gdl_ret_to_name(gdl_ret));
+			GDL_LOGXW_DRW(link_id, "gdl_dma_buf_get fail %s", gdl_ret_to_name(gdl_ret));
 			return -1;
 		}
 	}
@@ -1057,7 +1074,7 @@ void gps_dl_link_irq_set(enum gps_dl_link_id_enum link_id, bool enable)
 			/* It means this irq has already masked, */
 			/* DON'T mask again, otherwise twice unmask might be needed */
 			GDL_LOGXW(link_id,
-				"has dma_working = %d, pending rx = %d, by pass mask the this IRQ",
+				"has dma_working = %d, pending rx = %d, bypass mask irq",
 				dma_working, pending_rx);
 		} else {
 			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
@@ -1078,7 +1095,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	int ret;
 
 	j0 = jiffies;
-	GDL_LOGXD(link_id, "evt = %s", gps_dl_link_event_name(evt));
+	GDL_LOGXD_EVT(link_id, "evt = %s", gps_dl_link_event_name(evt));
 
 	switch (evt) {
 	case GPS_DL_EVT_LINK_OPEN:
@@ -1253,85 +1270,8 @@ _close_or_reset_ack:
 	}
 
 	j1 = jiffies;
-	GDL_LOGXI(link_id, "evt = %s, dj = %u", gps_dl_link_event_name(evt), j1 - j0);
+	GDL_LOGXI_EVT(link_id, "evt = %s, dj = %u", gps_dl_link_event_name(evt), j1 - j0);
 }
-
-int gps_each_link_send_data(char *buffer, unsigned int len, unsigned int data_link_num)
-{
-#if GPS_DL_HAS_CTRLD
-	struct gps_dl_osal_lxop *pOp;
-	struct gps_dl_osal_signal *pSignal;
-	int iRet;
-
-	pOp = gps_dl_get_free_op();
-	if (!pOp)
-		return -1;
-
-	pSignal = &pOp->signal;
-	pSignal->timeoutValue = 0;/* send data need to wait ?ms */
-	if (data_link_num == 0)
-		pOp->op.opId = GPS_DL_OPID_SEND_DATA_DL0;
-	else if (data_link_num == 1)
-		pOp->op.opId = GPS_DL_OPID_SEND_DATA_DL1;
-	else {
-		gps_dl_put_op_to_free_queue(pOp);
-		/*printf error msg*/
-		return -1;
-	}
-	pOp->op.au4OpData[0] = (unsigned long)buffer;
-	pOp->op.au4OpData[1] = len;
-	iRet = gps_dl_put_act_op(pOp);
-#endif
-	return 0;
-}
-
-int gps_each_link_power_control(bool on_off, unsigned int data_link_num)
-{
-#if GPS_DL_HAS_CTRLD
-	struct gps_dl_osal_lxop *pOp;
-	struct gps_dl_osal_signal *pSignal;
-	int iRet;
-
-	pOp = gps_dl_get_free_op();
-	if (!pOp)
-		return -1;
-
-	pSignal = &pOp->signal;
-	pSignal->timeoutValue = 0;/* power on/off need to wait ?ms */
-	if ((data_link_num == 0) && on_off)
-		pOp->op.opId = GPS_DL_OPID_PWR_ON_DL0;
-	else if ((data_link_num == 0) && (!on_off))
-		pOp->op.opId = GPS_DL_OPID_PWR_OFF_DL0;
-	else if ((data_link_num == 1) && on_off)
-		pOp->op.opId = GPS_DL_OPID_PWR_ON_DL1;
-	else if ((data_link_num == 1) && (!on_off))
-		pOp->op.opId = GPS_DL_OPID_PWR_OFF_DL1;
-	else {
-		gps_dl_put_op_to_free_queue(pOp);
-		/*printf error msg*/
-		return -1;
-	}
-
-	iRet = gps_dl_put_act_op(pOp);
-#endif
-	return 0;
-}
-
-int gps_each_link_receive_data(char *buffer, unsigned int length, unsigned int data_link_num)
-{
-#if GPS_DL_HAS_CTRLD
-	return gps_dl_receive_data(buffer, length, data_link_num);
-#else
-	return -1;
-#endif
-}
-
-#if GPS_DL_HAS_CTRLD
-int gps_each_link_register_event_cb(GPS_DL_RX_EVENT_CB func)
-{
-	return gps_dl_register_rx_event_cb(func);
-}
-#endif
 
 void gps_each_link_mutexes_init(struct gps_each_link *p)
 {
@@ -1436,7 +1376,7 @@ void gps_each_link_set_state(enum gps_dl_link_id_enum link_id, enum gps_each_lin
 	p->state_for_user = state;
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
-	GDL_LOGXD(link_id, "state change: %s -> %s",
+	GDL_LOGXI_STA(link_id, "state change: %s -> %s",
 		gps_dl_link_state_name(pre_state), gps_dl_link_state_name(state));
 }
 
@@ -1464,14 +1404,14 @@ bool gps_each_link_change_state_from(enum gps_dl_link_id_enum link_id,
 	gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 
 	if (is_okay && (to == LINK_RESETTING)) {
-		GDL_LOGXD(link_id, "state change: %s -> %s, okay, level: %s -> %s",
+		GDL_LOGXI_STA(link_id, "state change: %s -> %s, okay, level: %d -> %d",
 			gps_dl_link_state_name(from), gps_dl_link_state_name(to),
 			old_level, new_level);
 	} else if (is_okay) {
-		GDL_LOGXD(link_id, "state change: %s -> %s, okay",
+		GDL_LOGXI_STA(link_id, "state change: %s -> %s, okay",
 			gps_dl_link_state_name(from), gps_dl_link_state_name(to));
 	} else {
-		GDL_LOGXW(link_id, "state change: %s -> %s, fail on pre_state = %s",
+		GDL_LOGXW_STA(link_id, "state change: %s -> %s, fail on pre_state = %s",
 			gps_dl_link_state_name(from), gps_dl_link_state_name(to),
 			gps_dl_link_state_name(pre_state));
 	}

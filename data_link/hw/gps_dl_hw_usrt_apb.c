@@ -130,7 +130,7 @@ bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id)
 		GDL_HW_POLL_GPS_ENTRY(GPS_L5_USRT_APB_APB_STA_RX_EMP, 1, 10000 * POLL_US, &poll_okay);
 
 	if (!poll_okay)
-		GDL_LOGXE(link_id, "okay = %d", poll_okay);
+		GDL_LOGXE_DRW(link_id, "okay = %d", poll_okay);
 
 	return poll_okay;
 }

@@ -14,29 +14,9 @@
 #define _GPS_DL_LOG_H
 
 #include "gps_dl_config.h"
-
 #if GPS_DL_ON_LINUX
 #include <linux/printk.h>
-#define __GDL_LOGE(fmt, ...) pr_notice("GDL[E] [%s: %d]: "fmt, __func__, __LINE__, ##__VA_ARGS__)
-#define __GDL_LOGW(fmt, ...) pr_notice("GDL[W] [%s: %d]: "fmt, __func__, __LINE__, ##__VA_ARGS__)
-#define __GDL_LOGI(fmt, ...) pr_info("GDL[I] [%s: %d]: "fmt, __func__, __LINE__, ##__VA_ARGS__)
-#define __GDL_LOGD(fmt, ...) pr_info("GDL[D] [%s: %d]: "fmt, __func__, __LINE__, ##__VA_ARGS__)
-
-#define __GDL_LOGXE(link_id, fmt, ...) pr_notice("GDL-%d[E] [%s: %d]: "fmt, \
-	link_id, __func__, __LINE__, ##__VA_ARGS__)
-
-#define __GDL_LOGXW(link_id, fmt, ...) pr_notice("GDL-%d[W] [%s: %d]: "fmt, \
-		link_id, __func__, __LINE__, ##__VA_ARGS__)
-
-#define __GDL_LOGXI(link_id, fmt, ...) pr_info("GDL-%d[I] [%s: %d]: "fmt, \
-	link_id, __func__, __LINE__, ##__VA_ARGS__)
-
-#define __GDL_LOGXD(link_id, fmt, ...) pr_info("GDL-%d[D] [%s: %d]: "fmt, \
-	link_id, __func__, __LINE__, ##__VA_ARGS__)
-#elif GPS_DL_ON_CTP
-#include "gps_dl_ctp_log.h"
-#endif /* GPS_DL_ON_XX */
-
+#endif
 
 enum gps_dl_log_level_enum {
 	GPS_DL_LOG_LEVEL_DBG  = 1,
@@ -45,9 +25,67 @@ enum gps_dl_log_level_enum {
 	GPS_DL_LOG_LEVEL_ERR  = 7,
 };
 
-#define GPS_DL_LOG_LEVEL_DEFAULT GPS_DL_LOG_LEVEL_INFO
+enum gps_dl_log_module_enum {
+	GPS_DL_LOG_MOD_DEFAULT    = 0,
+	GPS_DL_LOG_MOD_OPEN_CLOSE = 1,
+	GPS_DL_LOG_MOD_READ_WRITE = 2,
+	GPS_DL_LOG_MOD_REG_RW     = 3,
+	GPS_DL_LOG_MOD_STATUS     = 4,
+	GPS_DL_LOG_MOD_EVENT      = 5,
+	GPS_DL_LOG_MOD_INIT       = 6,
+
+	GPS_DL_LOG_MOD_MAX        = 32
+};
+
+#define GPS_DL_LOG_DEF_SETTING_LEVEL   GPS_DL_LOG_LEVEL_INFO
+#define GPS_DL_LOG_DEF_SETTING_MODULES (             \
+		(1UL << GPS_DL_LOG_MOD_DEFAULT)    | \
+		(1UL << GPS_DL_LOG_MOD_OPEN_CLOSE) | \
+		(1UL << GPS_DL_LOG_MOD_READ_WRITE) | \
+		(1UL << GPS_DL_LOG_MOD_REG_RW)     | \
+		(1UL << GPS_DL_LOG_MOD_STATUS)     | \
+		(1UL << GPS_DL_LOG_MOD_EVENT)      | \
+		(1UL << GPS_DL_LOG_MOD_INIT)       | \
+	0)
+
+
 enum gps_dl_log_level_enum gps_dl_log_level_get(void);
 void gps_dl_log_level_set(enum gps_dl_log_level_enum level);
+
+unsigned int gps_dl_log_mod_bitmask_get(void);
+void gps_dl_log_mod_bitmask_set(unsigned int bitmask);
+bool gps_dl_log_mod_is_on(enum gps_dl_log_module_enum mod);
+void gps_dl_log_mod_on(enum gps_dl_log_module_enum mod);
+void gps_dl_log_mod_off(enum gps_dl_log_module_enum mod);
+
+void gps_dl_log_info_show(void);
+
+
+#if GPS_DL_ON_LINUX
+#define __GDL_LOGE(mod, fmt, ...) pr_notice("GDL[E:%d] [%s:%d]: "fmt, \
+	mod, __func__, __LINE__, ##__VA_ARGS__)
+#define __GDL_LOGW(mod, fmt, ...) pr_notice("GDL[W:%d] [%s:%d]: "fmt, \
+	mod, __func__, __LINE__, ##__VA_ARGS__)
+#define __GDL_LOGI(mod, fmt, ...) pr_info("GDL[I:%d] [%s:%d]: "fmt, \
+	mod, __func__, __LINE__, ##__VA_ARGS__)
+#define __GDL_LOGD(mod, fmt, ...) pr_info("GDL[D:%d] [%s:%d]: "fmt, \
+	mod, __func__, __LINE__, ##__VA_ARGS__)
+
+#define __GDL_LOGXE(mod, link_id, fmt, ...) pr_notice("GDL-%d[E:%d] [%s:%d]: "fmt, \
+	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
+
+#define __GDL_LOGXW(mod, link_id, fmt, ...) pr_notice("GDL-%d[W:%d] [%s:%d]: "fmt, \
+	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
+
+#define __GDL_LOGXI(mod, link_id, fmt, ...) pr_info("GDL-%d[I:%d] [%s:%d]: "fmt, \
+	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
+
+#define __GDL_LOGXD(mod, link_id, fmt, ...) pr_info("GDL-%d[D:%d] [%s:%d]: "fmt, \
+	link_id, mod, __func__, __LINE__, ##__VA_ARGS__)
+#elif GPS_DL_ON_CTP
+#include "gps_dl_ctp_log.h"
+#endif /* GPS_DL_ON_XX */
+
 
 #define _GDL_LOGE(...) \
 	do { if (gps_dl_log_level_get() <= GPS_DL_LOG_LEVEL_ERR) __GDL_LOGE(__VA_ARGS__); } while (0)
@@ -66,45 +104,108 @@ void gps_dl_log_level_set(enum gps_dl_log_level_enum level);
 #define _GDL_LOGXD(...) \
 	do { if (gps_dl_log_level_get() <= GPS_DL_LOG_LEVEL_DBG) __GDL_LOGXD(__VA_ARGS__); } while (0)
 
-#define GDL_LOGE(...)  _GDL_LOGE(__VA_ARGS__)
-#define GDL_LOGXE(...) _GDL_LOGXE(__VA_ARGS__)
 
-#define GDL_LOGW(...)  _GDL_LOGW(__VA_ARGS__)
-#define GDL_LOGXW(...) _GDL_LOGXW(__VA_ARGS__)
-
-
-enum gps_dl_log_module_enum {
-	GPS_DL_LOG_MOD_DEFAULT    = 0,
-	GPS_DL_LOG_MOD_OPEN_CLOSE = 1,
-	GPS_DL_LOG_MOD_READ_WRITE = 2,
-
-	GPS_DL_LOG_MOD_MAX        = 32
-};
-
-bool gps_dl_log_mod_is_on(enum gps_dl_log_module_enum mod);
-void gps_dl_log_mod_bitmask_set(unsigned int bitmask);
-unsigned int gps_dl_log_mod_bitmask_get(void);
-void gps_dl_log_info_show(void);
-
-#define GDL_LOGI(...) \
-	do { if (gps_dl_log_mod_is_on(GPS_DL_LOG_MOD_DEFAULT)) _GDL_LOGI(__VA_ARGS__); } while (0)
-#define GDL_LOGD(...) \
-	do { if (gps_dl_log_mod_is_on(GPS_DL_LOG_MOD_DEFAULT)) _GDL_LOGD(__VA_ARGS__); } while (0)
-
-#define GDL_LOGXI(...) \
-	do { if (gps_dl_log_mod_is_on(GPS_DL_LOG_MOD_DEFAULT)) _GDL_LOGXI(__VA_ARGS__); } while (0)
-#define GDL_LOGXD(...) \
-	do { if (gps_dl_log_mod_is_on(GPS_DL_LOG_MOD_DEFAULT)) _GDL_LOGXD(__VA_ARGS__); } while (0)
-
+#define GDL_LOGE2(mod, ...) \
+	do { if (1) \
+		_GDL_LOGE(mod, __VA_ARGS__); } while (0)
+#define GDL_LOGW2(mod, ...) \
+	do { if (1) \
+		_GDL_LOGW(mod, __VA_ARGS__); } while (0)
 #define GDL_LOGI2(mod, ...) \
-		do { if (gps_dl_log_mod_is_on(mod)) _GDL_LOGI(__VA_ARGS__); } while (0)
+	do { if (gps_dl_log_mod_is_on(mod)) \
+		_GDL_LOGI(mod, __VA_ARGS__); } while (0)
 #define GDL_LOGD2(mod, ...) \
-		do { if (gps_dl_log_mod_is_on(mod)) _GDL_LOGD(__VA_ARGS__); } while (0)
+	do { if (gps_dl_log_mod_is_on(mod)) \
+		_GDL_LOGD(mod, __VA_ARGS__); } while (0)
 
+/* Usage:
+ * 1. Bellow macro can be used to output log:
+ *       err  level: GDL_LOGE, GDL_LOGE_YYY, GDL_LOGXE, GDL_LOGXE_YYY
+ *       warn level: GDL_LOGW, GDL_LOGW_YYY, GDL_LOGXW, GDL_LOGXW_YYY
+ *       info level: GDL_LOGI, GDL_LOGI_YYY, GDL_LOGXI, GDL_LOGXI_YYY
+ *       dbg  level: GDL_LOGD, GDL_LOGE_YYY, GDL_LOGXD, GDL_LOGXD_YYY
+ *
+ * 2. _YYY stands for log module(group), the list are:
+ *       _ONF for device/link open or close flow
+ *       _DRW for devcie/link read or write flow
+ *       _RRW for hw register read or write flow
+ *       _STA for state machine related flow
+ *       _EVT for event processing related flow
+ *       _INI for device initialization/deinitializaion flow
+ *    if they are used, the log can be easily filtered by keywords like "[E:2]", "[I:5]" and so on
+ *    if you don't know which to use, just use: GDL_LOG* or GDL_LOGX*, which have no _YYY subfix
+ *
+ * 3. Log of info and dbg level can be showed seeing log level and module setting meet:
+ *       a) log level setting <= INFO or DBG and
+ *       b) log module bitmask bit is 1 for the module
+ *
+ * 4. Log of warn and err level is showed only seeing log level:
+ *       a) log level setting <= WARN or ERR
+ *
+ * 5. Difference between GDL_LOG* and GDL_LOGX*:
+ *      GDL_LOG* can be used like: GDL_LOGD("a = %d", a)
+ *      GDL_LOGX* can take a parameters of link_id, like: GDL_LOGXD(link_id, "a = %d", a)
+ */
+#define GDL_LOGE(...) GDL_LOGE2(GPS_DL_LOG_MOD_DEFAULT, __VA_ARGS__)
+#define GDL_LOGW(...) GDL_LOGW2(GPS_DL_LOG_MOD_DEFAULT, __VA_ARGS__)
+#define GDL_LOGI(...) GDL_LOGI2(GPS_DL_LOG_MOD_DEFAULT, __VA_ARGS__)
+#define GDL_LOGD(...) GDL_LOGD2(GPS_DL_LOG_MOD_DEFAULT, __VA_ARGS__)
+
+#define GDL_LOGD_ONF(...) GDL_LOGD2(GPS_DL_LOG_MOD_OPEN_CLOSE, __VA_ARGS__)
+
+#define GDL_LOGI_DRW(...) GDL_LOGI2(GPS_DL_LOG_MOD_READ_WRITE, __VA_ARGS__)
+
+#define GDL_LOGW_RRW(...) GDL_LOGI2(GPS_DL_LOG_MOD_REG_RW, __VA_ARGS__)
+#define GDL_LOGI_RRW(...) GDL_LOGI2(GPS_DL_LOG_MOD_REG_RW, __VA_ARGS__)
+
+#define GDL_LOGE_EVT(...) GDL_LOGE2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
+#define GDL_LOGW_EVT(...) GDL_LOGW2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
+#define GDL_LOGD_EVT(...) GDL_LOGD2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
+
+#define GDL_LOGE_INI(...) GDL_LOGE2(GPS_DL_LOG_MOD_INIT, __VA_ARGS__)
+#define GDL_LOGW_INI(...) GDL_LOGW2(GPS_DL_LOG_MOD_INIT, __VA_ARGS__)
+#define GDL_LOGI_INI(...) GDL_LOGI2(GPS_DL_LOG_MOD_INIT, __VA_ARGS__)
+#define GDL_LOGD_INI(...) GDL_LOGD2(GPS_DL_LOG_MOD_INIT, __VA_ARGS__)
+
+#define GDL_LOGXE2(mod, ...) \
+	do { if (1) \
+		_GDL_LOGXE(mod, __VA_ARGS__); } while (0)
+#define GDL_LOGXW2(mod, ...) \
+	do { if (1) \
+		_GDL_LOGXW(mod, __VA_ARGS__); } while (0)
 #define GDL_LOGXI2(mod, ...) \
-		do { if (gps_dl_log_mod_is_on(mod)) _GDL_LOGXI(__VA_ARGS__); } while (0)
+	do { if (gps_dl_log_mod_is_on(mod)) \
+		_GDL_LOGXI(mod, __VA_ARGS__); } while (0)
 #define GDL_LOGXD2(mod, ...) \
-		do { if (gps_dl_log_mod_is_on(mod)) _GDL_LOGXD(__VA_ARGS__); } while (0)
+	do { if (gps_dl_log_mod_is_on(mod)) \
+		_GDL_LOGXD(mod, __VA_ARGS__); } while (0)
+
+#define GDL_LOGXE(...) GDL_LOGXE2(GPS_DL_LOG_MOD_DEFAULT, __VA_ARGS__)
+#define GDL_LOGXW(...) GDL_LOGXW2(GPS_DL_LOG_MOD_DEFAULT, __VA_ARGS__)
+#define GDL_LOGXI(...) GDL_LOGXI2(GPS_DL_LOG_MOD_DEFAULT, __VA_ARGS__)
+#define GDL_LOGXD(...) GDL_LOGXD2(GPS_DL_LOG_MOD_DEFAULT, __VA_ARGS__)
+
+#define GDL_LOGXE_ONF(...) GDL_LOGXE2(GPS_DL_LOG_MOD_OPEN_CLOSE, __VA_ARGS__)
+#define GDL_LOGXW_ONF(...) GDL_LOGXW2(GPS_DL_LOG_MOD_OPEN_CLOSE, __VA_ARGS__)
+#define GDL_LOGXI_ONF(...) GDL_LOGXI2(GPS_DL_LOG_MOD_OPEN_CLOSE, __VA_ARGS__)
+#define GDL_LOGXD_ONF(...) GDL_LOGXD2(GPS_DL_LOG_MOD_OPEN_CLOSE, __VA_ARGS__)
+
+#define GDL_LOGXE_DRW(...) GDL_LOGXE2(GPS_DL_LOG_MOD_READ_WRITE, __VA_ARGS__)
+#define GDL_LOGXW_DRW(...) GDL_LOGXW2(GPS_DL_LOG_MOD_READ_WRITE, __VA_ARGS__)
+#define GDL_LOGXI_DRW(...) GDL_LOGXI2(GPS_DL_LOG_MOD_READ_WRITE, __VA_ARGS__)
+#define GDL_LOGXD_DRW(...) GDL_LOGXD2(GPS_DL_LOG_MOD_READ_WRITE, __VA_ARGS__)
+
+#define GDL_LOGXE_STA(...) GDL_LOGXE2(GPS_DL_LOG_MOD_STATUS, __VA_ARGS__)
+#define GDL_LOGXW_STA(...) GDL_LOGXW2(GPS_DL_LOG_MOD_STATUS, __VA_ARGS__)
+#define GDL_LOGXI_STA(...) GDL_LOGXI2(GPS_DL_LOG_MOD_STATUS, __VA_ARGS__)
+
+#define GDL_LOGXW_EVT(...) GDL_LOGXW2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
+#define GDL_LOGXI_EVT(...) GDL_LOGXI2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
+#define GDL_LOGXD_EVT(...) GDL_LOGXD2(GPS_DL_LOG_MOD_EVENT, __VA_ARGS__)
+
+#define GDL_LOGXE_INI(...) GDL_LOGXE2(GPS_DL_LOG_MOD_INIT, __VA_ARGS__)
+#define GDL_LOGXI_INI(...) GDL_LOGXI2(GPS_DL_LOG_MOD_INIT, __VA_ARGS__)
+#define GDL_LOGXD_INI(...) GDL_LOGXD2(GPS_DL_LOG_MOD_INIT, __VA_ARGS__)
 
 
 #define GDL_ASSERT(cond, ret, fmt, ...)                   \

@@ -29,7 +29,7 @@ static ssize_t gps_each_device_read(struct file *filp,
 
 	dev = (struct gps_each_device *)filp->private_data;
 
-	GDL_LOGXI(dev->index, "buf_len = %d, pid = %d", count, current->pid);
+	GDL_LOGXI_DRW(dev->index, "buf_len = %d, pid = %d", count, current->pid);
 
 #if GPS_DL_HAS_LINK_LAYER
 	i_len = gps_each_link_read((enum gps_dl_link_id_enum)dev->index,
@@ -48,10 +48,9 @@ static ssize_t gps_each_device_read(struct file *filp,
 		retval = wait_event_interruptible(dev->r_wq, dev->i_len > 0);
 		if (retval) {
 			if (-ERESTARTSYS == retval)
-				GDL_LOGXI(dev->index, "signaled by -ERESTARTSYS(%ld)\n ", retval);
+				GDL_LOGXW_DRW(dev->index, "signaled by -ERESTARTSYS(%ld)", retval);
 			else
-				GDL_LOGXI(dev->index, "signaled by %ld\n ", retval);
-
+				GDL_LOGXW_DRW(dev->index, "signaled by %ld", retval);
 			return retval;
 		}
 	}
@@ -67,10 +66,12 @@ static ssize_t gps_each_device_read(struct file *filp,
 #endif /* GPS_DL_CTRLD_MOCK_LINK_LAYER */
 #endif /* GPS_DL_HAS_LINK_LAYER */
 
-	if (retval)
+	if (retval) {
+		GDL_LOGXW_DRW(dev->index, "copy_to_user = %d", retval);
 		return -EFAULT;
+	}
 
-	GDL_LOGXI(dev->index, "ret_len = %d", i_len);
+	GDL_LOGXI_DRW(dev->index, "ret_len = %d", i_len);
 	return i_len;
 }
 
@@ -83,14 +84,16 @@ static ssize_t gps_each_device_write(struct file *filp,
 
 	dev = (struct gps_each_device *)filp->private_data;
 
-	GDL_LOGXI(dev->index, "len = %d, pid = %d", count, current->pid);
+	GDL_LOGXI_DRW(dev->index, "len = %d, pid = %d", count, current->pid);
 
 	if (count > 0) {
 		/* TODO: this size GPS_DATA_PATH_BUF_MAX for what? */
 		copy_size = (count > GPS_DATA_PATH_BUF_MAX) ? GPS_DATA_PATH_BUF_MAX : count;
 		retval = copy_from_user(&dev->o_buf[0], &buf[0], copy_size);
-		if (retval)
+		if (retval) {
+			GDL_LOGXW_DRW(dev->index, "copy_from_user = %d", retval);
 			return -EFAULT;
+		}
 
 #if GPS_DL_HAS_LINK_LAYER
 		gps_each_link_write((enum gps_dl_link_id_enum)dev->index,
@@ -102,6 +105,7 @@ static ssize_t gps_each_device_write(struct file *filp,
 #endif
 	}
 
+	GDL_LOGXI_DRW(dev->index, "ret_len = %d", count);
 	return count;
 }
 
@@ -208,7 +212,7 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 	switch (cmd) {
 	case GPSDL_IOC_TRIGGER_ASSERT:
 		/* Trigger FW assert for debug */
-		GDL_LOGXD(dev->index, "GPSDL_IOC_TRIGGER_ASSERT, reason = %d", arg);
+		GDL_LOGXW_DRW(dev->index, "GPSDL_IOC_TRIGGER_ASSERT, reason = %d", arg);
 
 		/* TODO: assert dev->is_open */
 		if (dev->index == GPS_DATA_LINK_ID0)
@@ -218,7 +222,7 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 		break;
 	case GPSDL_IOC_QUERY_STATUS:
 		retval = gps_each_link_check(dev->index);
-		GDL_LOGXD(dev->index, "GPSDL_IOC_QUERY_STATUS, status = %d", retval);
+		GDL_LOGXW_DRW(dev->index, "GPSDL_IOC_QUERY_STATUS, status = %d", retval);
 		break;
 #if 0
 	case GPSDL_IOC_GPS_HWVER:
@@ -313,9 +317,16 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 			retval = -EFAULT;
 		break;
 #endif
+	case 21505:
+	case 21506:
+	case 21515:
+		/* known unsupported cmd */
+		retval = -EFAULT;
+		GDL_LOGXI_DRW(dev->index, "cmd = %d, not support", cmd);
+		break;
 	default:
 		retval = -EFAULT;
-		GDL_LOGXW(dev->index, "cmd = %d, not support", cmd);
+		GDL_LOGXW_DRW(dev->index, "cmd = %d, not support", cmd);
 		break;
 	}
 
