@@ -128,7 +128,7 @@ enum GDL_RET_STATUS gdl_dma_buf_set_data_entry(struct gps_dl_dma_buf *p_dma,
 	struct gdl_dma_buf_entry *p_entry);
 
 enum GDL_RET_STATUS gdl_dma_buf_get_free_entry(struct gps_dl_dma_buf *p_dma,
-	struct gdl_dma_buf_entry *p_entry);
+	struct gdl_dma_buf_entry *p_entry, bool nospace_set_pending_rx);
 
 enum GDL_RET_STATUS gdl_dma_buf_set_free_entry(struct gps_dl_dma_buf *p_dma,
 	struct gdl_dma_buf_entry *p_entry);

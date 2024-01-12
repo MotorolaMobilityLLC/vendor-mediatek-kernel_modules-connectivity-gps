@@ -891,11 +891,15 @@ int gps_each_link_read_with_timeout(enum gps_dl_link_id_enum link_id,
 			else
 				GDL_LOGD("read buf, len = %d", data_len);
 
+			gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 			if (p->rx_dma_buf.has_pending_rx) {
-				GDL_LOGD("has pending rx, trigger again");
 				p->rx_dma_buf.has_pending_rx = false;
+				gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
+				GDL_LOGW("has pending rx, trigger again");
 				gps_dl_hal_event_send(GPS_DL_HAL_EVT_D2A_RX_HAS_DATA, link_id);
-			}
+			} else
+				gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 
 			return data_len;
 		} else if (gdl_ret == GDL_FAIL_NODATA) {
@@ -1036,13 +1040,18 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_dl_link_set_ready_to_write(link_id, false);
 		gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
 
+		gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 		if (p_link->rx_dma_buf.has_pending_rx) {
+			p_link->rx_dma_buf.has_pending_rx = false;
+			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
+
 			/* It means this irq has already masked, */
 			/* DON'T mask again, otherwise twice unmask might be needed */
 			GDL_LOGXD(link_id, "has pending rx, by pass mask the this IRQ");
-			p_link->rx_dma_buf.has_pending_rx = false;
-		} else
+		} else {
+			gps_each_link_spin_lock_give(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 			gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		}
 
 		/* TODO: avoid twice mask need to be handled if HAS_CTRLD */
 		gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_HAS_NODATA, GPS_DL_IRQ_CTRL_FROM_THREAD);

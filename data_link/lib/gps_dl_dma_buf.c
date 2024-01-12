@@ -122,7 +122,7 @@ enum GDL_RET_STATUS gdl_dma_buf_put(struct gps_dl_dma_buf *p_dma,
 	ASSERT_NOT_NULL(p_dma, GDL_FAIL_ASSERT);
 	ASSERT_NOT_NULL(p_buf, GDL_FAIL_ASSERT);
 
-	gdl_ret = gdl_dma_buf_get_free_entry(p_dma, p_entry);
+	gdl_ret = gdl_dma_buf_get_free_entry(p_dma, p_entry, false);
 
 	if (GDL_OKAY != gdl_ret)
 		return gdl_ret;
@@ -345,7 +345,7 @@ static enum GDL_RET_STATUS gdl_dma_buf_get_free_entry_inner(struct gps_dl_dma_bu
 }
 
 enum GDL_RET_STATUS gdl_dma_buf_get_free_entry(struct gps_dl_dma_buf *p_dma,
-	struct gdl_dma_buf_entry *p_entry)
+	struct gdl_dma_buf_entry *p_entry, bool nospace_set_pending_rx)
 {
 	enum GDL_RET_STATUS ret;
 
@@ -354,6 +354,10 @@ enum GDL_RET_STATUS gdl_dma_buf_get_free_entry(struct gps_dl_dma_buf *p_dma,
 
 	gps_each_link_spin_lock_take(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 	ret = gdl_dma_buf_get_free_entry_inner(p_dma, p_entry);
+	if ((ret == GDL_FAIL_NOSPACE) && nospace_set_pending_rx) {
+		p_dma->has_pending_rx = true;
+		ret = GDL_FAIL_NOSPACE_PENDING_RX;
+	}
 	gps_each_link_spin_lock_give(p_dma->dev_index, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 
 	return ret;
