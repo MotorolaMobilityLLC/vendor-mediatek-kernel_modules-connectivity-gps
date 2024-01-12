@@ -75,6 +75,7 @@ int gps_dl_procfs_set_met(int y, int z)
 	case GPS_DEBUG_OP_SET_EVENT_SIGNAL:
 	case GPS_DEBUG_OP_SET_EDGE_DETECTION:
 	case GPS_DEBUG_OP_SET_EVENT_SELECT:
+	case GPS_DEBUG_OP_SET_TIMER_SOURCE:
 		ret = gps_debug_met_set_parameter(&g_gps_debug_met_contex, y, z);
 		break;
 	default:
