@@ -1323,6 +1323,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 
 		ret = gps_dl_hal_link_power_ctrl(link_id, GPS_DL_HAL_POWER_ON);
 		if (ret != 0) {
+			gps_dl_hal_conn_power_ctrl(link_id, 0);
 			gps_dl_link_open_ack(link_id, false, false);
 			break;
 		}
