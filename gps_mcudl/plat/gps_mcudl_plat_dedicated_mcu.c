@@ -524,7 +524,9 @@ int gps_mcudl_plat_mcu_close(void)
 #endif
 	}
 
+#if GPS_DL_HAS_PLAT_DRV
 	gps_dl_update_status_for_md_blanking(false);
+#endif
 	gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump();
 
 	g_gps_mcudl_mcu_ctrl_status = GDL_MCU_CLOSED;

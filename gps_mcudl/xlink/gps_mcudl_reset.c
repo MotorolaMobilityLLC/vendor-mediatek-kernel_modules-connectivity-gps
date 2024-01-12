@@ -14,8 +14,10 @@
 #include "gps_mcudl_log.h"
 #include "gps_dl_name_list.h"
 #include "gps_dl_hw_api.h"
+#if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
 #include "connsys_coredump.h"
+#endif
 #include "gps_mcu_hif_host.h"
 #include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcudl_hal_mcu.h"
@@ -243,17 +245,25 @@ int gps_mcudl_coredump_conninfra_is_readable_by_mask(unsigned int mask)
 
 int gps_mcudl_coredump_conninfra_on_is_readable(void)
 {
+#if GPS_DL_HAS_CONNINFRA_DRV
 	return gps_mcudl_coredump_conninfra_is_readable_by_mask(
 		CONNINFRA_AP2CONN_RX_SLP_PROT_ERR |
 		CONNINFRA_AP2CONN_TX_SLP_PROT_ERR);
+#else
+	return true;
+#endif
 }
 
 int gps_mcudl_coredump_conninfra_off_is_readable(void)
 {
+#if GPS_DL_HAS_CONNINFRA_DRV
 	return gps_mcudl_coredump_conninfra_is_readable_by_mask(
 		CONNINFRA_AP2CONN_RX_SLP_PROT_ERR |
 		CONNINFRA_AP2CONN_TX_SLP_PROT_ERR |
 		CONNINFRA_AP2CONN_CLK_ERR);
+#else
+	return true;
+#endif
 }
 
 int gps_mcudl_coredump_is_readable(void)
@@ -273,11 +283,12 @@ int gps_mcudl_coredump_is_readable(void)
 	return readable;
 }
 
+#if GPS_DL_HAS_CONNINFRA_DRV
 struct coredump_event_cb g_gps_coredump_cb = {
 	.reg_readable = gps_mcudl_coredump_is_readable,
 	.poll_cpupcr = NULL,
 };
-#if GPS_DL_HAS_CONNINFRA_DRV
+
 void *g_gps_coredump_handler;
 #endif
 

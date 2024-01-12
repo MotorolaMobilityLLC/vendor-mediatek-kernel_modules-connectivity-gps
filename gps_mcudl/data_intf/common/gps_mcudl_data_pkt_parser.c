@@ -17,7 +17,7 @@ void gps_mcudl_data_pkt_parser_init(struct gps_mcudl_data_pkt_parser_t *p_parser
 	p_parser->remain_len = 0;
 
 	p_parser->head_done = false;
-	p_parser->false_head = false;
+	p_parser->false_head = 0;
 	p_parser->rbuf_wrapping = false;
 
 	p_parser->p_head = NULL;

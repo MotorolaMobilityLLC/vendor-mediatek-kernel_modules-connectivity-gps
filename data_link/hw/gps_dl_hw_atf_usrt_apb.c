@@ -14,6 +14,7 @@
 
 #include "gps_dl_hw_api.h"
 #include "gps_dl_hw_priv_util.h"
+
 #include "gps/gps_usrt_apb.h"
 #include "gps/gps_l5_usrt_apb.h"
 #if GPS_DL_CONNAC2
@@ -23,10 +24,6 @@
 #endif
 #include "conn_infra/conn_host_csr_top.h"
 
-/*******************************************************************************
-*                                 M A C R O S
-********************************************************************************
-*/
 #include "gps_dl_hw_atf.h"
 
 void gps_dl_hw_usrt_rx_irq_enable(enum gps_dl_link_id_enum link_id, bool enable)

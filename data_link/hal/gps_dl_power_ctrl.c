@@ -22,9 +22,12 @@
 #endif
 #endif
 
+#if GPS_DL_ON_LINUX
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
 #endif
+#endif
+
 #if GPS_DL_ON_CTP
 #include "gps_dl_ctp.h"
 #endif

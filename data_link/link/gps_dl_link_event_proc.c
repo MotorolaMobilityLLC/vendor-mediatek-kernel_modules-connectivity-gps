@@ -17,8 +17,11 @@
 #include "gps_dl_osal.h"
 #include "gps_dl_context.h"
 #include "gps_dl_subsys_reset.h"
+
+#if GPS_DL_ON_LINUX
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
+#endif
 #endif
 #if GPS_DL_HAS_MCUDL
 #include "gps_mcudl_ylink.h"
@@ -373,7 +376,9 @@ void gps_dl_link_post_enter_dpstop_setting(enum gps_dl_link_id_enum link_id)
 			&& (GPS_DSP_ST_HW_STOP_MODE == gps_dsp_state_get(GPS_DATA_LINK_ID1)
 			|| GPS_DSP_ST_OFF == gps_dsp_state_get(GPS_DATA_LINK_ID1))) {
 #if GPS_DL_HAS_PLAT_DRV
+#if GPS_DL_ON_LINUX
 		gps_dl_wake_lock_hold(false);
+#endif
 #endif
 		g_gps_dl_dpstop_release_wakelock_fg = true;
 		GDL_LOGXW(link_id, "enter dpstop with wake_lock relased");

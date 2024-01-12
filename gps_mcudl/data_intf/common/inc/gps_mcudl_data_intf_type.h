@@ -15,6 +15,9 @@
 #include <linux/string.h>
 #endif
 
+/* Note: linux kernel check_patch.pl does not allow new typedef from basic types
+ * such as int.
+ */
 typedef u8   gpsmdl_u8;
 typedef u16  gpsmdl_u16;
 typedef u32  gpsmdl_u32;

@@ -566,7 +566,9 @@ void gps_dma_buf_memcpy_to_tx(void *p_dst, const void *p_src, unsigned int len)
 	memcpy(p_dst, p_src, len);
 #endif
 	/* Use mb to make sure memcpy is done by CPU, and then DMA can be started.  */
+#if GPS_DL_ON_LINUX
 	mb();
+#endif
 	/* TODO:
 	 * __dma_flush_area((void *)p_dst, len);
 	 * dma_sync_single_for_device(DMA_TO_DEVICE);
@@ -583,7 +585,10 @@ void gps_dma_buf_memset_io(void *p_dst, unsigned char val, unsigned int len)
 	memset(p_dst, val, len);
 #endif
 	/* Use mb to make sure memcpy is done by CPU, and then DMA can be started.  */
+#if GPS_DL_ON_LINUX
 	mb();
+#endif
+
 	/* TODO:
 	 * __dma_flush_area((void *)p_dst, len);
 	 * dma_sync_single_for_device(DMA_TO_DEVICE);

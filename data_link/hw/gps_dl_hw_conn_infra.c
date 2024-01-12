@@ -20,10 +20,10 @@
 #include "conn_infra/conn_semaphore.h"
 #include "conn_infra/conn_rf_spi_mst_reg.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
-#if GPS_DL_ON_LINUX
-#include "conninfra.h"
-#elif GPS_DL_ON_CTP
+#if GPS_DL_ON_CTP
 #include "conninfra_ext.h"
+#else
+#include "conninfra.h"
 #endif
 #endif
 
@@ -574,6 +574,7 @@ static bool gps_dl_hw_gps_fmspi_write_rfcr(unsigned int addr, unsigned int val)
 
 void gps_dl_hw_gps_dump_gps_rf_cr_new(void)
 {
+#if GPS_DL_HAS_CONNINFRA_DRV
 	unsigned int addr, val;
 
 	/* read: 0x500 ~ 0x51b */
@@ -599,6 +600,7 @@ void gps_dl_hw_gps_dump_gps_rf_cr_new(void)
 		else
 			GDL_LOGW("rd: addr = 0x%x, fail", addr);
 	}
+#endif
 }
 
 void gps_dl_hw_gps_dump_gps_rf_cr(void)

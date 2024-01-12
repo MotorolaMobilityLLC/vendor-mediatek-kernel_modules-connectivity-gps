@@ -58,7 +58,6 @@ void gps_dl_hw_dep_set_dma_start(enum gps_dl_hal_dma_ch_index channel,
 			channel, bus_addr_of_data_sub_buf_offset,
 			bus_id, bus_len_to_wrap, bus_transfer_max_len, is_1byte, &res);
 	ret = res.a0;
-
 }
 
 void gps_dl_hw_dep_set_dma_stop(enum gps_dl_hal_dma_ch_index channel)
@@ -80,7 +79,6 @@ bool gps_dl_hw_dep_get_dma_int_status(enum gps_dl_hal_dma_ch_index channel)
 			channel, 0, 0, 0, 0, 0, &res);
 	ret = (bool)res.a0;
 	return ret;
-
 }
 
 void gps_dl_hw_dep_save_dma_status_struct(
@@ -92,7 +90,7 @@ void gps_dl_hw_dep_save_dma_status_struct(
 	p->wrap_count		 = GDL_HW_RD_GPS_REG(CONN_MCU_DMA_DMA7_WPPT_ADDR + offset);
 	p->wrap_to_addr		 = GDL_HW_RD_GPS_REG(CONN_MCU_DMA_DMA7_WPTO_ADDR + offset);
 	p->total_count		 = GDL_HW_RD_GPS_REG(CONN_MCU_DMA_DMA7_COUNT_ADDR + offset);
-	p->config			 = GDL_HW_RD_GPS_REG(CONN_MCU_DMA_DMA7_CON_ADDR + offset);
+	p->config		 = GDL_HW_RD_GPS_REG(CONN_MCU_DMA_DMA7_CON_ADDR + offset);
 	p->start_flag		 = GDL_HW_RD_GPS_REG(CONN_MCU_DMA_DMA7_START_ADDR + offset);
 	p->intr_flag		 = GDL_HW_RD_GPS_REG(CONN_MCU_DMA_DMA7_INTSTA_ADDR + offset);
 	p->left_count		 = GDL_HW_RD_GPS_REG(CONN_MCU_DMA_DMA7_RLCT_ADDR + offset);
@@ -127,5 +125,5 @@ unsigned int gps_dl_hw_dep_get_dma_left_len(enum gps_dl_hal_dma_ch_index channel
 			channel, 0, 0, 0, 0, 0, &res);
 	ret = (unsigned int)res.a0;
 	return ret;
-
 }
+

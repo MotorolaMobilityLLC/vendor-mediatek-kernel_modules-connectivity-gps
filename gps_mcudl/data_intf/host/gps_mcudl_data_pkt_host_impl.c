@@ -8,6 +8,7 @@
 #include "gps_mcudl_plat_api.h"
 #include "gps_dl_dma_buf.h"
 #include "gps_dl_time_tick.h"
+#include "gps_dl_name_list.h"
 #include "gps_each_link.h"
 #include "gps_mcudl_context.h"
 #include "gps_mcudl_each_link.h"
@@ -1137,6 +1138,7 @@ void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum g
 	struct gps_mcudl_mcu2ap_pkt_rec_item rec_item;
 	int rec_pl_len;
 	unsigned long curr_tick;
+	enum gps_each_link_state_enum x_st;
 	unsigned long record_pkt_idx;
 
 	if (!gps_mcudl_ypl_type2xid(type, &x_id)) {
@@ -1161,14 +1163,23 @@ _loop_start:
 		x_id_next = GPS_MDLX_CH_NUM;
 	}
 
-	MDL_LOGYD(y_id, "recv type=%d, len=%d, to x_id=%d", type, payload_len, x_id);
 	p_xlink = gps_mcudl_link_get(x_id);
+	x_st = gps_mcudl_each_link_get_state(x_id);
 
-	if (gps_mcudl_each_link_get_state(x_id) != LINK_OPENED)
+	if (x_st == LINK_CLOSED) {
+		MDL_LOGYD(y_id, "recv type=%d, len=%d, to x_id=%d, x_st=%s",
+			type, payload_len, x_id, gps_dl_link_state_name(x_st));
 		goto _loop_end;
+	} else if (x_st != LINK_OPENED) {
+		MDL_LOGYW(y_id, "recv type=%d, len=%d, to x_id=%d, x_st=%s",
+			type, payload_len, x_id, gps_dl_link_state_name(x_st));
+		goto _loop_end;
+	} else {
+		MDL_LOGYD(y_id, "recv type=%d, len=%d, to x_id=%d, x_st=%s",
+			type, payload_len, x_id, gps_dl_link_state_name(x_st));
+	}
 
 	gdl_ret = gdl_dma_buf_put(&p_xlink->rx_dma_buf, payload_ptr, payload_len);
-	/* Openwrt, coverity is going to check enum variable more than 0 */
 	/* Andriod, coverity do not */
 	/* no need sync this code between Andriod and Openwrt*/
 	if (gdl_ret != GDL_OKAY && x_id < GPS_MDLX_CH_NUM) {

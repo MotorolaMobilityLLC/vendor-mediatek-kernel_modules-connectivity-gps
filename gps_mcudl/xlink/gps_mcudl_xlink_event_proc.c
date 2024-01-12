@@ -341,7 +341,9 @@ _close_or_reset_ack:
 		}
 
 		/*dump tia status*/
+#if GPS_DL_HAS_PLAT_DRV
 		gps_dl_tia_gps_ctrl(false);
+#endif
 		/* dump ydata status */
 		gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_HOST_WR);
 		gps_mcu_host_trans_hist_dump(GPS_MCUDL_HIST_REC_MCU_ACK);

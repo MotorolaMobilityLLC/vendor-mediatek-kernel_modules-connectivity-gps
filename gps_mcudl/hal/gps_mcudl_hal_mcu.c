@@ -200,10 +200,12 @@ void gps_mcudl_hal_mcu_show_pc_log(void)
 
 bool gps_mcudl_hal_bg_is_readable(bool check_conn_off)
 {
+#if GPS_DL_HAS_CONNINFRA_DRV
 	if (check_conn_off) {
 		if (gps_mcudl_coredump_conninfra_off_is_readable() == 0)
 			return false;
 	}
+#endif
 	return gps_mcudl_hw_bg_is_readable();
 }
 

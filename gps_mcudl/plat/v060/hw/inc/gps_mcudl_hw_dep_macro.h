@@ -30,13 +30,14 @@
 #include "mcudl/gps_sys/gps_vlp_rtc_top.h"
 
 
-#define GDL_HW_SUPPORT_LIST "SUPPORT:MT6895,MT6989"
+#define GDL_HW_SUPPORT_LIST "SUPPORT:MT6980,MT6985,MT6989"
 
 
 #define GDL_HW_CHECK_CONN_INFRA_VER(p_poll_okay, p_poll_ver)             \
 	GDL_HW_POLL_ENTRY_VERBOSE(GPS_DL_CONN_INFRA_BUS,                 \
 		CONN_CFG_IP_VERSION_IP_VERSION,                    \
 		p_poll_okay, p_poll_ver, POLL_DEFAULT, (                 \
+			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6980) || \
 			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6985) || \
 			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6989))   \
 	)
@@ -45,6 +46,7 @@
 	GDL_HW_POLL_ENTRY_VERBOSE(GPS_DL_GPS_BUS,                 \
 		BG_GPS_CFG_BGF_IP_VERSION_BGFSYS_VERSION,                    \
 		p_poll_okay, p_poll_ver, POLL_DEFAULT, (                 \
+			(*p_poll_ver == GDL_HW_BGF_VER_MT6980) ||    \
 			(*p_poll_ver == GDL_HW_BGF_VER_MT6985) ||    \
 			(*p_poll_ver == GDL_HW_BGF_VER_MT6989))   \
 	)

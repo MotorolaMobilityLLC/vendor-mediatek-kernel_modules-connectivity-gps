@@ -94,7 +94,6 @@ void gps_dl_emi_remap_set_conn_mcu(unsigned int min_addr, unsigned int max_addr)
 
 	gps_dl_remap_ctx_get()->mcu_emi_phy_remap_base = aligned_addr;
 }
-
 #endif
 
 enum GDL_RET_STATUS gps_dl_emi_remap_phy_to_bus_addr_inner(
@@ -215,6 +214,13 @@ void gps_dl_hal_get_gps_awake_status(struct gps_dl_gps_awake_status *p_awake)
 {
 	if (p_awake == NULL)
 		return;
-
-	*p_awake = g_gps_dl_awake_status;
+	/*
+	 * On ARM processors, unaligned accesses to 64-bit and larger data structures can cause exceptions
+	 * (such as Data Abort) that hang the system. In your case, if the p_awake pointer is not aligned to
+	 * an 8-byte boundary (which is the size of unsigned long data), then the following statement may
+	 * cause an exception:
+	 *  *p_awake = g_gps_dl_awake_status;
+	 * so we use memcpy to copy structue
+	 */
+	memcpy(p_awake, &g_gps_dl_awake_status, sizeof(g_gps_dl_awake_status));
 }

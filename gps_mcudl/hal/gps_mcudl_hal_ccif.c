@@ -203,7 +203,7 @@ void gps_mcudl_hal_wdt_init(void)
 
 void gps_mcudl_hal_wdt_isr(void)
 {
-	int readable;
+	int readable = 0;
 	int hung_value = 0;
 	bool is_fw_own;
 

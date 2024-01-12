@@ -31,8 +31,8 @@ struct gps_mcudl_data_pkt_parser_t {
 	gpsmdl_u32 head_len;
 	gpsmdl_u32 remain_len;
 
+	gpsmdl_u32 false_head; /*just for internal debug, no need large uint type*/
 	bool head_done;
-	bool false_head; /*just for internal debug, no need large uint type*/
 	bool rbuf_wrapping;
 
 	struct gps_mcudl_pkt_head head;

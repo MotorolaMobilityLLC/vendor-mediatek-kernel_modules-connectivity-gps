@@ -17,11 +17,17 @@
 #include "gps_dl_name_list.h"
 #include "gps_dl_context.h"
 #include "gps_dl_subsys_reset.h"
+#include "gps_dl_hist_rec.h"
+
+
+#if GPS_DL_ON_LINUX
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
 #endif
-
 #include "linux/errno.h"
+#endif
+
+
 
 
 void gps_each_link_init(enum gps_dl_link_id_enum link_id)

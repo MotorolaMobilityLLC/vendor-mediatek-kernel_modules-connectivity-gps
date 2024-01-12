@@ -6,6 +6,8 @@
 #ifndef _GPS_MCU_HIF_API_H
 #define _GPS_MCU_HIF_API_H
 
+/* linux kernel no need to include this, but some os may need */
+/* #include <stdbool.h> */
 #include "gps_mcu_hif_shared_struct.h"
 
 #if 1 /* Impl them on target and host correspondingly */

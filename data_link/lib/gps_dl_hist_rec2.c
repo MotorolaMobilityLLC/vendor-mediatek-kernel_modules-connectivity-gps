@@ -4,7 +4,9 @@
  */
 
 #include "gps_dl_config.h"
+#if GPS_DL_ON_LINUX
 #include "gps_each_device.h"
+#endif
 #include "gps_each_link.h"
 #include "gps_dl_osal.h"
 #include "gps_dl_hist_rec2.h"
