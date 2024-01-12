@@ -317,6 +317,10 @@ gpsmdl_u8 *gps_mcudl_slot_pkt_reserve(struct gps_mcudl_data_slot_t *p_slot,
 	/* # calculate pkt total length*/
 	len = GPSMDL_PKT_HEAD_LEN + payload_len + 1;
 
+	/* may pend low priority pkt type if slot is near full */
+	if (gps_mcudl_slot_may_pend_pkt_type_if_near_full(p_slot, type, len))
+		return NULL;
+
 	gps_mcudl_slot_protect();
 	p_entr = gps_mcudl_pkt_reserve_entry_and_rbuf(p_slot, type, len);
 	gps_mcudl_slot_unprotect();
