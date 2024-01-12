@@ -65,10 +65,71 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id)
 
 	value = GDL_HW_RD_GPS_REG(0x80073160); /* DL0 */
 	value = GDL_HW_RD_GPS_REG(0x80073134); /* DL1 */
-	value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL);
-	value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG);
 }
 
+void gps_dl_hw_dump_host_csr_gps_info(bool force_show_log)
+{
+	int i;
+	unsigned int value;
+	bool show_log = true;
+
+	if (force_show_log)
+		show_log = gps_dl_set_show_reg_rw_log(true);
+
+	value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL);
+	value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG);
+	for (i = 0xA2; i <= 0xB7; i++) {
+		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL, i);
+		value = GDL_HW_GET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG);
+	}
+
+	if (force_show_log)
+		gps_dl_set_show_reg_rw_log(show_log);
+}
+
+void gps_dl_hw_dump_host_csr_conninfra_info(bool force_show_log)
+{
+	int i;
+	unsigned int value;
+	unsigned int selection;
+	bool show_log = true;
+
+	if (force_show_log)
+		show_log = gps_dl_set_show_reg_rw_log(true);
+
+	selection = 0x000F0001;
+	for (i = 0; i < 15; i++) {
+		GDL_HW_SET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_CONN_INFRA_DEBUG_CTRL_AO_DEBUGSYS_CTRL,
+			selection);
+		value = GDL_HW_GET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT);
+		selection -= 0x10000;
+	}
+
+	selection = 0x00030002;
+	for (i = 0; i < 3; i++) {
+		GDL_HW_SET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_CONN_INFRA_DEBUG_CTRL_AO_DEBUGSYS_CTRL,
+			selection);
+		value = GDL_HW_GET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT);
+		selection -= 0x10000;
+	}
+
+	selection = 0x00040003;
+	for (i = 0; i < 4; i++) {
+		GDL_HW_SET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_AO_DEBUGSYS_CONN_INFRA_DEBUG_CTRL_AO_DEBUGSYS_CTRL,
+			selection);
+		value = GDL_HW_GET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT_CONN_INFRA_DEBUG_CTRL_AO2SYS_OUT);
+		selection -= 0x10000;
+	}
+
+	if (force_show_log)
+		gps_dl_set_show_reg_rw_log(show_log);
+}
 
 /* CONN_INFRA_CFG_CKGEN_BUS_ADDR[5:2] */
 #define CONN_INFRA_CFG_PTA_CLK_ADDR CONN_INFRA_CFG_CKGEN_BUS_ADDR
@@ -127,6 +188,7 @@ bool gps_dl_hw_init_pta_uart(void)
 		return false;
 	}
 
+	gps_dl_hw_dump_host_csr_conninfra_info(true);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_UART_PTA_HIGHSPEED_SPEED, 3);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_UART_PTA_SAMPLE_COUNT_SAMPLE_COUNT, 5);
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_UART_PTA_SAMPLE_POINT_SAMPLE_POINT, 2);

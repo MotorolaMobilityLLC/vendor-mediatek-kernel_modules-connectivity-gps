@@ -56,18 +56,25 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 
 	/* fill it by datasheet */
 	if (1 == op) {
+		/* GPS SW force wakeup conninfra top off */
+		gps_dl_hw_gps_force_wakeup_conninfra_top_off(true);
+
 		/* GPS common */
 		if (!g_gps_common_on) {
-			if (gps_dl_hw_gps_common_on() != 0)
+			if (gps_dl_hw_gps_common_on() != 0) {
+				gps_dl_hw_gps_force_wakeup_conninfra_top_off(false);
 				return -1;
+			}
 #if GPS_DL_ON_LINUX
 			gps_dl_hal_md_blanking_init_pta();
 #endif
 			g_gps_common_on = true;
 		}
 
-		if (g_gps_dsp_on_array[link_id])
+		if (g_gps_dsp_on_array[link_id]) {
+			gps_dl_hw_gps_force_wakeup_conninfra_top_off(false);
 			return 0;
+		}
 
 		g_gps_dsp_on_array[link_id] = true;
 
@@ -119,6 +126,7 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 				gps_dl_hw_gps_dsp_ctrl(GPS_L5_DSP_ENTER_DSTOP);
 		}
 	} else if (0 == op) {
+		gps_dl_hw_gps_force_wakeup_conninfra_top_off(true);
 		if (g_gps_dsp_on_array[link_id]) {
 			g_gps_dsp_on_array[link_id] = false;
 
@@ -167,6 +175,7 @@ int gps_dl_hal_link_power_ctrl(enum gps_dl_link_id_enum link_id, int op)
 			}
 		}
 
+		gps_dl_hw_gps_force_wakeup_conninfra_top_off(false);
 		return 0;
 	}
 
