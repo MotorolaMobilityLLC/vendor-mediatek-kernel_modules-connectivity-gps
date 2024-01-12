@@ -29,6 +29,7 @@
 #include "gps_dl_hw_priv_util.h"
 #include "gps_dl_hal_util.h"
 #include "gps_dsp_fsm.h"
+#include "gps_dl_subsys_reset.h"
 
 #include "conn_infra/conn_infra_rgu.h"
 #include "conn_infra/conn_infra_cfg.h"
@@ -120,6 +121,7 @@ void gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 int gps_dl_hw_gps_common_on(void)
 {
 	bool poll_okay;
+	int i;
 
 	/* Conninfra driver will do it
 	 * GDL_HW_SET_CONN_INFRA_ENTRY(CONN_INFRA_RGU_BGFYS_ON_TOP_PWR_CTL_BGFSYS_ON_TOP_PWR_ON, 1);
@@ -176,8 +178,17 @@ int gps_dl_hw_gps_common_on(void)
 	/* Todo: set GPS host csr flag selection */
 	/* 0x18060240[3:0] == 4h'2 gps_top_off is GPS_ACTIVE state */
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_HOST2GPS_DEGUG_SEL_HOST2GPS_DEGUG_SEL, 0x80);
-	GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG, 2,
-		POLL_DEFAULT, &poll_okay);
+	for (i = 0; i < 3; i++) {
+		GDL_HW_POLL_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_CFG2HOST_DEBUG_GPS_CFG2HOST_DEBUG, 2,
+			POLL_DEFAULT, &poll_okay);
+		if (poll_okay)
+			break;
+		/*
+		 * TODO:
+		 * if (!gps_dl_reset_level_is_none()) break;
+		 */
+		GDL_LOGW("_poll_gps_top_off_active, cnt = %d", i + 1);
+	}
 	if (!poll_okay) {
 		GDL_LOGE("_fail_gps_top_off_active_not_okay");
 		goto _fail_gps_top_off_active_not_okay;
