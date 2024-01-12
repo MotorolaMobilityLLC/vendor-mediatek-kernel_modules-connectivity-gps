@@ -63,7 +63,7 @@ do { \
 		++((prb)->write); \
 	} \
 	else { \
-		osal_assert(!RB_FULL(prb)); \
+		gps_dl_osal_assert(!RB_FULL(prb)); \
 	} \
 } while (0)
 
@@ -78,7 +78,7 @@ do { \
 	} \
 	else { \
 		value = NULL; \
-		osal_assert(!RB_EMPTY(prb)); \
+		gps_dl_osal_assert(!RB_EMPTY(prb)); \
 	} \
 } while (0)
 
@@ -159,60 +159,44 @@ struct gps_dl_osal_thread {
 
 typedef unsigned int(*OSAL_EVENT_CHECKER) (struct gps_dl_osal_thread *pThread);
 
-unsigned int osal_strlen(const char *str);
-int osal_strcmp(const char *dst, const char *src);
-int osal_strncmp(const char *dst, const char *src, unsigned int len);
-char *osal_strcpy(char *dst, const char *src);
-char *osal_strncpy(char *dst, const char *src, unsigned int len);
-char *osal_strcat(char *dst, const char *src);
-char *osal_strncat(char *dst, const char *src, unsigned int len);
-char *osal_strchr(const char *str, unsigned char c);
-char *osal_strsep(char **str, const char *c);
-int osal_strtol(const char *str, unsigned int adecimal, long *res);
-int osal_snprintf(char *buf, unsigned int len, const char *fmt, ...);
-int osal_err_print(const char *str, ...);
-int osal_dbg_print(const char *str, ...);
-int osal_warn_print(const char *str, ...);
-void *osal_malloc(unsigned int size);
-void osal_free(const void *dst);
-void *osal_memset(void *buf, int i, unsigned int len);
-void *osal_memcpy(void *dst, const void *src, unsigned int len);
-void osal_memcpy_fromio(void *dst, const void *src, unsigned int len);
-void osal_memcpy_toio(void *dst, const void *src, unsigned int len);
-int osal_memcmp(const void *buf1, const void *buf2, unsigned int len);
-int osal_thread_create(struct gps_dl_osal_thread *pThread);
-int osal_thread_run(struct gps_dl_osal_thread *pThread);
-int osal_thread_stop(struct gps_dl_osal_thread *pThread);
-int osal_thread_should_stop(struct gps_dl_osal_thread *pThread);
-int osal_thread_destroy(struct gps_dl_osal_thread *pThread);
-int osal_thread_wait_for_event(struct gps_dl_osal_thread *pThread,
+char *gps_dl_osal_strncpy(char *dst, const char *src, unsigned int len);
+char *gps_dl_osal_strsep(char **str, const char *c);
+int gps_dl_osal_strtol(const char *str, unsigned int adecimal, long *res);
+int gps_dl_osal_err_print(const char *str, ...);
+void *gps_dl_osal_memset(void *buf, int i, unsigned int len);
+int gps_dl_osal_thread_create(struct gps_dl_osal_thread *pThread);
+int gps_dl_osal_thread_run(struct gps_dl_osal_thread *pThread);
+int gps_dl_osal_thread_stop(struct gps_dl_osal_thread *pThread);
+int gps_dl_osal_thread_should_stop(struct gps_dl_osal_thread *pThread);
+int gps_dl_osal_thread_destroy(struct gps_dl_osal_thread *pThread);
+int gps_dl_osal_thread_wait_for_event(struct gps_dl_osal_thread *pThread,
 	struct gps_dl_osal_event *pEvent, OSAL_EVENT_CHECKER pChecker);
-int osal_signal_init(struct gps_dl_osal_signal *pSignal);
-int osal_wait_for_signal(struct gps_dl_osal_signal *pSignal);
-int osal_wait_for_signal_timeout(struct gps_dl_osal_signal *pSignal, struct gps_dl_osal_thread *pThread);
-int osal_raise_signal(struct gps_dl_osal_signal *pSignal);
-int osal_signal_active_state(struct gps_dl_osal_signal *pSignal);
-int osal_op_is_wait_for_signal(struct gps_dl_osal_lxop *pOp);
-void osal_op_raise_signal(struct gps_dl_osal_lxop *pOp, int result);
-int osal_signal_deinit(struct gps_dl_osal_signal *pSignal);
-int osal_event_init(struct gps_dl_osal_event *pEvent);
-int osal_trigger_event(struct gps_dl_osal_event *pEvent);
-int osal_wait_for_event(struct gps_dl_osal_event *pEvent, int (*condition)(void *), void *cond_pa);
-int osal_wait_for_event_timeout(struct gps_dl_osal_event *pEvent, int (*condition)(void *), void *cond_pa);
-int osal_event_deinit(struct gps_dl_osal_event *pEvent);
-int osal_sleepable_lock_init(struct gps_dl_osal_sleepable_lock *pSL);
-int osal_lock_sleepable_lock(struct gps_dl_osal_sleepable_lock *pSL);
-int osal_unlock_sleepable_lock(struct gps_dl_osal_sleepable_lock *pSL);
-int osal_trylock_sleepable_lock(struct gps_dl_osal_sleepable_lock *pSL);
-int osal_sleepable_lock_deinit(struct gps_dl_osal_sleepable_lock *pSL);
-int osal_unsleepable_lock_init(struct gps_dl_osal_unsleepable_lock *pUSL);
-int osal_lock_unsleepable_lock(struct gps_dl_osal_unsleepable_lock *pUSL);
-int osal_unlock_unsleepable_lock(struct gps_dl_osal_unsleepable_lock *pUSL);
+int gps_dl_osal_signal_init(struct gps_dl_osal_signal *pSignal);
+int gps_dl_osal_wait_for_signal(struct gps_dl_osal_signal *pSignal);
+int gps_dl_osal_wait_for_signal_timeout(struct gps_dl_osal_signal *pSignal, struct gps_dl_osal_thread *pThread);
+int gps_dl_osal_raise_signal(struct gps_dl_osal_signal *pSignal);
+int gps_dl_osal_signal_active_state(struct gps_dl_osal_signal *pSignal);
+int gps_dl_osal_op_is_wait_for_signal(struct gps_dl_osal_lxop *pOp);
+void gps_dl_osal_op_raise_signal(struct gps_dl_osal_lxop *pOp, int result);
+int gps_dl_osal_signal_deinit(struct gps_dl_osal_signal *pSignal);
+int gps_dl_osal_event_init(struct gps_dl_osal_event *pEvent);
+int gps_dl_osal_trigger_event(struct gps_dl_osal_event *pEvent);
+int gps_dl_osal_wait_for_event(struct gps_dl_osal_event *pEvent, int (*condition)(void *), void *cond_pa);
+int gps_dl_osal_wait_for_event_timeout(struct gps_dl_osal_event *pEvent, int (*condition)(void *), void *cond_pa);
+int gps_dl_osal_event_deinit(struct gps_dl_osal_event *pEvent);
+int gps_dl_osal_sleepable_lock_init(struct gps_dl_osal_sleepable_lock *pSL);
+int gps_dl_osal_lock_sleepable_lock(struct gps_dl_osal_sleepable_lock *pSL);
+int gps_dl_osal_unlock_sleepable_lock(struct gps_dl_osal_sleepable_lock *pSL);
+int gps_dl_osal_trylock_sleepable_lock(struct gps_dl_osal_sleepable_lock *pSL);
+int gps_dl_osal_sleepable_lock_deinit(struct gps_dl_osal_sleepable_lock *pSL);
+int gps_dl_osal_unsleepable_lock_init(struct gps_dl_osal_unsleepable_lock *pUSL);
+int gps_dl_osal_lock_unsleepable_lock(struct gps_dl_osal_unsleepable_lock *pUSL);
+int gps_dl_osal_unlock_unsleepable_lock(struct gps_dl_osal_unsleepable_lock *pUSL);
 
-#define osal_assert(condition) \
+#define gps_dl_osal_assert(condition) \
 do { \
 	if (!(condition)) \
-		osal_err_print("%s, %d, (%s)\n", __FILE__, __LINE__, #condition); \
+		gps_dl_osal_err_print("%s, %d, (%s)\n", __FILE__, __LINE__, #condition); \
 } while (0)
 
 #endif /* _GPS_DL_OSAL_H */

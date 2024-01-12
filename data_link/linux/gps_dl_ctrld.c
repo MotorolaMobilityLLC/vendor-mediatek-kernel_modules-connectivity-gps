@@ -100,14 +100,14 @@ static int gps_dl_put_op(struct gps_dl_osal_lxop_q *pOpQ, struct gps_dl_osal_lxo
 
 	if (!pOpQ || !pOp) {
 		GDL_LOGW_EVT("invalid input param: pOpQ(0x%p), pLxOp(0x%p)", pOpQ, pOp);
-		osal_assert(pOpQ);
-		osal_assert(pOp);
+		gps_dl_osal_assert(pOpQ);
+		gps_dl_osal_assert(pOp);
 		return -1;
 	}
 
-	iRet = osal_lock_sleepable_lock(&pOpQ->sLock);
+	iRet = gps_dl_osal_lock_sleepable_lock(&pOpQ->sLock);
 	if (iRet) {
-		GDL_LOGW_EVT("osal_lock_sleepable_lock iRet(%d)", iRet);
+		GDL_LOGW_EVT("gps_dl_osal_lock_sleepable_lock iRet(%d)", iRet);
 		return -1;
 	}
 
@@ -119,7 +119,7 @@ static int gps_dl_put_op(struct gps_dl_osal_lxop_q *pOpQ, struct gps_dl_osal_lxo
 		iRet = -1;
 	}
 
-	osal_unlock_sleepable_lock(&pOpQ->sLock);
+	gps_dl_osal_unlock_sleepable_lock(&pOpQ->sLock);
 
 	if (iRet)
 		return -1;
@@ -133,8 +133,8 @@ int gps_dl_put_act_op(struct gps_dl_osal_lxop *pOp)
 	int waitRet = -1;
 	int bRet = 0;
 
-	osal_assert(pgps_dl_ctrld);
-	osal_assert(pOp);
+	gps_dl_osal_assert(pgps_dl_ctrld);
+	gps_dl_osal_assert(pOp);
 
 	do {
 		if (!pgps_dl_ctrld || !pOp) {
@@ -148,7 +148,7 @@ int gps_dl_put_act_op(struct gps_dl_osal_lxop *pOp)
 		pSignal = &pOp->signal;
 		if (pSignal->timeoutValue) {
 			pOp->result = -9;
-			osal_signal_init(pSignal);
+			gps_dl_osal_signal_init(pSignal);
 		}
 
 		/* Increment ref_count by 1 as gps control thread will hold a reference also,
@@ -168,7 +168,7 @@ int gps_dl_put_act_op(struct gps_dl_osal_lxop *pOp)
 		}
 
 		/* wake up gps control thread */
-		osal_trigger_event(&pgps_dl_ctrld->rgpsdlWq);
+		gps_dl_osal_trigger_event(&pgps_dl_ctrld->rgpsdlWq);
 
 		if (pSignal->timeoutValue == 0) {
 			bRet = -1;
@@ -176,7 +176,7 @@ int gps_dl_put_act_op(struct gps_dl_osal_lxop *pOp)
 		}
 
 		/* check result */
-		waitRet = osal_wait_for_signal_timeout(pSignal, &pgps_dl_ctrld->thread);
+		waitRet = gps_dl_osal_wait_for_signal_timeout(pSignal, &pgps_dl_ctrld->thread);
 
 		if (waitRet == 0)
 			GDL_LOGE("opId(%d) completion timeout", pOp->op.opId);
@@ -200,10 +200,10 @@ struct gps_dl_osal_lxop *gps_dl_get_free_op(void)
 	struct gps_dl_osal_lxop *pOp = NULL;
 	struct gps_dl_ctrld_context *pgps_dl_ctrld = &gps_dl_ctrld;
 
-	osal_assert(pgps_dl_ctrld);
+	gps_dl_osal_assert(pgps_dl_ctrld);
 	pOp = gps_dl_get_op(&pgps_dl_ctrld->rFreeOpQ);
 	if (pOp)
-		osal_memset(pOp, 0, sizeof(struct gps_dl_osal_lxop));
+		gps_dl_osal_memset(pOp, 0, sizeof(struct gps_dl_osal_lxop));
 	return pOp;
 }
 
@@ -214,23 +214,23 @@ static struct gps_dl_osal_lxop *gps_dl_get_op(struct gps_dl_osal_lxop_q *pOpQ)
 
 	if (pOpQ == NULL) {
 		GDL_LOGE("pOpQ = NULL");
-		osal_assert(pOpQ);
+		gps_dl_osal_assert(pOpQ);
 		return NULL;
 	}
 
-	iRet = osal_lock_sleepable_lock(&pOpQ->sLock);
+	iRet = gps_dl_osal_lock_sleepable_lock(&pOpQ->sLock);
 	if (iRet) {
-		GDL_LOGE("osal_lock_sleepable_lock iRet(%d)", iRet);
+		GDL_LOGE("gps_dl_osal_lock_sleepable_lock iRet(%d)", iRet);
 		return NULL;
 	}
 
 	/* acquire lock success */
 	RB_GET(pOpQ, pOp);
-	osal_unlock_sleepable_lock(&pOpQ->sLock);
+	gps_dl_osal_unlock_sleepable_lock(&pOpQ->sLock);
 
 	if (pOp == NULL) {
 		GDL_LOGW("RB_GET(%p) return NULL", pOpQ);
-		osal_assert(pOp);
+		gps_dl_osal_assert(pOp);
 		return NULL;
 	}
 
@@ -267,9 +267,9 @@ static int gps_dl_ctrl_thread(void *pData)
 		pOp = NULL;
 		pEvent->timeoutValue = 0;
 
-		osal_thread_wait_for_event(&pgps_dl_ctrld->thread, pEvent, gps_dl_wait_event_checker);
+		gps_dl_osal_thread_wait_for_event(&pgps_dl_ctrld->thread, pEvent, gps_dl_wait_event_checker);
 
-		if (osal_thread_should_stop(&pgps_dl_ctrld->thread)) {
+		if (gps_dl_osal_thread_should_stop(&pgps_dl_ctrld->thread)) {
 			GDL_LOGW(" thread should stop now...");
 			/* TODO: clean up active opQ */
 			break;
@@ -287,8 +287,8 @@ static int gps_dl_ctrl_thread(void *pData)
 
 		if (atomic_dec_and_test(&pOp->ref_count))
 			gps_dl_put_op(&pgps_dl_ctrld->rFreeOpQ, pOp);
-		else if (osal_op_is_wait_for_signal(pOp))
-			osal_op_raise_signal(pOp, iResult);
+		else if (gps_dl_osal_op_is_wait_for_signal(pOp))
+			gps_dl_osal_op_raise_signal(pOp, iResult);
 
 		if (iResult)
 			GDL_LOGW("opid (0x%x) failed, iRet(%d)", pOp->op.opId, iResult);
@@ -308,35 +308,35 @@ int gps_dl_ctrld_init(void)
 	int i;
 
 	pgps_dl_ctrld = &gps_dl_ctrld;
-	osal_memset(&gps_dl_ctrld, 0, sizeof(gps_dl_ctrld));
+	gps_dl_osal_memset(&gps_dl_ctrld, 0, sizeof(gps_dl_ctrld));
 
 	/* Create gps data link control thread */
 	pThread = &gps_dl_ctrld.thread;
-	osal_strncpy(pThread->threadName, "gps_kctrld", sizeof(pThread->threadName));
+	gps_dl_osal_strncpy(pThread->threadName, "gps_kctrld", sizeof(pThread->threadName));
 	pThread->pThreadData = (void *)pgps_dl_ctrld;
 	pThread->pThreadFunc = (void *)gps_dl_ctrl_thread;
 
-	iRet = osal_thread_create(pThread);
+	iRet = gps_dl_osal_thread_create(pThread);
 	if (iRet) {
 		GDL_LOGE("Create gps data link control thread fail:%d", iRet);
 		return -1;
 	}
 
 	/* Initialize gps control Thread Information: Thread */
-	osal_event_init(&pgps_dl_ctrld->rgpsdlWq);
-	osal_sleepable_lock_init(&pgps_dl_ctrld->rOpQ.sLock);
-	osal_sleepable_lock_init(&pgps_dl_ctrld->rFreeOpQ.sLock);
+	gps_dl_osal_event_init(&pgps_dl_ctrld->rgpsdlWq);
+	gps_dl_osal_sleepable_lock_init(&pgps_dl_ctrld->rOpQ.sLock);
+	gps_dl_osal_sleepable_lock_init(&pgps_dl_ctrld->rFreeOpQ.sLock);
 	/* Initialize op queue */
 	RB_INIT(&pgps_dl_ctrld->rOpQ, GPS_DL_OP_BUF_SIZE);
 	RB_INIT(&pgps_dl_ctrld->rFreeOpQ, GPS_DL_OP_BUF_SIZE);
 
 	/* Put all to free Q */
 	for (i = 0; i < GPS_DL_OP_BUF_SIZE; i++) {
-		osal_signal_init(&(pgps_dl_ctrld->arQue[i].signal));
+		gps_dl_osal_signal_init(&(pgps_dl_ctrld->arQue[i].signal));
 		gps_dl_put_op(&pgps_dl_ctrld->rFreeOpQ, &(pgps_dl_ctrld->arQue[i]));
 	}
 
-	iRet = osal_thread_run(pThread);
+	iRet = gps_dl_osal_thread_run(pThread);
 	if (iRet) {
 		GDL_LOGE("gps data link ontrol thread run fail:%d", iRet);
 		return -1;
@@ -352,15 +352,15 @@ int gps_dl_ctrld_deinit(void)
 
 	pThread = &gps_dl_ctrld.thread;
 
-	iRet = osal_thread_stop(pThread);
+	iRet = gps_dl_osal_thread_stop(pThread);
 	if (iRet)
 		GDL_LOGE("gps data link ontrol thread stop fail:%d", iRet);
 	else
 		GDL_LOGI("gps data link ontrol thread stop okay:%d", iRet);
 
-	osal_event_deinit(&gps_dl_ctrld.rgpsdlWq);
+	gps_dl_osal_event_deinit(&gps_dl_ctrld.rgpsdlWq);
 
-	iRet = osal_thread_destroy(pThread);
+	iRet = gps_dl_osal_thread_destroy(pThread);
 	if (iRet) {
 		GDL_LOGE("gps data link ontrol thread destroy fail:%d", iRet);
 		return -1;
