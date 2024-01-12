@@ -11,10 +11,15 @@
 #include "gps_dl_emi.h"
 
 #include <linux/of_reserved_mem.h>
-#include <mt_emi_api.h>
 
+#define GPS_DL_SET_EMI_MPU_CFG (1)
+#if GPS_DL_SET_EMI_MPU_CFG
+#include <memory/mediatek/emi.h>
 #if defined(CONFIG_MACH_MT6885)
-#define GPS_EMI_MPU_REGION 29
+#define GPS_DL_EMI_MPU_DOMAIN_AP      0
+#define GPS_DL_EMI_MPU_DOMAIN_CONN    2
+#define GPS_DL_EMI_MPU_REGION_NUM     29
+#endif
 #endif
 
 #define GPS_ICAP_MEM_SIZE (GPS_ICAP_BUF_SIZE)
@@ -32,8 +37,9 @@ struct gps_dl_iomem_addr_map_entry g_gps_dl_res_emi;
 void gps_dl_reserved_mem_init(void)
 {
 	void __iomem *host_virt_addr = NULL;
-#if 0
-	struct emi_region_info_t region_info;
+#if GPS_DL_SET_EMI_MPU_CFG
+	struct emimpu_region_t region;
+	int emimpu_ret1, emimpu_ret2, emimpu_ret3, emimpu_ret4, emimpu_ret5, emimpu_ret6;
 #endif
 	unsigned int min_size = sizeof(struct gps_dl_reserved_mem_layout);
 
@@ -51,18 +57,18 @@ void gps_dl_reserved_mem_init(void)
 		return;
 	}
 
-	/* TODO: set EMI MPU permission */
-#if 0
-	GDL_LOGD("emi_mpu_set_protection - start");
-	region_info.start = gGpsRsvMemPhyBase;
-	region_info.end = gGpsRsvMemPhyBase + gGpsRsvMemSize - 1;
-	region_info.region = GPS_EMI_MPU_REGION;
-	SET_ACCESS_PERMISSION(region_info.apc, LOCK,
-		FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN,
-		FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN,
-		NO_PROTECTION, FORBIDDEN, NO_PROTECTION);
-	emi_mpu_set_protection(&region_info);
-	GDL_LOGD("emi_mpu_set_protection - done");
+	/* Set EMI MPU permission */
+#if GPS_DL_SET_EMI_MPU_CFG
+	GDL_LOGI("emi mpu cfg: region = %d, no protection domain = %d, %d",
+		GPS_DL_EMI_MPU_REGION_NUM, GPS_DL_EMI_MPU_DOMAIN_AP, GPS_DL_EMI_MPU_DOMAIN_CONN);
+	emimpu_ret1 = mtk_emimpu_init_region(&region, GPS_DL_EMI_MPU_REGION_NUM);
+	emimpu_ret2 = mtk_emimpu_set_addr(&region, gGpsRsvMemPhyBase, gGpsRsvMemPhyBase + gGpsRsvMemSize - 1);
+	emimpu_ret3 = mtk_emimpu_set_apc(&region, GPS_DL_EMI_MPU_DOMAIN_AP, MTK_EMIMPU_NO_PROTECTION);
+	emimpu_ret4 = mtk_emimpu_set_apc(&region, GPS_DL_EMI_MPU_DOMAIN_CONN, MTK_EMIMPU_NO_PROTECTION);
+	emimpu_ret5 = mtk_emimpu_set_protection(&region);
+	emimpu_ret6 = mtk_emimpu_free_region(&region);
+	GDL_LOGI("emi mpu cfg: ret = %d, %d, %d, %d, %d, %d",
+		emimpu_ret1, emimpu_ret2, emimpu_ret3, emimpu_ret4, emimpu_ret5, emimpu_ret6);
 #endif
 
 	g_gps_dl_res_emi.host_phys_addr = gGpsRsvMemPhyBase;
