@@ -25,6 +25,7 @@
 #endif
 #include "gps_mcu_hif_mgmt_cmd_send.h"
 #include "gps_mcudl_hal_ccif.h"
+#include "gps_dl_hw_dep_api.h"
 
 
 struct gps_mcudl_ystate {
@@ -89,6 +90,15 @@ bool gps_mcudl_link_drv_on_recv_mgmt_data(const unsigned char *p_data, unsigned 
 		status = p_data[1];
 
 	switch (cmd) {
+	case 1:
+		gps_mcudl_mgmt_cmd_on_ack(GPS_MCUDL_CMD_OFL_INIT);
+		break;
+	case 2:
+		gps_mcudl_mgmt_cmd_on_ack(GPS_MCUDL_CMD_OFL_DEINIT);
+		break;
+	case 3:
+		gps_mcudl_mgmt_cmd_on_ack(GPS_MCUDL_CMD_FW_LOG_CTRL);
+		break;
 	case 5:
 		if (data_len >= 16) {
 			addr = gps_dl_util_get_u32(&p_data[4]);
@@ -295,6 +305,7 @@ void gps_mcudl_plat_mcu_ch1_reset_end_cb(void)
 int gps_mcudl_plat_mcu_open(void)
 {
 	bool is_okay;
+
 #if (GPS_DL_HAS_MCUDL_FW && GPS_DL_HAS_MCUDL_HAL)
 	is_okay = gps_mcudl_xlink_on(&c_gps_mcudl_rom_only_fw_list);
 	if (!is_okay) {
@@ -302,10 +313,9 @@ int gps_mcudl_plat_mcu_open(void)
 		return -1;
 	}
 #endif
-	gps_dl_sleep_us(100*1000, 200*1000);
-
 	gps_mcudl_mcu2ap_set_wait_read_flag(GPS_MDLY_NORMAL, false);
 	gps_mcudl_mcu2ap_set_wait_read_flag(GPS_MDLY_URGENT, false);
+	gps_mcudl_mgmt_cmd_state_init_all();
 
 	gps_mcu_hif_recv_listen_start(GPS_MCU_HIF_CH_DMALESS_MGMT,
 		&gps_mcudl_link_drv_on_recv_mgmt_data);
@@ -318,22 +328,28 @@ int gps_mcudl_plat_mcu_open(void)
 	if (g_gps_fw_log_is_on)
 		gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(true);
 
+	gps_mcudl_mgmt_cmd_pre_send(GPS_MCUDL_CMD_OFL_INIT);
 	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x01", 1);
 	MDL_LOGW("write cmd1, is_ok=%d", is_okay);
+	if (!is_okay)
+		return -1;
 
-	gps_dl_sleep_us(100*1000, 200*1000);
-	MDL_LOGI("have some wait, done");
-	return 0;
+	is_okay = gps_mcudl_mgmt_cmd_wait_ack(GPS_MCUDL_CMD_OFL_INIT, 100);
+	MDL_LOGW("write cmd1, wait_ok=%d", is_okay);
+	return is_okay ? 0 : -1;
 }
 
 int gps_mcudl_plat_mcu_close(void)
 {
 	bool is_okay;
 
+	gps_mcudl_mgmt_cmd_pre_send(GPS_MCUDL_CMD_OFL_DEINIT);
 	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x02", 1);
 	MDL_LOGW("write cmd2, is_ok=%d", is_okay);
-
-	gps_dl_sleep_us(100*1000, 200*1000);
+	if (is_okay) {
+		is_okay = gps_mcudl_mgmt_cmd_wait_ack(GPS_MCUDL_CMD_OFL_DEINIT, 100);
+		MDL_LOGW("write cmd2, wait_ok=%d", is_okay);
+	}
 
 	gps_mcu_hif_recv_listen_stop(GPS_MCU_HIF_CH_DMA_NORMAL);
 	gps_mcu_hif_recv_listen_stop(GPS_MCU_HIF_CH_DMALESS_MGMT);
@@ -342,6 +358,8 @@ int gps_mcudl_plat_mcu_close(void)
 #if GPS_DL_HAS_MCUDL_HAL
 	gps_mcudl_xlink_off();
 #endif
+	if (!is_okay)
+		gps_dl_hw_dep_gps_control_adie_off();
 	return 0;
 }
 
@@ -376,5 +394,4 @@ void *gps_mcudl_plat_nv_emi_get_start_ptr(void)
 	p_layout = gps_dl_get_conn_emi_layout_ptr();
 	return (void *)&p_layout->gps_nv_emi[0];
 }
-
 
