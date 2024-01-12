@@ -1059,10 +1059,21 @@ void gps_dl_link_irq_set(enum gps_dl_link_id_enum link_id, bool enable)
 		gps_dsp_fsm(GPS_DSP_EVT_FUNC_ON, link_id);
 
 		/* check if MCUB ROM ready */
-		gps_dl_hal_mcub_flag_handler(link_id);
-		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		if (!gps_dl_hal_mcub_flag_handler(link_id)) {
+			GDL_LOGXE(link_id, "mcub_flag_handler not okay, not unmask irq and wait reset");
+			gps_dl_hal_set_mcub_irq_dis_flag(link_id, true);
+		} else {
+			gps_dl_irq_each_link_unmask(link_id,
+				GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		}
 	} else {
-		gps_dl_irq_each_link_mask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		if (gps_dl_hal_get_mcub_irq_dis_flag(link_id)) {
+			GDL_LOGXW(link_id, "mcub irq already disable, bypass mask irq");
+			gps_dl_hal_set_mcub_irq_dis_flag(link_id, false);
+		} else {
+			gps_dl_irq_each_link_mask(link_id,
+				GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_THREAD);
+		}
 
 		gps_each_link_spin_lock_take(link_id, GPS_DL_SPINLOCK_FOR_DMA_BUF);
 		dma_working = p_link->rx_dma_buf.dma_working_entry.is_valid;

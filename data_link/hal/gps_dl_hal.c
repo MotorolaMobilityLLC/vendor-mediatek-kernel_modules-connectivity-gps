@@ -229,8 +229,11 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		reg_rw_log = gps_dl_log_reg_rw_is_on(GPS_DL_REG_RW_MCUB_IRQ_HANDLER);
 		if (reg_rw_log)
 			show_log = gps_dl_set_show_reg_rw_log(true);
-		gps_dl_hal_mcub_flag_handler(link_id);
-		gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_HAL);
+		if (!gps_dl_hal_mcub_flag_handler(link_id)) {
+			GDL_LOGXE(link_id, "mcub_flag_handler not okay, not unmask irq and wait reset");
+			gps_dl_hal_set_mcub_irq_dis_flag(link_id, true);
+		} else
+			gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_MCUB, GPS_DL_IRQ_CTRL_FROM_HAL);
 		if (reg_rw_log)
 			gps_dl_set_show_reg_rw_log(show_log);
 		break;
@@ -281,6 +284,15 @@ bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 
 		if (d2a.flag == 0)
 			break;
+
+		if (d2a.flag == 0xdeadfeed) {
+			gps_dl_hw_dump_host_csr_gps_info(true);
+			gps_dl_hw_dump_sleep_prot_status();
+
+			GDL_LOGXE(link_id, "deadfeed, trigger connsys reset");
+			gps_dl_trigger_connsys_reset();
+			return false;
+		}
 
 		/* Todo: if (dsp is off) -> break */
 		/* Note: clear flag before check and handle the flage event,
