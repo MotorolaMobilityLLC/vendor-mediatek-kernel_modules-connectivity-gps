@@ -64,7 +64,7 @@ void gps_each_dsp_reg_gourp_read_next(enum gps_dl_link_id_enum link_id, bool res
 	i = g_gps_each_dsp_reg_read_context[link_id].poll_index;
 	reg_addr = c_gps_dsp_reg_list[i];
 	ret = gps_each_dsp_reg_read_request(link_id, reg_addr);
-	GDL_LOGXD(link_id, "i = %d, addr = 0x%04x, status = %s",
+	GDL_LOGXI(link_id, "i = %d, addr = 0x%04x, status = %s",
 		i, reg_addr, gdl_ret_to_name(ret));
 }
 

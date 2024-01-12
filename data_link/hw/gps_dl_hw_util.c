@@ -59,7 +59,7 @@ void gps_dl_bus_write_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, un
 #endif
 
 	if (host_vir_addr == NULL) {
-		GDL_LOGD("gdl bus wr: id = %d, addr = 0x%p/0x%08x/0x%08x -> NULL!",
+		GDL_LOGW("gdl bus wr: id = %d, addr = 0x%p/0x%08x/0x%08x -> NULL!",
 			bus_id, host_vir_addr, host_addr, bus_addr);
 		return;
 	}
@@ -76,11 +76,11 @@ void gps_dl_bus_write_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, un
 #endif
 
 		if (gps_dl_show_reg_rw_log())
-			GDL_LOGD("gdl bus wr: id = %d, addr = 0x%p/0x%08x/0x%08x, w_val = 0x%08x, r_back = 0x%08x",
+			GDL_LOGI("gdl bus wr: id = %d, addr = 0x%p/0x%08x/0x%08x, w_val = 0x%08x, r_back = 0x%08x",
 				bus_id, host_vir_addr, host_addr, bus_addr, val, read_back_val);
 	} else {
 		if (gps_dl_show_reg_rw_log())
-			GDL_LOGD("gdl bus wr: id = %d, addr = 0x%p/0x%08x/0x%08x, w_val = 0x%08x",
+			GDL_LOGI("gdl bus wr: id = %d, addr = 0x%p/0x%08x/0x%08x, w_val = 0x%08x",
 				bus_id, host_vir_addr, host_addr, bus_addr, val);
 
 	}
@@ -95,11 +95,11 @@ void gps_dl_bus_write_opt(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr, un
 		read_back_val = GPS_DL_HOST_REG_RD(host_addr);
 
 		if (gps_dl_show_reg_rw_log())
-			GDL_LOGD("gdl bus wr: id = %d, addr = 0x%08x/0x%08x, w_val = 0x%08x, r_back = 0x%08x",
+			GDL_LOGI("gdl bus wr: id = %d, addr = 0x%08x/0x%08x, w_val = 0x%08x, r_back = 0x%08x",
 				bus_id, host_addr, bus_addr, val, read_back_val);
 	} else {
 		if (gps_dl_show_reg_rw_log())
-			GDL_LOGD("gdl bus wr: id = %d, addr = 0x%08x/0x%08x, w_val = 0x%08x",
+			GDL_LOGI("gdl bus wr: id = %d, addr = 0x%08x/0x%08x, w_val = 0x%08x",
 				bus_id, host_addr, bus_addr, val);
 	}
 #endif
@@ -127,7 +127,7 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 #endif
 
 	if (host_vir_addr == NULL) {
-		GDL_LOGD("gdl bus rd: id = %d, addr = 0x%p/0x%08x/0x%08x -> NULL!",
+		GDL_LOGW("gdl bus rd: id = %d, addr = 0x%p/0x%08x/0x%08x -> NULL!",
 			bus_id, host_vir_addr, host_addr, bus_addr);
 		return 0;
 	}
@@ -137,13 +137,13 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 #endif
 
 	if (gps_dl_show_reg_rw_log())
-		GDL_LOGD("gdl bus rd: id = %d, addr = 0x%p/0x%08x/0x%08x, r_val = 0x%08x",
+		GDL_LOGI("gdl bus rd: id = %d, addr = 0x%p/0x%08x/0x%08x, r_val = 0x%08x",
 			bus_id, host_vir_addr, host_addr, bus_addr, val);
 #else
 	val = GPS_DL_HOST_REG_RD(host_addr);
 
 	if (gps_dl_show_reg_rw_log())
-		GDL_LOGD("gdl bus rd: id = %d, addr = 0x%08x/0x%08x, r_val = 0x%08x",
+		GDL_LOGI("gdl bus rd: id = %d, addr = 0x%08x/0x%08x, r_val = 0x%08x",
 			bus_id, host_addr, bus_addr, val);
 #endif
 	return val;
