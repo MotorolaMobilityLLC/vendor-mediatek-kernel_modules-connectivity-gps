@@ -448,6 +448,8 @@ static int __init gps_emi_mod_init(void)
 	int ret = 0;
 	int err = 0;
 
+	sema_init(&fw_dl_mtx, 1);
+
 	devobj = kzalloc(sizeof(*devobj), GFP_KERNEL);
 	if (devobj == NULL) {
 		err = -ENOMEM;
@@ -478,7 +480,6 @@ static int __init gps_emi_mod_init(void)
 	}
 	devobj->dev = device_create(devobj->cls, NULL, devobj->devno, devobj, "gps_emi");
 
-	sema_init(&fw_dl_mtx, 1);
 
 	GPS_ERR("GPS EMI Done\n");
 	return 0;
