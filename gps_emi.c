@@ -247,7 +247,7 @@ INT32 mtk_wcn_consys_gps_emi_init(void)
 			CONSYS_REG_READ(conn_reg.topckgen_base + CONSYS_EMI_MAPPING_OFFSET));
 		#endif
 		#if EMI_MPU_PROTECTION_IS_READY
-		pGpsEmibaseaddr = ioremap_nocache(gGpsEmiPhyBase, GPS_EMI_MPU_SIZE);
+		pGpsEmibaseaddr = ioremap(gGpsEmiPhyBase, GPS_EMI_MPU_SIZE);
 		#endif
 		iRet = 1;
 		#if 0
