@@ -238,7 +238,6 @@ bool gps_dl_get_iomem_by_name(struct platform_device *pdev, const char *p_name,
 		p_entry->host_phys_addr = regs->start;
 		p_entry->host_virt_addr = devm_ioremap(&pdev->dev, p_entry->host_phys_addr, p_entry->length);
 		okay = true;
-		gps_dl_update_status_for_md_blanking(false);
 	} else {
 		p_entry->length = 0;
 		p_entry->host_phys_addr = 0;
