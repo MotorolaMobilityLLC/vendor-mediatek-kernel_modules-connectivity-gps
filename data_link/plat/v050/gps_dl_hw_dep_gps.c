@@ -95,8 +95,7 @@ void gps_dl_hw_dep_common_enter_dpstop_dsleep(void)
 {
 	bool poll_okay;
 
-	if (!gps_dl_hal_get_need_clk_ext_flag(GPS_DATA_LINK_ID0))
-		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_FORCE_OSC_EN_ON, 0);
+	gps_dl_hw_dep_may_set_conn_infra_l1_request(false);
 
 	/*close a-die*/
 	if (0x6686 == gps_dl_hal_get_adie_ver()) {
@@ -109,7 +108,8 @@ void gps_dl_hw_dep_common_enter_dpstop_dsleep(void)
 		}
 	}
 
-	gps_dl_hw_dep_may_set_conn_infra_l1_request(false);
+	if (!gps_dl_hal_get_need_clk_ext_flag(GPS_DATA_LINK_ID0))
+		GDL_HW_SET_GPS_ENTRY(GPS_AON_TOP_DSLEEP_CTL_FORCE_OSC_EN_ON, 0);
 }
 
 void gps_dl_hw_dep_common_leave_dpstop_dsleep(void)
@@ -122,14 +122,14 @@ void gps_dl_hw_dep_common_leave_dpstop_dsleep(void)
 	/*Induce clear GPS FW own to wakeup GPS*/
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_GPS_LPCTL_GPS_AP_HOST_CLR_FW_OWN_HS_PULSE, 1);
 
-	gps_dl_hw_dep_may_set_conn_infra_l1_request(true);
-
 	poll_okay = gps_dl_hw_dep_poll_bgf_bus_and_gps_top_ack();
 	if (!poll_okay) {
 		/* Just show log */
 		GDL_LOGE("_fail_bgf_check");
 		return;
 	}
+
+	gps_dl_hw_dep_may_set_conn_infra_l1_request(true);
 
 	/*open a-die*/
 	if (0x6686 == gps_dl_hal_get_adie_ver()) {
