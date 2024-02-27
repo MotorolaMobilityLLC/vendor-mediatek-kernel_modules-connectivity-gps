@@ -38,7 +38,7 @@ void gps_dl_unregister_conninfra_reset_cb(void);
 
 bool gps_dl_conninfra_is_readable(void);
 bool gps_dl_conninfra_is_readable_by_hung_value(int hung_value);
-void gps_dl_conninfra_not_readable_show_warning(unsigned int host_addr);
+void gps_dl_conninfra_not_readable_show_warning(void);
 bool gps_dl_conninfra_is_okay_or_handle_it(int *p_hung_value, bool dump_on_hung_value_zero);
 #if GPS_DL_HAS_MCUDL
 bool gps_mcudl_conninfra_is_okay_or_handle_it(void);
