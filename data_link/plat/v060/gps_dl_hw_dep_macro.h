@@ -190,6 +190,10 @@
 		BMASK_RW_FORCE_PRINT); \
 } while (0)
 
+/* NO need dump address list in V060*/
+#define GDL_HW_DUMP_GPS_ACTIVE_STATUS() do { \
+} while (0)
+
 /* For Bollinger, the address for GPS is 0x1800110C */
 #define GDL_HW_SET_GPS_AP_MODE_ENABLE() \
 	GDL_HW_SET_CONN_INFRA_ENTRY(CONN_CFG_ON_CONN_INFRA_CFG_GPS_MANUAL_CTRL_FORCE_AP_MODE_ENABLE, 1)
