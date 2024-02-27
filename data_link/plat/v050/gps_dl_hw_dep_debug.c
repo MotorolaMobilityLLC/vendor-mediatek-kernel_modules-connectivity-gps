@@ -66,6 +66,31 @@ void gps_dl_hw_dep_dump_host_csr_gps_info(void)
 		CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
 		BMASK_RW_FORCE_PRINT);
 
+	for (i = 0xC0020000; i <= 0xC0020001; i = i + 0x1) {
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, i,
+			BMASK_RW_FORCE_PRINT);
+		gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
+			BMASK_RW_FORCE_PRINT);
+	}
+
+	for (i = 0xC0020100; i <= 0xC0020108; i = i + 0x1) {
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, i,
+			BMASK_RW_FORCE_PRINT);
+		gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
+			BMASK_RW_FORCE_PRINT);
+	}
+
+	gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, 0xC0020200,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
+		BMASK_RW_FORCE_PRINT);
+
 	for (i = 0xC0020301; i <= 0xC0020307; i = i + 0x1) {
 		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
 			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, i,
@@ -84,6 +109,40 @@ void gps_dl_hw_dep_dump_host_csr_gps_info(void)
 			BMASK_RW_FORCE_PRINT);
 	}
 
+	/* dump bgf on domain status from host csr*/
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR,
+		BMASK_RW_FORCE_PRINT);
+
+	for (i = 0x300800; i <= 0x30080C; i = i + 0x1) {
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, i,
+			BMASK_RW_FORCE_PRINT);
+		gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
+			BMASK_RW_FORCE_PRINT);
+	}
+
+	for (i = 0x300840; i <= 0x300848; i = i + 0x1) {
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, i,
+			BMASK_RW_FORCE_PRINT);
+		gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
+			BMASK_RW_FORCE_PRINT);
+	}
+
+	for (i = 0x300880; i <= 0x300883; i = i + 0x1) {
+		gps_dl_bus_wr_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, i,
+			BMASK_RW_FORCE_PRINT);
+		gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+			CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR,
+			BMASK_RW_FORCE_PRINT);
+	}
 }
 
 #if 0
