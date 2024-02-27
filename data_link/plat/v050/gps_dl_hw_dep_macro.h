@@ -161,6 +161,10 @@
 		BMASK_RW_FORCE_PRINT); \
 } while (0)
 
+/* NO need dump address list in V050*/
+#define GDL_HW_DUMP_GPS_ACTIVE_STATUS() do { \
+} while (0)
+
 /* For MT6983, the address for GPS is 0x18000028 */
 #define GDL_HW_SET_CONN_INFRA_BGF_EN(val) do { \
 	unsigned int tmp_val; \

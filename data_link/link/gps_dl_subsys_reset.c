@@ -330,7 +330,7 @@ bool gps_dl_conninfra_is_readable_by_hung_value(int hung_value)
 #endif
 }
 
-void gps_dl_conninfra_not_readable_show_warning(unsigned int host_addr)
+void gps_dl_conninfra_not_readable_show_warning(void)
 {
 #if GPS_DL_HAS_CONNINFRA_DRV
 	int readable;
@@ -341,8 +341,7 @@ void gps_dl_conninfra_not_readable_show_warning(unsigned int host_addr)
 		return;
 
 	hung_value = conninfra_is_bus_hang();
-	GDL_LOGW("readable = %d, hung_value = %d, before access 0x%08x",
-		readable, hung_value, host_addr);
+	GDL_LOGW("readable = %d, hung_value = %d", readable, hung_value);
 #endif
 }
 

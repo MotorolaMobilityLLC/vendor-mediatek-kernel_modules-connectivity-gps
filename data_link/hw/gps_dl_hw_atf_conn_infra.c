@@ -148,6 +148,15 @@ void gps_dl_hw_dump_sleep_prot_status(void)
 	gps_dl_set_show_reg_rw_log(show_log);
 }
 
+void gps_dl_hw_dump_gps_active_status(void)
+{
+	bool show_log = true;
+
+	show_log = gps_dl_set_show_reg_rw_log(true);
+	GDL_HW_DUMP_GPS_ACTIVE_STATUS();
+	gps_dl_set_show_reg_rw_log(show_log);
+}
+
 void gps_dl_hw_dump_host_csr_gps_info(bool force_show_log)
 {
 	bool show_log = true;

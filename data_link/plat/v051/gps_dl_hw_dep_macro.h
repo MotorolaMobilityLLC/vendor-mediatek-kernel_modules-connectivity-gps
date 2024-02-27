@@ -158,6 +158,19 @@
 		BMASK_RW_FORCE_PRINT); \
 } while (0)
 
+/* dump address list in V051*/
+#define GDL_HW_DUMP_GPS_ACTIVE_STATUS() do { \
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, \
+		BGF_GPS_CFG_ON_GPS_L1_SLP_PWR_CTL_ADDR, \
+		BMASK_RW_FORCE_PRINT); \
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, \
+		BGF_GPS_CFG_ON_GPS_L5_SLP_PWR_CTL_ADDR, \
+		BMASK_RW_FORCE_PRINT); \
+	gps_dl_bus_rd_opt(GPS_DL_GPS_BUS, \
+		BGF_GPS_CFG_ON_GPS_TOP_OFF_PWR_CTL_ADDR, \
+		BMASK_RW_FORCE_PRINT); \
+} while (0)
+
 /* For MT6983, the address for GPS is 0x18000028 */
 #define GDL_HW_SET_CONN_INFRA_BGF_EN(val) do { \
 	unsigned int tmp_val; \
