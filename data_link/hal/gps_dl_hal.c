@@ -316,9 +316,11 @@ bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 		if ((d2a.flag & 0xFFFF0000) == 0xdead0000) {
 			gps_dl_hw_dump_host_csr_gps_info(true);
 			gps_dl_hw_dump_sleep_prot_status();
-
+			gps_dl_hw_dump_gps_active_status();
+			gps_dl_conninfra_not_readable_show_warning();
 			GDL_LOGXE(link_id, "d2a: flag = 0x%04x, trigger connsys reset",
 				d2a.flag);
+
 			gps_dl_trigger_connsys_reset();
 			return false;
 		}
