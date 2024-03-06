@@ -313,11 +313,12 @@ bool gps_dl_hal_mcub_flag_handler(enum gps_dl_link_id_enum link_id)
 				d2a.flag, d2a.dat0, d2a.dat1);
 		}
 
-		if (d2a.flag == 0xdeadfeed) {
+		if ((d2a.flag & 0xFFFF0000) == 0xdead0000) {
 			gps_dl_hw_dump_host_csr_gps_info(true);
 			gps_dl_hw_dump_sleep_prot_status();
 
-			GDL_LOGXE(link_id, "deadfeed, trigger connsys reset");
+			GDL_LOGXE(link_id, "d2a: flag = 0x%04x, trigger connsys reset",
+				d2a.flag);
 			gps_dl_trigger_connsys_reset();
 			return false;
 		}
