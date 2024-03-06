@@ -76,6 +76,17 @@ int gps_dl_procfs_set_met(int y, int z)
 	case GPS_DEBUG_OP_SET_EDGE_DETECTION:
 	case GPS_DEBUG_OP_SET_EVENT_SELECT:
 	case GPS_DEBUG_OP_SET_TIMER_SOURCE:
+#if GPS_DL_MET_V2
+		/*Interntional fallthrough*/
+	case GPS_DEBUG_OP_SET_MASK_SIGNAL2:
+		/*Interntional fallthrough*/
+	case GPS_DEBUG_OP_SET_EDGE_DETECTION2:
+		/*Interntional fallthrough*/
+	case GPS_DEBUG_OP_SET_EDGE_DETECTION3:
+		/*Interntional fallthrough*/
+	case GPS_DEBUG_OP_SET_EDGE_DETECTION4:
+		/*Interntional fallthrough*/
+#endif
 		ret = gps_debug_met_set_parameter(&g_gps_debug_met_contex, y, z);
 		break;
 	default:

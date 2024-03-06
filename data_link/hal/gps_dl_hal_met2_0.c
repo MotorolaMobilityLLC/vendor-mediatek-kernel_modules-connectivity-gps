@@ -29,15 +29,34 @@ static struct gps_debug_met_settings gps_debug_met_default_settings =  {
 	/*timer source = osc*/
 	.timer_source = 1,
 	/*mast siganl*/
-	.mask_signal = 0xf800,
+	.mask_signal = 0x80000000,
+#if GPS_DL_MET_V2
+	/*mast siganl*/
+	.mask_signal2 = 0x0,
+
+#endif
 	/*sample rate = 1M*/
+#if GPS_DL_MET_V2
+	.sample_rate = 52,
+#else
 	.sample_rate = 26,
+#endif
 	/*default L1, channel 1*/
 	.event_select = 0x0,
 	/*gps met debug message*/
+#if GPS_DL_MET_V2
+	.event_signal = 0xe4222210,
+#else
 	.event_signal = 0x33333210,
+#endif
 	/*detection*/
 	.edge_detection = 0xffffffff,
+#if GPS_DL_MET_V2
+	/*detection*/
+	.edge_detection2 = 0xffffffff,
+	.edge_detection3 = 0xffffffff,
+	.edge_detection4 = 0xffffffff,
+#endif
 };
 
 int gps_debug_met_start(struct gps_debug_met_contex *contex)
@@ -97,7 +116,11 @@ int gps_debug_met_start(struct gps_debug_met_contex *contex)
 
 	/*2. Set parameters for EMI CRs and notify connifra*/
 	/* 2.1 Set EMI Writing range*/
+#if GPS_DL_MET_V2
+	gps_dl_hw_dep_set_emi_write_range(bus_emi_met_phy_addr);
+#else
 	gps_dl_hw_dep_set_emi_write_range();
+#endif
 
 	/* 2.2 Set ring buffer mode*/
 	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_BUFFER_MODE_VALID ?
@@ -121,15 +144,42 @@ int gps_debug_met_start(struct gps_debug_met_contex *contex)
 		contex->settings.mask_signal : gps_debug_met_default_settings.mask_signal);
 	gps_dl_hw_dep_set_mask_signal(value);
 
+#if GPS_DL_MET_V2
+	/* 2.4 Set mask signal2*/
+	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_MASK_SIGNAL2_VALID ?
+		contex->settings.mask_signal2 : gps_debug_met_default_settings.mask_signal2);
+	gps_dl_hw_dep_set_mask_signal2(value);
+#endif
+
 	/* 2.5 Set edge detection*/
 	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_EADE_DETECTION_VALID ?
 		contex->settings.edge_detection : gps_debug_met_default_settings.edge_detection);
 	gps_dl_hw_dep_set_edge_detection(value);
 
+#if GPS_DL_MET_V2
+	/* 2.5 Set edge detection2*/
+	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_EADE_DETECTION2_VALID ?
+		contex->settings.edge_detection2 : gps_debug_met_default_settings.edge_detection2);
+	gps_dl_hw_dep_set_edge_detection2(value);
+
+	/* 2.5 Set edge detection3*/
+	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_EADE_DETECTION3_VALID ?
+		contex->settings.edge_detection3 : gps_debug_met_default_settings.edge_detection3);
+	gps_dl_hw_dep_set_edge_detection3(value);
+
+	/* 2.5 Set edge detection4*/
+	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_EADE_DETECTION4_VALID ?
+		contex->settings.edge_detection4 : gps_debug_met_default_settings.edge_detection4);
+	gps_dl_hw_dep_set_edge_detection4(value);
+#endif
+
+#if !GPS_DL_MET_V2
 	/* 2.6 Select event signal Level 1*/
 	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_EVENT_SIGNAL_VALID ?
 		contex->settings.event_signal : gps_debug_met_default_settings.event_signal);
 	gps_dl_hw_dep_set_event_signal(value);
+
+#endif
 
 	/*2.7 Event select Level 2*/
 	value = (contex->setting_bitmap&GPS_DEBUG_MET_SETTINGS_EVENT_SELECT_VALID ?
@@ -229,6 +279,24 @@ int gps_debug_met_set_parameter(struct gps_debug_met_contex *contex,
 		contex->settings.timer_source = value;
 		contex->setting_bitmap |=  GPS_DEBUG_MET_SETTINGS_TIMER_SOURCE_VALID;
 		break;
+#if GPS_DL_MET_V2
+	case GPS_DEBUG_OP_SET_MASK_SIGNAL2:
+		contex->settings.mask_signal2 = value;
+		contex->setting_bitmap |=  GPS_DEBUG_MET_SETTINGS_MASK_SIGNAL2_VALID;
+		break;
+	case GPS_DEBUG_OP_SET_EDGE_DETECTION2:
+		contex->settings.edge_detection2 = value;
+		contex->setting_bitmap |=  GPS_DEBUG_MET_SETTINGS_EADE_DETECTION2_VALID;
+		break;
+	case GPS_DEBUG_OP_SET_EDGE_DETECTION3:
+		contex->settings.edge_detection3 = value;
+		contex->setting_bitmap |=  GPS_DEBUG_MET_SETTINGS_EADE_DETECTION3_VALID;
+		break;
+	case GPS_DEBUG_OP_SET_EDGE_DETECTION4:
+		contex->settings.edge_detection4 = value;
+		contex->setting_bitmap |=  GPS_DEBUG_MET_SETTINGS_EADE_DETECTION4_VALID;
+		break;
+#endif
 	default:
 		ret = -1;
 		break;

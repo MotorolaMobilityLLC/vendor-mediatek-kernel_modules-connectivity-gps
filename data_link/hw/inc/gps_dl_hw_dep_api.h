@@ -90,7 +90,11 @@ void gps_dl_hw_dep_dump_gps_rf_temp_cr(void);
 /*
  * MET2.0
  */
+#if GPS_DL_MET_V2
+void gps_dl_hw_dep_set_emi_write_range(unsigned int bus_emi_met_phy_addr);
+#else
 void gps_dl_hw_dep_set_emi_write_range(void);
+#endif
 void gps_dl_hw_dep_set_ringbuffer_mode(unsigned int mode);
 void gps_dl_hw_dep_set_sampling_rate(unsigned int rate);
 void gps_dl_hw_dep_set_mask_signal(unsigned int mask_signal);
@@ -102,6 +106,12 @@ void gps_dl_hw_dep_disable_met(void);
 unsigned int gps_dl_hw_dep_get_met_read_ptr_addr(void);
 unsigned int gps_dl_hw_dep_get_met_write_ptr_addr(void);
 void gps_dl_hw_dep_set_timer_source(unsigned int timer_source);
+#if GPS_DL_MET_V2
+void gps_dl_hw_dep_set_mask_signal2(unsigned int mask_signal);
+void gps_dl_hw_dep_set_edge_detection2(unsigned int edge);
+void gps_dl_hw_dep_set_edge_detection3(unsigned int edge);
+void gps_dl_hw_dep_set_edge_detection4(unsigned int edge);
+#endif
 
 struct gps_dl_hw_host_csr_dump_range {
 	unsigned int flag_start;

@@ -34,6 +34,7 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_ON_CTP         (0)
 
 #define GPS_DL_NEW_AP_BASE    (0)
+#define GPS_DL_MET_V2   (0)
 #define GPS_DL_CONNAC3 (1)
 #define GPS_DL_CONNAC2 (0)
 #define GPS_DL_TFA (0)
