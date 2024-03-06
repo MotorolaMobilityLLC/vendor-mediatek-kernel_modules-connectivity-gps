@@ -11,7 +11,7 @@ void gps_mcudl_hal_conn_do_off(void);
 bool gps_mcudl_hal_conn_is_okay(void);
 void gps_mcudl_hal_get_ecid_info(void);
 bool gps_mcudl_hal_dump_power_state(void);
-
+void gps_mcudl_hal_dump_power_state_skip(void);
 
 enum gps_mcudl_hal_opp_vote_phase {
 	GPS_MCU_OPENING,

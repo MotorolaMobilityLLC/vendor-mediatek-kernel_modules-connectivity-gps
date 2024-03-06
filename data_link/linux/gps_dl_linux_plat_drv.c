@@ -42,7 +42,9 @@
 #if GPS_DL_HAS_MCUDL
 #include "gps_mcudl_ylink.h"
 #endif
-
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+#include "gps_mcudl_hal_stat.h"
+#endif
 
 /* #ifdef CONFIG_OF */
 const struct of_device_id gps_dl_of_ids[] = {
@@ -598,6 +600,10 @@ static int gps_dl_probe(struct platform_device *pdev)
 
 	gps_dl_device_context_init();
 
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+	/* TODO: register cb for mbrain */
+#endif
+
 	return 0;
 }
 
@@ -606,6 +612,11 @@ static int gps_dl_remove(struct platform_device *pdev)
 	struct gps_each_device *p_each_dev = gps_dl_device_get(GPS_DATA_LINK_ID0);
 
 	GDL_LOGW_INI("do gps_dl_remove");
+
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+	/* TODO: unregister cb for mbrain */
+#endif
+
 	platform_set_drvdata(pdev, NULL);
 	p_each_dev->private_data = NULL;
 	return 0;

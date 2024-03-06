@@ -116,6 +116,7 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 	case GPS_MCUDL_YLINK_EVT_ID_AP_RESUME:
 		gpsbin_state = gps_mcusys_gpsbin_state_get();
 		if (GPS_MCUSYS_GPSBIN_POST_ON != gpsbin_state) {
+			gps_mcudl_hal_dump_power_state_skip();
 			MDL_LOGI("ap_resume: gpsbin state=%d, skip", gpsbin_state);
 			break;
 		}

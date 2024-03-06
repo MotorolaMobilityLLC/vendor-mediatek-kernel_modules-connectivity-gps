@@ -7,6 +7,9 @@
 #include "gps_dl_log.h"
 #include "gps_mcudl_log.h"
 #include "gps_mcudl_hal_conn.h"
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+#include "gps_mcudl_hal_stat.h"
+#endif
 #include "gps_mcudl_ylink.h"
 #include "gps_dl_hal.h"
 #include "gps_dl_hw_dep_api.h"
@@ -23,6 +26,20 @@ void gps_mcudl_hal_get_ecid_info(void)
 	gps_dl_hw_dep_gps_control_adie_off();
 }
 
+unsigned int g_gps_mcudl_dump_pwr_state_cnt;
+
+void gps_mcudl_hal_dump_power_state_skip(void)
+{
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+	unsigned long curr_local_ms = gps_dl_tick_get_ms();
+	unsigned long curr_ktime_ms = gps_dl_tick_get_ktime_ms();
+
+	gps_mcudl_stat_set_pwr_state_data(curr_local_ms, curr_ktime_ms,
+		g_gps_mcudl_dump_pwr_state_cnt, false, false, false);
+#endif
+	g_gps_mcudl_dump_pwr_state_cnt++;
+}
+
 bool gps_mcudl_hal_dump_power_state(void)
 {
 	bool is_gps_awake = true;
@@ -33,6 +50,10 @@ bool gps_mcudl_hal_dump_power_state(void)
 	unsigned int flag = 0;
 	unsigned int on_off_cnt = 0;
 	gpsmdl_u32 xbitmask;
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+	unsigned long curr_local_ms = gps_dl_tick_get_ms();
+	unsigned long curr_ktime_ms = gps_dl_tick_get_ktime_ms();
+#endif
 
 	memset(&raw, 0, sizeof(raw));
 	gps_dl_hw_dep_gps_dump_power_state(&raw);
@@ -61,6 +82,11 @@ bool gps_mcudl_hal_dump_power_state(void)
 	}
 
 	is_gps_awake = is_sw_clk_ext || raw.is_hw_clk_ext || (raw.mcu_pc != 0);
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+	gps_mcudl_stat_set_pwr_state_data(curr_local_ms, curr_ktime_ms,
+		g_gps_mcudl_dump_pwr_state_cnt, true, is_gps_awake, false);
+#endif
+	g_gps_mcudl_dump_pwr_state_cnt++;
 
 	MDL_LOGI(
 		"awake=%d,mcu_pc=0x%08x,clk_ext=%d,%d,sw_ctrl=0x%04X[on=%u,%u,off=%u,%u,flag=%u,cnt=%u],xbitmask=0x%08x",

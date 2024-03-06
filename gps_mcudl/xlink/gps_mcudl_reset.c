@@ -27,6 +27,9 @@
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
 #endif
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+#include "gps_mcudl_hal_stat.h"
+#endif
 
 #if 1
 enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
@@ -356,6 +359,9 @@ void gps_mcudl_connsys_coredump_start_wrapper(void)
 
 	gps_mcudl_connsys_coredump_start();
 	gps_dl_set_show_reg_rw_log(show_log);
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+	gps_mcudl_stat_set_mcu_exception();
+#endif
 }
 #endif
 

@@ -13,6 +13,7 @@ void gps_dl_wait_us(unsigned int us);
 unsigned long gps_dl_tick_get(void);
 unsigned long gps_dl_tick_get_us(void);
 unsigned long gps_dl_tick_get_ms(void);
+unsigned long gps_dl_tick_get_ktime_ms(void);
 int gps_dl_tick_delta_to_usec(unsigned int tick0, unsigned int tick1);
 
 #endif /* _GPS_DL_TIME_TICK_H */

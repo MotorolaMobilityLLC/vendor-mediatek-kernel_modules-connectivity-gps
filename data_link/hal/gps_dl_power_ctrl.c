@@ -31,6 +31,9 @@
 #if GPS_DL_ON_CTP
 #include "gps_dl_ctp.h"
 #endif
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+#include "gps_mcudl_hal_stat.h"
+#endif
 
 /* TODO: move them into a single structure */
 bool g_gps_common_on;
@@ -722,6 +725,9 @@ void gps_dl_hal_load_clock_flag(void)
 	GDL_LOGW("clk: no conninfra drv, default flag = 0x%x", gps_clock_flag);
 #endif
 	g_gps_conn_clock_flag = gps_clock_flag;
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+	gps_mcudl_stat_set_clock_type(gps_clock_flag);
+#endif
 }
 
 bool gps_dl_hal_get_deep_stop_mode_revert_for_mvcd(enum gps_dl_link_id_enum link_id)

@@ -39,6 +39,9 @@
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_mcudl_hal_conn.h"
 
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+#include "gps_mcudl_hal_stat.h"
+#endif
 
 struct gps_mcudl_ystate {
 	bool open;
@@ -190,6 +193,8 @@ void gps_mcudl_hal_link_power_on_fail_handler(enum gps_mcudl_xid xid)
 	}
 }
 
+unsigned int g_gps_mcu_open_index;
+
 int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 {
 	enum gps_mcudl_yid yid;
@@ -198,6 +203,9 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 	bool do_mcu_ctrl = false;
 	bool non_lppm_sleep = false;
 	int mcu_ctrl_ret = 0;
+	unsigned long ts;
+	unsigned long ts2;
+	unsigned int d_ms;
 
 	/* only need to power on normal channel */
 	yid = GPS_MDLY_NORMAL;
@@ -225,6 +233,13 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		/* do nothing */
 		;
 	} else if (op && old_xbitmask == 0) {
+		ts = gps_dl_tick_get_ms();
+		ts2 = gps_dl_tick_get_ktime_ms();
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+		gps_mcudl_stat_set_mcu_sid(g_gps_mcu_open_index);
+#endif
+		g_gps_mcu_open_index++;
+
 		/* turn on */
 		do_mcu_ctrl = true;
 
@@ -258,7 +273,13 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
 			gps_mcudl_clear_fw_loading_done_flag();
 		}
+		d_ms = (unsigned int)(gps_dl_tick_get_ms() - ts);
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+		gps_mcudl_stat_set_mcu_open_info(ts, ts2, d_ms);
+#endif
 	} else if (!op && new_xbitmask == 0) {
+		ts = gps_dl_tick_get_ms();
+		ts2 = gps_dl_tick_get_ktime_ms();
 		/* turn off */
 		do_mcu_ctrl = true;
 		gps_mcudl_set_opp_vote_phase(GPS_MCU_CLOSING, true);
@@ -267,6 +288,10 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		MDL_LOGYD(yid, "gps_mcudl_clear_fw_loading_done_flag");
 		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
 		gps_mcudl_clear_fw_loading_done_flag();
+		d_ms = (unsigned int)(gps_dl_tick_get_ms() - ts);
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+		gps_mcudl_stat_set_mcu_close_info(ts, ts2, d_ms);
+#endif
 	}
 
 	if (mcu_ctrl_ret == 0 || !op)
@@ -519,6 +544,9 @@ int gps_mcudl_plat_mcu_close(void)
 			gps_dl_hw_gps_dump_top_rf_cr();
 			gps_dl_hw_gps_dump_gps_rf_cr_new();
 			gps_dl_hw_dep_gps_control_adie_off();
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+			gps_mcudl_stat_set_mcu_force_close();
+#endif
 		}
 		gps_mcudl_xlink_off();
 #endif

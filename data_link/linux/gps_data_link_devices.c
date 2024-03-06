@@ -19,6 +19,9 @@
 #include "gps_mcudl_devices.h"
 #include "gps_mcudl_each_device.h"
 #endif
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+#include "gps_mcudl_hal_stat.h"
+#endif
 #if GPS_DL_HAS_PLAT_DRV
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_dl_linux_reserved_mem.h"
@@ -276,6 +279,10 @@ void gps_dl_device_context_deinit(void)
 #if GPS_DL_HAS_MCUDL
 	gps_mcudl_device_context_deinit();
 #endif
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+	gps_mcudl_stat_lp_ctx_deinit();
+	gps_mcudl_stat_mcu_ctx_deinit();
+#endif
 
 	gps_dl_ctx_links_deinit();
 	gps_dl_reserved_mem_deinit();
@@ -365,6 +372,10 @@ void gps_dl_device_context_init(void)
 	gps_dl_ctx_links_init();
 #if GPS_DL_HAS_MCUDL
 	gps_mcudl_device_context_init();
+#endif
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+	gps_mcudl_stat_lp_ctx_init();
+	gps_mcudl_stat_mcu_ctx_init();
 #endif
 
 #if GPS_DL_MOCK_HAL

@@ -26,6 +26,9 @@
 #include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcudl_each_link.h"
 #include "gps_mcudl_plat_api.h"
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+#include "gps_mcudl_hal_stat.h"
+#endif
 #endif
 #include "gps_dl_iomem_dump.h"
 
@@ -253,6 +256,12 @@ int gps_mcudl_procfs_dbg(int y, int z)
 		gps_mcudl_hal_user_set_timeout_ms_to_set_fw_own((unsigned int)z);
 	else if (y == 8)
 		gps_mcudl_hal_user_set_fw_own_op_duration_us_to_warn((unsigned int)z);
+	else if (y == 9) {
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
+		gps_mcudl_stat_dump_mcu_data();
+		gps_mcudl_stat_dump_lp_data();
+#endif
+	}
 	return 0;
 }
 #endif
