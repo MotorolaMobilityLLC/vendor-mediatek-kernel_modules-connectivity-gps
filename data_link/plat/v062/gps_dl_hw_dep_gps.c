@@ -92,6 +92,10 @@ void gps_dl_hw_dep_common_leave_dpstop_dsleep(void)
 		return;
 	}
 
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_COMMON_LEAVE_DPSTOP_DSLEEP2,
+			0, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+
 	/*open a-die*/
 	poll_okay = gps_dl_hw_dep_gps_control_adie_on();
 	if (!poll_okay) {
