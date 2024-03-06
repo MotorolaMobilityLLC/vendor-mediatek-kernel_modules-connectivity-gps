@@ -146,6 +146,10 @@
 		BMASK_RW_FORCE_PRINT); \
 } while (0)
 
+/* NO need dump address list in V010*/
+#define GDL_HW_DUMP_GPS_ACTIVE_STATUS() do { \
+} while (0)
+
 
 #if (GPS_DL_HAS_CONNINFRA_DRV)
 /*
