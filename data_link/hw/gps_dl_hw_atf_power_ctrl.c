@@ -335,6 +335,11 @@ int gps_dl_hw_set_cfg_dsp_mem_and_dsp_off(enum dsp_ctrl_enum ctrl,
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_SET_CFG_DSP_MEM_AND_DSP_OFF_OPID,
 			ctrl, link_id, 0, 0, 0, 0, &res);
 	ret = res.a0;
+
+	if (ctrl == GPS_L1_DSP_OFF || ctrl == GPS_L5_DSP_OFF)
+		return 0;
+
+	gps_dl_hw_dep_poll_gps_sleep_state(link_id);
 	return ret;
 }
 

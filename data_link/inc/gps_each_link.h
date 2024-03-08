@@ -43,6 +43,7 @@ struct gps_each_link_state_list {
 	bool to_be_closed;
 	bool is_resetting;
 	bool open_result_okay;
+	bool close_result_okay;
 	bool user_open;
 	bool need_a2z_dump;
 	bool suspend_to_clk_ext;
@@ -60,6 +61,7 @@ enum gps_each_link_bool_state {
 	LINK_NEED_A2Z_DUMP,
 	LINK_SUSPEND_TO_CLK_EXT,
 	LINK_MISS_MNLBIN_ACK,
+	LINK_CLOSE_RESULT_OKAY,
 	BOOL_STATE_NUM
 };
 
@@ -267,7 +269,7 @@ void gps_dl_link_open_wait(enum gps_dl_link_id_enum link_id, long *p_sigval);
 void gps_dl_link_open_ack(enum gps_dl_link_id_enum link_id, bool okay, bool hw_resume);
 
 void gps_dl_link_close_wait(enum gps_dl_link_id_enum link_id, long *p_sigval);
-void gps_dl_link_close_ack(enum gps_dl_link_id_enum link_id, bool hw_suspend);
+void gps_dl_link_close_ack(enum gps_dl_link_id_enum link_id, bool okay, bool hw_suspend);
 
 void gps_dl_link_reset_ack(enum gps_dl_link_id_enum link_id);
 void gps_dl_link_on_post_conn_reset(enum gps_dl_link_id_enum link_id);

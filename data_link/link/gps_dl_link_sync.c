@@ -235,7 +235,7 @@ void gps_dl_link_close_wait(enum gps_dl_link_id_enum link_id, long *p_sigval)
 		; /* show warnning */
 }
 
-void gps_dl_link_close_ack(enum gps_dl_link_id_enum link_id, bool hw_suspend)
+void gps_dl_link_close_ack(enum gps_dl_link_id_enum link_id, bool okay, bool hw_suspend)
 {
 	struct gps_each_link *p = gps_dl_link_get(link_id);
 
@@ -247,6 +247,7 @@ void gps_dl_link_close_ack(enum gps_dl_link_id_enum link_id, bool hw_suspend)
 	else
 		gps_each_link_change_state_from(link_id, LINK_CLOSING, LINK_CLOSED);
 
+	gps_each_link_set_bool_flag(link_id, LINK_CLOSE_RESULT_OKAY, okay);
 	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
 	gps_each_link_give_big_lock(link_id);
 }

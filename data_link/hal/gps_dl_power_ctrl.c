@@ -762,7 +762,7 @@ void gps_dl_hal_gps_wait_wakeup_done_or_timeout(enum gps_dl_link_id_enum link_id
 				break;
 		}
 
-		if (dsp_state == GPS_DSP_ST_RESET_DONE || dsp_state == GPS_DSP_ST_WORKING)
+		if (dsp_state == GPS_DSP_ST_RESET_DONE)
 			break;
 
 		i++;

@@ -29,6 +29,9 @@ void gps_each_link_set_bool_flag(enum gps_dl_link_id_enum link_id,
 	case LINK_OPEN_RESULT_OKAY:
 		p->sub_states.open_result_okay = value;
 		break;
+	case LINK_CLOSE_RESULT_OKAY:
+		p->sub_states.close_result_okay = value;
+		break;
 	case LINK_NEED_A2Z_DUMP:
 		p->sub_states.need_a2z_dump = value;
 		break;
@@ -60,6 +63,9 @@ bool gps_each_link_get_bool_flag(enum gps_dl_link_id_enum link_id,
 		break;
 	case LINK_OPEN_RESULT_OKAY:
 		value = p->sub_states.open_result_okay;
+		break;
+	case LINK_CLOSE_RESULT_OKAY:
+		value = p->sub_states.close_result_okay;
 		break;
 	case LINK_NEED_A2Z_DUMP:
 		value = p->sub_states.need_a2z_dump;

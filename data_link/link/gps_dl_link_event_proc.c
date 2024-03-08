@@ -159,13 +159,18 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 	case GPS_DL_EVT_LINK_ENTER_DPSTOP:
 		dsp_state = gps_dsp_state_get(link_id);
 		/*Fix corner case: enter dpstop mode when dsp is wakeup, wait until reset_done or timeout*/
-		if (GPS_DSP_ST_WAKEN_UP == dsp_state) {
+		if (GPS_DSP_ST_WAKEN_UP == dsp_state || GPS_DSP_ST_WORKING == dsp_state) {
 			GDL_LOGXW(link_id, "enter dpstop with dsp state = %s",
 				gps_dl_dsp_state_name(dsp_state));
 			gps_dl_hal_gps_wait_wakeup_done_or_timeout(link_id);
 			dsp_state = gps_dsp_state_get(link_id);
 			GDL_LOGXW(link_id, "enter dpstop with dsp state = %s",
 				gps_dl_dsp_state_name(dsp_state));
+
+			if (GPS_DSP_ST_RESET_DONE != dsp_state) {
+				gps_dl_link_close_ack(link_id, false, true);
+				break;
+			}
 		}
 
 		if ((GPS_DSP_ST_WORKING != dsp_state) && (GPS_DSP_ST_RESET_DONE != dsp_state) &&
@@ -175,13 +180,8 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 				gps_dl_dsp_state_name(dsp_state));
 
 			/* TODO: ack fail */
-			gps_dl_link_close_ack(link_id, true);
+			gps_dl_link_close_ack(link_id, true, true);
 			break;
-		}
-
-		if (GPS_DSP_ST_WORKING == dsp_state) {
-			GDL_LOGXW(link_id, "enter dpstop with dsp state = %s",
-				gps_dl_dsp_state_name(dsp_state));
 		}
 
 		gps_dl_hal_set_need_clk_ext_flag(link_id,
@@ -196,7 +196,7 @@ void gps_dl_link_event_proc(enum gps_dl_link_event_id evt,
 		gps_dma_buf_reset(&p_link->tx_dma_buf);
 		gps_dma_buf_reset(&p_link->rx_dma_buf);
 #endif
-		gps_dl_link_close_ack(link_id, true);
+		gps_dl_link_close_ack(link_id, true, true);
 
 		gps_dl_link_post_enter_dpstop_setting(link_id);
 		break;
@@ -296,7 +296,7 @@ _close_or_reset_ack:
 			gps_dl_set_show_reg_rw_log(show_log);
 
 		if (GPS_DL_EVT_LINK_CLOSE == evt)
-			gps_dl_link_close_ack(link_id, false); /* TODO: check fired race */
+			gps_dl_link_close_ack(link_id, true, false); /* TODO: check fired race */
 		else
 			gps_dl_link_reset_ack(link_id);
 		break;

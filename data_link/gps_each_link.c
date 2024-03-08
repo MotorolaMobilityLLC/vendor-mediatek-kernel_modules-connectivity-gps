@@ -327,6 +327,7 @@ int gps_each_link_close_or_suspend(enum gps_dl_link_id_enum link_id,
 	long sigval = 0;
 	int retval;
 	bool hw_suspend;
+	bool okay = false;
 
 	state = gps_each_link_get_state(link_id);
 	hw_suspend = !!(close_or_suspend_op == GDL_DPSTOP || close_or_suspend_op == GDL_CLKEXT);
@@ -397,7 +398,14 @@ int gps_each_link_close_or_suspend(enum gps_dl_link_id_enum link_id,
 			break;
 		}
 
-		retval = 0;
+		okay = gps_each_link_get_bool_flag(link_id, LINK_CLOSE_RESULT_OKAY);
+
+		if (okay)
+			retval = 0;
+		else
+			/*DSP's status machine doesn't meet expectations, return error*/
+			retval = -EBUSY;
+
 		break;
 	default:
 		retval = -EINVAL;
