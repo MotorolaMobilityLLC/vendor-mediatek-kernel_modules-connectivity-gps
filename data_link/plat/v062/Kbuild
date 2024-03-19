@@ -187,6 +187,18 @@ $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_mcu.o
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_user_fw_own_ctrl.o
 ccflags-y += -DGPS_DL_HAS_MCUDL_HAL_STAT=1
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_stat.o
+
+ifeq ($(CONFIG_MTK_MBRAINK_BRIDGE), m)
+# Enable mbraink interface for kernel-6.6
+#NOTDIR_DEVICE_MODULES_PATH = $(notdir $(DEVICE_MODULES_PATH))
+#KERNEL_VERSION = $(patsubst kernel_device_modules-%,%,$(NOTDIR_DEVICE_MODULES_PATH))
+#ifeq (6.6,$(word 1,$(sort 6.6 $(KERNEL_VERSION))))
+ccflags-y += -DGPS_DL_HAS_MCUDL_IF_WITH_MBRAIN=1
+ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mbraink/bridge
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/linux/gps_mcudl_linux_mbraink.o
+#endif
+endif
+
 else
 ccflags-y += -DGPS_DL_HAS_MCUDL_HAL=0
 endif

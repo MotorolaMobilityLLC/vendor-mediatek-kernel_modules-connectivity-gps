@@ -45,6 +45,9 @@
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 #include "gps_mcudl_hal_stat.h"
 #endif
+#ifdef GPS_DL_HAS_MCUDL_IF_WITH_MBRAIN
+#include "gps_mcudl_linux_mbraink.h"
+#endif
 
 /* #ifdef CONFIG_OF */
 const struct of_device_id gps_dl_of_ids[] = {
@@ -599,11 +602,9 @@ static int gps_dl_probe(struct platform_device *pdev)
 	p_each_dev1->private_data = (struct device *)&pdev->dev;
 
 	gps_dl_device_context_init();
-
-#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
-	/* TODO: register cb for mbrain */
+#ifdef GPS_DL_HAS_MCUDL_IF_WITH_MBRAIN
+	gps_mcudl_linux_register_cbs_to_mbraink();
 #endif
-
 	return 0;
 }
 
@@ -613,10 +614,9 @@ static int gps_dl_remove(struct platform_device *pdev)
 
 	GDL_LOGW_INI("do gps_dl_remove");
 
-#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
-	/* TODO: unregister cb for mbrain */
+#ifdef GPS_DL_HAS_MCUDL_IF_WITH_MBRAIN
+	gps_mcudl_linux_unregister_cbs_to_mbraink();
 #endif
-
 	platform_set_drvdata(pdev, NULL);
 	p_each_dev->private_data = NULL;
 	return 0;
