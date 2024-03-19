@@ -5,8 +5,10 @@
 
 #include "gps_dl_config.h"
 #include "gps_dl_osal.h"
+#include "gps_dl_time_tick.h"
 #include "gps_mcudl_config.h"
 #include "gps_mcudl_hal_stat.h"
+#include "gps_mcudl_ylink.h"
 
 #define GPS_MCUDL_STAT_REC_SIZE (8)
 
@@ -22,6 +24,8 @@ struct gps_mcudl_stat_history_ctx {
 
 	unsigned int curr_mcu_sid;
 	unsigned int pwr_wrn_cnt;
+	unsigned long pwr_dump_ktime_ms;
+	unsigned long pwr_trig_ktime_ms;
 };
 
 struct gps_mcudl_stat_lp_ctx {
@@ -50,6 +54,8 @@ void gps_mcudl_stat_lp_ctx_init(void)
 		g_gps_lp_data.get_idx[user] = 0;
 
 	g_gps_lp_data.set_idx = 0;
+	g_gps_history_data.pwr_dump_ktime_ms = 0;
+	g_gps_history_data.pwr_trig_ktime_ms = 0;
 	(void)gps_dl_osal_sleepable_lock_init(&g_gps_lp_data.lock);
 }
 
@@ -74,6 +80,8 @@ void gps_mcudl_stat_mcu_ctx_deinit(void)
 	(void)gps_dl_osal_sleepable_lock_deinit(&g_gps_mcu_data.lock);
 }
 
+/* Ref: GPS_MCUDL_HAL_PWR_WRN_MS */
+#define GPS_MCUDL_PWR_DUMP_TRIG_INTERVAL_MS (305 * 1000) /* 5m + 5s */
 enum gps_mcudl_stat_get_result gps_mcudl_stat_get_lp_data(
 	enum gps_mcudl_stat_get_user user,
 	enum gps_mcudl_stat_get_reason reason, struct gps_mcudl_stat_lp_data *p)
@@ -84,14 +92,16 @@ enum gps_mcudl_stat_get_result gps_mcudl_stat_get_lp_data(
 	unsigned long set_idx = 0;
 	struct gps_mcudl_stat_lp_data *p_data = NULL;
 	int mutex_take_retval;
+	unsigned long curr_ktime, d_dump_ktime_ms, d_trig_ktims_ms;
+	bool trig_dump = false;
 
+	curr_ktime = gps_dl_tick_get_ktime_ms();
 	if (user >= GPS_MCUDL_STAT_GET_USER_CNT) {
 		ret = GPS_MCUDL_STAT_NO_DATA;
 		GDL_LOGW("user=%d, reason=%d, ret=%d, invalid user",
 			user, reason, ret);
 		return ret;
 	}
-
 
 	mutex_take_retval = gps_dl_osal_lock_sleepable_lock(&g_gps_lp_data.lock);
 	if (mutex_take_retval) {
@@ -104,6 +114,15 @@ enum gps_mcudl_stat_get_result gps_mcudl_stat_get_lp_data(
 	get_idx = g_gps_lp_data.get_idx[user];
 	set_idx = g_gps_lp_data.set_idx;
 
+	d_dump_ktime_ms = curr_ktime - g_gps_history_data.pwr_dump_ktime_ms;
+	d_trig_ktims_ms = curr_ktime - g_gps_history_data.pwr_trig_ktime_ms;
+	if ((d_dump_ktime_ms >= GPS_MCUDL_PWR_DUMP_TRIG_INTERVAL_MS) &&
+		(d_trig_ktims_ms >= GPS_MCUDL_PWR_DUMP_TRIG_INTERVAL_MS)) {
+		g_gps_history_data.pwr_trig_ktime_ms = curr_ktime;
+		trig_dump = true;
+	} else
+		trig_dump = false;
+
 	if ((get_idx == set_idx) || (get_idx > set_idx)) {
 		ret = GPS_MCUDL_STAT_NO_DATA;
 		if (get_idx > set_idx) {
@@ -112,27 +131,35 @@ enum gps_mcudl_stat_get_result gps_mcudl_stat_get_lp_data(
 		}
 		(void)gps_dl_osal_unlock_sleepable_lock(&g_gps_lp_data.lock);
 
-		GDL_LOGI("user=%d, reason=%d, ret=%d, idx=%lu,%lu",
-			user, reason, ret, set_idx, get_idx);
-		return ret;
+		GDL_LOGI("user=%d, reason=%d, ret=%d, ktime=%lu,%lu,%lu,%d, idx=%lu,%lu",
+			user, reason, ret,
+			curr_ktime, d_dump_ktime_ms, d_trig_ktims_ms, trig_dump,
+			set_idx, get_idx);
+	} else {
+
+		if (get_idx + GPS_MCUDL_STAT_REC_SIZE - 1 < set_idx)
+			get_idx2 = (set_idx + 1 - GPS_MCUDL_STAT_REC_SIZE);
+		else
+			get_idx2 = get_idx;
+
+		p_data = &g_gps_lp_data.data[get_idx2 % GPS_MCUDL_STAT_REC_SIZE];
+		*p = *p_data;
+		if (get_idx2 + 1 == set_idx)
+			ret = GPS_MCUDL_STAT_OK_NO_MORE;
+		else
+			ret = GPS_MCUDL_STAT_OK_MORE;
+		g_gps_lp_data.get_idx[user] = get_idx2 + 1;
+		(void)gps_dl_osal_unlock_sleepable_lock(&g_gps_lp_data.lock);
+
+		GDL_LOGI("user=%d, reason=%d, ret=%d, ktime=%lu,%lu,%lu,%d, idx=%lu,%lu,%lu",
+			user, reason, ret,
+			curr_ktime, d_dump_ktime_ms, d_trig_ktims_ms, trig_dump,
+			set_idx, get_idx, get_idx2);
 	}
 
-	if (get_idx + GPS_MCUDL_STAT_REC_SIZE - 1 < set_idx)
-		get_idx2 = (set_idx + 1 - GPS_MCUDL_STAT_REC_SIZE);
-	else
-		get_idx2 = get_idx;
+	if (trig_dump)
+		gps_mcudl_ylink_on_ap_resume();
 
-	p_data = &g_gps_lp_data.data[get_idx2 % GPS_MCUDL_STAT_REC_SIZE];
-	*p = *p_data;
-	if (get_idx2 + 1 == set_idx)
-		ret = GPS_MCUDL_STAT_OK_NO_MORE;
-	else
-		ret = GPS_MCUDL_STAT_OK_MORE;
-	g_gps_lp_data.get_idx[user] = get_idx2 + 1;
-	(void)gps_dl_osal_unlock_sleepable_lock(&g_gps_lp_data.lock);
-
-	GDL_LOGI("user=%d, reason=%d, ret=%d, idx=%lu,%lu,%lu",
-		user, reason, ret, set_idx, get_idx, get_idx2);
 	return ret;
 }
 
@@ -162,6 +189,7 @@ void gps_mcudl_stat_set_pwr_state_data(unsigned long local_ms, unsigned long kti
 	}
 
 	g_gps_lp_data.set_idx++;
+	g_gps_history_data.pwr_dump_ktime_ms = ktime_ms;
 	(void)gps_dl_osal_unlock_sleepable_lock(&g_gps_lp_data.lock);
 }
 
@@ -295,7 +323,7 @@ void gps_mcudl_stat_set_mcu_force_close(void)
 	struct gps_mcudl_stat_mcu_data *p = &g_gps_mcu_data.data[set_idx];
 
 	p->force_close = true;
-	g_gps_history_data.exception_cnt++;
+	g_gps_history_data.force_close_cnt++;
 }
 
 void gps_mcudl_stat_set_mcu_close_info(unsigned long local_ms, unsigned long ktime_ms, unsigned int d_ms)

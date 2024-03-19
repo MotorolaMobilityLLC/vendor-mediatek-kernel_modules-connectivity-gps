@@ -289,6 +289,7 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
 		gps_mcudl_clear_fw_loading_done_flag();
 		d_ms = (unsigned int)(gps_dl_tick_get_ms() - ts);
+		gps_mcudl_hal_dump_reset_pwr_sw_flag_rec();
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 		gps_mcudl_stat_set_mcu_close_info(ts, ts2, d_ms);
 #endif

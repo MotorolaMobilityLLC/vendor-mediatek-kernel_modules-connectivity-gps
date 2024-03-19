@@ -29,6 +29,7 @@
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 #include "gps_mcudl_hal_stat.h"
 #endif
+#include "gps_mcudl_hal_conn.h"
 #endif
 #include "gps_dl_iomem_dump.h"
 
@@ -261,7 +262,9 @@ int gps_mcudl_procfs_dbg(int y, int z)
 		gps_mcudl_stat_dump_mcu_data();
 		gps_mcudl_stat_dump_lp_data();
 #endif
-	}
+	} else if (y == 0xA)
+		gps_mcudl_hal_dump_set_pwr_wrn_sec_for_test((unsigned int)z);
+
 	return 0;
 }
 #endif

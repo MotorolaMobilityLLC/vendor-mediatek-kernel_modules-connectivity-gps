@@ -27,17 +27,57 @@ void gps_mcudl_hal_get_ecid_info(void)
 }
 
 unsigned int g_gps_mcudl_dump_pwr_state_cnt;
+unsigned int g_gps_mcudl_dump_pwr_state_skip_cnt;
+
+unsigned int g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_val;
+unsigned long g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms;
+unsigned long g_gps_mcudl_dump_pwr_wrn_test_interval_ms;
 
 void gps_mcudl_hal_dump_power_state_skip(void)
 {
+	unsigned long curr_ktime_ms = gps_dl_tick_get_ktime_ms();
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 	unsigned long curr_local_ms = gps_dl_tick_get_ms();
-	unsigned long curr_ktime_ms = gps_dl_tick_get_ktime_ms();
 
 	gps_mcudl_stat_set_pwr_state_data(curr_local_ms, curr_ktime_ms,
 		g_gps_mcudl_dump_pwr_state_cnt, false, false, false);
 #endif
 	g_gps_mcudl_dump_pwr_state_cnt++;
+	g_gps_mcudl_dump_pwr_state_skip_cnt++;
+
+	/* Clear the wrn rec to avoid to show pwr_wrn. */
+	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms = curr_ktime_ms;
+	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_val = 0;
+}
+
+void gps_mcudl_hal_dump_reset_pwr_sw_flag_rec(void)
+{
+	unsigned long curr_ktime_ms = gps_dl_tick_get_ktime_ms();
+
+	/* Clear the wrn rec to avoid to show pwr_wrn. */
+	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms = curr_ktime_ms;
+	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_val = 0;
+}
+
+/* Ref: GPS_MCUDL_PWR_DUMP_TRIG_INTERVAL_MS
+ * Generally:
+ *  1. GPS_MCUDL_HAL_PWR_WRN_MS > clk_ext timeout max (10m)
+ *  2. GPS_MCUDL_HAL_PWR_WRN_MS > GPS_MCUDL_PWR_DUMP_TRIG_INTERVAL_MS
+ *  3. GPS_MCUDL_HAL_PWR_WRN_MS less than but next to
+ *     N * GPS_MCUDL_PWR_DUMP_TRIG_INTERVAL_MS (N >= 2)
+ */
+#define GPS_MCUDL_HAL_PWR_WRN_MS (605 * 1000) /* 10m + 5s */
+unsigned long gps_mcudl_hal_dump_get_pwr_wrn_ms(void)
+{
+	if (g_gps_mcudl_dump_pwr_wrn_test_interval_ms > 0)
+		return g_gps_mcudl_dump_pwr_wrn_test_interval_ms;
+
+	return GPS_MCUDL_HAL_PWR_WRN_MS;
+}
+
+void gps_mcudl_hal_dump_set_pwr_wrn_sec_for_test(unsigned int sec)
+{
+	g_gps_mcudl_dump_pwr_wrn_test_interval_ms = (unsigned long)sec * 1000;
 }
 
 bool gps_mcudl_hal_dump_power_state(void)
@@ -50,10 +90,12 @@ bool gps_mcudl_hal_dump_power_state(void)
 	unsigned int flag = 0;
 	unsigned int on_off_cnt = 0;
 	gpsmdl_u32 xbitmask;
-#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 	unsigned long curr_local_ms = gps_dl_tick_get_ms();
 	unsigned long curr_ktime_ms = gps_dl_tick_get_ktime_ms();
-#endif
+	bool pwr_wrn = false;
+	unsigned int last_sw_flag;
+	unsigned long d_rec_wrn_ms;
+	unsigned long wrn_interval_ms = gps_mcudl_hal_dump_get_pwr_wrn_ms();
 
 	memset(&raw, 0, sizeof(raw));
 	gps_dl_hw_dep_gps_dump_power_state(&raw);
@@ -82,16 +124,48 @@ bool gps_mcudl_hal_dump_power_state(void)
 	}
 
 	is_gps_awake = is_sw_clk_ext || raw.is_hw_clk_ext || (raw.mcu_pc != 0);
+
+	last_sw_flag = g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_val;
+	if ((raw.sw_gps_ctrl == 0x0000) || (raw.sw_gps_ctrl == 0xFFFF) ||
+		(raw.sw_gps_ctrl != last_sw_flag) || !is_gps_awake ||
+		g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms == 0) {
+		/* For the cases (OR):
+		 *  1. sw flag shows not support
+		 *  2. sw flag shows gnss is working
+		 *  3. sw flag is changed between 2 dumps
+		 *  4. pwr is low
+		 *  5. is 1st dump
+		 * we clear the wrn rec to avoid to show pwr_wrn.
+		 */
+		g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms = curr_ktime_ms;
+		g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_val = raw.sw_gps_ctrl;
+	}
+
+	/* The case to keep wrn rec is (AND):
+	 *  1. pwr is high
+	 *  2. sw flag shows gnss is not working and sw flag keeps unchanged
+	 *
+	 * Show pwr_wrn if wrn rec val is unchanged over the threshold of interval
+	 */
+	d_rec_wrn_ms = curr_ktime_ms - g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms;
+	if (d_rec_wrn_ms >= wrn_interval_ms)
+		pwr_wrn = true;
+	else
+		pwr_wrn = false;
+
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 	gps_mcudl_stat_set_pwr_state_data(curr_local_ms, curr_ktime_ms,
-		g_gps_mcudl_dump_pwr_state_cnt, true, is_gps_awake, false);
+		g_gps_mcudl_dump_pwr_state_cnt, true, is_gps_awake, pwr_wrn);
 #endif
-	g_gps_mcudl_dump_pwr_state_cnt++;
-
 	MDL_LOGI(
 		"awake=%d,mcu_pc=0x%08x,clk_ext=%d,%d,sw_ctrl=0x%04X[on=%u,%u,off=%u,%u,flag=%u,cnt=%u],xbitmask=0x%08x",
 		is_gps_awake, raw.mcu_pc, raw.is_hw_clk_ext, is_sw_clk_ext, raw.sw_gps_ctrl,
 		L1_on_mode, L5_on_mode, L1_off_mode, L5_off_mode, flag, on_off_cnt, xbitmask);
+	MDL_LOGI("idx=%d,%d, ms=%lu,%lu, wrn=%d, sw_ctrl:0x%04X,0x%04X, d_ms=%lu,%lu",
+		g_gps_mcudl_dump_pwr_state_cnt, g_gps_mcudl_dump_pwr_state_skip_cnt,
+		curr_ktime_ms, curr_local_ms, pwr_wrn, last_sw_flag, raw.sw_gps_ctrl,
+		wrn_interval_ms, d_rec_wrn_ms);
+	g_gps_mcudl_dump_pwr_state_cnt++;
 	return is_gps_awake;
 }
 
