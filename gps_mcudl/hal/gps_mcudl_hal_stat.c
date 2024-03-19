@@ -286,6 +286,8 @@ void gps_mcudl_stat_set_mcu_sid(unsigned int sid)
 	struct gps_mcudl_stat_mcu_data *p = &g_gps_mcu_data.data[set_idx];
 
 	p->gnss_mcu_sid = sid;
+	p->has_exception = false;
+	p->force_close = false;
 	g_gps_history_data.curr_mcu_sid = sid;
 }
 
