@@ -117,11 +117,16 @@ bool gps_mcudl_xlink_test_toggle_reset_by_gps_hif(unsigned int type)
 	bool is_okay;
 	unsigned char buf[2];
 
-	buf[0] = '\x04';
-	buf[1] = (unsigned char)(type & 0xFF);
-	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, &buf[0], 2);
-	MDL_LOGW("write cmd4, type=%u, is_ok=%d", type, is_okay);
-	return is_okay;
+	if (gps_mcudl_hal_get_open_flag() != 0) {
+		buf[0] = '\x04';
+		buf[1] = (unsigned char)(type & 0xFF);
+		is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, &buf[0], 2);
+		MDL_LOGW("write cmd4, type=%u, is_ok=%d", type, is_okay);
+		return is_okay;
+	}
+
+	MDL_LOGW("GPS is not active, FalseAlarm");
+	return false;
 }
 
 void gps_mcudl_xlink_test_read_mcu_reg(unsigned int addr, unsigned int bytes)
