@@ -280,7 +280,7 @@ struct platform_driver gps_lna_dev_drv = {
 
 static ssize_t driver_flag_read(struct device_driver *drv, char *buf)
 {
-	return sprintf(buf, "gps lna driver debug level:%d\n", 1);
+	return snprintf(buf, PAGE_SIZE, "gps lna driver debug level:%d\n", 1);
 }
 
 static ssize_t driver_flag_set(struct device_driver *drv,
