@@ -74,13 +74,14 @@ unsigned long gps_dl_tick_get_ms(void)
 
 unsigned long gps_dl_tick_get_ktime_ms(void)
 {
+	struct timespec64 ts;
 	unsigned long tmp;
 
-	/* tmp is ns */
-	tmp = (unsigned long)ktime_get();
+	/* Get the real-time since 1970 */
+	ktime_get_real_ts64(&ts);
 
-	/* tmp is changed to ms after */
-	do_div(tmp, GPS_NSEC_IN_MSEC);
+	/* Convert seconds to milliseconds and nanoseconds to milliseconds */
+	tmp = (unsigned long)(ts.tv_sec * 1000 + ts.tv_nsec / GPS_NSEC_IN_MSEC);
 
 	return tmp;
 }
