@@ -78,6 +78,11 @@ enum gps_dl_link_id_enum {
 
 #define GPS_DL_IS_MODULE      (1)
 
+/* CONFIG_MTK_EMI_LEGACY to distinguish new chips and legacy chips */
+/* legacy chips use emimpu api in kernel is permitted*/
+#if IS_ENABLED(CONFIG_MTK_EMI_LEGACY)
+#define GPS_DL_SET_EMI_MPU_CFG       (1)
+#else
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
 #define GPS_DL_SET_EMI_MPU_CFG       (0)
 #else
@@ -85,6 +90,7 @@ enum gps_dl_link_id_enum {
 #define GPS_DL_SET_EMI_MPU_CFG       (1)
 #else
 #define GPS_DL_SET_EMI_MPU_CFG       (0)
+#endif
 #endif
 #endif
 
