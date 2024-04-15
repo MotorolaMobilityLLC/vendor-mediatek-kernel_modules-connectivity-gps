@@ -315,19 +315,45 @@ static enum GDL_RET_STATUS gdl_dma_buf_get_data_entry_inner(struct gps_dl_dma_bu
 {
 	struct gdl_dma_buf_entry *p_data_entry = NULL;
 	unsigned int data_len;
+	bool data_empty = false;
+	bool entry_empty = false;
 
 	if (p_dma->reader_working)
 		return GDL_FAIL_BUSY;
 
 	p_dma->reader_working = true;
 
-	if (p_dma->read_index == p_dma->write_index) {
+	data_empty = (p_dma->read_index == p_dma->write_index);
+	entry_empty = (p_dma->entry_r == p_dma->entry_w);
+
+	if (data_empty) {
+		if (!entry_empty) {
+			/* impossible case */
+			GDL_LOGXE(p_dma->dev_index,
+				"get data err1: dir=%d, d_r=%u, w=%u, l=%u, en_r=%u, w=%u, l=%u",
+				p_dma->dir,
+				p_dma->read_index, p_dma->write_index, p_dma->len,
+				p_dma->entry_r, p_dma->entry_w, GPS_DL_DMA_BUF_ENTRY_MAX);
+
+			/* reset entries */
+			p_dma->entry_r = p_dma->entry_w;
+		}
 		p_dma->reader_working = false;
 		return GDL_FAIL_NODATA;
 	}
 
-	if (p_dma->entry_r == p_dma->entry_w) {
-		/* impossible: has data but no data entry */
+	if (entry_empty) {
+		if (!data_empty) {
+			/* impossible case */
+			GDL_LOGXE(p_dma->dev_index,
+				"get data err2: dir=%d, d_r=%u, w=%u, l=%u, en_r=%u, w=%u, l=%u",
+				p_dma->dir,
+				p_dma->read_index, p_dma->write_index, p_dma->len,
+				p_dma->entry_r, p_dma->entry_w, GPS_DL_DMA_BUF_ENTRY_MAX);
+
+			/* reset buffer */
+			p_dma->read_index = p_dma->write_index;
+		}
 		p_dma->reader_working = false;
 		return GDL_FAIL_NOENTRY;
 	}
@@ -784,7 +810,6 @@ enum GDL_RET_STATUS gdl_dma_buf_entry_transfer_left_to_write_index(
 		GDL_LOGI("free_len <= left_len, free_len = %d, left_len = %d", free_len, left_len);
 		return GDL_FAIL_NODATA;
 	}
-
 	new_write_index = p_entry->write_index + free_len - left_len;
 	if (new_write_index >= p_entry->buf_length)
 		new_write_index -= p_entry->buf_length;

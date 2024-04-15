@@ -64,6 +64,8 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	bool reg_rw_log = false;
 	bool conninfra_okay = false;
 	bool dma_irq_en = false;
+	bool nodata_flag = false;
+	bool irq_mask_flag = false;
 
 	j0 =  gps_dl_tick_get();
 	curr_sid = gps_each_link_get_session_id(link_id);
@@ -116,39 +118,81 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 	GDL_LOGXD_EVT(link_id, "evt = %s", gps_dl_hal_event_name(evt));
 	switch (evt) {
 	case GPS_DL_HAL_EVT_D2A_RX_HAS_DATA:
-		gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_START);
+		/* hasdata irq is masked when this message is sent,
+		 * we just record the status here.
+		 */
+		s_gps_has_data_irq_masked[link_id] = true;
+
+		nodata_flag = gps_dl_hw_usrt_has_set_nodata_flag(link_id);
+		if (nodata_flag) {
+			/* If we see a nodata before hasdata starts rx_dma,
+			 * it should be a "fake" nodata.
+			 *
+			 * We do nothing here to let the subsequent
+			 * GPS_DL_HAL_EVT_D2A_RX_HAS_NODATA triggered by "fake" nodata
+			 * goes firstly and it will clear the nodata flag and
+			 * unmask hasdata irq there, then
+			 * GPS_DL_HAL_EVT_D2A_RX_HAS_DATA will trigger again.
+			 *
+			 * This corrects the order of these two message.
+			 */
+			GDL_LOGXW(link_id, "HASDATA: nodata is valid");
+			break;
+		}
 
 		gdl_ret = gdl_dma_buf_get_free_entry(
 			&p_link->rx_dma_buf, &dma_buf_entry, true);
 
-		s_gps_has_data_irq_masked[link_id] = true;
 		if (gdl_ret == GDL_OKAY) {
+			gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_START);
 			gps_dl_hal_d2a_rx_dma_claim_emi_usage(link_id, true);
 			gps_dl_hal_d2a_rx_dma_start(link_id, &dma_buf_entry);
+		} else if (gdl_ret == GDL_FAIL_NOSPACE_PENDING_RX) {
+			/* Resend GPS_DL_HAL_EVT_D2A_RX_HAS_DATA in
+			 * gps_each_link_read_with_timeout.
+			 *
+			 * This is a normal case.
+			 */
+			GDL_LOGXI_DRW(link_id,
+				"HASDATA: not start due to %s", gdl_ret_to_name(gdl_ret));
 		} else {
-
-			/* TODO: has pending rx: GDL_FAIL_NOSPACE_PENDING_RX */
-			GDL_LOGXI_DRW(link_id, "rx dma not start due to %s", gdl_ret_to_name(gdl_ret));
+			/* This is a error case which should not happened */
+			GDL_LOGXE(link_id,
+				"HASDATA: not start due to %s", gdl_ret_to_name(gdl_ret));
 		}
 		break;
 
-	/* TODO: handle the case data_len is just equal to buf_len, */
-	/* the rx_dma_done and usrt_has_nodata both happen. */
 	case GPS_DL_HAL_EVT_D2A_RX_DMA_DONE:
 		/* TODO: to make mock work with it */
-		gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_CONTINUE);
-
+		if (!p_link->rx_dma_buf.dma_working_entry.is_valid) {
+			/* rxdma done happened just after nodata */
+			GDL_LOGXW(link_id, "RXDMA_DONE: invalid, r=%u, w=%u, l=%u",
+				p_link->rx_dma_buf.dma_working_entry.read_index,
+				p_link->rx_dma_buf.dma_working_entry.write_index,
+				p_link->rx_dma_buf.dma_working_entry.buf_length);
+			break;
+		}
 		/* stop and clear int flag in isr */
 		/* gps_dl_hal_d2a_rx_dma_stop(link_id); */
+
+		/* record old one into write_index */
+		write_index = p_link->rx_dma_buf.dma_working_entry.write_index;
 		p_link->rx_dma_buf.dma_working_entry.write_index =
 			p_link->rx_dma_buf.dma_working_entry.read_index;
 
 		/* check whether no data also happen */
 		if (gps_dl_hw_usrt_has_set_nodata_flag(link_id)) {
 			p_link->rx_dma_buf.dma_working_entry.is_nodata = true;
-			gps_dl_hw_usrt_clear_nodata_irq(link_id);
-		} else
+			gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_END);
+			GDL_LOGXI(link_id, "NODATA: invalid0, r=%u, w=%u, l=%u, w0=%u, nd=1",
+				p_link->rx_dma_buf.dma_working_entry.read_index,
+				p_link->rx_dma_buf.dma_working_entry.write_index,
+				p_link->rx_dma_buf.dma_working_entry.buf_length,
+				write_index);
+		} else {
 			p_link->rx_dma_buf.dma_working_entry.is_nodata = false;
+			gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_CONTINUE);
+		}
 
 		gdl_ret = gdl_dma_buf_set_free_entry(&p_link->rx_dma_buf,
 			&p_link->rx_dma_buf.dma_working_entry);
@@ -165,10 +209,46 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 			gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, GPS_DL_IRQ_CTRL_FROM_HAL);
 			s_gps_has_data_irq_masked[link_id] = false;
 		} else
-			GDL_LOGXW_DRW(link_id, "D2A_RX_DMA_DONE  while s_gps_has_data_irq_masked is false");
+			GDL_LOGXW_DRW(link_id, "RXDMA_DONE: s_gps_has_data_irq_masked is false");
 		break;
 
 	case GPS_DL_HAL_EVT_D2A_RX_HAS_NODATA:
+		if (!p_link->rx_dma_buf.dma_working_entry.is_valid) {
+			/* twice nodata irq is a special but not abnormal case */
+			nodata_flag = gps_dl_hw_usrt_has_set_nodata_flag(link_id);
+			if (nodata_flag)
+				gps_dl_hw_usrt_clear_nodata_irq(link_id);
+			gps_dl_irq_each_link_unmask(link_id,
+				GPS_DL_IRQ_TYPE_HAS_NODATA,
+				GPS_DL_IRQ_CTRL_FROM_HAL);
+
+			irq_mask_flag = s_gps_has_data_irq_masked[link_id];
+			if (irq_mask_flag) {
+				/* Another special case.
+				 * See comment in "case GPS_DL_HAL_EVT_D2A_RX_HAS_DATA".
+				 */
+				gps_dl_irq_each_link_unmask(link_id,
+					GPS_DL_IRQ_TYPE_HAS_DATA,
+					GPS_DL_IRQ_CTRL_FROM_HAL);
+				s_gps_has_data_irq_masked[link_id] = false;
+				GDL_LOGXW(link_id,
+					"NODATA: invalid, r=%u, w=%u, l=%u, nd=%d, da_mask=1",
+					p_link->rx_dma_buf.dma_working_entry.read_index,
+					p_link->rx_dma_buf.dma_working_entry.write_index,
+					p_link->rx_dma_buf.dma_working_entry.buf_length,
+					nodata_flag);
+				break;
+			}
+
+			GDL_LOGXI(link_id,
+				"NODATA: invalid, r=%u, w=%u, l=%u, nd=%d, da_mask=0",
+				p_link->rx_dma_buf.dma_working_entry.read_index,
+				p_link->rx_dma_buf.dma_working_entry.write_index,
+				p_link->rx_dma_buf.dma_working_entry.buf_length,
+				nodata_flag);
+			break;
+		}
+
 		/* get rx length */
 		gdl_ret = gps_dl_hal_d2a_rx_dma_get_write_index(link_id, &write_index);
 
@@ -176,26 +256,36 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 		gps_dl_hal_d2a_rx_dma_stop(link_id);
 
 		if (gdl_ret == GDL_OKAY) {
-			/* no need to mask data irq */
+			/* no need to mask data irq here */
 			p_link->rx_dma_buf.dma_working_entry.write_index = write_index;
 			p_link->rx_dma_buf.dma_working_entry.is_nodata = true;
-
-			gdl_ret = gdl_dma_buf_set_free_entry(&p_link->rx_dma_buf,
-				&p_link->rx_dma_buf.dma_working_entry);
-
-			if (gdl_ret != GDL_OKAY)
-				GDL_LOGXI(link_id, "NODATA : gdl_dma_buf_set_free_entry ret = %s",
-					gdl_ret_to_name(gdl_ret));
-
-		} else
-			GDL_LOGXD(link_id, "gps_dl_hal_d2a_rx_dma_get_write_index ret = %s", gdl_ret_to_name(gdl_ret));
+		} else if (gdl_ret == GDL_FAIL_NODATA) {
+			/* empty packet */
+			GDL_LOGXW(link_id, "NODATA: empty_pkt, r=%u, w=%u, l=%u",
+				p_link->rx_dma_buf.dma_working_entry.read_index,
+				p_link->rx_dma_buf.dma_working_entry.write_index,
+				p_link->rx_dma_buf.dma_working_entry.buf_length);
+		} else {
+			GDL_LOGXW(link_id, "NODATA: get w_idx fail=%s, r=%u, w=%u, l=%u",
+				gdl_ret_to_name(gdl_ret),
+				p_link->rx_dma_buf.dma_working_entry.read_index,
+				p_link->rx_dma_buf.dma_working_entry.write_index,
+				p_link->rx_dma_buf.dma_working_entry.buf_length);
+		}
+		/* set p_dma->writer_working and dma_working_entry.is_valid to false
+		 * for next transaction.
+		 */
+		gdl_ret = gdl_dma_buf_set_free_entry(&p_link->rx_dma_buf,
+			&p_link->rx_dma_buf.dma_working_entry);
+		p_link->rx_dma_buf.dma_working_entry.is_valid = false;
 
 		gps_dl_hist_rec2_data_routing(link_id, DATA_TRANS_END);
 
 		if (gdl_ret == GDL_OKAY) {
-			p_link->rx_dma_buf.dma_working_entry.is_valid = false;
+			/* empty pkt case also arrives here */
 			gps_dl_link_wake_up(&p_link->waitables[GPS_DL_WAIT_READ]);
-		}
+		} else
+			GDL_LOGXW(link_id, "NODATA: set f_en fail=%s", gdl_ret_to_name(gdl_ret));
 
 		gps_dl_hal_d2a_rx_dma_claim_emi_usage(link_id, false);
 		gps_dl_hw_usrt_clear_nodata_irq(link_id);
@@ -204,18 +294,27 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 			GDL_LOGXE(link_id, "test mask hasdata irq, not unmask irq and wait reset");
 			gps_dl_test_mask_hasdata_irq_set(link_id, false);
 			gps_dl_hal_set_irq_dis_flag(link_id, GPS_DL_IRQ_TYPE_HAS_DATA, true);
-		} else {
-			if (s_gps_has_data_irq_masked[link_id] == true) {
-				gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA,
-					GPS_DL_IRQ_CTRL_FROM_HAL);
-				s_gps_has_data_irq_masked[link_id] = false;
-			} else
-				GDL_LOGXW_DRW(link_id, "D2A_RX_HAS_NODATA  while s_gps_has_data_irq_masked is false");
+			break;
 		}
+
+		if (s_gps_has_data_irq_masked[link_id] == true) {
+			gps_dl_irq_each_link_unmask(link_id, GPS_DL_IRQ_TYPE_HAS_DATA,
+				GPS_DL_IRQ_CTRL_FROM_HAL);
+			s_gps_has_data_irq_masked[link_id] = false;
+		} else
+			GDL_LOGXW_DRW(link_id, "NODATA: s_gps_has_data_irq_masked is false");
 		break;
 
 	case GPS_DL_HAL_EVT_A2D_TX_DMA_DONE:
 		/* gps_dl_hw_print_usrt_status(link_id); */
+
+		if (!p_link->tx_dma_buf.dma_working_entry.is_valid) {
+			GDL_LOGXW(link_id, "TXDMA_DONE: en not valid, r=%u, w=%u, l=%u",
+				p_link->tx_dma_buf.dma_working_entry.read_index,
+				p_link->tx_dma_buf.dma_working_entry.write_index,
+				p_link->tx_dma_buf.dma_working_entry.buf_length);
+			break;
+		}
 
 		/* data tx finished */
 		gdl_ret = gdl_dma_buf_set_data_entry(&p_link->tx_dma_buf,
@@ -223,7 +322,10 @@ void gps_dl_hal_event_proc(enum gps_dl_hal_event_id evt,
 
 		p_link->tx_dma_buf.dma_working_entry.is_valid = false;
 
-		GDL_LOGD("gdl_dma_buf_set_data_entry ret = %s", gdl_ret_to_name(gdl_ret));
+		if (gdl_ret == GDL_OKAY)
+			GDL_LOGXD(link_id, "TXDMA_DONE: set d_en ok");
+		else
+			GDL_LOGXW(link_id, "TXDMA_DONE: set d_en fail=%s", gdl_ret_to_name(gdl_ret));
 
 		/* stop tx dma, should stop and clear int flag in isr */
 		/* gps_dl_hal_a2d_tx_dma_stop(link_id); */
