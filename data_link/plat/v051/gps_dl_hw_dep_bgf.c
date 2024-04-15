@@ -21,6 +21,9 @@
 #include "conn_infra/conn_infra_cfg_on.h"
 #include "conn_infra/conn_infra_cfg.h"
 #include "gps_dl_hw_atf.h"
+#if GPS_DL_GET_INFO_FROM_NODE
+#include "gps_dl_info_node.h"
+#endif
 
 void gps_dl_hw_dep_gps_sw_request_peri_usage(bool request)
 {
@@ -376,8 +379,10 @@ bool gps_dl_hw_gps_common_on_inner(void)
 		goto _fail_gps_hw_common_on_part4_not_okay;
 	}
 #if GPS_DL_DO_ADIE2_ACTION
-	if (adie_ver == 0x6686)
+	if (adie_ver == 0x6686) {
 		gps_dl_hw_dep_gps_control_adie_on_6878();
+		gps_dl_hw_dep_gps_get_ecid_info();
+	}
 #endif
 	return true;
 
@@ -424,5 +429,59 @@ unsigned int gps_dl_hw_gps_get_adie_id_from_conninfra(void)
 #endif
 #endif
 	return adie_ver;
+}
+
+bool gps_dl_hw_dep_gps_get_ecid_info(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	unsigned int ecid_lsb = 0, ecid_msb = 0;
+	unsigned long ecid_data = 0, ecid_bak = 0;
+	unsigned int macro_sel;
+	bool print_ecid_1st = true;
+#endif
+
+#if GPS_DL_HAS_CONNINFRA_DRV
+twice_get_ecid:
+	macro_sel = (print_ecid_1st)?(0x0000030D):(0x0000050D);
+	if (conninfra_spi_1_write(SYS_SPI_TOP, 0x144, macro_sel) != 0) {
+		GDL_LOGI_RRW("conninfra_spi_write_ecid_macro_sel not okay");
+		goto _fail_conninfra_spi_write_ecid_macro_sel_not_okay;
+	}
+	if (conninfra_spi_1_write(SYS_SPI_TOP, 0x108, 0x40000040) != 0) {
+		GDL_LOGI_RRW("conninfra_spi_write_ecid_mode_trig not okay");
+		goto _fail_conninfra_spi_write_ecid_mode_trig_not_okay;
+	}
+
+	gps_dl_wait_us(20);
+
+	if (conninfra_spi_1_read(SYS_SPI_TOP, 0x130, &ecid_lsb) != 0) {
+		GDL_LOGI_RRW("conninfra_spi_read_ecid_lsb_data not okay");
+		goto _fail_conninfra_spi_read_ecid_lsb_data_not_okay;
+	}
+	if (conninfra_spi_1_read(SYS_SPI_TOP, 0x134, &ecid_msb) != 0) {
+		GDL_LOGI_RRW("conninfra_spi_read_ecid_hsb_data not okay");
+		goto _fail_conninfra_spi_read_ecid_hsb_data_not_okay;
+	}
+	ecid_data = ecid_msb;
+	ecid_data = ecid_data << 32 | ecid_lsb;
+	GDL_LOGI("[MT6686P_ECID] : 0x%lx", ecid_data);
+	if (print_ecid_1st) {
+		print_ecid_1st = false;
+		ecid_bak = ecid_data;
+		goto twice_get_ecid;
+	}
+#endif
+#if	GPS_DL_GET_INFO_FROM_NODE
+	gps_dl_info_node_set_ecid_info(ecid_bak, ecid_data);
+#endif
+	return true;
+
+#if GPS_DL_HAS_CONNINFRA_DRV
+_fail_conninfra_spi_read_ecid_hsb_data_not_okay:
+_fail_conninfra_spi_read_ecid_lsb_data_not_okay:
+_fail_conninfra_spi_write_ecid_mode_trig_not_okay:
+_fail_conninfra_spi_write_ecid_macro_sel_not_okay:
+#endif
+	return false;
 }
 
