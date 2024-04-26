@@ -10,6 +10,7 @@
 #include <linux/jiffies.h>
 #include <asm/div64.h>
 #include <linux/time.h>
+#include <linux/timekeeping.h>
 #include <linux/sched/clock.h>
 #elif GPS_DL_ON_CTP
 #include "kernel_to_ctp.h"
