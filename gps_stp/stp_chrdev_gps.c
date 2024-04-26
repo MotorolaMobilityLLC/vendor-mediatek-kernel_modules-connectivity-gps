@@ -80,8 +80,10 @@ MODULE_LICENSE("GPL");
 #define COMBO_IOC_GPS_GET_MD_STATUS  21
 #define COMBO_IOC_GPS_CTRL_L5_LNA    27
 #define COMBO_IOC_GPS_GET_BOOT_TIME  28
+#define COMBO_IOC_GPS_GET_PMIC       29
 
 static UINT32 md_status_addr;
+static UINT32 gnss_pmic;
 
 static UINT32 gDbgLevel = GPS_LOG_DBG;
 
@@ -968,6 +970,18 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		GPS_ERR_FUNC("COMBO_IOC_GPS_GET_BOOT_TIME now_time = %lld,arch_counter = %lld",
 			gps_boot_time.now_time, gps_boot_time.arch_counter);
 		break;
+	case COMBO_IOC_GPS_GET_PMIC:
+		if (gnss_pmic != 0) {
+			do {
+				GPS_INFO_FUNC("gnss_pmic update (%d)\n", gnss_pmic);
+				if (copy_to_user((int __user *)arg, &gnss_pmic, sizeof(gnss_pmic)))
+					retval = -EFAULT;
+			} while (0);
+		} else {
+			retval = -EFAULT;
+			GPS_ERR_FUNC("Can't get gnss_pmic in this platform\n");
+		}
+		break;
 	default:
 		retval = -EFAULT;
 		GPS_DBG_FUNC("GPS_ioctl(): unknown cmd (%d)\n", cmd);
@@ -1235,6 +1249,27 @@ int gps_stp_get_md_status(struct device *dev)
 
 }
 
+int gps_stp_get_pmic_status(struct device *dev)
+{
+	struct device_node *node;
+
+	node = dev->of_node;
+	if (!node) {
+		pr_info("gps_stp_get_pmic_status: unable to get gps node\n");
+		return -1;
+	}
+
+	if (of_property_read_u32(node, "gnss-pmic", &gnss_pmic)) {
+		pr_info("gps_stp_get_pmic_status: unable to get gnss-pmic\n");
+		return -1;
+	}
+
+	pr_info("gps_stp_get_pmic_status gnss_pmic 0x%x\n", gnss_pmic);
+
+	return 0;
+
+}
+
 const struct file_operations GPS_fops = {
 	.open = GPS_open,
 	.release = GPS_close,
@@ -1287,6 +1322,9 @@ static int GPS_init(void)
 #endif
 #endif
 	int alloc_ret = 0;
+	md_status_addr = 0;
+
+	gnss_pmic = 0;
 #ifdef MTK_GENERIC_HAL
 	gps_lna_linux_plat_drv_register();
 #else
@@ -1388,8 +1426,6 @@ static int GPS_init(void)
 		pr_info("%s %d: init gps wakeup source fail!", __func__, __LINE__);
 		goto error;
 	}
-
-	md_status_addr = 0;
 
 	sema_init(&status_mtx, 1);
 	sema_init(&fwctl_mtx, 1);
