@@ -205,6 +205,7 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 	int mcu_ctrl_ret = 0;
 	unsigned long ts;
 	unsigned long ts2;
+	unsigned long ts_start, ts_end;
 	unsigned int d_ms;
 
 	/* only need to power on normal channel */
@@ -234,6 +235,7 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		;
 	} else if (op && old_xbitmask == 0) {
 		ts = gps_dl_tick_get_ms();
+		ts_start = gps_dl_tick_get_no_hop_ktime_ms();
 		ts2 = gps_dl_tick_get_ktime_ms();
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 		gps_mcudl_stat_set_mcu_sid(g_gps_mcu_open_index);
@@ -273,12 +275,14 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 			gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
 			gps_mcudl_clear_fw_loading_done_flag();
 		}
-		d_ms = (unsigned int)(gps_dl_tick_get_ms() - ts);
+		ts_end = gps_dl_tick_get_no_hop_ktime_ms();
+		d_ms = (unsigned int)(ts_end - ts_start);
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 		gps_mcudl_stat_set_mcu_open_info(ts, ts2, d_ms);
 #endif
 	} else if (!op && new_xbitmask == 0) {
 		ts = gps_dl_tick_get_ms();
+		ts_start = gps_dl_tick_get_no_hop_ktime_ms();
 		ts2 = gps_dl_tick_get_ktime_ms();
 		/* turn off */
 		do_mcu_ctrl = true;
@@ -288,7 +292,8 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		MDL_LOGYD(yid, "gps_mcudl_clear_fw_loading_done_flag");
 		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_POST_OFF);
 		gps_mcudl_clear_fw_loading_done_flag();
-		d_ms = (unsigned int)(gps_dl_tick_get_ms() - ts);
+		ts_end = gps_dl_tick_get_no_hop_ktime_ms();
+		d_ms = (unsigned int)(ts_end - ts_start);
 		gps_mcudl_hal_dump_reset_pwr_sw_flag_rec();
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 		gps_mcudl_stat_set_mcu_close_info(ts, ts2, d_ms);

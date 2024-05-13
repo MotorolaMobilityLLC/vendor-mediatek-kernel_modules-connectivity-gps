@@ -35,7 +35,10 @@ unsigned long g_gps_mcudl_dump_pwr_wrn_test_interval_ms;
 
 void gps_mcudl_hal_dump_power_state_skip(void)
 {
+#ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 	unsigned long curr_ktime_ms = gps_dl_tick_get_ktime_ms();
+#endif
+	unsigned long curr_nohop_ktime_ms = gps_dl_tick_get_no_hop_ktime_ms();
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 	unsigned long curr_local_ms = gps_dl_tick_get_ms();
 
@@ -46,16 +49,16 @@ void gps_mcudl_hal_dump_power_state_skip(void)
 	g_gps_mcudl_dump_pwr_state_skip_cnt++;
 
 	/* Clear the wrn rec to avoid to show pwr_wrn. */
-	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms = curr_ktime_ms;
+	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms = curr_nohop_ktime_ms;
 	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_val = 0;
 }
 
 void gps_mcudl_hal_dump_reset_pwr_sw_flag_rec(void)
 {
-	unsigned long curr_ktime_ms = gps_dl_tick_get_ktime_ms();
+	unsigned long curr_nohop_ktime_ms = gps_dl_tick_get_no_hop_ktime_ms();
 
 	/* Clear the wrn rec to avoid to show pwr_wrn. */
-	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms = curr_ktime_ms;
+	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms = curr_nohop_ktime_ms;
 	g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_val = 0;
 }
 
@@ -92,6 +95,7 @@ bool gps_mcudl_hal_dump_power_state(void)
 	gpsmdl_u32 xbitmask;
 	unsigned long curr_local_ms = gps_dl_tick_get_ms();
 	unsigned long curr_ktime_ms = gps_dl_tick_get_ktime_ms();
+	unsigned long curr_nohop_ktime_ms = gps_dl_tick_get_no_hop_ktime_ms();
 	bool pwr_wrn = false;
 	unsigned int last_sw_flag;
 	unsigned long d_rec_wrn_ms;
@@ -137,7 +141,7 @@ bool gps_mcudl_hal_dump_power_state(void)
 		 *  5. is 1st dump
 		 * we clear the wrn rec to avoid to show pwr_wrn.
 		 */
-		g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms = curr_ktime_ms;
+		g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms = curr_nohop_ktime_ms;
 		g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_val = raw.sw_gps_ctrl;
 	}
 
@@ -147,7 +151,7 @@ bool gps_mcudl_hal_dump_power_state(void)
 	 *
 	 * Show pwr_wrn if wrn rec val is unchanged over the threshold of interval
 	 */
-	d_rec_wrn_ms = curr_ktime_ms - g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms;
+	d_rec_wrn_ms = curr_nohop_ktime_ms - g_gps_mcudl_dump_pwr_sw_flag_rec_wrn_ktime_ms;
 	if (d_rec_wrn_ms >= wrn_interval_ms)
 		pwr_wrn = true;
 	else

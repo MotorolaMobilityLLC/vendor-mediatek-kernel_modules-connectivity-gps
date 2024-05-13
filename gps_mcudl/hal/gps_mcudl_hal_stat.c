@@ -92,10 +92,11 @@ enum gps_mcudl_stat_get_result gps_mcudl_stat_get_lp_data(
 	unsigned long set_idx = 0;
 	struct gps_mcudl_stat_lp_data *p_data = NULL;
 	int mutex_take_retval;
-	unsigned long curr_ktime, d_dump_ktime_ms, d_trig_ktims_ms;
+	unsigned long curr_ktime, curr_nohop_ktime_ms, d_dump_ktime_ms, d_trig_ktims_ms;
 	bool trig_dump = false;
 
 	curr_ktime = gps_dl_tick_get_ktime_ms();
+	curr_nohop_ktime_ms = gps_dl_tick_get_no_hop_ktime_ms();
 	if (user >= GPS_MCUDL_STAT_GET_USER_CNT) {
 		ret = GPS_MCUDL_STAT_NO_DATA;
 		GDL_LOGW("user=%d, reason=%d, ret=%d, invalid user",
@@ -114,11 +115,11 @@ enum gps_mcudl_stat_get_result gps_mcudl_stat_get_lp_data(
 	get_idx = g_gps_lp_data.get_idx[user];
 	set_idx = g_gps_lp_data.set_idx;
 
-	d_dump_ktime_ms = curr_ktime - g_gps_history_data.pwr_dump_ktime_ms;
-	d_trig_ktims_ms = curr_ktime - g_gps_history_data.pwr_trig_ktime_ms;
+	d_dump_ktime_ms = curr_nohop_ktime_ms - g_gps_history_data.pwr_dump_ktime_ms;
+	d_trig_ktims_ms = curr_nohop_ktime_ms - g_gps_history_data.pwr_trig_ktime_ms;
 	if ((d_dump_ktime_ms >= GPS_MCUDL_PWR_DUMP_TRIG_INTERVAL_MS) &&
 		(d_trig_ktims_ms >= GPS_MCUDL_PWR_DUMP_TRIG_INTERVAL_MS)) {
-		g_gps_history_data.pwr_trig_ktime_ms = curr_ktime;
+		g_gps_history_data.pwr_trig_ktime_ms = curr_nohop_ktime_ms;
 		trig_dump = true;
 	} else
 		trig_dump = false;
@@ -168,6 +169,7 @@ void gps_mcudl_stat_set_pwr_state_data(unsigned long local_ms, unsigned long kti
 {
 	unsigned int set_idx = (g_gps_lp_data.set_idx % GPS_MCUDL_STAT_REC_SIZE);
 	struct gps_mcudl_stat_lp_data *p = &g_gps_lp_data.data[set_idx];
+	unsigned long curr_nohop_ktime_ms = gps_dl_tick_get_no_hop_ktime_ms();
 	int mutex_take_retval;
 
 	p->dump_index = dump_index;
@@ -189,7 +191,7 @@ void gps_mcudl_stat_set_pwr_state_data(unsigned long local_ms, unsigned long kti
 	}
 
 	g_gps_lp_data.set_idx++;
-	g_gps_history_data.pwr_dump_ktime_ms = ktime_ms;
+	g_gps_history_data.pwr_dump_ktime_ms = curr_nohop_ktime_ms;
 	(void)gps_dl_osal_unlock_sleepable_lock(&g_gps_lp_data.lock);
 }
 
