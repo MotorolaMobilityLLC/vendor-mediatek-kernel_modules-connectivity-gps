@@ -411,6 +411,11 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 		if (b13_gps_status_addr != 0) {
 			do {
 				char *addr = ioremap((phys_addr_t)b13_gps_status_addr, 0x4);
+				if (addr == NULL) {
+					retval = -EFAULT;
+					GDL_LOGXE_ONF(dev->index, "Can't get MD2GPS_REG in this platform\n");
+					break;
+				}
 
 				md2gps_status = *(unsigned int *)addr;
 				GDL_LOGXI_ONF(dev->index, "MD2GPS_REG (0x%x), md2gps_status=0x%x\n",

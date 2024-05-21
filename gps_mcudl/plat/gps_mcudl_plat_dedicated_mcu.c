@@ -577,7 +577,7 @@ int gps_mcudl_plat_mcu_ch1_write(const unsigned char *kbuf, unsigned int count)
 	static unsigned long print_us;
 	static bool pair_print;
 	struct gps_mcudl_data_pkt_rec_item rec_item;
-	enum gps_mcu_hif_send_status send_status;
+	enum gps_mcu_hif_send_status send_status = GPS_MCU_HIF_SEND_STATUS_NUM;
 
 	if (!gps_mcusys_gpsbin_state_is(GPS_MCUSYS_GPSBIN_POST_ON)) {
 		MDL_LOGW("write count=%d, fail due to MCU not post_on", count);
