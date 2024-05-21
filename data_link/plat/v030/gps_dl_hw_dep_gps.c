@@ -64,7 +64,17 @@ void gps_dl_hw_dep_set_dsp_off(enum gps_dl_link_id_enum link_id)
 
 void gps_dl_hw_dep_set_dsp_dpstop(enum gps_dl_link_id_enum link_id)
 {
-	/*no need in legacy project*/
+	if (GPS_DATA_LINK_ID0 == link_id) {
+		GDL_HW_SET_GPS_ENTRY(
+			GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_SOFT_RST_B, 0);
+		GDL_HW_SET_GPS_ENTRY(
+			GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_ON, 0);
+	} else if (GPS_DATA_LINK_ID1 == link_id) {
+		GDL_HW_SET_GPS_ENTRY(
+			GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_SOFT_RST_B, 0);
+		GDL_HW_SET_GPS_ENTRY(
+			GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_ON, 0);
+	}
 }
 
 void gps_dl_hw_dep_common_enter_dpstop_dsleep(void)
