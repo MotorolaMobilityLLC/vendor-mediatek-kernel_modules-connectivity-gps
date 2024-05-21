@@ -920,12 +920,16 @@ long GPS_unlocked_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			do {
 				char *addr = ioremap((phys_addr_t)md_status_addr, 0x4);
 
-				md2gps_status = *(unsigned int *)addr;
-				GPS_INFO_FUNC("MD2GPS_REG (0x%x), md2gps_status=0x%x\n",
-					md_status_addr, md2gps_status);
-				if (copy_to_user((int __user *)arg, &md2gps_status, sizeof(md2gps_status)))
-					retval = -EFAULT;
-				iounmap(addr);
+				if (addr != NULL) {
+					md2gps_status = *(unsigned int *)addr;
+					GPS_INFO_FUNC("MD2GPS_REG (0x%x), md2gps_status=0x%x\n",
+						md_status_addr, md2gps_status);
+					if (copy_to_user((int __user *)arg, &md2gps_status, sizeof(md2gps_status)))
+						retval = -EFAULT;
+					iounmap(addr);
+				} else {
+					GPS_ERR_FUNC("ioremao failed\n");
+				}
 			} while (0);
 		} else {
 			retval = -EFAULT;
