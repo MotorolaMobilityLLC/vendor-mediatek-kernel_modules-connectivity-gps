@@ -52,6 +52,10 @@ bool gps_mcusys_nv_common_check_header(
 		return true;
 	}
 	GPS_OFL_TRC("magic err, local/remote: %x/%x", p_local->magic, p_remote->magic);
+
+	/*check header fail, re-init*/
+	gps_mcusys_nv_data_host_hdr_init(nv_id, &p_hdr->hdr_host);
+
 	return false;
 }
 

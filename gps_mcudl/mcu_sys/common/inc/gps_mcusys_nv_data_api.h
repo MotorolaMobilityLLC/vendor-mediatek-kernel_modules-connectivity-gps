@@ -15,6 +15,8 @@ void gps_mcusys_nv_data_on_gpsbin_state(enum gps_mcusys_gpsbin_state gpsbin_stat
 
 struct gps_mcusys_nv_data_header *gps_mcusys_nv_data_get_hdr(enum gps_mcusys_nv_data_id nv_id);
 gpsmdl_u32 gps_mcusys_nv_data_get_block_size(enum gps_mcusys_nv_data_id nv_id);
+void gps_mcusys_nv_data_host_hdr_init(enum gps_mcusys_nv_data_id nv_id,
+	struct gps_mcusys_nv_data_sub_header *p_host);
 
 /* return true for okay */
 bool gps_mcusys_nv_data_take_write_lock(enum gps_mcusys_nv_data_id nv_id);
