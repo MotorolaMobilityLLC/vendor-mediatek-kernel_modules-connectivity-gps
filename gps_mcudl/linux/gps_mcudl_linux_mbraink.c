@@ -19,31 +19,13 @@ static struct mbraink2gps_ops gps2mbraink_ops = {
 
 void gps_mcudl_linux_register_cbs_to_mbraink(void)
 {
-	void (*pfn)(struct mbraink2gps_ops *ops);
-
-	pfn = symbol_get(register_gps2mbraink_ops);
-	if (pfn == NULL) {
-		GDL_LOGW("symbol_get fail");
-		return;
-	}
-
-	pfn(&gps2mbraink_ops);
-	symbol_put(register_gps2mbraink_ops);
+	register_gps2mbraink_ops(&gps2mbraink_ops);
 	GDL_LOGI("ok");
 }
 
 void gps_mcudl_linux_unregister_cbs_to_mbraink(void)
 {
-	void (*pfn)(void);
-
-	pfn = symbol_get(unregister_gps2mbraink_ops);
-	if (pfn == NULL) {
-		GDL_LOGW("symbol_get fail");
-		return;
-	}
-
-	pfn();
-	symbol_put(unregister_gps2mbraink_ops);
+	unregister_gps2mbraink_ops();
 	GDL_LOGI("ok");
 }
 
