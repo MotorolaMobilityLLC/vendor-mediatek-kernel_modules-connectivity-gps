@@ -35,7 +35,8 @@
 		p_poll_okay, p_poll_ver, (10 * POLL_DEFAULT2), (                 \
 			(*p_poll_ver == GDL_HW_BGF_VER_MT6893) ||    \
 			(*p_poll_ver == GDL_HW_BGF_VER_MT6897) ||    \
-			(*p_poll_ver == GDL_HW_BGF_VER_MT6878))   \
+			(*p_poll_ver == GDL_HW_BGF_VER_MT6878) ||    \
+			(*p_poll_ver == GDL_HW_BGF_VER_MT6899))   \
 	)
 
 #define GDL_HW_SET_EMI_REMAP_FIELD \
