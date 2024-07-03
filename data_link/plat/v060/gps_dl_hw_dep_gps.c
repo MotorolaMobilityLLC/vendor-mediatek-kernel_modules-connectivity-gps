@@ -67,10 +67,34 @@ void gps_dl_hw_dep_set_dsp_off(enum gps_dl_link_id_enum link_id)
 	}
 }
 
-void gps_dl_hw_dep_set_dsp_dpstop(enum gps_dl_link_id_enum link_id)
+bool gps_dl_hw_dep_poll_gps_sleep_state(enum gps_dl_link_id_enum link_id)
 {
 	bool poll_okay = false;
 
+	if (GPS_DATA_LINK_ID0 == link_id) {
+		GDL_HW_POLL_GPS_ENTRY(
+			BG_GPS_CFG_ON_GPS_L1_SLP_CTL_GPS_L1_SLP_PWR_CTL_CS, 0xb,
+			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_poll_l1_gps_sleep_not_okay");
+			return false;
+		}
+	} else if (GPS_DATA_LINK_ID1 == link_id) {
+		GDL_HW_POLL_GPS_ENTRY(
+			BG_GPS_CFG_ON_GPS_L5_SLP_CTL_GPS_L5_SLP_PWR_CTL_CS, 0xb,
+			POLL_DEFAULT, &poll_okay);
+		if (!poll_okay) {
+			GDL_LOGE("_fail_poll_l5_gps_sleep_not_okay");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+void gps_dl_hw_dep_set_dsp_dpstop(enum gps_dl_link_id_enum link_id)
+{
 	/*Enable HW Wakeup Function 0x1800110c[4] = 0b1*/
 	GDL_HW_SET_CONN_INFRA_ENTRY(
 		CONN_INFRA_CFG_ON_CONN_INFRA_CFG_GPS_MANUAL_CTRL_FORCE_HOST_SECOND, 1);
@@ -81,6 +105,8 @@ void gps_dl_hw_dep_set_dsp_dpstop(enum gps_dl_link_id_enum link_id)
 	if (GPS_DATA_LINK_ID0 == link_id) {
 		GDL_HW_SET_GPS_ENTRY(
 			BG_GPS_CFG_ON_GPS_L1_SLP_CTL_GPS_L1_SLP_HWCTL_CR, 1);
+		/*The section of code has been refactored into a funciton:gps_dl_hw_dep_poll_gps_sleep_state*/
+#if 0
 		GDL_HW_POLL_GPS_ENTRY(
 			BG_GPS_CFG_ON_GPS_L1_SLP_CTL_GPS_L1_SLP_PWR_CTL_CS, 0xb,
 			POLL_DEFAULT, &poll_okay);
@@ -88,21 +114,27 @@ void gps_dl_hw_dep_set_dsp_dpstop(enum gps_dl_link_id_enum link_id)
 			GDL_LOGE("poll BG_GPS_CFG_ON_GPS_L1_SLP_CTL_GPS_L1_SLP_PWR_CTL_CS timeout");
 			return;
 		}
+#endif
 		GDL_HW_SET_GPS_ENTRY(
 			BG_GPS_RGU_ON_GPS_L1_CR_RGU_GPS_L1_SOFT_RST_B, 0);
 	} else if (GPS_DATA_LINK_ID1 == link_id) {
 		GDL_HW_SET_GPS_ENTRY(
 			BG_GPS_CFG_ON_GPS_L5_SLP_CTL_GPS_L5_SLP_HWCTL, 1);
+		/*The section of code has been refactored into a funciton:gps_dl_hw_dep_poll_gps_sleep_state*/
+#if 0
 		GDL_HW_POLL_GPS_ENTRY(
 			BG_GPS_CFG_ON_GPS_L5_SLP_CTL_GPS_L5_SLP_PWR_CTL_CS, 0xb,
 			POLL_DEFAULT, &poll_okay);
 		if (!poll_okay) {
-			GDL_LOGE("poll BG_GPS_CFG_ON_GPS_L1_SLP_CTL_GPS_L1_SLP_PWR_CTL_CS timeout");
+			GDL_LOGE("poll BG_GPS_CFG_ON_GPS_L5_SLP_CTL_GPS_L5_SLP_PWR_CTL_CS timeout");
 			return;
 		}
+#endif
 		GDL_HW_SET_GPS_ENTRY(
 			BG_GPS_RGU_ON_GPS_L5_CR_RGU_GPS_L5_SOFT_RST_B, 0);
 	}
+
+	gps_dl_hw_dep_poll_gps_sleep_state(link_id);
 }
 
 void gps_dl_hw_dep_common_enter_dpstop_dsleep(void)
