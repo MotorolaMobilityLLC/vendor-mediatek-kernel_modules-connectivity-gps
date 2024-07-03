@@ -59,7 +59,7 @@ struct gps2scp_dev *gps2scp_devobj;
 static unsigned char o_buf[GPS2SCP_BUFFER_SIZE];	/* output buffer of write() */
 static struct semaphore wr_mtx, rd_mtx, ring_buf_mtx;
 static wait_queue_head_t GPS2SCP_wq;
-#define SCP2GPS_BUFF_SIZE       1024
+#define SCP2GPS_BUFF_SIZE       10240
 #define SCP2GPS_BUFF_NUM  24
 struct scp2gps_data {
 	int size;
