@@ -76,6 +76,8 @@ ifeq ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6897),y)
     ccflags-y += -D GPS_DL_EMI_BASE_TO_VLP=1
 else if ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6878),y)
     ccflags-y += -D GPS_DL_EMI_BASE_TO_VLP=1
+else if ($(CONFIG_MTK_COMBO_CHIP_CONSYS_6899),y)
+    ccflags-y += -D GPS_DL_EMI_BASE_TO_VLP=1
 else
 
 endif
