@@ -55,7 +55,7 @@ int gps_dl_osal_thread_run(struct gps_dl_osal_thread *pThread)
 
 int gps_dl_osal_thread_stop(struct gps_dl_osal_thread *pThread)
 {
-	int iRet;
+	int iRet = 0;
 
 	if ((pThread) && (pThread->pThread)) {
 		iRet = kthread_stop(pThread->pThread);

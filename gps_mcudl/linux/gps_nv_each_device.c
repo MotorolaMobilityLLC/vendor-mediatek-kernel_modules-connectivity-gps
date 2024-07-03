@@ -319,7 +319,7 @@ static loff_t gps_nv_each_device_seek(struct file *filp, loff_t offset, int when
 			break;
 		}
 
-		if (new_pos >= 0 && new_pos <= data_size && retval == 0)
+		if (new_pos <= data_size && retval == 0)
 			retval = 0;
 	}
 

@@ -327,7 +327,10 @@ ssize_t gps_dl_procfs_write(struct file *filp, const char __user *buffer, size_t
 		if (sub_len != 0)
 			pToken = gps_dl_osal_strsep(&pBuf, "\t\n\r ");
 		if (sub_len != 0 && pToken != NULL) {
-			gps_dl_osal_strtol(pToken, 16, &res);
+			if (gps_dl_osal_strtol(pToken, 16, &res) < 0) {
+				GDL_LOGW("x use default value");
+				break;
+			}
 			x = (int)res;
 		} else {
 			GDL_LOGW("x use default value");

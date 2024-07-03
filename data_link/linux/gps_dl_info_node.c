@@ -79,8 +79,10 @@ ssize_t gps_dl_info_node_write(struct file *filp, const char __user *buffer, siz
 	pBuf = buf;
 	pToken = gps_dl_osal_strsep(&pBuf, pDelimiter);
 	if (pToken != NULL) {
-		gps_dl_osal_strtol(pToken, 16, &res);
-		x = (int)res;
+		if (gps_dl_osal_strtol(pToken, 16, &res) < 0)
+			x = 0;
+		else
+			x = (int)res;
 	} else {
 		x = 0;
 	}
