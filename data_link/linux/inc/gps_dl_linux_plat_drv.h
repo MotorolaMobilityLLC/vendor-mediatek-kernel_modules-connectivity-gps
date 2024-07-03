@@ -40,6 +40,7 @@ extern unsigned int b13_gps_status_addr;
 
 #if GPS_DL_CONN_EMI_MERGED
 extern struct gps_dl_iomem_addr_map_entry g_gps_dl_conn_res_emi;
+extern bool gIfGetRsvMemOk;
 #endif
 extern struct gps_dl_iomem_addr_map_entry g_gps_dl_res_emi;
 

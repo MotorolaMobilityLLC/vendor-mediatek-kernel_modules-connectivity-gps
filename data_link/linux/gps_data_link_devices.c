@@ -230,10 +230,6 @@ int gps_dl_ctx_links_init(void)
 
 static void gps_dl_devices_exit(void)
 {
-	enum gps_dl_link_id_enum link_id;
-	dev_t devno = MKDEV(gps_dl_devno_major, gps_dl_devno_minor);
-	struct gps_each_device *p_dev = NULL;
-
 #if GPS_DL_GET_PLATFORM_CLOCK_FREQ
 	gps_dl_clock_mng_deinit();
 #endif
@@ -244,20 +240,14 @@ static void gps_dl_devices_exit(void)
 	gps_dl_linux_plat_drv_unregister();
 #endif
 
-#if GPS_DL_HAS_MCUDL
-	gps_mcudl_devices_exit();
-#endif
-
-	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
-		p_dev = gps_dl_device_get(link_id);
-		gps_dl_cdev_cleanup(p_dev, link_id);
-	}
-
-	unregister_chrdev_region(devno, GPS_DATA_LINK_NUM);
 }
 
 void gps_dl_device_context_deinit(void)
 {
+	enum gps_dl_link_id_enum link_id;
+	dev_t devno = MKDEV(gps_dl_devno_major, gps_dl_devno_minor);
+	struct gps_each_device *p_dev = NULL;
+
 #if GPS_DL_GET_INFO_FROM_NODE
 	gps_dl_info_node_remove();
 #endif
@@ -286,6 +276,17 @@ void gps_dl_device_context_deinit(void)
 
 	gps_dl_ctx_links_deinit();
 	gps_dl_reserved_mem_deinit();
+
+#if GPS_DL_HAS_MCUDL
+	gps_mcudl_devices_exit();
+#endif
+
+	for (link_id = 0; link_id < GPS_DATA_LINK_NUM; link_id++) {
+		p_dev = gps_dl_device_get(link_id);
+		gps_dl_cdev_cleanup(p_dev, link_id);
+	}
+
+	unregister_chrdev_region(devno, GPS_DATA_LINK_NUM);
 }
 
 int gps_dl_irq_init(void)
@@ -317,6 +318,21 @@ int gps_dl_irq_deinit(void)
 
 static int gps_dl_devices_init(void)
 {
+#if GPS_DL_HAS_PLAT_DRV
+	gps_dl_linux_plat_drv_register();
+#else
+	gps_dl_device_context_init();
+#endif
+
+#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
+	gps_dl_clock_mng_init();
+#endif
+
+	return 0;
+}
+
+void gps_dl_device_context_init(void)
+{
 	int result;
 	enum gps_dl_link_id_enum link_id;
 	dev_t devno = 0;
@@ -329,7 +345,7 @@ static int gps_dl_devices_init(void)
 
 	if (result < 0) {
 		GDL_LOGE_INI("fail to get major %d\n", gps_dl_devno_major);
-		return result;
+		return;
 	}
 
 	GDL_LOGD_INI("success to get major %d\n", gps_dl_devno_major);
@@ -342,7 +358,7 @@ static int gps_dl_devices_init(void)
 		if (result) {
 			/* error happened */
 			gps_dl_devices_exit();
-			return result;
+			return;
 		}
 	}
 
@@ -350,24 +366,10 @@ static int gps_dl_devices_init(void)
 	result = gps_mcudl_devices_init();
 	if (result) {
 		gps_dl_devices_exit();
-		return result;
+		return;
 	}
 #endif
 
-#if GPS_DL_HAS_PLAT_DRV
-	gps_dl_linux_plat_drv_register();
-#else
-	gps_dl_device_context_init();
-#endif
-
-#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
-	gps_dl_clock_mng_init();
-#endif
-	return 0;
-}
-
-void gps_dl_device_context_init(void)
-{
 	gps_dl_reserved_mem_init();
 	gps_dl_ctx_links_init();
 #if GPS_DL_HAS_MCUDL

@@ -15,6 +15,7 @@
 phys_addr_t gConnRsvMemPhyBase;
 unsigned long long gConnRsvMemSize;
 struct gps_dl_iomem_addr_map_entry g_gps_dl_conn_res_emi;
+bool gIfGetRsvMemOk = true;
 
 int gps_dl_get_reserved_memory_from_conninfra_drv(void)
 {
@@ -31,6 +32,14 @@ int gps_dl_get_reserved_memory_from_conninfra_drv(void)
 	conninfra_get_emi_phy_addr(CONNSYS_EMI_FW, &emi_base, &emi_size);
 #endif
 	GDL_LOGI("conn_emi: base=0x%llx, size=0x%x", emi_base, emi_size);
+
+	/* check emi_base/emi_size if conninfra_get_emi_phy_addr fail*/
+	if (emi_size == 0x0 || emi_base == 0x0) {
+		gIfGetRsvMemOk = false;
+		GDL_LOGI("conninfra_get_emi_phy_addr fail");
+		return -1;
+	}
+
 	gConnRsvMemPhyBase = emi_base;
 	gConnRsvMemSize = emi_size;
 

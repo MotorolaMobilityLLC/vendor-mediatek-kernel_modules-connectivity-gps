@@ -553,6 +553,13 @@ static int gps_dl_probe(struct platform_device *pdev)
 		gps_not_allocate_emi_from_lk2 = 0;
 #endif
 #endif
+
+#if (GPS_DL_CONN_EMI_MERGED)
+	/* get reserved_mem fail, probe shouldn't going*/
+	if (!gIfGetRsvMemOk)
+		return -1;
+#endif
+
 	gps_dl_get_iomem_by_name(pdev, "conn_infra_base", &g_gps_dl_iomem_arrary[0]);
 	gps_dl_get_iomem_by_name(pdev, "conn_gps_base", &g_gps_dl_iomem_arrary[1]);
 #if GPS_DL_HAS_MCUDL
