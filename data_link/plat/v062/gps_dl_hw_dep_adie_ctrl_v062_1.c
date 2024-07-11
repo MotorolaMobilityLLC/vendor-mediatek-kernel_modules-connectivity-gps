@@ -37,8 +37,8 @@ bool gps_dl_hw_dep_gps_control_adie_on_6991(void)
 	/*set pinmux driving to 4ma setting*/
 	GDL_HW_SET_AP_ENTRY(0x13860008, 0, 0xffffffff, 0x7);
 	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x13860000, 0, 0x7, 0x0);
-	GDL_HW_SET_AP_ENTRY(0x13860004, 0, 0xffffffff, 0x7);
-	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x13860000, 0, 0x7, 0x7);
+	GDL_HW_SET_AP_ENTRY(0x13860004, 0, 0xffffffff, 0x1);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x13860000, 0, 0x7, 0x1);
 
 	/*set pinmux PUPD setting*/
 	GDL_HW_SET_AP_ENTRY(0x13860098, 0, 0xffffffff, 0x4000);
