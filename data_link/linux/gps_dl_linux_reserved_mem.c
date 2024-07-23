@@ -29,7 +29,8 @@ void gps_dl_reserved_mem_init_v1(void)
 	void __iomem *host_virt_addr = NULL;
 #if (GPS_DL_SET_EMI_MPU_CFG)
 	struct emimpu_region_t region;
-	int emimpu_ret1, emimpu_ret2, emimpu_ret3, emimpu_ret4, emimpu_ret5, emimpu_ret6;
+	int emimpu_ret1 = 0, emimpu_ret2 = 0, emimpu_ret3 = 0;
+	int emimpu_ret4 = 0, emimpu_ret5 = 0, emimpu_ret6 = 0;
 #endif
 	unsigned int min_size = sizeof(struct gps_dl_reserved_mem_layout);
 
@@ -50,6 +51,7 @@ void gps_dl_reserved_mem_init_v1(void)
 
 	/* Set EMI MPU permission */
 #if (GPS_DL_SET_EMI_MPU_CFG)
+	memset(&region, 0, sizeof(region));
 	if (gps_not_allocate_emi_from_lk2 == 1) {
 		GDL_LOGI_INI("emi mpu cfg: region = %d, no protection domain = %d, %d",
 			GPS_DL_EMI_MPU_REGION_NUM, GPS_DL_EMI_MPU_DOMAIN_AP, GPS_DL_EMI_MPU_DOMAIN_CONN);
