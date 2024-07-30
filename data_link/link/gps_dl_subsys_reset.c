@@ -236,6 +236,20 @@ int gps_dl_trigger_connsys_reset(void)
 	return 0;
 }
 
+int gps_dl_trigger_connsys_reset_v2(void)
+{
+#if GPS_DL_HAS_CONNINFRA_DRV
+	int ret;
+
+	GDL_LOGE("");
+	ret = conninfra_trigger_whole_chip_rst(CONNDRV_TYPE_GPS, "GNSS trigger whole chip reset for test");
+	GDL_LOGE("conninfra_trigger_whole_chip_rst return = %d", ret);
+#else
+	GDL_LOGE("has no conninfra_drv");
+#endif
+	return 0;
+}
+
 #if GPS_DL_HAS_CONNINFRA_DRV
 static bool gps_dl_connsys_is_resetting;
 int gps_dl_on_pre_connsys_reset(enum consys_drv_type drv, char *reason)

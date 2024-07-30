@@ -151,8 +151,9 @@ int gps_dl_procfs_set_opt(int y, int z)
 
 int gps_dl_procfs_trigger_reset(int y, int z)
 {
+	/* Replace the new API to avoid QA tests hitting the same keywords as the normal EE keywords */
 	if (y == 0)
-		gps_dl_trigger_connsys_reset();
+		gps_dl_trigger_connsys_reset_v2();
 	else if (y == 1)
 		gps_dl_trigger_gps_subsys_reset((bool)z);
 	else if (y == 2 && (z >= 0 && z <= GPS_DATA_LINK_NUM))
