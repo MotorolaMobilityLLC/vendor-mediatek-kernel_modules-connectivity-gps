@@ -71,17 +71,18 @@ KBUILD_MODPOST_FAIL_ON_WARNINGS := y
 GPS_PLATFORM := v030
 MODULE_NAME := gps_drv_dl_$(GPS_PLATFORM)
 obj-m += $(MODULE_NAME).o
+KO_PATH := $(if $(filter /%,$(src)),,$(srctree)/)$(src)
 
 GPS_DRV_CONTROL_LNA := n
 GPS_DL_HAS_MOCK := n
-GPS_SRC_FOLDER := $(srctree)/$(src)/../..
+GPS_SRC_FOLDER := $(KO_PATH)/../..
 ccflags-y += -DMTK_GENERIC_HAL
 
-ccflags-y += -I$(srctree)/$(src)
-ccflags-y += -I$(srctree)/$(src)/inc
-ccflags-y += -I$(srctree)/$(src)/hw/inc
+ccflags-y += -I$(KO_PATH)
+ccflags-y += -I$(KO_PATH)/inc
+ccflags-y += -I$(KO_PATH)/hw/inc
 
-CONNINFRA_SRC_FOLDER := $(srctree)/$(src)/../../../../conninfra
+CONNINFRA_SRC_FOLDER := $(KO_PATH)/../../../../conninfra
 ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/include
 ccflags-y += -I$(CONNINFRA_SRC_FOLDER)/conn_drv/connv2/debug_utility/metlog
 ccflags-y += -DGPS_DL_HAS_CONNINFRA_DRV=1

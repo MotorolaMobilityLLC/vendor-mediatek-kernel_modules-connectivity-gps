@@ -36,6 +36,8 @@ endif
 # Force build fail on modpost warning
 KBUILD_MODPOST_FAIL_ON_WARNINGS := y
 
+KO_CODE_PATH := $(if $(filter /%,$(src)),,$(srctree)/)$(src)
+
 ###############################################################################
 
 # only WMT align this design flow, but gps use this also.
@@ -73,12 +75,12 @@ MODULE_NAME := gps_drv_stp
 obj-m += $(MODULE_NAME).o
 
 GPS_DRV_CONTROL_LNA := y
-GPS_SRC_FOLDER := $(srctree)/$(src)
+GPS_SRC_FOLDER := $(KO_CODE_PATH)
 ccflags-y += -DMTK_GENERIC_HAL
 ccflags-y += -DCONFIG_GPSL5_SUPPORT
 ccflags-y += -DCONFIG_MTK_GPS_EMI
 
-WMT_SRC_FOLDER := $(srctree)/$(src)/../../common
+WMT_SRC_FOLDER := $(KO_CODE_PATH)/../../common
 ccflags-y += -DSOC_CO_CLOCK_FLAG=1
 ccflags-y += -DWMT_CREATE_NODE_DYNAMIC=1
 ccflags-y += -DREMOVE_MK_NODE=0
