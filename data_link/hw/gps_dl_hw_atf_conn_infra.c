@@ -41,7 +41,16 @@ void gps_dl_hw_set_gps_emi_remapping(unsigned int _20msb_of_36bit_phy_addr)
 
 unsigned int gps_dl_hw_get_gps_emi_remapping(void)
 {
-	return GDL_HW_GET_CONN_INFRA_ENTRY(GDL_HW_SET_EMI_REMAP_FIELD);
+	struct arm_smccc_res res;
+	int ret;
+
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_GET_EMI_REMAP_VALUE,
+			0, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+
+	GDL_LOGI_RRW("remap cr:gps=[0x%08x]", ret);
+
+	return 0;
 }
 
 #if GPS_DL_USE_PERI_REMAP
@@ -101,10 +110,21 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr
 #endif
 }
 
+void gps_dl_hw_do_gps_a2z_enable(unsigned int op)
+{
+	struct arm_smccc_res res;
+	int ret;
+
+	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_SET_A2Z_ENABLE,
+			op, 0, 0, 0, 0, 0, &res);
+	ret = res.a0;
+}
+
 void gps_dl_hw_do_gps_a2z_dump(void)
 {
-#if 0
-	GDL_HW_WR_GPS_REG(0x80073120, 1); /* enable A2Z */
+#if 1
+	gps_dl_hw_do_gps_a2z_enable(1); /* enable A2Z */
+	GDL_HW_RD_GPS_REG(0x80073120);
 	GDL_HW_RD_GPS_REG(0x80072228);
 	GDL_HW_RD_GPS_REG(0x80082228);
 	GDL_HW_RD_GPS_REG(0x8007048C);
@@ -112,6 +132,7 @@ void gps_dl_hw_do_gps_a2z_dump(void)
 	GDL_HW_RD_GPS_REG(0x80080680);
 	GDL_HW_RD_GPS_REG(0x800806C0);
 	GDL_HW_RD_GPS_REG(0x80070680);
+	GDL_HW_RD_GPS_REG(0x80070684);
 	GDL_HW_RD_GPS_REG(0x800706C0);
 	GDL_HW_RD_GPS_REG(0x800706C8);
 	GDL_HW_RD_GPS_REG(0x800706CC);
@@ -130,7 +151,22 @@ void gps_dl_hw_do_gps_a2z_dump(void)
 	gps_dl_sleep_us(999, 1001);
 	GDL_HW_RD_GPS_REG(0x800740a0);
 	GDL_HW_RD_GPS_REG(0x800740a4);
-	GDL_HW_WR_GPS_REG(0x80073120, 0);
+	GDL_HW_RD_GPS_REG(0x80070680);
+	GDL_HW_RD_GPS_REG(0x80070684);
+	GDL_HW_RD_GPS_REG(0x800700C8);
+	GDL_HW_RD_GPS_REG(0x800700CC);
+	GDL_HW_RD_GPS_REG(0x80070100);
+	GDL_HW_RD_GPS_REG(0x80070104);
+	GDL_HW_RD_GPS_REG(0x80070108);
+	GDL_HW_RD_GPS_REG(0x8007010C);
+	GDL_HW_RD_GPS_REG(0x80070110);
+	GDL_HW_RD_GPS_REG(0x80070114);
+	GDL_HW_RD_GPS_REG(0x80070118);
+	GDL_HW_RD_GPS_REG(0x8007011C);
+	GDL_HW_RD_GPS_REG(0x80074018);
+	GDL_HW_RD_GPS_REG(0x8007401C);
+	GDL_HW_RD_GPS_REG(0x800740D8);
+	gps_dl_hw_do_gps_a2z_enable(0);
 #endif
 }
 

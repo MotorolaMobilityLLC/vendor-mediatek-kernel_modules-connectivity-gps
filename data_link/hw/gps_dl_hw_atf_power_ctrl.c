@@ -502,13 +502,13 @@ dsp_relog:
 				gps_dl_hw_get_gps_peri_remapping();
 
 #endif
+				gps_dl_hw_get_gps_emi_remapping();
 				/* it means a2z dump is already done */
 				if (gps_each_link_get_bool_flag(link_id, LINK_NEED_A2Z_DUMP))
 					break;
 
 				/* only dump for need_dump_for_reset_done = true*/
 				if (need_dump_for_reset_done) {
-					gps_dl_hw_get_gps_emi_remapping();
 					GDL_HW_GET_CONN2GPS_SLP_PROT_RX_VAL();
 					GDL_HW_GET_CONN2GPS_SLP_PROT_RX_UNTIL_VAL();
 					GDL_HW_GET_CONN2GPS_SLP_PROT_TX_VAL();
@@ -520,7 +520,7 @@ dsp_relog:
 					gps_dl_conninfra_is_okay_or_handle_it(NULL, true);
 				}
 
-#if 0
+#if 1
 				/* dump for No IOC_QUERY case */
 				gps_dl_hw_do_gps_a2z_dump();
 #endif
