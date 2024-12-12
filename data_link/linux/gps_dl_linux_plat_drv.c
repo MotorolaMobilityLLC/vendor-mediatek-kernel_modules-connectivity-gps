@@ -616,7 +616,7 @@ static int gps_dl_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int gps_dl_remove(struct platform_device *pdev)
+static void gps_dl_remove(struct platform_device *pdev)
 {
 	struct gps_each_device *p_each_dev = gps_dl_device_get(GPS_DATA_LINK_ID0);
 
@@ -627,7 +627,6 @@ static int gps_dl_remove(struct platform_device *pdev)
 #endif
 	platform_set_drvdata(pdev, NULL);
 	p_each_dev->private_data = NULL;
-	return 0;
 }
 
 static int gps_dl_drv_suspend(struct device *dev)

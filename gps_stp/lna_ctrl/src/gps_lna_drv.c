@@ -196,11 +196,10 @@ static int gps_lna_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int gps_lna_remove(struct platform_device *pdev)
+static void gps_lna_remove(struct platform_device *pdev)
 {
 	GPS_INFO_FUNC("do gps_lna_remove");
 	platform_set_drvdata(pdev, NULL);
-	return 0;
 }
 
 static int gps_lna_drv_suspend(struct device *dev)
