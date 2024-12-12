@@ -288,6 +288,7 @@ $(MODULE_NAME)-objs += gps_dl_hw_dep_debug.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_dma.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_met2_0.o
 $(MODULE_NAME)-objs += gps_dl_hw_dep_adie_ctrl_v062_1.o
+$(MODULE_NAME)-objs += gps_dl_hw_dep_adie_ctrl_v062_3.o
 
 ifeq ($(GPS_DL_HAS_MOCK),y)
 $(MODULE_NAME)-objs += data_link_mock/mock/gps_mock_mvcd.o

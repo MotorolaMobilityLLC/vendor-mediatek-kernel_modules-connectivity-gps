@@ -414,6 +414,8 @@ bool gps_dl_hw_dep_gps_control_adie_on(void)
 	conn_ver = gps_dl_hal_get_conn_infra_ver();
 	if (GDL_HW_CONN_INFRA_VER_MT6991 == conn_ver)
 		return gps_dl_hw_dep_gps_control_adie_on_6991();
+	else if (GDL_HW_CONN_INFRA_VER_MT6993 == conn_ver)
+		return gps_dl_hw_dep_gps_control_adie_on_6993();
 
 	GDL_LOGW("unknown conn ver 0x%08x, do not open adie", conn_ver);
 	return false;
@@ -450,6 +452,8 @@ void gps_dl_hw_dep_gps_control_adie_off(void)
 
 	if (GDL_HW_CONN_INFRA_VER_MT6991 == conn_ver)
 		gps_dl_hw_dep_gps_control_adie_off_6991();
+	else if (GDL_HW_CONN_INFRA_VER_MT6993 == conn_ver)
+		gps_dl_hw_dep_gps_control_adie_off_6993();
 	else
 		GDL_LOGW("unknown conn ver 0x%08x, do not close adie", conn_ver);
 }

@@ -64,6 +64,7 @@ const struct of_device_id gps_dl_of_ids[] = {
 	{ .compatible = "mediatek,mt6989-gps", },
 	{ .compatible = "mediatek,mt6990-gps", },
 	{ .compatible = "mediatek,mt6991-gps", },
+	{ .compatible = "mediatek,mt6993-gps", },
 	{},
 	/* please check bellow list when adding a new id:
 	 * 1. gps_mcudl_set_emi_layout_in_probe
