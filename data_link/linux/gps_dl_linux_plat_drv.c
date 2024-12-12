@@ -524,6 +524,8 @@ static void gps_mcudl_set_emi_layout_in_probe(const char *p_compatible)
 		gps_mcudl_set_emi_layout(GDL_EMI_LAYOUT_SOC711X);
 	else if (0 == strcmp("mediatek,mt6991-gps", p_compatible))
 		gps_mcudl_set_emi_layout(GDL_EMI_LAYOUT_SOC721A);
+	else if (0 == strcmp("mediatek,mt6993-gps", p_compatible))
+		gps_mcudl_set_emi_layout(GDL_EMI_LAYOUT_SOC721A);
 }
 #endif
 
