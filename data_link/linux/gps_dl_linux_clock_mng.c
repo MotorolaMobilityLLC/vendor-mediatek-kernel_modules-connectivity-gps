@@ -105,7 +105,8 @@ int gps_dl_clock_mng_get_platform_clock(void)
 
 	if (!map) {
 		GDL_LOGE("failed to get regmap.\n");
-		return -1;
+		/*from HL req, keep 52M if cannot get freq from clock_ic*/
+		return 1;
 	}
 
 	regmap_read(map, DCXO_DIGCLK_ELR, &value);
