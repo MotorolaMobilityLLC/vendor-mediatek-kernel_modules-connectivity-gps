@@ -56,7 +56,7 @@ void gps_dl_hw_dep_dump_gps_pos_info(enum gps_dl_link_id_enum link_id)
 
 void gps_dl_hw_dep_dump_host_csr_gps_info(void)
 {
-	int i;
+	unsigned int i;
 
 	/*2021.5.7 confirm with DE, gps use 0x18023a04, 0x18023a00*/
 	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
