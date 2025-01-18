@@ -246,6 +246,7 @@ void gps_mcudl_hal_wdt_dump(void)
 		gps_mcudl_hal_mcu_show_pc_log();
 		gps_mcudl_hal_mcu_show_status();
 		gps_mcudl_hal_ccif_show_status();
+		gps_dl_hw_get_gps_emi_remapping();
 		gps_dl_hw_dump_host_csr_gps_info(false);
 	}
 	/* gps_dl_sleep_us(2200, 3200); */

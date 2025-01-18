@@ -72,6 +72,16 @@ void gps_dl_hw_dep_dump_gps_pos_info(enum gps_dl_link_id_enum link_id)
 		GPS_AON_TOP_DSLEEP_CTL_ADDR,
 		BMASK_RW_FORCE_PRINT);
 
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_INFRA_CFG_ON_CONN_INFRA_CFG_GPS_PWRCTRL0_GPS_FUNCTION_EN_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_INFRA_CFG_ON_CONN_INFRA_CFG_GPS_MANUAL_CTRL_SW_R2H_RST_MASK_INV_ADDR,
+		BMASK_RW_FORCE_PRINT);
+	gps_dl_bus_rd_opt(GPS_DL_CONN_INFRA_BUS,
+		CONN_INFRA_RGU_ON_BGFSYS_WDT_EN_BGFSYS_WDT_RESET_ENABLE_ADDR,
+		BMASK_RW_FORCE_PRINT);
+
 }
 
 void gps_dl_hw_dep_dump_host_csr_range(unsigned int flag_start, unsigned int len)

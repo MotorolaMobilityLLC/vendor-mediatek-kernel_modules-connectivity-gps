@@ -331,6 +331,7 @@ _close_or_reset_ack:
 		show_log = gps_dl_set_show_reg_rw_log(true);
 		if (evt == GPS_DL_EVT_LINK_PRINT_HW_STATUS) {
 			gps_dl_hw_dump_host_csr_gps_info(true);
+			gps_dl_hw_dep_dump_gps_pos_info(link_id);
 			gps_dl_hw_print_hw_status(link_id, true);
 			gps_each_dsp_reg_gourp_read_start(link_id, true, 4);
 		} else {

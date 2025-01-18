@@ -116,14 +116,18 @@ bool gps_dl_hw_poll_usrt_dsp_rx_empty(enum gps_dl_link_id_enum link_id)
 {
 	struct arm_smccc_res res;
 	bool poll_okay = false;
+	unsigned int value1 = 0, value2 = 0;
 
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_HW_POLL_USRT_DSP_RX_EMPTY_OPID,
 			link_id, 0, 0, 0, 0, 0, &res);
 	poll_okay = (bool)res.a0;
 
 #if GPS_DL_ON_LINUX
-	if (!poll_okay)
-		GDL_LOGXE_DRW(link_id, "okay = %d", poll_okay);
+	if (!poll_okay) {
+		value1 = GDL_HW_RD_GPS_REG(GPS_USRT_APB_MCU_D2A0_ADDR);
+		value2 = GDL_HW_RD_GPS_REG(GPS_USRT_APB_MCU_D2A1_ADDR);
+		GDL_LOGXE_DRW(link_id, "okay = %d, 3050/3054 : 0x%08x/0x%08x", poll_okay, value1, value2);
+	}
 #endif
 	return poll_okay;
 }
