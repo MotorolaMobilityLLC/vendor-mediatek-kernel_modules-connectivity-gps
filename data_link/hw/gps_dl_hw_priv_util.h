@@ -128,6 +128,16 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 		iounmap(pConnGPIObaseaddr);          \
 	} while (0)
 
+#define GDL_HW_GET_AP_ENTRY2(Field) ({      \
+		conn_reg val;                           \
+		void __iomem *pConnGPIObaseaddr;        \
+		pConnGPIObaseaddr = ioremap(Field, 0x4);\
+		val = __raw_readl(pConnGPIObaseaddr);   \
+		GDL_LOGD("RD : addr = 0x%08x, r_val = 0x%08x", Field, val); \
+		iounmap(pConnGPIObaseaddr);             \
+		val;                                    \
+		})
+
 #define GDL_HW_SET_ENTRY(Bus_ID, Field, Value) do {     \
 		conn_reg val;                                   \
 		val = gps_dl_bus_read(Bus_ID, ADDR(Field));     \

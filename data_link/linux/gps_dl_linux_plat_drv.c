@@ -35,6 +35,8 @@
 #include "gps_dl_linux_reserved_mem.h"
 #include "gps_dl_linux_reserved_mem_v2.h"
 #include "gps_dl_isr.h"
+#include "gps_dl_hal.h"
+#include "gps_dl_hw_priv_util.h"
 #include "gps_each_device.h"
 #if GPS_DL_HAS_CONNINFRA_DRV
 #include "conninfra.h"
@@ -170,6 +172,26 @@ void gps_dl_update_status_for_md_blanking(bool gps_is_on)
 			val_old, val_new, gps_is_on);
 	} else
 		GDL_LOGW_INI("dummy cr addr is invalid, can not update (on = %d)", gps_is_on);
+}
+
+void gps_dl_if_disable_pmrc25(void)
+{
+	unsigned int conn_ver = 0;
+	unsigned int read_old = 0, read_new = 0;
+	bool if_set = false;
+
+	conn_ver = gps_dl_hal_get_conn_infra_ver();
+	if (GDL_HW_CONN_INFRA_VER_MT6993 == conn_ver) {
+		read_old = GDL_HW_GET_AP_ENTRY2(0x1c011564);
+		/*Check if disable already*/
+		if (read_old & 0x10) {
+			GDL_HW_SET_AP_ENTRY(0x1c011564, 0, 0xffffffff, 0x8);
+			read_new = GDL_HW_GET_AP_ENTRY2(0x1c011564);
+			if_set = true;
+		}
+		GDL_LOGI_INI("driver may dis pmrc25, set=%d, old->new: 0x%x->0x%x",
+			if_set, read_old, read_new);
+	}
 }
 
 void gps_dl_tia1_gps_ctrl(bool gps_is_on)

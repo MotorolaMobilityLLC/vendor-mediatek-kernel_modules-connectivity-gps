@@ -560,6 +560,7 @@ int gps_mcudl_plat_mcu_close(void)
 
 #if GPS_DL_HAS_PLAT_DRV
 	gps_dl_update_status_for_md_blanking(false);
+	gps_dl_if_disable_pmrc25();
 #endif
 	gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump();
 
