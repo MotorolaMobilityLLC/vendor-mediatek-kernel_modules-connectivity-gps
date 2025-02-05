@@ -148,6 +148,13 @@ recheck_rch:
 				conninfra_trigger_whole_chip_rst(
 					CONNDRV_TYPE_GPS, "GNSS FW trigger whole chip reset");
 				return;
+			} else if (ch == GPS_MCUDL_CCIF_CH5) {
+				/* mark irq is not enabled and return for this case */
+				gps_mcudl_hal_set_ccif_irq_en_flag(false);
+
+				/* SUBSYS reset */
+				gps_mcudl_trigger_gps_subsys_reset(false, "GNSS FW trigger subsys reset for test");
+				return;
 			}
 #endif
 		}

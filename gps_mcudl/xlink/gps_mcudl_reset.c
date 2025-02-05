@@ -161,7 +161,7 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 	return GDL_OKAY;
 }
 
-#define MDL_RST_REASON_MAX (32)
+#define MDL_RST_REASON_MAX (40)
 char g_gps_mcudl_subsys_reset_reason[MDL_RST_REASON_MAX];
 int gps_mcudl_trigger_gps_subsys_reset(bool wait_reset_done, const char *p_reason)
 {
