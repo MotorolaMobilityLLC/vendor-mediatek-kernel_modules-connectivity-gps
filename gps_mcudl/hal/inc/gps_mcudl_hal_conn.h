@@ -32,6 +32,10 @@ unsigned int gps_mcudl_get_opp_vote_phase_bitmask(void);
 
 void gps_mcudl_vote_to_deny_opp0_for_coinninfra_on(bool vote);
 
+#if GPS_DL_STATE_NOTIFY
+bool gps_mcudl_set_mnld_fsm_is_working(bool is_in);
+bool gps_mcudl_get_mnld_fsm_is_working(void);
+#endif
 
 #endif /* _GPS_MCUDL_HAL_CONN_H */
 

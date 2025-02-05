@@ -506,6 +506,9 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 		if (arg == 0) {
 			/* MNLD: STOPPING to IDLE/SUSPEND_DONE */
 			gps_mcudl_set_opp_vote_phase(GPS_MNLD_FSM_STOPPING, false);
+#if GPS_DL_STATE_NOTIFY
+			gps_mcudl_set_mnld_fsm_is_working(false);
+#endif
 		} else if (arg == 1) {
 			/* MNLD: IDLE/SUSPEND_DONE to STARTING */
 			gps_mcudl_set_opp_vote_phase(GPS_MNLD_FSM_STARTING, true);
@@ -513,6 +516,9 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 			/* MNLD: STARTING to STARTED */
 			gps_mcudl_set_opp_vote_phase(GPS_MNLD_FSM_STARTING, false);
 			gps_mcudl_set_opp_vote_phase(GPS_DSP_NOT_WORKING, false);
+#if GPS_DL_STATE_NOTIFY
+			gps_mcudl_set_mnld_fsm_is_working(true)
+#endif
 		} else if (arg == 3) {
 			/* MNLD: STARTED to STOPPING */
 			gps_mcudl_set_opp_vote_phase(GPS_DSP_NOT_WORKING, true);
@@ -529,8 +535,13 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 			retval = -EFAULT;
 		}
 		new_bitmask = gps_mcudl_get_opp_vote_phase_bitmask();
+#if GPS_DL_STATE_NOTIFY
+		MDL_LOGXI(dev->index, "cmd=%d, arg=%lu, vote_bitmask=0x%04x,0x%04x, mnld_fsm_is_working=%x",
+			cmd, arg, old_bitmask, new_bitmask, gps_mcudl_get_mnld_fsm_is_working());
+#else
 		MDL_LOGXI(dev->index, "cmd=%d, arg=%lu, vote_bitmask=0x%04x,0x%04x",
 			cmd, arg, old_bitmask, new_bitmask);
+#endif
 		break;
 
 	default:

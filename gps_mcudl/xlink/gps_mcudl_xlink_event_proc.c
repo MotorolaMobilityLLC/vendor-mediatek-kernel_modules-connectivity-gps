@@ -32,7 +32,9 @@
 #include "gps_mcu_hif_host.h"
 #include "gps_mcudl_data_pkt_payload_struct.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
-
+#if GPS_DL_STATE_NOTIFY
+#include "gps_mcudl_hal_timer.h"
+#endif
 
 bool g_gps_fw_log_is_on;
 

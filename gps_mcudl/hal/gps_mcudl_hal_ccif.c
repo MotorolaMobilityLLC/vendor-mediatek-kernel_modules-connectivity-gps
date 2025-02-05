@@ -282,3 +282,27 @@ void gps_mcudl_hal_wdt_dump(void)
 #endif
 }
 
+#if GPS_DL_STATE_NOTIFY
+bool g_gps_ccif_state_blocked;
+
+void gps_mcudl_hal_ccif_isr_is_blocking(void)
+{
+	static unsigned long ccif_old_cnt;
+	unsigned long ccif_new_cnt = 0;
+	unsigned int rch_mask = 0;
+
+	ccif_new_cnt = g_gps_ccif_irq_cnt;
+	rch_mask = gps_mcudl_hw_ccif_get_rch_bitmask();
+	/*ccif is blocking*/
+	if ((ccif_new_cnt == ccif_old_cnt) && (rch_mask & (1UL << GPS_MCUDL_CCIF_CH4))) {
+		/*set gps_ccif state blocked*/
+		g_gps_isr_state_blocked = true;
+		/*dump gps_ccif status*/
+		;
+	} else {
+		g_gps_isr_state_blocked = false;
+	}
+	ccif_old_cnt = ccif_new_cnt;
+}
+#endif
+

@@ -43,6 +43,10 @@ static struct gps_mcudl_ctx s_gps_mcudl_ctx = {
 			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE} },
 		[GPS_MDLX_MPELOG2]  = {
 			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE} },
+#if GPS_DL_STATE_NOTIFY
+		[GPS_MDLX_STATE]  = {
+			.cfg = {.tx_buf_size = GPS_DL_TX_BUF_SIZE, .rx_buf_size = GPS_DL_RX_BUF_SIZE} },
+#endif
 	},
 #if GPS_DL_ON_LINUX
 	.devices = { /* gps_mcudl_each_device */
@@ -82,6 +86,10 @@ static struct gps_mcudl_ctx s_gps_mcudl_ctx = {
 			.cfg = {.dev_name = "gpsmdl-mpelog", .xid = GPS_MDLX_MPELOG} },
 		[GPS_MDLX_MPELOG2]  = {
 			.cfg = {.dev_name = "gpsmdl-mpelog2", .xid = GPS_MDLX_MPELOG2} },
+#if GPS_DL_STATE_NOTIFY
+		[GPS_MDLX_STATE]  = {
+			.cfg = {.dev_name = "gpsmdl-state", .xid = GPS_MDLX_STATE} },
+#endif
 	},
 	.nv_devices = { /* gps_nv_each_device */
 		[GPS_MCUSYS_NV_DATA_ID_EPO] = {

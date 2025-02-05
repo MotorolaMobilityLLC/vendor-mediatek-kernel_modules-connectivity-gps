@@ -34,6 +34,9 @@ void gps_mcudl_hal_ccif_rx_isr(void);
 void gps_mcudl_hal_wdt_isr(void);
 void gps_mcudl_hal_wdt_dump(void);
 
+#if GPS_DL_STATE_NOTIFY
+void gps_mcudl_hal_ccif_isr_is_blocking(void);
+#endif
 bool gps_mcudl_hal_get_ccif_irq_en_flag(void);
 void gps_mcudl_hal_set_ccif_irq_en_flag(bool enable);
 void gps_mcudl_hal_wdt_init(void);

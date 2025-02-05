@@ -19,7 +19,9 @@
 #include "gps_mcusys_fsm.h"
 #include "gps_dl_time_tick.h"
 #include "gps_dl_subsys_reset.h"
-
+#if GPS_DL_STATE_NOTIFY
+#include "gps_mcudl_hal_timer.h"
+#endif
 
 void gps_mcudl_ylink_event_send(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_event_id evt)
 {
@@ -49,6 +51,7 @@ void gps_mcudl_ylink_event_send(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 	gps_mcudl_ylink_event_proc(y_id, evt);
 #endif
 }
+
 
 void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_event_id evt)
 {
@@ -125,6 +128,31 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 		gps_mcudl_link_trigger_state_ntf_all();
 		gps_mcudl_mcu2ap_arrange_pkt_dump_after_ap_resume();
 		break;
+#if GPS_DL_STATE_NOTIFY
+	case GPS_MCUDL_YLINK_EVT_ID_KCTRLD_TIMER:
+		/*check gps status if need stop timer*/
+		if (!gps_mcudl_get_mnld_fsm_is_working()) {
+			MDL_LOGI("gps_is_close: stop kctrld_timer");
+			gps_mcudl_hal_kctrld_timer_stop();
+			break;
+		}
+		/*dump more log*/
+
+		/*sync status*/
+
+		break;
+	case GPS_MCUDL_YLINK_EVT_ID_CCIF_ISR_TIMER:
+		/*check gps status if need stop timer*/
+		if (!gps_mcudl_get_mnld_fsm_is_working()) {
+			MDL_LOGI("gps_is_close: stop ccif_isr_timer");
+			gps_mcudl_hal_ccif_isr_timer_stop();
+			break;
+		}
+		/*dump more log*/
+
+		/*try to receive data like ccif isr*/
+		break;
+#endif
 	default:
 		break;
 	}

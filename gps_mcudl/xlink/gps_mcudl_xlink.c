@@ -20,6 +20,9 @@ bool gps_mcudl_xlink_is_connected_to_mcu_lifecycle(enum gps_mcudl_xid x_id)
 	not_connected_to = (
 		x_id == GPS_MDLX_GDLOG2 ||
 		x_id == GPS_MDLX_MPELOG2 ||
+#if GPS_DL_STATE_NOTIFY
+		x_id == GPS_MDLX_STATE ||
+#endif
 		false
 	);
 

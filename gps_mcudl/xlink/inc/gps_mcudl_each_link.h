@@ -41,6 +41,11 @@ struct gps_mcudl_each_link {
 	bool epoll_flag;
 };
 
+#if GPS_DL_STATE_NOTIFY
+extern bool g_gps_kctld_state_blocked;
+extern bool g_gps_isr_state_blocked;
+#endif
+
 void gps_mcudl_each_link_init(enum gps_mcudl_xid link_id);
 void gps_mcudl_each_link_deinit(enum gps_mcudl_xid link_id);
 void gps_mcudl_each_link_context_init(enum gps_mcudl_xid link_id);

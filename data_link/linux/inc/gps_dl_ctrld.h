@@ -36,6 +36,8 @@ struct gps_dl_osal_lxop *gps_dl_get_free_op(void);
 int gps_dl_put_op_to_free_queue(struct gps_dl_osal_lxop *pOp);
 int gps_dl_ctrld_init(void);
 int gps_dl_ctrld_deinit(void);
-
+#if GPS_DL_STATE_NOTIFY
+void gps_dl_ctrl_thread_check_is_blocking(void);
+#endif
 #endif /* _GPS_DL_CTRLD_H */
 

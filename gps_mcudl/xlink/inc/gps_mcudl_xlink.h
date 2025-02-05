@@ -7,6 +7,7 @@
 #define _GPS_MCUDL_XLINK_H
 
 #include "gps_mcudl_data_intf_type.h"
+#include "gps_dl_config.h"
 
 enum gps_mcudl_xid {
 	GPS_MDLX_MCUSYS,
@@ -29,6 +30,9 @@ enum gps_mcudl_xid {
 	GPS_MDLX_LPPM,     /* for gps low power positioning mode */
 	GPS_MDLX_MPELOG,   /* for MPE log */
 	GPS_MDLX_MPELOG2,  /* for MPE log */
+#if GPS_DL_STATE_NOTIFY
+	GPS_MDLX_STATE, /* for MNLD Driver sync status */
+#endif
 
 	GPS_MDLX_CH_NUM
 };

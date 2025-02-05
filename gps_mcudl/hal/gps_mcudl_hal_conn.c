@@ -318,3 +318,21 @@ bool gps_mcudl_hw_conn_force_wake(bool enable)
 
 #endif
 
+#if GPS_DL_STATE_NOTIFY
+bool g_gps_mnld_fsm_is_working;
+
+bool gps_mcudl_set_mnld_fsm_is_working(bool is_in)
+{
+	bool old = g_gps_mnld_fsm_is_working;
+
+	g_gps_mnld_fsm_is_working = is_in;
+	return old;
+}
+
+bool gps_mcudl_get_mnld_fsm_is_working(void)
+{
+	return g_gps_mnld_fsm_is_working;
+}
+
+#endif
+

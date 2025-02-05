@@ -144,6 +144,9 @@ struct gps_dl_osal_lxop_q {
 	unsigned int write;
 	unsigned int read;
 	unsigned int size;
+	atomic_t total_count;
+	atomic_t exec_start_count;
+	atomic_t exec_end_count;
 	struct gps_dl_osal_lxop *queue[GPS_OSAL_OP_BUF_SIZE];
 };
 

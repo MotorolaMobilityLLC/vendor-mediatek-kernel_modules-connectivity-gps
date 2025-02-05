@@ -287,6 +287,11 @@ int gps_mcudl_hal_link_power_ctrl(enum gps_mcudl_xid xid, int op)
 		/* turn off */
 		do_mcu_ctrl = true;
 		gps_mcudl_set_opp_vote_phase(GPS_MCU_CLOSING, true);
+#if GPS_DL_STATE_NOTIFY
+		gps_mcudl_set_mnld_fsm_is_working(false);
+		/* stop timer when mnld_state is close*/
+		gps_mcudl_hal_ccif_isr_timer_stop();
+#endif
 		gps_mcusys_gpsbin_state_set(GPS_MCUSYS_GPSBIN_PRE_OFF);
 		mcu_ctrl_ret = gps_mcudl_plat_do_mcu_ctrl(yid, false);
 		MDL_LOGYD(yid, "gps_mcudl_clear_fw_loading_done_flag");

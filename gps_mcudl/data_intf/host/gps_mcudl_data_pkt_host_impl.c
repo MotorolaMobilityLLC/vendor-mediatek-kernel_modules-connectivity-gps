@@ -1126,6 +1126,46 @@ void gps_mcudl_mcu2ap_clear_ap_resume_pkt_dump_flag(void)
 	g_gps_mcudl_mcu2ap_after_ap_resume_dump_cnt = 0;
 }
 
+#if GPS_DL_STATE_NOTIFY
+bool gps_mcudl_mcu2ap_check_xlink_reader_is_pending(void)
+{
+	bool data_is_pending = false;
+	struct gps_mcudl_each_link *p = NULL;
+	unsigned int pending_r_count = 0;
+	unsigned int pending_bitmask_old = 0, pending_bitmask_new = 0;
+	/* golden_mask = 0b'11100 = 0x1c*/
+	unsigned int golden_mask = 0x1c;
+	enum gps_mcudl_xid link_id = 0;
+
+	/*only check mnl/nema/agent link is pending*/
+	for (link_id = 0; link_id < GPS_MDLX_CH_NUM; link_id++) {
+		gps_mcudl_each_link_mutex_take(link_id, GPS_DL_MTX_BIG_LOCK);
+		p = gps_mcudl_link_get(link_id);
+		pending_r_count = gps_dma_buf_count_data_entry(&p->rx_dma_buf);
+		gps_mcudl_each_link_mutex_give(link_id, GPS_DL_MTX_BIG_LOCK);
+		if (pending_r_count > 0)
+			pending_bitmask_old = pending_bitmask_old | (1 << link_id);
+
+	}
+	data_is_pending = !(!(pending_bitmask_old & golden_mask));
+
+	for (link_id = 0; link_id < GPS_MDLX_CH_NUM; link_id++) {
+		gps_mcudl_each_link_mutex_take(link_id, GPS_DL_MTX_BIG_LOCK);
+		p = gps_mcudl_link_get(link_id);
+		pending_r_count = gps_dma_buf_count_data_entry(&p->rx_dma_buf);
+		gps_mcudl_each_link_mutex_give(link_id, GPS_DL_MTX_BIG_LOCK);
+		if (pending_r_count > 0)
+			pending_bitmask_new = pending_bitmask_new | (1 << link_id);
+
+	}
+	data_is_pending = data_is_pending && (!(!(pending_bitmask_new & golden_mask)));
+
+	MDL_LOGI"pending bitmask old/new : 0x%x/0x%x, if_pending = 0x%x", pending_bitmask_old,
+		pending_bitmask_new, data_is_pending);
+
+	return data_is_pending;
+}
+#endif
 
 void gps_mcudl_mcu2ap_try_to_wakeup_xlink_reader(enum gps_mcudl_yid y_id, enum gps_mcudl_pkt_type type,
 	const gpsmdl_u8 *payload_ptr, gpsmdl_u16 payload_len)

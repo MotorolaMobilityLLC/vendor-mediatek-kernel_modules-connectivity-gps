@@ -14,6 +14,10 @@
 #if GPS_DL_HAS_MCUDL
 #include "gps_mcudl_xlink.h"
 #include "gps_mcudl_ylink.h"
+#include "gps_mcudl_hal_conn.h"
+#endif
+#if GPS_DL_STATE_NOTIFY
+#include "gps_mcudl_hal_timer.h"
 #endif
 
 
@@ -169,6 +173,11 @@ static int gps_dl_put_op(struct gps_dl_osal_lxop_q *pOpQ, struct gps_dl_osal_lxo
 	else
 		iRet = -1;
 
+#if GPS_DL_STATE_NOTIFY
+	/* Increment total_count*/
+	atomic_inc(&pOpQ->total_count);
+#endif
+
 	gps_dl_osal_unlock_unsleepable_lock(&pOpQ->spin_lock);
 
 	if (iRet) {
@@ -305,6 +314,9 @@ static int gps_dl_ctrl_thread(void *pData)
 	struct gps_dl_osal_event *pEvent = NULL;
 	struct gps_dl_osal_lxop *pOp = NULL;
 	int iResult;
+#if GPS_DL_STATE_NOTIFY
+	bool mnld_fsm_is_not_idle;
+#endif
 
 	if (pgps_dl_ctrld == NULL) {
 		GDL_LOGE("pgps_dl_ctx is NULL");
@@ -334,8 +346,38 @@ static int gps_dl_ctrl_thread(void *pData)
 			continue;
 		}
 
+#if GPS_DL_STATE_NOTIFY
+		mnld_fsm_is_not_idle = gps_mcudl_get_mnld_fsm_is_working();
+		/* only mnld_fsm is not idle, set timer to monitoring data path*/
+		if (mnld_fsm_is_not_idle) {
+			/*start kctrld_timer before proc msg, to confirm proc status*/
+			gps_mcudl_hal_kctrld_timer_start();
+		}
+#endif
+
+#if GPS_DL_STATE_NOTIFY
+		/* Increment exec_start_count*/
+		atomic_inc(&pgps_dl_ctrld->rOpQ.exec_start_count);
+#endif
+
 		/*Execute operation*/
 		iResult = gps_dl_core_opid(&pOp->op);
+
+#if GPS_DL_STATE_NOTIFY
+		/* Increment exec_end_count*/
+		atomic_inc(&pgps_dl_ctrld->rOpQ.exec_end_count);
+#endif
+
+#if GPS_DL_STATE_NOTIFY
+		/* only mnld_fsm is not idle, set timer to monitoring data path*/
+		if (gps_mcudl_get_mnld_fsm_is_working())
+			gps_mcudl_hal_ccif_isr_timer_refresh();
+
+		if (mnld_fsm_is_not_idle) {
+			/*stop kctrld_timer after proc msg, to confirm proc status*/
+			gps_mcudl_hal_kctrld_timer_stop();
+		}
+#endif
 
 		if (atomic_dec_and_test(&pOp->ref_count))
 			gps_dl_put_op(&pgps_dl_ctrld->rFreeOpQ, pOp);
@@ -414,4 +456,31 @@ int gps_dl_ctrld_deinit(void)
 	gps_dl_osal_event_deinit(&gps_dl_ctrld.rgpsdlWq);
 	return 0;
 }
+
+#if GPS_DL_STATE_NOTIFY
+bool g_gps_kctld_state_blocked;
+
+void gps_dl_ctrl_thread_check_is_blocking(void)
+{
+	struct gps_dl_ctrld_context *pgps_dl_ctrld = &gps_dl_ctrld;
+	static int old_msg_cnt;
+	int curr_msg_cnt = 0, kctrld_total = 0,  kctrld_exec = 0;
+
+	curr_msg_cnt = RB_COUNT(&pgps_dl_ctrld->rOpQ);
+	kctrld_total = atomic_get(&pgps_dl_ctrld->rOpQ.total_count);
+	kctrld_exec  = atomic_get(&pgps_dl_ctrld->rOpQ.exec_end_count);
+
+	/*gps_kctrld is blocking*/
+	if ((curr_msg_cnt == old_msg_cnt) && (kctrld_total != kctrld_exec)) {
+		/*set gps_kctrld state blocked*/
+		g_gps_kctld_state_blocked = true;
+		/*dump gps_kctrld status*/
+		;
+	} else {
+		g_gps_kctld_state_blocked = false;
+	}
+	old_msg_cnt = curr_msg_cnt;
+
+}
+#endif
 

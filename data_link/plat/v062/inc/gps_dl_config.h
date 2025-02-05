@@ -44,6 +44,8 @@ enum gps_dl_link_id_enum {
 
 #define GPS_DL_CONN_EMI_MERGED (1)
 
+#define GPS_DL_STATE_NOTIFY (0)
+
 #ifndef GPS_DL_HAS_CTRLD
 #define GPS_DL_HAS_CTRLD      (1)
 #endif

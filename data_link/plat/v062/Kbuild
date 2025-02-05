@@ -186,6 +186,7 @@ $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_ccif.o
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_conn.o
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_mcu.o
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_user_fw_own_ctrl.o
+$(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_timer.o
 ccflags-y += -DGPS_DL_HAS_MCUDL_HAL_STAT=1
 $(MODULE_NAME)-objs += $(GPS_MDL_SRC_ROOT)/hal/gps_mcudl_hal_stat.o
 

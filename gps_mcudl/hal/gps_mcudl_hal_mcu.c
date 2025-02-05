@@ -21,6 +21,9 @@
 #include "gps_dl_iomem_dump.h"
 #include <asm/io.h>
 #endif
+#if GPS_DL_STATE_NOTIFY
+#include "gps_mcudl_hal_timer.h"
+#endif
 
 bool gps_mcudl_xlink_on(const struct gps_mcudl_fw_list *p_fw_list)
 {
@@ -37,6 +40,9 @@ bool gps_mcudl_xlink_on(const struct gps_mcudl_fw_list *p_fw_list)
 		return false;
 
 	gps_mcudl_hal_user_fw_own_init(GMDL_FW_OWN_CTRL_BY_POS);
+#if GPS_DL_STATE_NOTIFY
+	gps_mcudl_hal_timer_init();
+#endif
 	is_okay = gps_mcudl_conninfra_is_okay_or_handle_it();
 	if (!is_okay)
 		return false;
@@ -60,6 +66,9 @@ bool gps_mcudl_xlink_off(void)
 	(void)gps_mcudl_conninfra_is_okay_or_handle_it();
 
 	gps_mcudl_hal_mcu_do_off();
+#if GPS_DL_STATE_NOTIFY
+	gps_mcudl_hal_timer_deinit();
+#endif
 	gps_mcudl_hal_user_fw_own_deinit(GMDL_FW_OWN_CTRL_BY_POS);
 	(void)gps_mcudl_hw_conn_force_wake(false);
 #if GPS_DL_ON_CTP
