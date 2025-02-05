@@ -87,16 +87,19 @@ unsigned long gps_dl_tick_get_ktime_ms(void)
 	return tmp;
 }
 
-#define NOHOP_FREQ_TO_MS 13000
 unsigned long gps_dl_tick_get_no_hop_ktime_ms(void)
 {
-	unsigned long tmp1, tmp2;
+	unsigned long tmp1, tmp2, divider;
+
+	/* Get the real-freq*/
+	divider = arch_timer_get_cntfrq();
+	divider = divider / 1000;
 
 	/* Get the real-time since boot */
 	tmp1 = __arch_counter_get_cntvct();
 
 	/* Get ms*/
-	tmp2 = (tmp1 / NOHOP_FREQ_TO_MS);
+	tmp2 = (tmp1 / divider);
 
 	return tmp2;
 }
