@@ -286,7 +286,7 @@ void gps_mcudl_hal_wdt_dump(void)
 }
 
 #if GPS_DL_STATE_NOTIFY
-bool g_gps_isr_state_blocked;
+bool g_gps_ccif_isr_state_blocked;
 
 void gps_mcudl_hal_ccif_isr_is_blocking(void)
 {
@@ -299,11 +299,11 @@ void gps_mcudl_hal_ccif_isr_is_blocking(void)
 	/*ccif is blocking*/
 	if ((ccif_new_cnt == ccif_old_cnt) && (rch_mask & (1UL << GPS_MCUDL_CCIF_CH4))) {
 		/*set gps_ccif state blocked*/
-		g_gps_isr_state_blocked = true;
+		g_gps_ccif_isr_state_blocked = true;
 		/*dump gps_ccif status*/
 		;
 	} else {
-		g_gps_isr_state_blocked = false;
+		g_gps_ccif_isr_state_blocked = false;
 	}
 	ccif_old_cnt = ccif_new_cnt;
 }

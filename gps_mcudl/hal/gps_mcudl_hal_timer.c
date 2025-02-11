@@ -69,17 +69,18 @@ void gps_mcudl_hal_timer_deinit(void)
 	gps_mcul_hal_user_fw_own_unlock();
 }
 
-#define REFRESH 2000
+#define KCTRLD_TIMER_1S 1000
+#define CCIF_ISR_TIMER_1S 1000
 void gps_mcudl_hal_kctrld_timer_refersh(void)
 {
 	gps_dl_osal_timer_stop(&g_gps_monitor_ktimer.timer_to_monitor);
 	gps_dl_osal_timer_start(&g_gps_monitor_ktimer.timer_to_monitor,
-		REFRESH);
+		KCTRLD_TIMER_1S);
 }
 
 void gps_mcudl_hal_kctrld_timer_start(void)
 {
-	gps_dl_osal_timer_start(&g_gps_monitor_ktimer.timer_to_monitor, REFRESH);
+	gps_dl_osal_timer_start(&g_gps_monitor_ktimer.timer_to_monitor, KCTRLD_TIMER_1S);
 }
 
 void gps_mcudl_hal_kctrld_timer_stop(void)
@@ -91,12 +92,12 @@ void gps_mcudl_hal_ccif_isr_timer_refresh(void)
 {
 	gps_dl_osal_timer_stop(&g_gps_monitor_ctimer.timer_to_monitor);
 	gps_dl_osal_timer_start(&g_gps_monitor_ctimer.timer_to_monitor,
-		REFRESH);
+		CCIF_ISR_TIMER_1S);
 }
 
 void gps_mcudl_hal_ccif_isr_timer_start(void)
 {
-	gps_dl_osal_timer_start(&g_gps_monitor_ctimer.timer_to_monitor, REFRESH);
+	gps_dl_osal_timer_start(&g_gps_monitor_ctimer.timer_to_monitor, CCIF_ISR_TIMER_1S);
 }
 
 void gps_mcudl_hal_ccif_isr_timer_stop(void)

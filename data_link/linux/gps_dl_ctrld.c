@@ -464,23 +464,67 @@ void gps_dl_ctrl_thread_check_is_blocking(void)
 {
 	struct gps_dl_ctrld_context *pgps_dl_ctrld = &gps_dl_ctrld;
 	static int old_msg_cnt;
-	int curr_msg_cnt = 0, kctrld_total = 0,  kctrld_exec = 0;
+	int old_msg_cnt_rec1, old_msg_cnt_rec2;
+	int curr_msg_cnt1 = 0, kctrld_total1 = 0,  kctrld_exec1 = 0;
+	int curr_msg_cnt2 = 0, kctrld_total2 = 0,  kctrld_exec2 = 0;
+	bool gps_kctld_state_blocked_old, gps_kctld_state_blocked_new;
 
-	curr_msg_cnt = RB_COUNT(&pgps_dl_ctrld->rOpQ);
-	kctrld_total = atomic_read(&pgps_dl_ctrld->rOpQ.total_count);
-	kctrld_exec  = atomic_read(&pgps_dl_ctrld->rOpQ.exec_end_count);
+	/*1st check*/
+	curr_msg_cnt1 = RB_COUNT(&pgps_dl_ctrld->rOpQ);
+	kctrld_total1 = atomic_read(&pgps_dl_ctrld->rOpQ.total_count);
+	kctrld_exec1  = atomic_read(&pgps_dl_ctrld->rOpQ.exec_end_count);
 
 	/*gps_kctrld is blocking*/
-	if ((curr_msg_cnt == old_msg_cnt) && (kctrld_total != kctrld_exec)) {
+	if ((curr_msg_cnt1 == old_msg_cnt) && (kctrld_total1 != kctrld_exec1)) {
 		/*set gps_kctrld state blocked*/
-		g_gps_kctld_state_blocked = true;
+		gps_kctld_state_blocked_old = true;
 		/*dump gps_kctrld status*/
 		;
 	} else {
-		g_gps_kctld_state_blocked = false;
+		gps_kctld_state_blocked_old = false;
 	}
-	old_msg_cnt = curr_msg_cnt;
+	old_msg_cnt = curr_msg_cnt1;
+	old_msg_cnt_rec1 = old_msg_cnt;
 
+	/*2nd checking*/
+	curr_msg_cnt2 = RB_COUNT(&pgps_dl_ctrld->rOpQ);
+	kctrld_total2 = atomic_read(&pgps_dl_ctrld->rOpQ.total_count);
+	kctrld_exec2  = atomic_read(&pgps_dl_ctrld->rOpQ.exec_end_count);
+
+	/*gps_kctrld is blocking*/
+	if ((curr_msg_cnt2 == old_msg_cnt) && (kctrld_total2 != kctrld_exec2)) {
+		/*set gps_kctrld state blocked*/
+		gps_kctld_state_blocked_new = true;
+		/*dump gps_kctrld status*/
+		;
+	} else {
+		gps_kctld_state_blocked_new = false;
+	}
+	old_msg_cnt = curr_msg_cnt2;
+	old_msg_cnt_rec2 = old_msg_cnt;
+
+	g_gps_kctld_state_blocked = gps_kctld_state_blocked_new ? true : gps_kctld_state_blocked_old;
+
+	GDL_LOGW("1st/2nd: 0x%x 0x%x 0x%x 0x%x/0x%x 0x%x 0x%x 0x%x blocking old/new: 0x%x/0x%x, if_blocking: 0x%x\n",
+		curr_msg_cnt1, kctrld_total1, kctrld_exec1, old_msg_cnt_rec1,
+		curr_msg_cnt2, kctrld_total2, kctrld_exec2, old_msg_cnt_rec2,
+		gps_kctld_state_blocked_old, gps_kctld_state_blocked_new, g_gps_kctld_state_blocked);
 }
+
+bool g_gps_mnld_fsm_is_working;
+
+bool gps_mcudl_set_mnld_fsm_is_working(bool is_in)
+{
+	bool old = g_gps_mnld_fsm_is_working;
+
+	g_gps_mnld_fsm_is_working = is_in;
+	return old;
+}
+
+bool gps_mcudl_get_mnld_fsm_is_working(void)
+{
+	return g_gps_mnld_fsm_is_working;
+}
+
 #endif
 

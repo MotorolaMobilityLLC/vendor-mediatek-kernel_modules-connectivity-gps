@@ -149,6 +149,7 @@ void gps_mcudl_ylink_event_proc(enum gps_mcudl_yid y_id, enum gps_mcudl_ylink_ev
 			break;
 		}
 		/*dump more log*/
+		gps_mcudl_mcu2ap_rec_dump();
 
 		/*try to receive data like ccif isr*/
 		break;

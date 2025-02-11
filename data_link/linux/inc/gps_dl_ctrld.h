@@ -38,6 +38,8 @@ int gps_dl_ctrld_init(void);
 int gps_dl_ctrld_deinit(void);
 #if GPS_DL_STATE_NOTIFY
 void gps_dl_ctrl_thread_check_is_blocking(void);
+bool gps_mcudl_set_mnld_fsm_is_working(bool is_in);
+bool gps_mcudl_get_mnld_fsm_is_working(void);
 #endif
 #endif /* _GPS_DL_CTRLD_H */
 

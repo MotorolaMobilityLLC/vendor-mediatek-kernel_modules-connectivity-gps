@@ -530,7 +530,7 @@ int gps_mcudl_each_link_check(enum gps_mcudl_xid link_id, int reason)
 #if GPS_DL_STATE_NOTIFY
 		if (g_gps_kctld_state_blocked)
 			retval = -900;
-		else if (g_gps_isr_state_blocked)
+		else if (g_gps_ccif_isr_state_blocked)
 			retval = -901;
 		else if (gps_mcudl_mcu2ap_check_xlink_reader_is_pending())
 			retval = -902;
