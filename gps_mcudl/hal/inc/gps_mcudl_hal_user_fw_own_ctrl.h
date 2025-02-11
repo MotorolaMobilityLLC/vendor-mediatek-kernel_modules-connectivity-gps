@@ -19,6 +19,8 @@ enum gps_mcudl_fw_own_ctrl_user {
 	GMDL_FW_OWN_CTRL_USER_NUM
 };
 
+void gps_mcul_hal_user_fw_own_lock(void);
+void gps_mcul_hal_user_fw_own_unlock(void);
 
 void gps_mcudl_hal_user_fw_own_init(enum gps_mcudl_fw_own_ctrl_user user);
 

@@ -42,6 +42,9 @@
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT
 #include "gps_mcudl_hal_stat.h"
 #endif
+#if GPS_DL_STATE_NOTIFY
+#include "gps_mcudl_hal_timer.h"
+#endif
 
 struct gps_mcudl_ystate {
 	bool open;

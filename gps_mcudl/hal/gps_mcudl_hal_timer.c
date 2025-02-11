@@ -7,6 +7,8 @@
 #include "gps_dl_config.h"
 #include "gps_dl_ctrld.h"
 #include "gps_mcudl_hal_ccif.h"
+#include "gps_mcudl_hal_user_fw_own_ctrl.h"
+#include "gps_mcudl_ylink.h"
 
 #if GPS_DL_STATE_NOTIFY
 
@@ -77,7 +79,7 @@ void gps_mcudl_hal_kctrld_timer_refersh(void)
 
 void gps_mcudl_hal_kctrld_timer_start(void)
 {
-	gps_dl_osal_timer_start(&g_gps_monitor_ktimer.timer_to_monitor);
+	gps_dl_osal_timer_start(&g_gps_monitor_ktimer.timer_to_monitor, REFRESH);
 }
 
 void gps_mcudl_hal_kctrld_timer_stop(void)
@@ -94,7 +96,7 @@ void gps_mcudl_hal_ccif_isr_timer_refresh(void)
 
 void gps_mcudl_hal_ccif_isr_timer_start(void)
 {
-	gps_dl_osal_timer_start(&g_gps_monitor_ctimer.timer_to_monitor);
+	gps_dl_osal_timer_start(&g_gps_monitor_ctimer.timer_to_monitor, REFRESH);
 }
 
 void gps_mcudl_hal_ccif_isr_timer_stop(void)

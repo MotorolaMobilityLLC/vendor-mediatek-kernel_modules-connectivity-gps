@@ -21,6 +21,9 @@
 #include "connsyslog.h"
 #include "gps_dl_linux_plat_drv.h"
 #endif
+#if GPS_DL_STATE_NOTIFY
+#include "gps_mcudl_each_link.h"
+#endif
 
 bool gps_mcudl_hal_ccif_tx_is_busy(enum gps_mcudl_ccif_ch ch)
 {
@@ -283,7 +286,7 @@ void gps_mcudl_hal_wdt_dump(void)
 }
 
 #if GPS_DL_STATE_NOTIFY
-bool g_gps_ccif_state_blocked;
+bool g_gps_isr_state_blocked;
 
 void gps_mcudl_hal_ccif_isr_is_blocking(void)
 {

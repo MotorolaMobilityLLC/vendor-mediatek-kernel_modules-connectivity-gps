@@ -517,7 +517,7 @@ static int gps_mcudl_each_device_ioctl_inner(struct file *filp, unsigned int cmd
 			gps_mcudl_set_opp_vote_phase(GPS_MNLD_FSM_STARTING, false);
 			gps_mcudl_set_opp_vote_phase(GPS_DSP_NOT_WORKING, false);
 #if GPS_DL_STATE_NOTIFY
-			gps_mcudl_set_mnld_fsm_is_working(true)
+			gps_mcudl_set_mnld_fsm_is_working(true);
 #endif
 		} else if (arg == 3) {
 			/* MNLD: STARTED to STOPPING */

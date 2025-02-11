@@ -17,7 +17,9 @@
 #include "gps_mcudl_data_pkt_payload_struct.h"
 #include "gps_mcudl_ylink.h"
 #include "gps_mcusys_data_api.h"
-
+#if GPS_DL_STATE_NOTIFY
+#include "gps_mcudl_link_util.h"
+#endif
 
 
 #define RBUF_MAX (10*1024)
@@ -1160,7 +1162,7 @@ bool gps_mcudl_mcu2ap_check_xlink_reader_is_pending(void)
 	}
 	data_is_pending = data_is_pending && (!(!(pending_bitmask_new & golden_mask)));
 
-	MDL_LOGI"pending bitmask old/new : 0x%x/0x%x, if_pending = 0x%x", pending_bitmask_old,
+	MDL_LOGW("pending bitmask old/new : 0x%x/0x%x, if_pending = 0x%x", pending_bitmask_old,
 		pending_bitmask_new, data_is_pending);
 
 	return data_is_pending;

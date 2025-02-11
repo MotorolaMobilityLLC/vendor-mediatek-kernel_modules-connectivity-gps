@@ -467,8 +467,8 @@ void gps_dl_ctrl_thread_check_is_blocking(void)
 	int curr_msg_cnt = 0, kctrld_total = 0,  kctrld_exec = 0;
 
 	curr_msg_cnt = RB_COUNT(&pgps_dl_ctrld->rOpQ);
-	kctrld_total = atomic_get(&pgps_dl_ctrld->rOpQ.total_count);
-	kctrld_exec  = atomic_get(&pgps_dl_ctrld->rOpQ.exec_end_count);
+	kctrld_total = atomic_read(&pgps_dl_ctrld->rOpQ.total_count);
+	kctrld_exec  = atomic_read(&pgps_dl_ctrld->rOpQ.exec_end_count);
 
 	/*gps_kctrld is blocking*/
 	if ((curr_msg_cnt == old_msg_cnt) && (kctrld_total != kctrld_exec)) {
