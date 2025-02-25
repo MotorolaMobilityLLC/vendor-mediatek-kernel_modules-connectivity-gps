@@ -424,23 +424,70 @@ bool gps_dl_hw_dep_gps_control_adie_on(void)
 void gps_dl_hw_dep_adie_mt6686_dump_status(void)
 {
 #if GPS_DL_HAS_CONNINFRA_DRV
-	unsigned int adie_03C = 0, adie_B18 = 0, adie_750 = 0;
+	unsigned int adie_02C = 0, adie_03C = 0, adie_A10 = 0, adie_A18 = 0, adie_B18 = 0, adie_4FC = 0, adie_750 = 0;
+	unsigned int adie_000_r = 0, adie_000_w = 0, adie_000_r2 = 0;
+	unsigned int adie_A00_w = 0xFFFFFFFF, adie_A0C_w = 0xFFFFFFFF, adie_A10_r2 = 0;
+
 	int rd_status;
+
+	/* READ TOP: 0x02C */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0x02C, &adie_02C);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
 
 	/* READ TOP: 0x03C */
 	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0x03C, &adie_03C);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	/* READ TOP: 0xA10 */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xA10, &adie_A10);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	/* READ TOP: 0xA18 */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xA18, &adie_A18);
 	ASSERT_ZERO(rd_status, GDL_VOIDF());
 
 	/* READ TOP: 0xB18 */
 	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xB18, &adie_B18);
 	ASSERT_ZERO(rd_status, GDL_VOIDF());
 
+	/* READ TOP: 0x4FC */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0x4FC, &adie_4FC);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
 	/* READ TOP: 0x750 */
 	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0x750, &adie_750);
 	ASSERT_ZERO(rd_status, GDL_VOIDF());
 
-	GDL_LOGW("adie_dump, 03C=0x%x, B18=0x%x, 750=0x%x",
-		adie_03C, adie_B18, adie_750);
+	/* READ TOP: 0x000 */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0x000, &adie_000_r);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	/* WRITE TOP: 0x000 */
+	adie_000_w = ((~adie_000_r) & 0xFFFF);
+	rd_status = conninfra_spi_write(SYS_SPI_TOP, 0x000, adie_000_w);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	/* READ TOP: 0x000 */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0x000, &adie_000_r2);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	/* WRITE TOP: 0xA00 */
+	rd_status = conninfra_spi_write(SYS_SPI_TOP, 0xA00, adie_A00_w);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	/* WRITE TOP: 0xA0C */
+	rd_status = conninfra_spi_write(SYS_SPI_TOP, 0xA0C, adie_A0C_w);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	/* READ TOP: 0xA10 */
+	rd_status = conninfra_spi_read(SYS_SPI_TOP, 0xA10, &adie_A10_r2);
+	ASSERT_ZERO(rd_status, GDL_VOIDF());
+
+	GDL_LOGW("adie_dump, 02C=0x%x, 03C=0x%x, A10=0x%x, A18=0x%x, B18=0x%x, 4FC=0x%x, 750=0x%x",
+		adie_02C, adie_03C, adie_A10, adie_A18, adie_B18, adie_4FC, adie_750);
+
+	GDL_LOGW("adie_dump2, 000=[r:0x%x, w:0x%x, r2:0x%x], A10=0x%x",
+		adie_000_r, adie_000_w, adie_000_r2, adie_A10_r2);
 #endif
 }
 
