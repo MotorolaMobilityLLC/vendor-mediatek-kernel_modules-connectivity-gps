@@ -76,7 +76,7 @@ unsigned int gps_dl_util_get_u32(const unsigned char *p_buffer)
 		((unsigned int)(*(p_buffer + 3)) << 24));
 }
 
-#define GPS_MCU_FW_VER_STR_MAX_LEN (100)
+#define GPS_MCU_FW_VER_STR_MAX_LEN (196)
 bool gps_mcudl_link_drv_on_recv_mgmt_data(const unsigned char *p_data, unsigned int data_len)
 {
 	unsigned char cmd;
