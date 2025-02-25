@@ -52,6 +52,9 @@ const char *const gpsmdl_xid_name_list[GPS_MDLX_CH_NUM + 1] = {
 	[GPS_MDLX_LPPM]     = "LPM",
 	[GPS_MDLX_MPELOG]   = "MLG",
 	[GPS_MDLX_MPELOG2]  = "ML2",
+#if GPS_DL_STATE_NOTIFY
+	[GPS_MDLX_STATE]  = "STA",
+#endif
 	[GPS_MDLX_CH_NUM] = "???",
 };
 
