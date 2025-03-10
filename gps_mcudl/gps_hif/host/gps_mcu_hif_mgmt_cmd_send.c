@@ -9,6 +9,7 @@
 #include "gps_mcudl_data_pkt_slot.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcu_hif_host.h"
+#include "gps_mcudl_hal_ccif.h"
 #if GPS_DL_ON_LINUX
 #include <linux/jiffies.h>
 #include <linux/completion.h>
@@ -123,6 +124,28 @@ void gps_mcudl_mgmt_cmd_on_ack(enum gps_mcudl_mgmt_cmd_id cmd_id)
 		MDL_LOGW("cmd_id=%d, old_state=%d abnormal", cmd_id, old_state);
 }
 
+bool gps_mcudl_mgmt_cmd_wait_ack_extend(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_ms, int extend_cnt)
+{
+	bool is_result_okay;
+	int ext_cnt = extend_cnt;
+	struct gps_mcudl_mgmt_cmd_state_wrapper *p_wrapper;
+
+	p_wrapper = gps_mcudl_mgmt_cmd_get_state_ptr(cmd_id);
+	if (!p_wrapper) {
+		MDL_LOGW("cmd_id=%d, out of range", cmd_id);
+		return false;
+	}
+
+	do {
+		is_result_okay = gps_mcudl_mgmt_cmd_wait_ack(cmd_id, timeout_ms);
+		ext_cnt--;
+		if (is_result_okay)
+			break;
+	} while (ext_cnt > 0);
+
+	return is_result_okay;
+}
+
 bool gps_mcudl_mgmt_cmd_wait_ack(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_ms)
 {
 	struct gps_mcudl_mgmt_cmd_state_wrapper *p_wrapper;
@@ -150,7 +173,8 @@ bool gps_mcudl_mgmt_cmd_wait_ack(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_
 	} else if (p_wrapper->state == GMDL_CMD_PRE_SEND) {
 		p_wrapper->state = GMDL_CMD_WAIT_ACK;
 		wait_for_comp = true;
-	}
+	} else if (p_wrapper->state == GMDL_CMD_WAIT_ACK)
+		wait_for_comp = true;
 	gps_mcudl_slot_unprotect();
 
 	if (already_ack) {
@@ -183,12 +207,16 @@ bool gps_mcudl_mgmt_cmd_wait_ack(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_
 		is_result_okay = p_wrapper->is_result_okay;
 	else
 		is_result_okay = false;
-	p_wrapper->state = GMDL_CMD_IDLE;
+
+	if (is_result_okay)
+		p_wrapper->state = GMDL_CMD_IDLE;
+
 	gps_mcudl_slot_unprotect();
 	if (is_timeout || old_state != GMDL_CMD_ACK_AFTER_WAIT || !is_result_okay) {
 		GDL_LOGW("cmd_id=%d, is_timeout=%d, old_state=%d, is_okay=%d",
 			cmd_id, is_timeout, old_state, is_result_okay);
 		gps_mcu_hif_host_dump_ch(GPS_MCU_HIF_CH_DMALESS_MGMT);
+		gps_mcudl_hal_ccif_show_status();
 	}
 	return is_result_okay;
 }
@@ -210,7 +238,7 @@ bool gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(bool enable)
 	MDL_LOGW("write cmd3, is_ok=%d", is_okay);
 
 	if (is_okay)
-		wait_okay = gps_mcudl_mgmt_cmd_wait_ack(GPS_MCUDL_CMD_FW_LOG_CTRL, 100);
+		wait_okay = gps_mcudl_mgmt_cmd_wait_ack_extend(GPS_MCUDL_CMD_FW_LOG_CTRL, 100, 15);
 	MDL_LOGI("write cmd3, is_ok=%d, wait_ok=%d", is_okay, wait_okay);
 	return is_okay;
 }

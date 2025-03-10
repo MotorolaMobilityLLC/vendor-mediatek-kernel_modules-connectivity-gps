@@ -22,6 +22,7 @@ void gps_mcudl_mgmt_cmd_state_init_all(void);
 bool gps_mcudl_mgmt_cmd_pre_send(enum gps_mcudl_mgmt_cmd_id cmd_id);
 void gps_mcudl_mgmt_cmd_on_ack(enum gps_mcudl_mgmt_cmd_id cmd_id);
 bool gps_mcudl_mgmt_cmd_wait_ack(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_ms);
+bool gps_mcudl_mgmt_cmd_wait_ack_extend(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_ms, int extend_cnt);
 
 #endif /* _GPS_MCU_HIF_MGMT_CMD_SEND_H */
 

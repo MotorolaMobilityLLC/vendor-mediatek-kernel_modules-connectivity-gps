@@ -516,7 +516,7 @@ int gps_mcudl_plat_mcu_open(void)
 		return -1;
 	}
 
-	is_okay = gps_mcudl_mgmt_cmd_wait_ack(GPS_MCUDL_CMD_OFL_INIT, 100);
+	is_okay = gps_mcudl_mgmt_cmd_wait_ack_extend(GPS_MCUDL_CMD_OFL_INIT, 100, 15);
 	MDL_LOGW("write cmd1, wait_ok=%d", is_okay);
 	if (!is_okay)
 		g_gps_mcudl_mcu_ctrl_status = GDL_MCU_OPEN_FAIL_ON_CMD;
