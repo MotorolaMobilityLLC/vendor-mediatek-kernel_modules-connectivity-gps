@@ -94,6 +94,7 @@ void gps_mcudl_hal_may_set_link_power_flag(enum gps_mcudl_xid xid,
 	bool power_ctrl);
 extern int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op);
 extern bool g_gps_mcudl_ever_do_coredump;
+extern bool g_gps_mcudl_ever_do_pending_dump;
 
 #endif /* _GPS_MCUDL_XLINK_H */
 

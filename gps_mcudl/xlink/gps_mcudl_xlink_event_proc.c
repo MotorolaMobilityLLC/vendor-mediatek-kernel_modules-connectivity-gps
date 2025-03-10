@@ -289,7 +289,15 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 			gps_mcudl_connsys_coredump_start_wrapper();
 			g_gps_mcudl_ever_do_coredump = true;
 		}
-
+#if GPS_DL_STATE_NOTIFY
+		 else if (gps_mcudl_get_mnld_fsm_is_working() && !g_gps_mcudl_ever_do_pending_dump
+			&& !g_gps_mcudl_ever_do_coredump) {
+			/* unexpected case, mnld_fsm = true*/
+			/* normal case, mnld_fsm = false */
+			gps_mcudl_xlink_dump_all_rec();
+			g_gps_mcudl_ever_do_pending_dump = true;
+		}
+#endif
 		gps_mcudl_hal_link_power_ctrl(link_id, 0);
 		gps_mcudl_hal_conn_power_ctrl(link_id, 0);
 _close_non_mcu_link:

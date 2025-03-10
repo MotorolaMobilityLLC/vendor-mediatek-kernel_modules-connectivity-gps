@@ -336,6 +336,7 @@ void gps_mcudl_hal_may_set_link_power_flag(enum gps_mcudl_xid xid,
 
 unsigned int g_conn_xuser;
 bool g_gps_mcudl_ever_do_coredump;
+bool g_gps_mcudl_ever_do_pending_dump;
 
 int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op)
 {
@@ -348,6 +349,7 @@ int gps_mcudl_hal_conn_power_ctrl(enum gps_mcudl_xid xid, int op)
 				op, g_conn_xuser, g_gps_conninfa_on, g_gps_tia_on);
 
 			g_gps_mcudl_ever_do_coredump = false;
+			g_gps_mcudl_ever_do_pending_dump = false;
 			gps_dl_log_info_show();
 			gps_mcudl_vote_to_deny_opp0_for_coinninfra_on(true);
 			if (!gps_dl_hal_conn_infra_driver_on()) {
