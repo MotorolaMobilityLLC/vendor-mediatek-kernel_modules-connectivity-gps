@@ -18,6 +18,7 @@ enum GDL_RET_STATUS gps_mcudl_link_try_wait_on(enum gps_mcudl_xid x_id,
 
 void gps_mcudl_link_open_wait(enum gps_mcudl_xid link_id, long *p_sigval);
 void gps_mcudl_link_open_ack(enum gps_mcudl_xid x_id, bool okay);
+void gps_mcudl_link_try_open_fail_ack_on_reset(enum gps_mcudl_xid link_id);
 
 void gps_mcudl_link_close_wait(enum gps_mcudl_xid link_id, long *p_sigval);
 void gps_mcudl_link_close_ack(enum gps_mcudl_xid link_id);

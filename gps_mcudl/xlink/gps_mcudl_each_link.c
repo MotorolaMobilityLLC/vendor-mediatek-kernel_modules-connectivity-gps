@@ -139,14 +139,31 @@ int gps_mcudl_each_link_open(enum gps_mcudl_xid link_id)
 		if (sigval == 0) {
 			/* Not signalled */
 			okay = gps_mcudl_each_link_get_bool_flag(link_id, LINK_OPEN_RESULT_OKAY);
-			gps_mcudl_each_link_give_big_lock(link_id);
-
-			if (okay)
+			if (okay) {
+				gps_mcudl_each_link_give_big_lock(link_id);
 				retval = 0;
-			else {
-				gps_mcudl_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
-				retval = -EBUSY;
+				break;
 			}
+
+			/* Arrives here might be by:
+			 * 1. gps_mcudl_link_open_ack okay=false
+			 * 2. gps_mcudl_link_try_open_fail_ack_on_reset
+			 */
+			gps_mcudl_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
+
+			/* The state2 maybe: CLOSING or RESETTING or RESET_DONE */
+			state2 = gps_mcudl_each_link_get_state(link_id);
+			if (state2 == LINK_RESET_DONE)
+				gps_mcudl_each_link_set_state(link_id, LINK_CLOSED);
+
+			/* In case of double wake up */
+			gdl_ret = gps_mcudl_link_try_wait_on(link_id, GPS_DL_WAIT_OPEN_CLOSE);
+
+			gps_mcudl_each_link_give_big_lock(link_id);
+			MDL_LOGXW_ONF(link_id, "try_wait=%s, corner case 4, st=%s",
+				gdl_ret_to_name(gdl_ret),
+				gps_dl_link_state_name(state2));
+			retval = -EBUSY;
 			break;
 		}
 

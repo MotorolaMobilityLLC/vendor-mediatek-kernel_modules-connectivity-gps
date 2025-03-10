@@ -79,6 +79,13 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 			break;
 
 		case LINK_OPENING:
+			gps_mcudl_link_try_open_fail_ack_on_reset(x_id);
+			need_wait[x_id] = true;
+			p->state_for_user = LINK_RESETTING;
+			p->reset_level = level;
+			to_send_reset_event = true;
+			break;
+
 		case LINK_OPENED:
 		case LINK_CLOSING:
 		case LINK_RESET_DONE:
