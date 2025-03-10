@@ -474,13 +474,6 @@ static const struct file_operations gps_emi_fops = {
 };
 
 /*****************************************************************************/
-#ifdef CONFIG_OF
-static const struct of_device_id apgps_of_ids[] = {
-	{ .compatible = "mediatek,gps_emi-v1", },
-	{}
-};
-#endif
-/*****************************************************************************/
 static int gps_emi_mod_init(void)
 {
 	int ret = 0;
