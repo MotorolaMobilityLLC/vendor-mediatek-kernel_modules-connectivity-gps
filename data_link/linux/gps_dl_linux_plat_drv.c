@@ -477,7 +477,11 @@ static int gps_dl_get_reserved_memory(struct device *dev)
 static int gps_dl_get_reserved_memory_lk(struct device *dev)
 {
 	struct device_node *node;
+#if GPS_DL_GET_RSV_MEM_IN_MODULE_BY_GPS_WRITE
+	unsigned int phy_addr = 0;
+#else
 	unsigned long long phy_addr = 0;
+#endif
 	unsigned int phy_size = 0;
 
 	node = dev->of_node;
@@ -485,12 +489,19 @@ static int gps_dl_get_reserved_memory_lk(struct device *dev)
 		pr_info("gps_dl_get_reserved_memory_lk: unable to get consys node\n");
 		return -1;
 	}
-
+	/*lk2 gps write emi-addr with 32bit api on 6893/6879/6895*/
+	/*lk2 conninfra write emi-addr with 64bit after T's project*/
+#if GPS_DL_GET_RSV_MEM_IN_MODULE_BY_GPS_WRITE
+	if (of_property_read_u32(node, "emi-addr", &phy_addr)) {
+		pr_info("gps_dl_get_reserved_memory_lk: unable to get emi_addr\n");
+		return -1;
+	}
+#else
 	if (of_property_read_u64(node, "emi-addr", &phy_addr)) {
 		pr_info("gps_dl_get_reserved_memory_lk: unable to get emi_addr\n");
 		return -1;
 	}
-
+#endif
 	if (of_property_read_u32(node, "emi-size", &phy_size)) {
 		pr_info("gps_dl_get_reserved_memory_lk: unable to get emi_size\n");
 		return -1;
