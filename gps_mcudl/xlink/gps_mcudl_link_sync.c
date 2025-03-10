@@ -60,21 +60,27 @@ void gps_mcudl_link_open_wait(enum gps_mcudl_xid link_id, long *p_sigval)
 		; /* show warnning */
 }
 
-/* Might be in ISR, avoid using mutex */
-void gps_mcudl_link_try_open_fail_ack_on_reset(enum gps_mcudl_xid link_id)
+void gps_mcudl_link_open_fail_ack_on_reset(enum gps_mcudl_xid link_id)
 {
 	struct gps_mcudl_each_link *p = gps_mcudl_link_get(link_id);
-	bool user_still_open = gps_mcudl_each_link_get_bool_flag(link_id, LINK_USER_OPEN);
+	bool user_still_open = false;
 
-	MDL_LOGXD_ONF(link_id, "user_still_open=%d", user_still_open);
-	if (!user_still_open)
-		return;
+	gps_mcudl_each_link_take_big_lock(link_id, GDL_LOCK_FOR_OPEN_DONE);
+	/* Caller might have checked user_still_open==true before,
+	 * here in big lock scope check it again for sure
+	 */
+	user_still_open = gps_mcudl_each_link_get_bool_flag(link_id, LINK_USER_OPEN);
+	if (user_still_open) {
+		/* Set result fail due to reset */
+		gps_mcudl_each_link_set_bool_flag(link_id, LINK_OPEN_RESULT_OKAY, false);
 
-	/* Set result fail due to reset */
-	gps_mcudl_each_link_set_bool_flag(link_id, LINK_OPEN_RESULT_OKAY, false);
-
-	/* Make gps_mcudl_link_open_wait return */
-	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
+		/* Make gps_mcudl_link_open_wait return and reach corner case 4 in
+		 * gps_mcudl_each_link_open
+		 */
+		gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_OPEN_CLOSE]);
+	}
+	gps_mcudl_each_link_give_big_lock(link_id);
+	MDL_LOGXW_ONF(link_id, "user = %d", user_still_open);
 }
 
 void gps_mcudl_link_open_ack(enum gps_mcudl_xid link_id, bool okay)
@@ -245,6 +251,12 @@ static void gps_mcudl_link_reset_ack_inner(enum gps_mcudl_xid link_id, bool post
 	 * if any other link not reset done (see all_clear_done print).
 	 */
 	gps_dl_link_wake_up(&p->waitables[GPS_DL_WAIT_RESET]);
+
+	if (!user_still_open)
+		return;
+
+	/* if user_still_open, try to wakeup waiter to change state from RESET_DONE to CLOSED */
+	gps_mcudl_link_open_fail_ack_on_reset(link_id);
 }
 
 void gps_mcudl_link_reset_ack(enum gps_mcudl_xid link_id)

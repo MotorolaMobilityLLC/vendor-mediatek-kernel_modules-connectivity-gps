@@ -42,6 +42,7 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 	bool need_wait[GPS_MDLX_CH_NUM] = {false};
 	bool send_reset[GPS_MDLX_CH_NUM] = {false};
 	bool to_send_reset_event = false;
+	bool user_still_open = false;
 	long sigval;
 	enum GDL_RET_STATUS wait_status;
 
@@ -60,6 +61,7 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 		gps_mcudl_each_link_spin_lock_take(x_id, GPS_DL_SPINLOCK_FOR_LINK_STATE);
 		old_state = p->state_for_user;
 		old_level = p->reset_level;
+		user_still_open = p->sub_states.user_open;
 
 		switch (old_state) {
 		case LINK_CLOSED:
@@ -79,13 +81,6 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 			break;
 
 		case LINK_OPENING:
-			gps_mcudl_link_try_open_fail_ack_on_reset(x_id);
-			need_wait[x_id] = true;
-			p->state_for_user = LINK_RESETTING;
-			p->reset_level = level;
-			to_send_reset_event = true;
-			break;
-
 		case LINK_OPENED:
 		case LINK_CLOSING:
 		case LINK_RESET_DONE:
@@ -125,9 +120,9 @@ enum GDL_RET_STATUS gps_mcudl_reset_level_set_and_trigger(
 			continue;
 
 		MDL_LOGXE_STA(x_id,
-			"state change: %s -> %s, level = %d (%d -> %d), is_sent = %d, to_wait = %d",
+			"state change: %s -> %s, level = %d (%d -> %d), user = %d, is_sent = %d, to_wait = %d",
 			gps_dl_link_state_name(old_state), gps_dl_link_state_name(new_state),
-			level, old_level, new_level,
+			level, old_level, new_level, user_still_open,
 			to_send_reset_event, need_wait[x_id]);
 	}
 

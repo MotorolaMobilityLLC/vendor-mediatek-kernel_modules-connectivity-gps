@@ -147,7 +147,7 @@ int gps_mcudl_each_link_open(enum gps_mcudl_xid link_id)
 
 			/* Arrives here might be by:
 			 * 1. gps_mcudl_link_open_ack okay=false
-			 * 2. gps_mcudl_link_try_open_fail_ack_on_reset
+			 * 2. gps_mcudl_link_open_fail_ack_on_reset
 			 */
 			gps_mcudl_each_link_set_bool_flag(link_id, LINK_USER_OPEN, false);
 
