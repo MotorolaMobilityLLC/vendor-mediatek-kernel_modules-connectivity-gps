@@ -24,5 +24,9 @@ void gps_mcudl_mgmt_cmd_on_ack(enum gps_mcudl_mgmt_cmd_id cmd_id);
 bool gps_mcudl_mgmt_cmd_wait_ack(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_ms);
 bool gps_mcudl_mgmt_cmd_wait_ack_extend(enum gps_mcudl_mgmt_cmd_id cmd_id, int timeout_ms, int extend_cnt);
 
+void gps_mcudl_mgmt_cmd1_test_param_set(unsigned int data_4byte);
+void gps_mcudl_mgmt_cmd1_test_param_clear(void);
+unsigned int gps_mcudl_mgmt_cmd1_test_param_get(void);
+
 #endif /* _GPS_MCU_HIF_MGMT_CMD_SEND_H */
 

@@ -86,6 +86,7 @@ void gps_mcudl_xlink_test_query_ver(void);
 void gps_mcudl_xlink_test_wakeup_ap_later(unsigned int data);
 void gps_mcudl_xlink_test_send_4byte_mgmt_data(unsigned int data_4byte);
 void gps_mcudl_xlink_test_bypass_mcu2ap_data(bool bypass);
+void gps_mcudl_xlink_test_set_cmd1_param_data(unsigned int data);
 
 void gps_mcudl_xlink_fw_log_ctrl(bool on);
 

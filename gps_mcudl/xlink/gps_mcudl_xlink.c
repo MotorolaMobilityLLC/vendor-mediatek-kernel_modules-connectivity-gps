@@ -11,6 +11,7 @@
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcudl_data_pkt_host_api.h"
 #include "gps_mcu_hif_api.h"
+#include "gps_mcu_hif_mgmt_cmd_send.h"
 
 
 bool gps_mcudl_xlink_is_connected_to_mcu_lifecycle(enum gps_mcudl_xid x_id)
@@ -181,5 +182,10 @@ void gps_mcudl_xlink_test_bypass_mcu2ap_data(bool bypass)
 {
 	MDL_LOGW("bypass=%d", bypass);
 	gps_mcudl_mcu2ap_test_bypass_set(bypass);
+}
+
+void gps_mcudl_xlink_test_set_cmd1_param_data(unsigned int data_4byte)
+{
+	gps_mcudl_mgmt_cmd1_test_param_set(data_4byte);
 }
 

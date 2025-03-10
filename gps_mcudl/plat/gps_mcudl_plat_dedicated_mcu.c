@@ -469,6 +469,8 @@ enum gps_mcudl_plat_mcu_ctrl_status g_gps_mcudl_mcu_ctrl_status;
 int gps_mcudl_plat_mcu_open(void)
 {
 	bool is_okay;
+	unsigned int cmd1_test_param;
+	unsigned char cmd1_data_buf[5];
 
 #if (GPS_DL_HAS_MCUDL_FW && GPS_DL_HAS_MCUDL_HAL)
 	is_okay = gps_mcudl_xlink_on(&c_gps_mcudl_rom_only_fw_list);
@@ -509,8 +511,19 @@ int gps_mcudl_plat_mcu_open(void)
 	}
 
 	gps_mcudl_mgmt_cmd_pre_send(GPS_MCUDL_CMD_OFL_INIT);
-	is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x01", 1);
-	MDL_LOGW("write cmd1, is_ok=%d", is_okay);
+	cmd1_test_param = gps_mcudl_mgmt_cmd1_test_param_get();
+	if (cmd1_test_param == 0)
+		is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, "\x01", 1);
+	else {
+		cmd1_data_buf[0] = 0x01;
+		cmd1_data_buf[1] = (unsigned char)((cmd1_test_param >>  0) & 0xFF);
+		cmd1_data_buf[2] = (unsigned char)((cmd1_test_param >>  8) & 0xFF);
+		cmd1_data_buf[3] = (unsigned char)((cmd1_test_param >> 16) & 0xFF);
+		cmd1_data_buf[4] = (unsigned char)((cmd1_test_param >> 24) & 0xFF);
+		gps_mcudl_mgmt_cmd1_test_param_clear();
+		is_okay = gps_mcu_hif_send(GPS_MCU_HIF_CH_DMALESS_MGMT, &cmd1_data_buf[0], 5);
+	}
+	MDL_LOGW("write cmd1, is_ok=%d, test_val=0x%08x", is_okay, cmd1_test_param);
 	if (!is_okay) {
 		g_gps_mcudl_mcu_ctrl_status = GDL_MCU_OPEN_FAIL_ON_CMD;
 		return -1;

@@ -243,3 +243,20 @@ bool gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(bool enable)
 	return is_okay;
 }
 
+
+unsigned int g_gps_mcudl_mgmt_cmd1_test_param;
+
+void gps_mcudl_mgmt_cmd1_test_param_set(unsigned int data_4byte)
+{
+	g_gps_mcudl_mgmt_cmd1_test_param = data_4byte;
+}
+
+void gps_mcudl_mgmt_cmd1_test_param_clear(void)
+{
+	g_gps_mcudl_mgmt_cmd1_test_param = 0;
+}
+
+unsigned int gps_mcudl_mgmt_cmd1_test_param_get(void)
+{
+	return g_gps_mcudl_mgmt_cmd1_test_param;
+}

@@ -173,6 +173,8 @@ int gps_dl_procfs_trigger_reset(int y, int z)
 		gps_mcudl_xlink_test_bypass_mcu2ap_data(z != 0);
 	else if (y == 0x12)
 		gps_mcudl_trigger_gps_subsys_reset(true, "GNSS intended for testing");
+	else if (y == 0x13)
+		gps_mcudl_xlink_test_set_cmd1_param_data((unsigned int)z);
 #endif
 	return 0;
 }
