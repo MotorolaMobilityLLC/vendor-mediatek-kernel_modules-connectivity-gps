@@ -180,7 +180,7 @@ _try_again:
 	if (retval == 0) {
 		p_ctx->len -= copy_len;
 		if (p_ctx->len > 0)
-			memcpy(&p_ctx->buf[copy_len], &p_ctx->buf[0], p_ctx->len);
+			memcpy(&p_ctx->buf[0], &p_ctx->buf[copy_len], p_ctx->len);
 		retval = copy_len;
 	} else
 		retval = -EFAULT;
