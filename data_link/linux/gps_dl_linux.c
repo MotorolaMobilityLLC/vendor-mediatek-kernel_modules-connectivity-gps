@@ -76,6 +76,12 @@ int gps_dl_linux_irqs_register(struct gps_each_irq *p_irqs, int irq_num)
 			continue; /* not stop even fail */
 		}
 
+		i_ret = enable_irq_wake(irq_id);
+		if (i_ret) {
+			GDL_LOGW_INI("i = %d, irq_id = %d, name = %s, flags = 0x%lx, enable_irq_wake failed",
+				i, irq_id, p_irqs[i].cfg.name, sys_irq_flags);
+		}
+
 		/* The init status is unmask, mask them here */
 		gps_dl_irq_mask(irq_id, GPS_DL_IRQ_CTRL_FROM_THREAD);
 		p_irqs[i].register_done = true;
