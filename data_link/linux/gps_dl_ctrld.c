@@ -97,13 +97,26 @@ static int gps_dl_opfunc_ylink_event_proc(struct gps_dl_osal_op_dat *pOpDat)
 unsigned int gps_dl_wait_event_checker(struct gps_dl_osal_thread *pThread)
 {
 	struct gps_dl_ctrld_context *pgps_dl_ctrld = NULL;
+	struct gps_dl_osal_lxop_q *pOpQ = NULL;
+	unsigned int has_data;
+	int iRet;
 
-	if (pThread) {
-		pgps_dl_ctrld = (struct gps_dl_ctrld_context *) (pThread->pThreadData);
-		return !RB_EMPTY(&pgps_dl_ctrld->rOpQ);
+	if (pThread == NULL) {
+		GDL_LOGE_EVT("pThread null");
+		return 0;
 	}
-	GDL_LOGE_EVT("pThread null");
-	return 0;
+
+	pgps_dl_ctrld = (struct gps_dl_ctrld_context *) (pThread->pThreadData);
+	pOpQ = &pgps_dl_ctrld->rOpQ;
+	iRet = gps_dl_osal_lock_unsleepable_lock(&pOpQ->spin_lock);
+	if (iRet) {
+		GDL_LOGE("gps_dl_osal_lock_sleepable_lock iRet(%d)", iRet);
+		return 0;
+	}
+	/* acquire lock success */
+	has_data = !RB_EMPTY(&pgps_dl_ctrld->rOpQ);
+	gps_dl_osal_unlock_unsleepable_lock(&pOpQ->spin_lock);
+	return has_data;
 }
 
 static int gps_dl_core_opid(struct gps_dl_osal_op_dat *pOpDat)
