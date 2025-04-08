@@ -105,19 +105,23 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 		iounmap(pConnGPIObaseaddr);                 \
 	} while (0)
 
-#define GDL_HW_SET_AP_ENTRY(Field, Shft, Mask, Value) do {     \
-		conn_reg val, rd_val;                                   \
-		void __iomem *pConnGPIObaseaddr;               \
-		pConnGPIObaseaddr = ioremap(Field, 0x4);        \
-		val = __raw_readl(pConnGPIObaseaddr);     \
-		GDL_LOGD("RD : addr = 0x%08x, r_val = 0x%08x", Field, val);			\
-		val &= (~Mask);                          \
-		val |= ((Value << Shft) & Mask);  \
-		gps_dl_linux_sync_writel(val, pConnGPIObaseaddr);     \
-		rd_val = __raw_readl(pConnGPIObaseaddr);     \
-		GDL_LOGD("WR : addr = 0x%08x, w_val = 0x%08x, read_back = 0x%08x,", Field, val, rd_val);	\
-		iounmap(pConnGPIObaseaddr);                 \
-	} while (0)
+#define GDL_HW_SET_AP_ENTRY(Field, Shft, Mask, Value) do { \
+	conn_reg val, rd_val; \
+	void __iomem *pConnGPIObaseaddr; \
+	pConnGPIObaseaddr = ioremap(Field, 0x4); \
+	if (pConnGPIObaseaddr) { \
+		val = __raw_readl(pConnGPIObaseaddr); \
+		GDL_LOGD("RD : addr = 0x%08x, r_val = 0x%08x", Field, val); \
+		val &= (~Mask); \
+		val |= ((Value << Shft) & Mask); \
+		gps_dl_linux_sync_writel(val, pConnGPIObaseaddr); \
+		rd_val = __raw_readl(pConnGPIObaseaddr); \
+		GDL_LOGD("WR : addr = 0x%08x, w_val = 0x%08x, read_back = 0x%08x", Field, val, rd_val); \
+		iounmap(pConnGPIObaseaddr); \
+	} else { \
+		GDL_LOGE("ioremap failed for addr = 0x%08x", Field); \
+	} \
+} while (0)
 
 #define GDL_HW_GET_AP_ENTRY(Field) do {     \
 		conn_reg val;                                   \
@@ -128,15 +132,19 @@ unsigned int gps_dl_bus_read(enum GPS_DL_BUS_ENUM bus_id, unsigned int bus_addr)
 		iounmap(pConnGPIObaseaddr);          \
 	} while (0)
 
-#define GDL_HW_GET_AP_ENTRY2(Field) ({      \
-		conn_reg val;                           \
-		void __iomem *pConnGPIObaseaddr;        \
-		pConnGPIObaseaddr = ioremap(Field, 0x4);\
-		val = __raw_readl(pConnGPIObaseaddr);   \
+#define GDL_HW_GET_AP_ENTRY2(Field) ({ \
+	conn_reg val = 0; \
+	void __iomem *pConnGPIObaseaddr; \
+	pConnGPIObaseaddr = ioremap(Field, 0x4); \
+	if (pConnGPIObaseaddr) { \
+		val = __raw_readl(pConnGPIObaseaddr); \
 		GDL_LOGD("RD : addr = 0x%08x, r_val = 0x%08x", Field, val); \
-		iounmap(pConnGPIObaseaddr);             \
-		val;                                    \
-		})
+		iounmap(pConnGPIObaseaddr); \
+	} else { \
+		GDL_LOGE("ioremap failed for addr = 0x%08x", Field); \
+	} \
+	val; \
+})
 
 #define GDL_HW_SET_ENTRY(Bus_ID, Field, Value) do {     \
 		conn_reg val;                                   \
