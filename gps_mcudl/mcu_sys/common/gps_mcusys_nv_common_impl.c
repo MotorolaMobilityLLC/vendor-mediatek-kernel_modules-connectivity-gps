@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2021 MediaTek Inc.
+ * Copyright (c) 2021-2025 MediaTek Inc.
  */
 #include "gps_mcusys_fsm.h"
 #include "gps_mcusys_nv_data.h"
@@ -8,6 +8,7 @@
 #include "gps_mcusys_nv_data_layout.h"
 #include "gps_mcusys_nv_common_impl.h"
 #include "gps_mcusys_nv_per_side_macro.h"
+#include "gps_dl_time_tick.h"
 
 struct gps_mcusys_nv_data_sub_header *gps_mcusys_nv_common_get_local_sub_hdr(
 	struct gps_mcusys_nv_data_header *p_hdr, bool is_on_mcu)
@@ -97,6 +98,48 @@ bool gps_mcusys_nv_common_shared_mem_take(
 	return true;
 }
 
+#define GPS_NV_TRY_INTERVAL_MIN_US 20
+#define GPS_NV_TRY_INTERVAL_MAX_US 40
+#define GPS_NV_MAX_WAIT_TIME_US 1500
+#define GPS_NV_MAX_RETRY_CNT 50
+
+bool gps_mcusys_nv_common_shared_mem_take_with_retry(
+	enum gps_mcusys_nv_data_id nv_id, bool is_on_mcu)
+{
+	bool is_okay;
+	unsigned int try_cnt = 0;
+	unsigned int try_start_tick = 0;
+	unsigned int curr_tick = 0;
+	unsigned long d_us;
+
+	try_start_tick = gps_dl_tick_get_us();
+	do {
+		try_cnt++;
+		is_okay = gps_mcusys_nv_common_shared_mem_take(nv_id, is_on_mcu);
+		curr_tick = gps_dl_tick_get_us();
+		d_us = curr_tick - try_start_tick;
+
+		/* No need to show log for 1st trial */
+		if (try_cnt > 1) {
+			GPS_OFL_TRC("nv_id=%d, try_cnt=%u, d_us=%lu, is_okay=%d",
+				nv_id, try_cnt, d_us, is_okay);
+		}
+
+		if (is_okay)
+			return true;
+
+		if (!gps_mcusys_nv_common_check_header(nv_id))
+			break;
+
+		if (d_us >= GPS_NV_MAX_WAIT_TIME_US || try_cnt >= GPS_NV_MAX_RETRY_CNT)
+			break;
+
+		gps_dl_sleep_us(GPS_NV_TRY_INTERVAL_MIN_US, GPS_NV_TRY_INTERVAL_MAX_US);
+	} while (1);
+
+	return false;
+}
+
 void gps_mcusys_nv_common_shared_mem_give(
 	enum gps_mcusys_nv_data_id nv_id, bool is_on_mcu)
 {
@@ -140,7 +183,7 @@ int gps_mcusys_nv_common_shared_mem_invalidate2(enum gps_mcusys_nv_data_id nv_id
 	block_size = p_local->block_size;
 	old_local_size = p_local->data_size;
 
-	take_okay = gps_mcusys_nv_common_shared_mem_take(nv_id, NV_IS_ON_MCU);
+	take_okay = gps_mcusys_nv_common_shared_mem_take_with_retry(nv_id, NV_IS_ON_MCU);
 	if (!take_okay) {
 		GPS_OFL_TRC("nv_id=%d, block_size=%d, local_size=%d, take failed",
 				   nv_id, block_size, old_local_size);
@@ -242,7 +285,7 @@ int gps_mcusys_nv_common_shared_mem_write2(enum gps_mcusys_nv_data_id nv_id,
 	}
 
 	p_dst = (gpsmdl_u8 *)&p_hdr->data_start[0];
-	take_okay = gps_mcusys_nv_common_shared_mem_take(nv_id, NV_IS_ON_MCU);
+	take_okay = gps_mcusys_nv_common_shared_mem_take_with_retry(nv_id, NV_IS_ON_MCU);
 	if (!take_okay) {
 		GPS_OFL_TRC("nv_id=%d, block_size=%d, dat_len=%d, take failed",
 				   nv_id, block_size, dat_len);
@@ -334,7 +377,7 @@ int gps_mcusys_nv_common_shared_mem_read2(enum gps_mcusys_nv_data_id nv_id,
 	_max = offset + buf_len;
 	read_len = buf_len;
 
-	take_okay = gps_mcusys_nv_common_shared_mem_take(nv_id, NV_IS_ON_MCU);
+	take_okay = gps_mcusys_nv_common_shared_mem_take_with_retry(nv_id, NV_IS_ON_MCU);
 	if (!take_okay) {
 		GPS_OFL_TRC("nv_id=%d, buf_len=%d, take failed",
 			nv_id, buf_len);
@@ -422,7 +465,7 @@ int gps_mcusys_nv_common_shared_mem_get_info(enum gps_mcusys_nv_data_id nv_id,
 	p_local = gps_mcusys_nv_common_get_local_sub_hdr(p_hdr, NV_IS_ON_MCU);
 	p_remote = gps_mcusys_nv_common_get_remote_sub_hdr(p_hdr, NV_IS_ON_MCU);
 
-	take_okay = gps_mcusys_nv_common_shared_mem_take(nv_id, NV_IS_ON_MCU);
+	take_okay = gps_mcusys_nv_common_shared_mem_take_with_retry(nv_id, NV_IS_ON_MCU);
 	if (!take_okay) {
 		GPS_OFL_TRC("nv_id=%d, take failed", nv_id);
 		return -1;
