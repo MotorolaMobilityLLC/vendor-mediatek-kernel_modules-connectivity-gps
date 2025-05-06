@@ -349,7 +349,8 @@ bool gps_dl_hw_gps_common_on_inner(void)
 	* MT6631 for BT/WIFI and MT6686 for GNSS
 	* so we need to check conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID) again for GNSS part
 	*/
-	if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878) {
+	if ((gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878) ||
+		(gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6858)) {
 		if (adie_ver == 0x6631) {
 			adie_ver = conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID);
 			if (adie_ver == 0x6686)
@@ -380,7 +381,11 @@ bool gps_dl_hw_gps_common_on_inner(void)
 	}
 #if GPS_DL_DO_ADIE2_ACTION
 	if (adie_ver == 0x6686) {
-		gps_dl_hw_dep_gps_control_adie_on_6878();
+		if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878)
+			gps_dl_hw_dep_gps_control_adie_on_6878();
+		else if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6858)
+			gps_dl_hw_dep_gps_control_adie_on_6858();
+
 		gps_dl_hw_dep_gps_get_ecid_info();
 	}
 #endif

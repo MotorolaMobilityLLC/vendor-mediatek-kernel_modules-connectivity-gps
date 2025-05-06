@@ -201,6 +201,13 @@ bool gps_dl_hal_conn_infra_ver_is_mt6893(void)
 	return (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6893);
 }
 
+bool gps_dl_hal_conn_infra_ver_is_mt6858(void)
+{
+	/* is_mt6893 valid after gps_dl_hw_gps_common_on */
+	return (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6858);
+}
+
+
 struct gps_dl_gps_awake_status g_gps_dl_awake_status;
 void gps_dl_hal_set_gps_awake_status(bool is_gps_awake)
 {

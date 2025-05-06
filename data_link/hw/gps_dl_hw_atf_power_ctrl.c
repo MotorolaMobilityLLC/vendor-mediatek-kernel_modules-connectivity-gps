@@ -248,9 +248,11 @@ int gps_dl_hw_gps_common_off(void)
 
 #if GPS_DL_DO_ADIE2_ACTION
 	/*mt6878 need close 6686 adie*/
-	if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878) {
-		if (gps_dl_hal_get_adie_ver() == 0x6686)
+	if (gps_dl_hal_get_adie_ver() == 0x6686) {
+		if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878)
 			gps_dl_hw_dep_gps_control_adie_off_6878();
+		else if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6858)
+			gps_dl_hw_dep_gps_control_adie_off_6858();
 	}
 #endif
 

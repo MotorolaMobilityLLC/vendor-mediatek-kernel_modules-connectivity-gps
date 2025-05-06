@@ -10,6 +10,7 @@
 #include "conn_infra/conn_infra_cfg_on.h"
 #include "conn_infra/conn_host_csr_top.h"
 #include "conn_infra/conn_wt_slp_ctl_reg.h"
+#include "conn_infra/inst2_conn_wt_slp_ctl_reg.h"
 #include "conn_infra/conn_rf_spi_mst_reg.h"
 #include "conn_infra/conn_infra_bus_cr.h"
 #include "conn_infra/conn_infra_rgu_on.h"
@@ -217,6 +218,16 @@
 
 #define GPS_CFG_ON_GPS_CLKGEN1_CTL_CR_GPS_DIGCK_DIV_EN \
 	BGF_GPS_CFG_GPS_CLKGEN1_CTL_CR_GPS_DIGCK_DIV_EN
+
+/*mt6878 6686*/
+#define GDL_HW_ADIE_TOP_CLK2_EN_6686(val) do { \
+			GDL_HW_SET_CONN_INFRA_ENTRY( \
+				INST2_CONN_WT_SLP_CTL_REG_WB_SLP_TOP_CK_5_WB_SLP_TOP_CK_5, val); \
+			if (val) { \
+				GDL_HW_SET_CONN_INFRA_ENTRY( \
+					INST2_CONN_WT_SLP_CTL_REG_WB_GPS_CTL_GPS_HW_MODE_EN, 1); \
+			} \
+		} while (0)
 
 /* For MT6893:
  * 8: HW TICK H/L, BG tick H/L, TX_END/TX_RD, RX_END/RX_WR

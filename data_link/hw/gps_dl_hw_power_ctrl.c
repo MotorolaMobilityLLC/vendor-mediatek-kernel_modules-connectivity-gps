@@ -47,15 +47,19 @@ bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 	bool poll_okay = false;
 
 	if (enable) {
+		GDL_HW_SET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS_WRITE_KEY, 0x5450);
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
 		GDL_HW_MAY_WAIT_CONN_INFRA_SLP_PROT_DISABLE_ACK(&poll_okay);
 		if (!poll_okay) {
 			GDL_LOGE("_fail_conn_slp_prot_not_okay");
 			return false; /* not okay */
 		}
-	} else
+	} else {
+		GDL_HW_SET_CONN_INFRA_ENTRY(
+			CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS_WRITE_KEY, 0x5450);
 		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 0);
-
+	}
 	return true;
 }
 
@@ -184,9 +188,11 @@ int gps_dl_hw_gps_common_off(void)
 
 #if GPS_DL_DO_ADIE2_ACTION
 	/*mt6878 need close 6686 adie*/
-	if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878) {
-		if (gps_dl_hal_get_adie_ver() == 0x6686)
+	if (gps_dl_hal_get_adie_ver() == 0x6686) {
+		if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878)
 			gps_dl_hw_dep_gps_control_adie_off_6878();
+		else if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6858)
+			gps_dl_hw_dep_gps_control_adie_off_6858();
 	}
 #endif
 

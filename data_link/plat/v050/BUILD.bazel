@@ -96,6 +96,7 @@ conninfra_include_dirs=[
 #Need Check, adie files depending on project
 gps_dl_adie_srcs=[
     "gps_dl_hw_dep_adie_ctrl_v050_1.c",
+    "gps_dl_hw_dep_adie_ctrl_v050_3.c",
 ]
 
 #Need Check, ATF files

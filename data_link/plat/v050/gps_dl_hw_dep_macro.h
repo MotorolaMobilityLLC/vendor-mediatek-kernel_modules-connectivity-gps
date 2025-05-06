@@ -30,7 +30,8 @@
 			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6983)   ||    \
 			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6897)   ||    \
 			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6878)   ||    \
-			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6899))        \
+			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6899)   ||    \
+			(*p_poll_ver == GDL_HW_CONN_INFRA_VER_MT6858))        \
 	)
 
 #define GDL_HW_CHECK_BGF_IP_VER(p_poll_okay, p_poll_ver)             \
@@ -40,7 +41,8 @@
 			(*p_poll_ver == GDL_HW_BGF_VER_MT6893)  ||    \
 			(*p_poll_ver == GDL_HW_BGF_VER_MT6897)  ||    \
 			(*p_poll_ver == GDL_HW_BGF_VER_MT6878)  ||    \
-			(*p_poll_ver == GDL_HW_BGF_VER_MT6899))       \
+			(*p_poll_ver == GDL_HW_BGF_VER_MT6899)  ||    \
+			(*p_poll_ver == GDL_HW_BGF_VER_MT6858))       \
 	)
 
 #define GDL_HW_SET_EMI_REMAP_FIELD \
