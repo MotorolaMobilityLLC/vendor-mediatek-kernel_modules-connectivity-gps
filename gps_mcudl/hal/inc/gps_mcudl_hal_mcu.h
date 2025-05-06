@@ -28,7 +28,7 @@ bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list);
 void gps_mcudl_hal_mcu_do_off(void);
 bool gps_mcudl_hal_mcu_set_fw_own(void);
 bool gps_mcudl_hal_mcu_clr_fw_own(void);
-void gps_mcudl_hal_mcu_show_status(void);
+void gps_mcudl_hal_mcu_show_status(bool is_readable);
 void gps_mcudl_hal_mcu_show_pc_log(void);
 bool gps_mcudl_hal_bg_is_readable(bool check_conn_off);
 void gps_mcudl_hal_vdnr_dump(void);

@@ -389,20 +389,26 @@ void gps_mcudl_hw_mcu_do_off(void)
 		CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_GPSSYS_CPU_SW_RST_B, 0);
 }
 
-void gps_mcudl_hw_mcu_show_status(void)
+void gps_mcudl_hw_mcu_show_status(bool is_readable)
 {
 	unsigned int conn_ver, bg_ver;
 	unsigned int pc1, pc2, pc3, pc4, not_rst;
 	unsigned int val1, val2;
 	unsigned int lp_status;
-	unsigned int fw_own[7];
+	unsigned int fw_own[7] = {0};
 
-	conn_ver = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_IP_VERSION_ADDR);
-	bg_ver = GDL_HW_RD_GPS_REG(BG_GPS_CFG_BGF_IP_VERSION_ADDR);
-	GDL_LOGW("conn_ver=0x%08X, bg_ver=0x%08X", conn_ver, bg_ver);
+	GDL_LOGW("is_readable_b=%d", is_readable);
+	if (is_readable) {
+		conn_ver = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_IP_VERSION_ADDR);
+		bg_ver = GDL_HW_RD_GPS_REG(BG_GPS_CFG_BGF_IP_VERSION_ADDR);
+		GDL_LOGW("conn_ver=0x%08X, bg_ver=0x%08X", conn_ver, bg_ver);
 
-	not_rst = GDL_HW_GET_CONN_INFRA_ENTRY(
-		CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_GPSSYS_CPU_SW_RST_B);
+		not_rst = GDL_HW_GET_CONN_INFRA_ENTRY(
+			CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_GPSSYS_CPU_SW_RST_B);
+	} else {
+		/* if not readable, assume in rst status */
+		not_rst = 0;
+	}
 	GDL_HW_WR_CONN_INFRA_REG(
 		CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, 0xC0040103);
 	pc1 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
@@ -416,18 +422,22 @@ void gps_mcudl_hw_mcu_show_status(void)
 	fw_own[1] = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_IRQ_STAT_ADDR);
 	fw_own[2] = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_IRQ_ENA_ADDR);
 	fw_own[3] = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_FW_OWN_IRQ_ADDR);
-	fw_own[4] = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_CSR_BGF_ON_IRQ_STATUS_ADDR);
-	fw_own[5] = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_CSR_BGF_ON_HOST_CSR_MISC_ADDR);
-	fw_own[6] = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_CSR_BGF_ON_FW_OWN_IRQ_ADDR);
+	if (is_readable) {
+		fw_own[4] = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_CSR_BGF_ON_IRQ_STATUS_ADDR);
+		fw_own[5] = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_CSR_BGF_ON_HOST_CSR_MISC_ADDR);
+		fw_own[6] = GDL_HW_RD_CONN_INFRA_REG(CONN_CFG_ON_CSR_BGF_ON_FW_OWN_IRQ_ADDR);
+	}
 	GDL_LOGW("fw_own_sta=0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X",
 		fw_own[0], fw_own[1], fw_own[2], fw_own[3], fw_own[4], fw_own[5], fw_own[6]);
 
-	val1 = GDL_HW_RD_GPS_REG(BG_GPS_MCU_CONFG_SW_DBG_CTL_ADDR);
-	val2 = GDL_HW_RD_GPS_REG(BG_GPS_MCU_CONFG_SW_DBG_CTL_ADDR);
-	GDL_LOGW("idle_val=0x%08X, 0x%08X", val1, val2);
+	if (is_readable) {
+		val1 = GDL_HW_RD_GPS_REG(BG_GPS_MCU_CONFG_SW_DBG_CTL_ADDR);
+		val2 = GDL_HW_RD_GPS_REG(BG_GPS_MCU_CONFG_SW_DBG_CTL_ADDR);
+		GDL_LOGW("idle_val=0x%08X, 0x%08X", val1, val2);
 
-	lp_status = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
-	GDL_LOGW("lp_status=0x%08X", lp_status);
+		lp_status = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
+		GDL_LOGW("lp_status=0x%08X", lp_status);
+	}
 }
 
 void gps_mcudl_hw_mcu_show_pc_log(void)

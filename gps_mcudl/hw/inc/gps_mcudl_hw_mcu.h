@@ -16,7 +16,7 @@ bool gps_mcudl_hw_mcu_do_on_with_rst_held(void);
 void gps_mcudl_hw_mcu_speed_up_clock(void);
 void gps_mcudl_hw_mcu_release_rst(void);
 bool gps_mcudl_hw_mcu_wait_idle_loop_or_timeout_us(unsigned int timeout_us);
-void gps_mcudl_hw_mcu_show_status(void);
+void gps_mcudl_hw_mcu_show_status(bool is_readable);
 void gps_mcudl_hw_mcu_show_pc_log(void);
 bool gps_mcudl_hw_bg_is_readable(void);
 

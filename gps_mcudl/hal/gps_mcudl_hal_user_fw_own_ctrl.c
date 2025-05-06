@@ -314,8 +314,6 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 	unsigned user_clr_cnt;
 	unsigned user_clr_cnt_on_ntf_set;
 	unsigned int user_clr_bitmask;
-	int readable = 0;
-	int hung_value = 0;
 
 	gps_mcul_hal_user_fw_own_lock();
 	if (!g_gps_mcudl_fw_own_ctx.init_done) {
@@ -372,22 +370,9 @@ void gps_mcudl_hal_user_set_fw_own_if_no_recent_clr(void)
 	set_okay = gps_mcudl_hal_mcu_set_fw_own();
 	if (!set_okay) {
 		MDL_LOGW("set_okay = %d", set_okay);
-		gps_mcudl_hal_user_fw_own_status_dump();
+		set_okay = gps_mcudl_hal_set_fw_own_fail_handler();
+		MDL_LOGW("set_okay2 = %d", set_okay);
 
-		/* show debug info if not okay */
-#if GPS_DL_HAS_CONNINFRA_DRV
-		readable = conninfra_reg_readable();
-		hung_value = conninfra_is_bus_hang();
-		MDL_LOGW("readable=%d, hung_value=%d", readable, hung_value);
-#endif
-		gps_mcudl_hal_mcu_show_pc_log();
-		gps_mcudl_hal_mcu_show_status();
-		gps_mcudl_hal_ccif_show_status();
-		gps_dl_hw_dump_host_csr_gps_info(false);
-
-		/* check one more time */
-		set_okay = gps_mcudl_hw_mcu_set_or_clr_fw_own_is_okay(true);
-		MDL_LOGW("recheck set_okay=%d", set_okay);
 	} else
 		MDL_LOGD("set_okay = %d", set_okay);
 }
@@ -480,8 +465,9 @@ bool gps_mcudl_hal_clr_fw_own_fail_handler(void)
 #endif
 			gps_mcudl_hal_mcu_show_pc_log();
 		}
-		gps_mcudl_hal_mcu_show_status();
-		gps_mcudl_hal_ccif_show_status();
+		gps_mcudl_hal_mcu_show_status(readable != 0);
+		if (readable != 0)
+			gps_mcudl_hal_ccif_show_status();
 		if (cnt % 2 == 0) {
 			/* do not print them on each cnt to reduce log amount */
 			gps_dl_hw_dump_host_csr_gps_info(false);
@@ -502,6 +488,33 @@ bool gps_mcudl_hal_clr_fw_own_fail_handler(void)
 	} while (1);
 	gps_mcudl_trigger_gps_subsys_reset(false, "GNSS clear fw own fail");
 	return false;
+}
+
+bool gps_mcudl_hal_set_fw_own_fail_handler(void)
+{
+	bool set_okay = false;
+	int readable = 0;
+	int hung_value = 0;
+
+	/* show status recording in sw */
+	gps_mcudl_hal_user_fw_own_status_dump();
+
+	/* show hw debug info */
+#if GPS_DL_HAS_CONNINFRA_DRV
+	readable = conninfra_reg_readable();
+	hung_value = conninfra_is_bus_hang();
+	MDL_LOGW("readable=%d, hung_value=%d", readable, hung_value);
+#endif
+	gps_mcudl_hal_mcu_show_pc_log();
+	gps_mcudl_hal_mcu_show_status(readable != 0);
+	if (readable != 0)
+		gps_mcudl_hal_ccif_show_status();
+	gps_dl_hw_dump_host_csr_gps_info(false);
+
+	/* check one more time */
+	set_okay = gps_mcudl_hw_mcu_set_or_clr_fw_own_is_okay(true);
+	MDL_LOGW("recheck set_okay=%d", set_okay);
+	return set_okay;
 }
 
 bool gps_mcudl_hal_is_fw_own(void)

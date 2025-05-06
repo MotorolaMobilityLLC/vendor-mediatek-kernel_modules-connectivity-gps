@@ -476,8 +476,9 @@ bool gps_mcudl_conninfra_is_okay_or_handle_it(void)
 			/* it's safe to cump gps host csr even hang value > 0
 			 */
 			gps_mcudl_hal_mcu_show_pc_log();
-			gps_mcudl_hal_mcu_show_status();
-			gps_mcudl_hal_ccif_show_status();
+			gps_mcudl_hal_mcu_show_status(readable != 0);
+			if (readable != 0)
+				gps_mcudl_hal_ccif_show_status();
 			gps_dl_hw_dump_host_csr_gps_info(false);
 			if (gps_mcudl_hal_bg_is_readable(true))
 				gps_mcudl_hal_vdnr_dump();

@@ -350,7 +350,7 @@ void gps_mcudl_connsys_coredump_start_wrapper(void)
 	gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump();
 
 	if (gps_mcudl_coredump_conninfra_on_is_readable()) {
-		gps_mcudl_hal_mcu_show_status();
+		gps_mcudl_hal_mcu_show_status(true);
 		gps_mcudl_hal_ccif_show_status();
 		gps_dl_hw_dump_host_csr_gps_info(false);
 		if (gps_mcudl_hal_bg_is_readable(true))

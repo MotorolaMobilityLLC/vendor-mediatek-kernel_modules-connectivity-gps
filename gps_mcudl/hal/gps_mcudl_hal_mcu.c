@@ -153,7 +153,7 @@ bool gps_mcudl_hal_mcu_do_on(const struct gps_mcudl_fw_list *p_fw_list)
 	}
 	if (!is_okay) {
 		gps_mcudl_hal_mcu_show_pc_log();
-		gps_mcudl_hal_mcu_show_status();
+		gps_mcudl_hal_mcu_show_status(true);
 		return false;
 	}
 	/* gps_mcudl_hal_mcu_clr_fw_own();*/
@@ -197,9 +197,9 @@ bool gps_mcudl_hal_mcu_clr_fw_own(void)
 	return is_okay;
 }
 
-void gps_mcudl_hal_mcu_show_status(void)
+void gps_mcudl_hal_mcu_show_status(bool is_readable)
 {
-	gps_mcudl_hw_mcu_show_status();
+	gps_mcudl_hw_mcu_show_status(is_readable);
 }
 
 void gps_mcudl_hal_mcu_show_pc_log(void)

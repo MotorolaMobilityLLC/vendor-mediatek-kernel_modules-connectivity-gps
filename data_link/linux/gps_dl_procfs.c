@@ -244,7 +244,10 @@ int gps_mcudl_procfs_dbg(int y, int z)
 		else if (z == 0x0C) {
 			GDL_LOGW("gps_mcudl_ylink_on_ap_resume - test");
 			gps_mcudl_ylink_on_ap_resume();
-		}
+		} else if (z == 0x0D)
+			gps_mcudl_ylink_test_ccif_abnormal_check();
+		else if (z == 0x0E)
+			gps_mcudl_ylink_test_set_fw_own_fail_check();
 	}
 	else if (y == 2)
 		gps_mcudl_xlink_test_toggle_ccif(z);

@@ -173,7 +173,7 @@ void gps_mcudl_hal_link_power_on_fail_handler(enum gps_mcudl_xid xid)
 	int reset_check_cnt;
 
 	gps_mcudl_hal_mcu_show_pc_log();
-	gps_mcudl_hal_mcu_show_status();
+	gps_mcudl_hal_mcu_show_status(true);
 	gps_mcudl_hal_ccif_show_status();
 	gps_dl_hw_dump_host_csr_gps_info(false);
 	reset_check_cnt = 0;
@@ -190,7 +190,7 @@ void gps_mcudl_hal_link_power_on_fail_handler(enum gps_mcudl_xid xid)
 			break;
 
 		gps_dl_sleep_us(2200, 3200);
-		gps_mcudl_hal_mcu_show_status();
+		gps_mcudl_hal_mcu_show_status(false);
 		gps_mcudl_hal_ccif_show_status();
 		reset_check_cnt++;
 	}
