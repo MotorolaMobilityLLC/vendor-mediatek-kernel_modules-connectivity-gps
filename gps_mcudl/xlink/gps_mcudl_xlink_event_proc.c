@@ -371,6 +371,7 @@ _close_or_reset_ack:
 		if (!gps_mcudl_conninfra_is_okay_or_handle_it())
 			break;
 
+		/* "not break" means it's readable */
 		gps_mcudl_hal_mcu_show_pc_log();
 		gps_mcudl_hal_mcu_show_status(true);
 		gps_mcudl_hal_ccif_show_status();
@@ -392,7 +393,7 @@ _close_or_reset_ack:
 			break;
 		}
 
-		gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(true);
+		(void)gps_mcu_hif_mgmt_cmd_send_fw_log_ctrl(true);
 		break;
 
 	case GPS_MCUDL_EVT_LINK_FW_LOG_OFF:

@@ -248,6 +248,8 @@ int gps_mcudl_procfs_dbg(int y, int z)
 			gps_mcudl_ylink_test_ccif_abnormal_check();
 		else if (z == 0x0E)
 			gps_mcudl_ylink_test_set_fw_own_fail_check();
+		else if (z == 0x0F)
+			gps_mcudl_hal_wdt_isr();
 	}
 	else if (y == 2)
 		gps_mcudl_xlink_test_toggle_ccif(z);

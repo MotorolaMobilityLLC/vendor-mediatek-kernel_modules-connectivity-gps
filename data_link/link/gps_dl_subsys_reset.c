@@ -19,6 +19,7 @@
 #include "gps_mcudl_reset.h"
 #include "gps_mcudl_hal_mcu.h"
 #include "gps_mcudl_hal_ccif.h"
+#include "gps_mcudl_hal_conn.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcudl_hw_mcu.h"
 #endif
@@ -325,6 +326,11 @@ bool gps_dl_conninfra_is_readable(void)
  *
  * Even conninfra_reg_readable()=0, we may want to do dump except
  *  there are certain bitmasks(such as SLP_PROT_ERR) in hung_value
+ *
+ * Similar to gps_mcudl_coredump_conninfra_is_readable_by_mask.
+ *
+ * Deprecated.
+ *
  */
 bool gps_dl_conninfra_is_readable_by_hung_value(int hung_value)
 {
@@ -336,6 +342,9 @@ bool gps_dl_conninfra_is_readable_by_hung_value(int hung_value)
 		return false;
 
 	if (hung_value & CONNINFRA_AP2CONN_TX_SLP_PROT_ERR)
+		return false;
+
+	if (hung_value & CONNINFRA_AP2CONN_CLK_ERR)
 		return false;
 
 	return true;
@@ -476,10 +485,14 @@ bool gps_mcudl_conninfra_is_okay_or_handle_it(void)
 			/* it's safe to cump gps host csr even hang value > 0
 			 */
 			gps_mcudl_hal_mcu_show_pc_log();
-			gps_mcudl_hal_mcu_show_status(readable != 0);
-			if (readable != 0)
-				gps_mcudl_hal_ccif_show_status();
+			/* arriving here means readable == 0, bypass below code for coverity scan
+			 * gps_mcudl_hal_mcu_show_status(readable != 0);
+			 * if (readable != 0)
+			 *   gps_mcudl_hal_ccif_show_status();
+			 */
+			gps_mcudl_hal_mcu_show_status(false);
 			gps_dl_hw_dump_host_csr_gps_info(false);
+			gps_mcudl_hal_dump_power_state();
 			if (gps_mcudl_hal_bg_is_readable(true))
 				gps_mcudl_hal_vdnr_dump();
 			gps_dl_hw_dump_host_csr_gps_info(false);

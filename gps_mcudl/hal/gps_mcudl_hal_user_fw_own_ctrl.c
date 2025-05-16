@@ -7,6 +7,7 @@
 #include "gps_mcudl_log.h"
 #include "gps_mcudl_ylink.h"
 #include "gps_mcudl_hal_mcu.h"
+#include "gps_mcudl_hal_conn.h"
 #include "gps_mcudl_hal_user_fw_own_ctrl.h"
 #include "gps_mcudl_data_pkt_slot.h"
 #include "gps_mcudl_hw_ccif.h"
@@ -510,6 +511,7 @@ bool gps_mcudl_hal_set_fw_own_fail_handler(void)
 	if (readable != 0)
 		gps_mcudl_hal_ccif_show_status();
 	gps_dl_hw_dump_host_csr_gps_info(false);
+	gps_mcudl_hal_dump_power_state();
 
 	/* check one more time */
 	set_okay = gps_mcudl_hw_mcu_set_or_clr_fw_own_is_okay(true);

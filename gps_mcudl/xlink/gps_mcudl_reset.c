@@ -327,6 +327,7 @@ void gps_mcudl_connsys_coredump_start(void)
 void gps_mcudl_connsys_coredump_start_wrapper(void)
 {
 	bool show_log = false;
+	bool is_readable = false;
 
 	show_log = gps_dl_set_show_reg_rw_log(false);
 #if GPS_DL_HAS_PLAT_DRV
@@ -349,16 +350,15 @@ void gps_mcudl_connsys_coredump_start_wrapper(void)
 	(void)gps_mcudl_hal_dump_power_state();
 	gps_mcudl_mcu2ap_put_to_xlink_fail_rec_dump();
 
-	if (gps_mcudl_coredump_conninfra_on_is_readable()) {
-		gps_mcudl_hal_mcu_show_status(true);
+	is_readable = gps_dl_conninfra_is_readable();
+	MDL_LOGE("is_readable=%d", is_readable);
+	gps_mcudl_hal_mcu_show_status(is_readable);
+	if (is_readable)
 		gps_mcudl_hal_ccif_show_status();
-		gps_dl_hw_dump_host_csr_gps_info(false);
-		if (gps_mcudl_hal_bg_is_readable(true))
-			gps_mcudl_hal_vdnr_dump();
-		gps_dl_hw_dump_host_csr_gps_info(false);
-	} else
-		MDL_LOGE("readable=0");
-
+	gps_dl_hw_dump_host_csr_gps_info(false);
+	if (gps_mcudl_hal_bg_is_readable(true))
+		gps_mcudl_hal_vdnr_dump();
+	gps_dl_hw_dump_host_csr_gps_info(false);
 	gps_mcudl_connsys_coredump_start();
 	gps_dl_set_show_reg_rw_log(show_log);
 #ifdef GPS_DL_HAS_MCUDL_HAL_STAT

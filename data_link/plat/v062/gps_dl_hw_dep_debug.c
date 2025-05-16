@@ -97,7 +97,9 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 
 	unsigned int pc1, pc2, pc3, pc4, not_rst;
 	unsigned int lp_status, lp_status2;
+	bool is_readable;
 
+	is_readable = gps_dl_conninfra_is_readable();
 	is_fw_own = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_LPCTL_ADDR);
 	conn_wake_by_top = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_TOP_ADDR);
 	conn_wake_by_gps = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_ADDR);
@@ -121,13 +123,19 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	bgf_dbg_30004b = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
 
 	GDL_LOGI(
-		"fo=%u,wk:t/g=%d/%d,clk/pwr=0x%x,0x%x,dmy=0x%x,0x%x,dbg[0-4;a-b]=0x%x,0x%x,0x%x,0x%x,0x%x;0x%x,0x%x",
+		"fo=%u,wk:t/g=%d/%d,clk/pwr=0x%x,0x%x,dmy=0x%x,0x%x,dbg[0-4;a-b]=0x%x,0x%x,0x%x,0x%x,0x%x;0x%x,0x%x,r=%d",
 		is_fw_own, conn_wake_by_top, conn_wake_by_gps, clock_det, conn_pwr_st,
 		bgf_dummy, bgf_dummy2, bgf_dbg_300040[0], bgf_dbg_300040[1], bgf_dbg_300040[2], bgf_dbg_300040[3],
-		bgf_dbg_300040[4], bgf_dbg_30004a, bgf_dbg_30004b);
+		bgf_dbg_300040[4], bgf_dbg_30004a, bgf_dbg_30004b,
+		is_readable);
 
-	not_rst = GDL_HW_GET_CONN_INFRA_ENTRY(
-		CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_GPSSYS_CPU_SW_RST_B);
+	if (is_readable) {
+		not_rst = GDL_HW_GET_CONN_INFRA_ENTRY(
+			CONN_RGU_ON_GPSSYS_CPU_SW_RST_B_GPSSYS_CPU_SW_RST_B);
+	} else {
+		/* if not readable, assume in rst status */
+		not_rst = 0;
+	}
 	GDL_HW_WR_CONN_INFRA_REG(
 		CONN_DBG_CTL_CR_DBGCTL2BGF_OFF_DEBUG_SEL_ADDR, 0xC0040103);
 	pc1 = GDL_HW_RD_CONN_INFRA_REG(CONN_DBG_CTL_BGF_MONFLAG_OFF_OUT_ADDR);
@@ -141,10 +149,13 @@ void gps_dl_hw_dep_gps_dump_power_state(struct gps_dl_power_raw_state *p_raw)
 	 */
 	GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CR_HOSTCSR2BGF_ON_DBG_SEL_ADDR, 0x300d43);
 	lp_status = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_BGF_MONFLG_ON_OUT_ADDR);
-	lp_status2 = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
+	if (is_readable)
+		lp_status2 = GDL_HW_RD_GPS_REG(CONN_MCU_CONFG_ON_HOST_MAILBOX_MCU_ADDR);
+	else
+		lp_status2 = 0;
 
-	GDL_LOGW("nr=%d, pc=0x%08X,0x%08X,0x%08X,0x%08X, lp=0x%08X,0x%08X",
-		not_rst, pc1, pc2, pc3, pc4, lp_status, lp_status2);
+	GDL_LOGW("nr=%d, pc=0x%08X,0x%08X,0x%08X,0x%08X, lp=0x%08X,0x%08X(r=%d)",
+		not_rst, pc1, pc2, pc3, pc4, lp_status, lp_status2, is_readable);
 	if (p_raw != NULL) {
 		p_raw->mcu_pc = pc1;
 		/* bit4(+16) and bit2(+16) are L5/L1 osc_en */
