@@ -410,14 +410,14 @@ unsigned int gps_dl_hw_gps_get_adie_id_from_conninfra(void)
 
 #if GPS_DL_DO_ADIE2_ACTION
 	/*
-	* mt6878 has 2 adie, check adie
+	* mt6878/mt6858 has 2 adie, check adie
 	* adie_ver==0x6631 from conninfra_get_ic_info(CONNSYS_ADIE_CHIPID)
 	* has 2 cases:
 	* MT6631 for BT/WIFI/GNSS
 	* MT6631 for BT/WIFI and MT6686 for GNSS
 	* so we need to check conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID) again for GNSS part
 	*/
-	if (chip_ver == 0x6878) {
+	if ((chip_ver == 0x6878) || (chip_ver == 0x6858)) {
 		if (adie_ver == 0x6631) {
 			adie_ver = conninfra_get_ic_info(CONNSYS_GPS_ADIE_CHIPID);
 			if (adie_ver == 0x6686)
