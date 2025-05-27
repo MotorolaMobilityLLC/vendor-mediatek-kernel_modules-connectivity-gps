@@ -89,6 +89,10 @@ bool gps_dl_hw_dep_gps_control_adie_on_6858(void)
 	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005600, 0, 0x7, 0x0);
 	GDL_HW_SET_AP_ENTRY(0x10005604, 0, 0xffffffff, 0x0);
 	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005600, 0, 0x7, 0x0);
+	GDL_HW_SET_AP_ENTRY(0x10005068, 0, 0xffffffff, 0x1);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005060, 0, 0x1, 0x0);
+	GDL_HW_SET_AP_ENTRY(0x10005064, 0, 0xffffffff, 0x1);
+	GDL_HW_SET_AP_ENTRY_TO_CHECK(0x10005060, 0, 0x1, 0x1);
 
 #if GPS_DL_USE_BGF_SEL_SEMA
 	/*take semaphore before rw 18001010*/
