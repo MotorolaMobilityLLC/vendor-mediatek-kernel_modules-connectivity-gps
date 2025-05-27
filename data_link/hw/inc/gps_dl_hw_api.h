@@ -117,6 +117,16 @@ struct gps_dl_hw_mvcd_gps_bootup_info {
 	unsigned int frag_num;
 };
 
+enum gps_dl_hw_mvcd_n1_dsp_segment_type {
+	N1_MVCD_PILOT = 0,
+	N1_MVCD_DATA_PRN,
+	N1_MVCD_2ND_CODE,
+};
+
+struct gps_dl_hw_mvcd_n1_dsp_bootup_info {
+	unsigned int ldpc_count;
+};
+
 void gps_dl_hw_get_link_status(
 	enum gps_dl_link_id_enum link_id, struct gps_dl_hw_link_status_struct *p);
 
@@ -170,6 +180,9 @@ unsigned int gps_dl_hw_get_mcub_a2d1_cfg(enum gps_dl_link_id_enum link_id, bool 
 bool gps_dl_hw_gps_get_bootup_info(enum gps_dl_link_id_enum link_id,
 	bool is_cw_dsp, struct gps_dl_hw_mvcd_gps_bootup_info *bootup_info);
 bool gps_dl_hw_gps_send_dsp_fragement_num(enum gps_dl_link_id_enum link_id, bool is_cw_dsp, unsigned int fragement_num);
+bool gps_dl_hw_gps_n1_get_bootup_info(struct gps_dl_hw_mvcd_n1_dsp_bootup_info *bootup_info);
+bool gps_dl_hw_n1_gps_send_dsp_fragement_num(enum gps_dl_hw_mvcd_n1_dsp_segment_type segment_type,
+		unsigned int sv_id);
 
 #endif /* _GPS_DL_HW_API_H */
 

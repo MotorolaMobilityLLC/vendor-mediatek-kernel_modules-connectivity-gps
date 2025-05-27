@@ -116,6 +116,8 @@ enum conn_smc_opid {
 	SMC_GPS_DL_HW_DEP_GET_MET_WRITE_PTR_ADDR = 0x6a,
 	SMC_GPS_DL_HW_DEP_SET_TIMER_SOURCE = 0x6b,
 #endif
+	SMC_GPS_MVCD_N1_GET_DSP_BOOT_UP_INFO = 0x70,
+	SMC_GPS_MVCD_N1_SEND_DSP_FRAGEMENT = 0x71,
 };
 
 enum gps_dl_hw_mvcd_dsp_type {

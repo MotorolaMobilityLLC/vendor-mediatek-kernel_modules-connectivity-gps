@@ -468,3 +468,16 @@ bool gps_dl_hw_gps_send_dsp_fragement_num(enum gps_dl_link_id_enum link_id,
 	GDL_LOGXE(link_id, "NOT SUPPORT ATF %d %d", is_cw_dsp, fragement_num);
 	return false;
 }
+
+bool gps_dl_hw_gps_n1_get_bootup_info(struct gps_dl_hw_mvcd_n1_dsp_bootup_info *bootup_info)
+{
+	GDL_LOGE("NOT SUPPORT ATF 0x%lx", (unsigned long)bootup_info);
+	return false;
+}
+
+bool gps_dl_hw_n1_gps_send_dsp_fragement_num(enum gps_dl_hw_mvcd_n1_dsp_segment_type segment_type,
+		unsigned int sv_id)
+{
+	GDL_LOGE("NOT SUPPORT ATF %d %d", segment_type, sv_id);
+	return false;
+}

@@ -244,6 +244,8 @@ static int gps_each_device_hw_suspend(enum gps_dl_link_id_enum link_id, bool nee
 #define GPSDL_IOC_GPS_EAP_SAP_TIMESYNC 29
 #endif
 #define GPSDL_IOC_GET_PLATFORM_CLOCK_FREQ     30
+#define GPSDL_IOC_GPS_N1_GET_DSP_BOOTUP_INFO   38
+#define GPSDL_IOC_GPS_N1_DSP_MVCD_FRAGEMENT_NO 39
 
 static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
 {
@@ -522,6 +524,46 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 		retval = gps_dl_clock_mng_get_platform_clock();
 		break;
 #endif
+	case GPSDL_IOC_GPS_N1_GET_DSP_BOOTUP_INFO:
+	{
+		struct gps_dl_hw_mvcd_n1_dsp_bootup_info bootup_info;
+
+		if (!dev->is_open) {
+			retval = -EFAULT;
+			GDL_LOGXI_ONF(dev->index,
+				"GPSDL_IOC_GPS_N1_GET_DSP_BOOTUP_INFO retval = %d, is_open = %d", retval, dev->is_open);
+			break;
+		}
+		if (gps_dl_hw_gps_n1_get_bootup_info(&bootup_info)) {
+			if (copy_to_user((int __user *)arg, &bootup_info, sizeof(bootup_info)))
+				retval = -EFAULT;
+			else
+				retval = 0;
+		} else {
+			retval = -EFAULT;
+		}
+		break;
+	}
+	case GPSDL_IOC_GPS_N1_DSP_MVCD_FRAGEMENT_NO:
+	{
+		enum gps_dl_hw_mvcd_n1_dsp_segment_type segment_type;
+		unsigned int sv_id;
+
+		if (!dev->is_open) {
+			retval = -EFAULT;
+			GDL_LOGXI_ONF(dev->index,
+				"GPSDL_IOC_GPS_N1_DSP_MVCD_FRAGEMENT_NO retval = %d, is_open = %d", retval,
+				dev->is_open);
+			break;
+		}
+		segment_type = (enum gps_dl_hw_mvcd_n1_dsp_segment_type)((arg & 0x0000FF00) >> 8);
+		sv_id = (unsigned int)(arg & 0x000000FF);
+		if (gps_dl_hw_n1_gps_send_dsp_fragement_num(segment_type, sv_id))
+			retval = 0;
+		else
+			retval = -EFAULT;
+		break;
+	}
 	default:
 		retval = -EFAULT;
 		GDL_LOGXI_DRW(dev->index, "cmd = %d, not support", cmd);
