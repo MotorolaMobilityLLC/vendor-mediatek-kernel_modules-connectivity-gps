@@ -45,21 +45,25 @@ void gps_dl_hw_may_set_link_power_flag(enum gps_dl_link_id_enum link_id, bool po
 bool gps_dl_hw_gps_force_wakeup_conninfra_top_off(bool enable)
 {
 	bool poll_okay = false;
+	unsigned int tmp_val;
 
 	if (enable) {
-		GDL_HW_SET_CONN_INFRA_ENTRY(
-			CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS_WRITE_KEY, 0x5450);
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 1);
+		tmp_val = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_ADDR);
+		tmp_val = (0x54500000 | (tmp_val & 0xFFFE)) | 0x1;
+		GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_ADDR, tmp_val);
+		GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_ADDR);
 		GDL_HW_MAY_WAIT_CONN_INFRA_SLP_PROT_DISABLE_ACK(&poll_okay);
 		if (!poll_okay) {
 			GDL_LOGE("_fail_conn_slp_prot_not_okay");
 			return false; /* not okay */
 		}
 	} else {
-		GDL_HW_SET_CONN_INFRA_ENTRY(
-			CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS_WRITE_KEY, 0x5450);
-		GDL_HW_SET_CONN_INFRA_ENTRY(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_CONN_INFRA_WAKEPU_GPS, 0);
+		tmp_val = GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_ADDR);
+		tmp_val = (0x54500000 | (tmp_val & 0xFFFE));
+		GDL_HW_WR_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_ADDR, tmp_val);
+		GDL_HW_RD_CONN_INFRA_REG(CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_GPS_ADDR);
 	}
+
 	return true;
 }
 
