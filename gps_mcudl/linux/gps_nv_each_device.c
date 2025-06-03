@@ -301,32 +301,29 @@ static loff_t gps_nv_each_device_seek(struct file *filp, loff_t offset, int when
 	get_info_ret = gps_mcusys_nv_common_shared_mem_get_info(nv_id, &data_size, &block_size);
 	get_info_okay = (get_info_ret == 0);
 
-	retval = -EINVAL;
-	if (get_info_okay) {
-		retval = 0;
-		switch (whence) {
-		case 0: /* SEEK_SET */
-			new_pos = offset;
-			break;
-		case 1: /* SEEK_CUR */
-			new_pos = old_pos + offset;
-			break;
-		case 2: /* SEEK_END */
+	retval = 0;
+	switch (whence) {
+	case 0: /* SEEK_SET */
+		new_pos = offset;
+		break;
+	case 1: /* SEEK_CUR */
+		new_pos = old_pos + offset;
+		break;
+	case 2: /* SEEK_END */
+		if (get_info_okay)
 			new_pos = data_size + offset;
-			break;
-		default:
+		else
 			retval = -EINVAL;
-			break;
-		}
-
-		if (new_pos <= data_size && retval == 0)
-			retval = 0;
+		break;
+	default:
+		retval = -EINVAL;
+		break;
 	}
 
 	if (retval == 0)
 		filp->f_pos = new_pos;
 
-	GDL_LOGI("pid=%d, nv_id=%d, case=%d, off=%ld, pos=%ld->%ld, info=%d,%u,%u, ret_val=%d",
+	GDL_LOGI("pid=%d, nv_id=%d, case=%d, off=%ld, pos=%ld->%ld, info=%d,%u,%u, ret_val=%d, v2",
 		pid, nv_id, whence,
 		(long)offset, (long)old_pos, (long)new_pos,
 		get_info_ret, data_size, block_size,
