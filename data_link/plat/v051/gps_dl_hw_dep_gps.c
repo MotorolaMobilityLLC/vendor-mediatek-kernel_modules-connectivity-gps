@@ -96,8 +96,12 @@ void gps_dl_hw_dep_common_enter_dpstop_dsleep(void)
 	int ret;
 
 	/*close a-die*/
-	if (0x6686 == gps_dl_hal_get_adie_ver())
-		gps_dl_hw_dep_gps_control_adie_off_6878();
+	if (0x6686 == gps_dl_hal_get_adie_ver()) {
+		if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878)
+			gps_dl_hw_dep_gps_control_adie_off_6878();
+		else if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6858)
+			gps_dl_hw_dep_gps_control_adie_off_6858();
+	}
 
 	arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_COMMON_ENTER_DPSTOP_DSLEEP,
 			0, 0, 0, 0, 0, 0, &res);
@@ -127,7 +131,10 @@ void gps_dl_hw_dep_common_leave_dpstop_dsleep(void)
 
 	/*open a-die*/
 	if (0x6686 == gps_dl_hal_get_adie_ver()) {
-		gps_dl_hw_dep_gps_control_adie_on_6878();
+		if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6878)
+			gps_dl_hw_dep_gps_control_adie_on_6878();
+		else if (gps_dl_hal_get_conn_infra_ver() == GDL_HW_CONN_INFRA_VER_MT6858)
+			gps_dl_hw_dep_gps_control_adie_on_6858();
 	} else {
 		arm_smccc_smc(MTK_SIP_KERNEL_GPS_CONTROL, SMC_GPS_DL_COMMON_ENABLE_ADIE,
 				0, 0, 0, 0, 0, 0, &res);
