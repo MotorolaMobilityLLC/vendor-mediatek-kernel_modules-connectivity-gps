@@ -3,6 +3,10 @@
  * Copyright (c) 2022 MediaTek Inc.
  */
 #include <asm/arch_timer.h>
+#include <linux/device.h>
+#include <linux/pm_wakeup.h>
+#include <linux/atomic.h>
+
 #include "gps_each_device.h"
 #include "gps_each_link.h"
 #if GPS_DL_MOCK_HAL
@@ -194,13 +198,22 @@ static int gps_mcudl_each_device_open(struct inode *inode, struct file *filp)
 {
 	struct gps_mcudl_each_device *dev; /* device information */
 	int retval = -EBUSY;
+	static atomic_t signal_pending_count = ATOMIC_INIT(0);
 
 	dev = container_of(inode->i_cdev, struct gps_mcudl_each_device, cdev);
+	pm_stay_awake(dev->dev);
 	filp->private_data = dev; /* for other methods */
 
 	MDL_LOGXD(dev->index, "major = %d, minor = %d, pid = %d",
 		imajor(inode), iminor(inode), current->pid);
 
+	if (signal_pending(current)) {
+		atomic_inc(&signal_pending_count);
+		retval = -ERESTARTSYS;
+		goto _out;
+	}
+
+	atomic_set(&signal_pending_count, 0);
 	if (!dev->is_open) {
 		retval = gps_mcudl_each_link_open((enum gps_mcudl_xid)dev->index);
 		if (0 == retval) {
@@ -209,8 +222,12 @@ static int gps_mcudl_each_device_open(struct inode *inode, struct file *filp)
 		}
 	}
 
-	MDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d, retval=%d",
-		imajor(inode), iminor(inode), current->pid, retval);
+_out:
+	MDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d, retval=%d, sp_cnt=%d",
+		imajor(inode), iminor(inode), current->pid, retval,
+		atomic_read(&signal_pending_count));
+
+	pm_relax(dev->dev);
 	return retval;
 }
 
@@ -237,16 +254,25 @@ static int gps_mcudl_each_device_hw_resume(enum gps_mcudl_xid link_id)
 static int gps_mcudl_each_device_release(struct inode *inode, struct file *filp)
 {
 	struct gps_mcudl_each_device *dev;
+	static atomic_t signal_pending_count = ATOMIC_INIT(0);
 
 	dev = (struct gps_mcudl_each_device *)filp->private_data;
+	pm_stay_awake(dev->dev);
 	dev->is_open = false;
 
-	MDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d",
-		imajor(inode), iminor(inode), current->pid);
+	if (signal_pending(current))
+		atomic_inc(&signal_pending_count);
+	else
+		atomic_set(&signal_pending_count, 0);
+
+	MDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d, sp_cnt=%d",
+		imajor(inode), iminor(inode), current->pid,
+		atomic_read(&signal_pending_count));
 
 	gps_mcudl_each_link_close((enum gps_mcudl_xid)dev->index);
 	/*gps_each_link_rec_force_dump(dev->index);*/
 
+	pm_relax(dev->dev);
 	return 0;
 }
 
@@ -612,12 +638,14 @@ int gps_mcudl_cdev_setup(struct gps_mcudl_each_device *dev, enum gps_mcudl_xid x
 		return -1;
 	}
 
+	device_init_wakeup(dev->dev, true);
 	return 0;
 }
 
 void gps_mcudl_cdev_cleanup(struct gps_mcudl_each_device *dev, enum gps_mcudl_xid xid)
 {
 	if (dev->dev) {
+		device_init_wakeup(dev->dev, false);
 		device_destroy(dev->cls, dev->devno);
 		dev->dev = NULL;
 	}

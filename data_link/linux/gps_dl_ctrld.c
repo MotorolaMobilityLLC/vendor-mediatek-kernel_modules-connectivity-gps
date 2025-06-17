@@ -4,6 +4,7 @@
  */
 
 #include "gps_dl_ctrld.h"
+#include "gps_dl_linux_plat_drv.h"
 #include "gps_each_device.h"
 #if GPS_DL_MOCK_HAL
 #include "gps_mock_mvcd.h"
@@ -374,7 +375,9 @@ static int gps_dl_ctrl_thread(void *pData)
 #endif
 
 		/*Execute operation*/
+		gps_dl_ctrld_wake_lock_hold(true);
 		iResult = gps_dl_core_opid(&pOp->op);
+		gps_dl_ctrld_wake_lock_hold(false);
 
 #if GPS_DL_STATE_NOTIFY
 		/* Increment exec_end_count*/

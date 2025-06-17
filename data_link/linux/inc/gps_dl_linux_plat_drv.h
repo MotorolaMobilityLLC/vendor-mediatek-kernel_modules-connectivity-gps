@@ -32,6 +32,7 @@ void gps_dl_reserved_mem_show_info(void);
 void gps_dl_wake_lock_init(void);
 void gps_dl_wake_lock_deinit(void);
 void gps_dl_wake_lock_hold(bool hold);
+void gps_dl_ctrld_wake_lock_hold(bool hold);
 #endif
 
 void gps_dl_show_major_iomem_info(void);
