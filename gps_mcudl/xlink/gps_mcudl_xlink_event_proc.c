@@ -35,6 +35,7 @@
 #if GPS_DL_STATE_NOTIFY
 #include "gps_mcudl_hal_timer.h"
 #endif
+#include "gps_mcudl_plat_api.h"
 
 bool g_gps_fw_log_is_on;
 
@@ -348,6 +349,11 @@ _close_or_reset_ack:
 	case GPS_MCUDL_EVT_LINK_PRINT_DATA_STATUS:
 		if (!gps_mcudl_each_link_is_active(link_id)) {
 			MDL_LOGXW(link_id, "inactive, do not dump hw status");
+			break;
+		}
+
+		if (!g_gps_conninfa_on) {
+			MDL_LOGXW(link_id, "conninfra is off, do not dump hw status");
 			break;
 		}
 
