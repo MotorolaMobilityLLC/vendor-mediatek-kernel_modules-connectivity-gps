@@ -10,6 +10,7 @@
 #include "gps_dl_hw_semaphore.h"
 #include "gps_dl_hw_dep_macro.h"
 #include "gps_dl_hw_priv_util.h"
+#include "gps_dl_time_tick.h"
 
 #include "conn_infra/conn_host_csr_top.h"
 #if GPS_DL_CONNAC3
@@ -73,6 +74,20 @@ void gps_dl_hw_print_hw_status(enum gps_dl_link_id_enum link_id, bool dump_rf_cr
 	} else
 		return;
 
+	/* Dump 3 times with 10ms interval,
+	 * before gps_each_dsp_reg_gourp_read_start change the values.
+	 */
+	GDL_LOGXW(link_id, "1st");
+	gps_dl_hw_save_usrt_status_struct(link_id, &usrt_status);
+	gps_dl_hw_print_usrt_status_struct(link_id, &usrt_status);
+
+	gps_dl_sleep_us(9999, 10001);
+	GDL_LOGXW(link_id, "2nd");
+	gps_dl_hw_save_usrt_status_struct(link_id, &usrt_status);
+	gps_dl_hw_print_usrt_status_struct(link_id, &usrt_status);
+
+	gps_dl_sleep_us(9999, 10001);
+	GDL_LOGXW(link_id, "3rd");
 	gps_dl_hw_save_usrt_status_struct(link_id, &usrt_status);
 	gps_dl_hw_print_usrt_status_struct(link_id, &usrt_status);
 
