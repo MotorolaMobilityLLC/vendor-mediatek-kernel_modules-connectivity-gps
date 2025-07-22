@@ -74,6 +74,8 @@ int gps_mcudl_each_link_open(enum gps_mcudl_xid link_id)
 	long sigval = 0;
 	bool okay = false;
 	bool is_twice_check = false;
+	enum gps_dl_sys_suspend_status suspend_wait_ret;
+	int retry_cnt = 0, sp_cnt = 0;
 	int retval;
 #if GPS_DL_ON_CTP
 	/* Todo: is it need on LINUX? */
@@ -130,7 +132,24 @@ int gps_mcudl_each_link_open(enum gps_mcudl_xid link_id)
 
 		gps_mcudl_each_link_waitable_reset(link_id, GPS_DL_WAIT_OPEN_CLOSE);
 		gps_mcudl_xlink_event_send(link_id, GPS_MCUDL_EVT_LINK_OPEN);
-		gps_mcudl_link_open_wait(link_id, &sigval);
+		do {
+			gps_mcudl_link_open_wait(link_id, &sigval);
+
+			/* If signalled, check if system is in suspend. */
+			if (sigval != 0) {
+				suspend_wait_ret = gps_dl_wait_if_system_in_suspend(200);
+				sp_cnt = gps_mcudl_signal_pending_count();
+				MDL_LOGXW_ONF(link_id, "sigval=%ld, wait_ret=%d, sp_cnt=%d, retry_cnt=%d",
+					sigval, suspend_wait_ret, sp_cnt, retry_cnt);
+				if (suspend_wait_ret != GPS_DL_SYS_NOT_IN_SUSPEND && retry_cnt < 3) {
+					gps_dl_sleep_us(280 * 1000, 300 * 1000);
+					retry_cnt++;
+					sigval = 0;
+					continue;
+				}
+			}
+			break;
+		} while (1);
 
 		/* TODO: Check this mutex can be removed?
 		 * the possible purpose is make it's atomic from LINK_USER_OPEN and LINK_OPEN_RESULT_OKAY.
@@ -840,6 +859,7 @@ int gps_mcudl_each_link_listen_state_ntf(enum gps_mcudl_xid x_id)
 	enum gps_each_link_state_enum state, pre_state;
 	struct gps_dl_gps_awake_status gps_awake_status;
 	unsigned long tick0, tick1;
+	int sp_cnt = 0;
 
 	pre_state = gps_mcudl_each_link_get_state(x_id);
 	if (gps_mcudl_xlink_is_in_state_to_listen(pre_state)) {
@@ -852,6 +872,7 @@ int gps_mcudl_each_link_listen_state_ntf(enum gps_mcudl_xid x_id)
 	tick0 = gps_dl_tick_get_us();
 	gps_mcudl_each_link_waitable_reset(x_id, GPS_DL_WAIT_STATE_NTF);
 	wait_ret = gps_mcudl_link_wait_state_ntf(x_id, &sigval);
+	sp_cnt = gps_mcudl_signal_pending_count();
 	state = gps_mcudl_each_link_get_state(x_id);
 	memset(&gps_awake_status, 0, sizeof(gps_awake_status));
 	gps_dl_hal_get_gps_awake_status(&gps_awake_status);
@@ -871,9 +892,9 @@ int gps_mcudl_each_link_listen_state_ntf(enum gps_mcudl_xid x_id)
 		}
 	}
 	tick1 = gps_dl_tick_get_us();
-	MDL_LOGXW(x_id, "state=%s,%s, awake=%d,%lums, sigval=%ld, retval=%d,%d, delta_us = %lu",
+	MDL_LOGXW(x_id, "state=%s,%s, awake=%d,%lums, sigval=%ld, sp_cnt=%d, retval=%d,%d, delta_us = %lu",
 		gps_dl_link_state_name(pre_state), gps_dl_link_state_name(state),
 		gps_awake_status.is_awake, gps_awake_status.updated_ms,
-		sigval, wait_ret, retval, (tick1 - tick0));
+		sigval, sp_cnt, wait_ret, retval, (tick1 - tick0));
 	return retval;
 }

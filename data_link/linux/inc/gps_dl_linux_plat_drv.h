@@ -32,6 +32,23 @@ void gps_dl_wake_lock_init(void);
 void gps_dl_wake_lock_deinit(void);
 void gps_dl_wake_lock_hold(bool hold);
 void gps_dl_ctrld_wake_lock_hold(bool hold);
+void gps_dl_dev_wake_lock_hold(bool hold);
+
+enum gps_dl_sys_suspend_status {
+	GPS_DL_SYS_NOT_IN_SUSPEND = 0,
+	GPS_DL_SYS_SUSPEND_EXITED = 1,
+	GPS_DL_SYS_SUSPEND_TIMEOUT = 2,
+};
+
+/*
+ * Wait for system suspend to exit if currently in suspend.
+ * Return:
+ *   GPS_DL_SYS_NOT_IN_SUSPEND - not in suspend
+ *   GPS_DL_SYS_SUSPEND_EXITED - waited and suspend already exited
+ *   GPS_DL_SYS_SUSPEND_TIMEOUT - wait timeout for suspend exit
+ */
+enum gps_dl_sys_suspend_status gps_dl_wait_if_system_in_suspend(int timeout_ms);
+
 #endif
 
 void gps_dl_show_major_iomem_info(void);

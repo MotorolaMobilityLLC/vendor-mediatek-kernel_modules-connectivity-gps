@@ -18,6 +18,7 @@
 #include "gps_dl_subsys_reset.h"
 #include "gps_dl_hist_rec.h"
 #include "gps_dl_linux_plat_drv.h"
+#include "gps_dl_procfs.h"
 #include "gps_mcudl_each_device.h"
 #include "gps_mcudl_each_link.h"
 #include "gps_mcudl_link_state.h"
@@ -199,8 +200,15 @@ static int gps_mcudl_each_device_open(struct inode *inode, struct file *filp)
 	struct gps_mcudl_each_device *dev; /* device information */
 	int retval = -EBUSY;
 	static atomic_t signal_pending_count = ATOMIC_INIT(0);
+	int delay = gps_dl_procfs_get_dev_open_delay();
 
 	dev = container_of(inode->i_cdev, struct gps_mcudl_each_device, cdev);
+	if (delay > 0) {
+		MDL_LOGXW(dev->index, "delay: %d ms", delay);
+		msleep(delay);
+	}
+
+	gps_dl_dev_wake_lock_hold(true);
 	pm_stay_awake(dev->dev);
 	filp->private_data = dev; /* for other methods */
 
@@ -228,6 +236,14 @@ _out:
 		atomic_read(&signal_pending_count));
 
 	pm_relax(dev->dev);
+	/*
+	 * If open failed, keep device awake for a short period
+	 * to allow user space to retry open.
+	 */
+	if (retval != 0)
+		pm_wakeup_event(dev->dev, 500);
+
+	gps_dl_dev_wake_lock_hold(false);
 	return retval;
 }
 
@@ -256,6 +272,7 @@ static int gps_mcudl_each_device_release(struct inode *inode, struct file *filp)
 	struct gps_mcudl_each_device *dev;
 	static atomic_t signal_pending_count = ATOMIC_INIT(0);
 
+	gps_dl_dev_wake_lock_hold(true);
 	dev = (struct gps_mcudl_each_device *)filp->private_data;
 	pm_stay_awake(dev->dev);
 	dev->is_open = false;
@@ -273,6 +290,7 @@ static int gps_mcudl_each_device_release(struct inode *inode, struct file *filp)
 	/*gps_each_link_rec_force_dump(dev->index);*/
 
 	pm_relax(dev->dev);
+	gps_dl_dev_wake_lock_hold(false);
 	return 0;
 }
 

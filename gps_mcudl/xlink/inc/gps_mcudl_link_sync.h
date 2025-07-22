@@ -29,6 +29,8 @@ int gps_mcudl_link_wait_state_ntf(enum gps_mcudl_xid x_id, long *p_sigval);
 void gps_mcudl_link_trigger_state_ntf(enum gps_mcudl_xid x_id);
 void gps_mcudl_link_trigger_state_ntf_all(void);
 
+int gps_mcudl_signal_pending_count(void);
+
 
 #endif /* _GPS_MCUDL_LINK_SYNC_H */
 

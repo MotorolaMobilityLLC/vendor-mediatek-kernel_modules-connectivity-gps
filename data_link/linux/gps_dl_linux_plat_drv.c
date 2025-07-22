@@ -30,6 +30,8 @@
 #include <linux/of_reserved_mem.h>
 #include <linux/platform_device.h>
 #include <linux/pm_wakeup.h>
+#include <linux/wait.h>
+#include <linux/atomic.h>
 
 #include "gps_dl_linux.h"
 #include "gps_dl_linux_plat_drv.h"
@@ -699,6 +701,32 @@ static DRIVER_ATTR(flag, 0644, driver_flag_read, driver_flag_set);
 
 #if GPS_DL_HAS_MCUDL
 static struct notifier_block gps_dl_pm_notifier;
+static wait_queue_head_t gps_dl_suspend_waitq;
+static atomic_t gps_dl_in_suspend = ATOMIC_INIT(0);
+
+static bool gps_dl_is_in_suspend(void)
+{
+	return atomic_read(&gps_dl_in_suspend) != 0;
+}
+
+enum gps_dl_sys_suspend_status gps_dl_wait_if_system_in_suspend(int timeout_ms)
+{
+	long ret;
+
+	if (!gps_dl_is_in_suspend())
+		return GPS_DL_SYS_NOT_IN_SUSPEND;
+
+	ret = wait_event_timeout(
+		gps_dl_suspend_waitq,
+		!gps_dl_is_in_suspend(),
+		msecs_to_jiffies(timeout_ms)
+	);
+
+	if (ret > 0)
+		return GPS_DL_SYS_SUSPEND_EXITED;
+	else
+		return GPS_DL_SYS_SUSPEND_TIMEOUT;
+}
 
 /* not including the time spent in suspend */
 static ktime_t gps_dl_ap_suspend_monotime;
@@ -713,6 +741,7 @@ static int gps_dl_pm_notifier_callback(struct notifier_block *nb,
 {
 	switch (event) {
 	case PM_SUSPEND_PREPARE:
+		atomic_set(&gps_dl_in_suspend, 1);
 		gps_dl_ap_suspend_monotime = ktime_get();
 		gps_dl_ap_suspend_boottime = ktime_get_boottime();
 		GDL_LOGI("GDLP: event = %lu: PM_SUSPEND_PREPARE, kt_ms=%lld, ktb_ms=%lld, d_ms=%lld",
@@ -722,6 +751,8 @@ static int gps_dl_pm_notifier_callback(struct notifier_block *nb,
 			ktime_to_ms(ktime_sub(gps_dl_ap_suspend_boottime, gps_dl_ap_resume_boottime)));
 		break;
 	case PM_POST_SUSPEND:
+		atomic_set(&gps_dl_in_suspend, 0);
+		wake_up_all(&gps_dl_suspend_waitq);
 		gps_dl_ap_resume_monotime = ktime_get();
 		gps_dl_ap_resume_boottime = ktime_get_boottime();
 		GDL_LOGI("GDLP: event = %lu: PM_POST_SUSPEND, kt_ms=%lld, ktb_ms=%lld, d_ms=%lld",
@@ -754,6 +785,9 @@ int gps_dl_linux_plat_drv_register(void)
 	GDL_LOGW_INI("driver_create_file, ret(%d)\n", result);
 
 #if GPS_DL_HAS_MCUDL
+	/* Initialize suspend waitqueue for system suspend handling */
+	init_waitqueue_head(&gps_dl_suspend_waitq);
+
 	gps_dl_pm_notifier.notifier_call = gps_dl_pm_notifier_callback;
 	result = register_pm_notifier(&gps_dl_pm_notifier);
 	GDL_LOGW_INI("register_pm_notifier, ret(%d)\n", result);
@@ -775,17 +809,21 @@ int gps_dl_linux_plat_drv_unregister(void)
 
 static struct wakeup_source *g_gps_dl_wake_lock_ptr;
 static struct wakeup_source *g_gps_dl_ctrld_wake_lock_ptr;
+static struct wakeup_source *g_gps_dl_dev_wake_lock_ptr;
 const char c_gps_dl_wake_lock_name[] = "gpsdl_wakelock";
 const char c_gps_dl_ctrld_wake_lock_name[] = "gpsdl_kctrld";
+const char c_gps_dl_dev_wake_lock_name[] = "gpsdl_dev";
 void gps_dl_wake_lock_init(void)
 {
 	GDL_LOGD_INI("");
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 149)
 	g_gps_dl_wake_lock_ptr = wakeup_source_register(NULL, c_gps_dl_wake_lock_name);
 	g_gps_dl_ctrld_wake_lock_ptr = wakeup_source_register(NULL, c_gps_dl_ctrld_wake_lock_name);
+	g_gps_dl_dev_wake_lock_ptr = wakeup_source_register(NULL, c_gps_dl_dev_wake_lock_name);
 #else
 	g_gps_dl_wake_lock_ptr = wakeup_source_register(c_gps_dl_wake_lock_name);
 	g_gps_dl_ctrld_wake_lock_ptr = wakeup_source_register(c_gps_dl_ctrld_wake_lock_name);
+	g_gps_dl_dev_wake_lock_ptr = wakeup_source_register(c_gps_dl_dev_wake_lock_name);
 #endif
 }
 
@@ -794,7 +832,9 @@ void gps_dl_wake_lock_deinit(void)
 	GDL_LOGD_INI("");
 	wakeup_source_unregister(g_gps_dl_wake_lock_ptr);
 	wakeup_source_unregister(g_gps_dl_ctrld_wake_lock_ptr);
+	wakeup_source_unregister(g_gps_dl_dev_wake_lock_ptr);
 }
+
 
 void gps_dl_wake_lock_hold(bool hold)
 {
@@ -812,6 +852,15 @@ void gps_dl_ctrld_wake_lock_hold(bool hold)
 		__pm_stay_awake(g_gps_dl_ctrld_wake_lock_ptr);
 	else
 		__pm_relax(g_gps_dl_ctrld_wake_lock_ptr);
+}
+
+void gps_dl_dev_wake_lock_hold(bool hold)
+{
+	GDL_LOGD_ONF("hold = %d", hold);
+	if (hold)
+		__pm_stay_awake(g_gps_dl_dev_wake_lock_ptr);
+	else
+		__pm_relax(g_gps_dl_dev_wake_lock_ptr);
 }
 
 #endif /* GPS_DL_HAS_PLAT_DRV */

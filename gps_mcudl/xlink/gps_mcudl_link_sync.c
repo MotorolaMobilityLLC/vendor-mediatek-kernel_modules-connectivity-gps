@@ -12,6 +12,7 @@
 #include "gps_dl_hal.h"
 #if GPS_DL_ON_LINUX
 #include <asm/bitops.h>
+#include <linux/sched/signal.h>
 #endif
 
 void gps_mcudl_link_waitable_reset(enum gps_mcudl_xid x_id,
@@ -277,4 +278,13 @@ void gps_mcudl_link_trigger_state_ntf_all(void)
 
 	for (x_id = 0; x_id < GPS_MDLX_CH_NUM; x_id++)
 		gps_mcudl_link_trigger_state_ntf(x_id);
+}
+
+int gps_mcudl_signal_pending_count(void)
+{
+#if GPS_DL_ON_LINUX
+	return signal_pending(current);
+#else
+	return 0;
+#endif
 }

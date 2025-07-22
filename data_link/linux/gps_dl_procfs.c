@@ -144,7 +144,8 @@ int gps_dl_procfs_set_opt(int y, int z)
 			gps_dl_set_show_reg_rw_log(true);
 		rrw_new = gps_dl_show_reg_rw_log();
 		GDL_LOGW("log rrw change: %d to %d", rrw_old, rrw_new);
-	}
+	} else if (y == 6)
+		gps_dl_procfs_set_dev_open_delay(z);
 
 	return 0;
 }
@@ -207,6 +208,29 @@ int gps_dl_procfs_set_opid_duration(int y, int z)
 	}
 	return 0;
 }
+
+/* Runtime adjustable open delay for GPS device, default 0, range 0~500 */
+static int g_gps_dev_open_delay_ms;
+
+int gps_dl_procfs_get_dev_open_delay(void)
+{
+	return g_gps_dev_open_delay_ms;
+}
+
+void gps_dl_procfs_set_dev_open_delay(int val)
+{
+	int old_val = g_gps_dev_open_delay_ms;
+	int new_val = old_val;
+
+	if (val >= 0 && val <= 500)
+		new_val = val;
+
+	GDL_LOGW("input=%d, old=%d, new=%d", val, old_val, new_val);
+
+	if (new_val != old_val)
+		g_gps_dev_open_delay_ms = new_val;
+}
+
 #if GPS_DL_HAS_MCUDL
 /* arrive here if x == 0x10 */
 int gps_mcudl_procfs_dbg(int y, int z)
